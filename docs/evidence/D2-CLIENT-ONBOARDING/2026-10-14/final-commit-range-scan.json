@@ -1,0 +1,11 @@
+{
+  "scanner": "Gitleaks 8.28.0",
+  "base": "342ffc8d0d6465a85942518da59a1d01e45c6aa4",
+  "head": "bbe4cee7152bbe0cb38adff52a454af1f04fb93b",
+  "exit_code": 0,
+  "finding_count": 0,
+  "elapsed_seconds": 0.33,
+  "redaction": 100,
+  "history_rewritten": false,
+  "scope": "All committed additions since the full-history-verified repair head, including the consolidated merge."
+}

@@ -37,7 +37,8 @@ import { downloadBlob, safeFileName } from '../download';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
 
-interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null; }
+interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null;
+  module?: string | null; limitations?: string[] }
 
 export interface AuthoringCreateExportProps {
   /** Currently open document (null when none). */
@@ -65,6 +66,9 @@ export interface AuthoringCreateExportProps {
 }
 
 const NONE = '(blank document)';
+function creationModule(template: AuthoringTemplate | undefined, entered: string, fallback: string): string | null {
+  return template?.module === undefined ? entered || fallback : template.module;
+}
 
 export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports }: AuthoringCreateExportProps) {
   /* Sealed, or not offered. An unknown status used to count as exportable,
@@ -98,6 +102,8 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
     return () => window.removeEventListener(NEW_DOCUMENT_EVENT, open);
   }, [fireToast]);
   const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
+  const [templateChoice, setTemplateChoice] = useState('');
+  useEffect(() => { if (dialog !== 'doc') setTemplateChoice(''); }, [dialog]);
   // 'unavailable' = the server said the shared reference catalog failed to
   // read (its fail-soft still lists the org's own templates). A SHORT list
   // and a FAILED half are different facts; the dialog states which.
@@ -126,6 +132,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   }, []);
 
   const templateLabel = (t: AuthoringTemplate) => String(t.name ?? t.title ?? 'Template ' + t.id);
+  const selectedTemplate = templates.find(t => String(t.id) === templateChoice);
 
   const DOC_FORM: C2CFormConfig = {
     eyebrow: 'Authoring · ' + module,
@@ -133,15 +140,19 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
     sub:
       'Creates a governed document in the authoring store. Choosing a template seeds its sections server-side.' +
       (globalCatalog === 'unavailable'
-        ? ' The shared template catalog didn’t load — Start from lists only your organization’s templates right now.'
+        ? ' The shared reference store did not load; organization and built-in IND templates remain available.'
         : globalCatalog === 'failed'
           ? ' The template list didn’t load — only a blank document can be started right now. This is a failed read, not an empty catalog.'
           : ''),
     submitLabel: 'Create document',
     fields: [
       { key: 'title', label: 'Document title', type: 'text', required: true, placeholder: 'e.g. 2.6.6 Toxicology Written Summary' },
-      { key: 'module', label: 'CTD module', type: 'seg', options: ['M1', 'M2', 'M3', 'M4', 'M5'], default: module, half: true },
-      { key: 'template', label: 'Start from', type: 'select', options: [NONE, ...templates.map(templateLabel)], default: NONE, half: true },
+      { key: 'module', label: 'CTD module', type: selectedTemplate?.module === undefined ? 'seg' : 'text', options: ['M1', 'M2', 'M3', 'M4', 'M5'], default: module, half: true,
+        derive: values => { const selected = templates.find(t => String(t.id) === values.template);
+          return selected?.module === undefined ? null : selected.module ?? 'No CTD placement (preparation)'; } },
+      { key: 'template', label: 'Start from', type: 'select', options: [{ value: NONE, label: NONE },
+        ...templates.map(t => ({ value: String(t.id), label: templateLabel(t) }))], default: NONE, half: true,
+        desc: selectedTemplate?.limitations?.join(' ') },
     ],
   };
 
@@ -166,9 +177,9 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
       return;
     }
     try {
-      const tpl = templates.find((t) => templateLabel(t) === v.template);
+      const tpl = templates.find((t) => String(t.id) === v.template);
       const res = await apiRequest('POST', '/api/authoring/docs', {
-        title: v.title, module: v.module || module,
+        title: v.title, module: creationModule(tpl, v.module, module),
         ...(tpl ? { template_id: tpl.id } : {}),
         client_program_id: clientProgramId,
       });
@@ -245,7 +256,8 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
         </>
       )}
       <ExportRecoveryNotice {...recovery} />
-      {dialog === 'doc' && <C2CForm config={DOC_FORM} onCancel={() => setDialog(null)} onSubmit={createDoc} />}
+      {dialog === 'doc' && <C2CForm config={DOC_FORM} onCancel={() => setDialog(null)} onSubmit={createDoc}
+        onFieldChange={(key, value) => { if (key === 'template') setTemplateChoice(value); }} />}
       {dialog === 'section' && docId && <C2CForm config={SECTION_FORM} onCancel={() => setDialog(null)} onSubmit={createSection} />}
     </>
   );

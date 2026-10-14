@@ -4,7 +4,7 @@ import { isWorkflowImportOrigin, type WorkflowImportOrigin } from '../../../shar
 import { clauseSpans } from '../clinical-regulatory-evidence/lineage-gate';
 import { comparableText, MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
 import { assertLineageCoversContent, hashSpanText, listLiveMachineSpans } from '../clinical-regulatory-evidence/span-lineage.service';
-import { sectionsDigest, computeAuthoringSignatureDigest } from './authoring-export';
+import { sectionsDigest, computeAuthoringSignatureDigest } from './authoring-content-digests';
 import type { AuthoringActor } from './authoring-documents';
 import type { Queryable } from './authoring-evidence';
 import { verifySavedWorkflowImport } from './import-source-references';

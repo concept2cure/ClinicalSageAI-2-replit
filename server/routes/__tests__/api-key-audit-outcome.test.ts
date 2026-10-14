@@ -5,7 +5,7 @@
  * The route and canonical outcome helper run here; the transaction recorder
  * stages credential state to make rollback assertions meaningful.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
@@ -27,6 +27,7 @@ const h = vi.hoisted(() => ({
   revokeCalls: [] as unknown[][],
   listCalls: [] as unknown[][],
   clients: [] as MutationClient[],
+  sharedTransaction: vi.fn(),
   order: [] as string[],
   revoked: true,
   chainFails: false,
@@ -47,7 +48,13 @@ const SCOPES = ['documents:read', 'regulatory:read'];
 
 vi.mock('../../auth.js', () => ({
   authMiddleware: (req: Request, _res: Response, next: NextFunction) => {
-    req.tenantId = h.tenantId; req.userId = h.userId; next();
+    req.tenantId = h.tenantId; req.userId = h.userId;
+    let pinnedClient: MutationClient | undefined;
+    Object.defineProperty(req, 'dbClient', {
+      configurable: true,
+      get: () => (pinnedClient ??= transactionClient()),
+    });
+    next();
   },
   requireAdminRole: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
@@ -103,18 +110,7 @@ function transactionClient(): MutationClient {
 }
 
 vi.mock('../../db/runtime', () => ({
-  transaction: async (callback: (client: MutationClient) => Promise<unknown>) => {
-    const client = transactionClient();
-    await client.query('BEGIN');
-    try {
-      const result = await callback(client);
-      await client.query('COMMIT');
-      return result;
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally { client.release(); }
-  },
+  transaction: h.sharedTransaction,
 }));
 
 function logger(scope: string) {
@@ -133,9 +129,16 @@ beforeEach(async () => {
   h.auditEntries = []; h.chainEntries = []; h.generateCalls = []; h.revokeCalls = []; h.listCalls = [];
   h.clients = []; h.order = []; h.logs = []; h.revoked = true;
   h.chainFails = false; h.commitFails = false; h.keyState = 'missing';
+  h.sharedTransaction.mockReset().mockImplementation(() => {
+    throw new Error('Pooled transaction must not replace request context');
+  });
   const mod = await import('../api-keys');
   app = express(); app.use(express.json());
   app.use('/api/api-keys', mod.default);
+});
+
+afterEach(() => {
+  expect(h.sharedTransaction).not.toHaveBeenCalled();
 });
 
 const create = (extra: Record<string, unknown> = {}) => request(app).post('/api/api-keys')

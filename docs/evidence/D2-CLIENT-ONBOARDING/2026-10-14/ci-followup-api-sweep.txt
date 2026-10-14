@@ -1,0 +1,16 @@
+Follow-up verification; safe selected verdicts only.
+
+Before request-client fix
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 201 to be 500 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+
+Request-pinned API-key mutation and service checks
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+
+Canonical report fixture and tenant isolation sweep
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+

@@ -76,6 +76,9 @@ The table stage passed before the later verifier detected its missing index.
 This repair ensures the required canonical index through the migration path;
 it does not claim to diagnose or change Drizzle's earlier partial execution.
 
-Full browser verification requires a new CI run on the repair commit. Local
-PGlite proof validates the migration and exact object contract, not a full
-application boot or an authenticated Chromium journey.
+The repair head `342ffc8d0d6465a85942518da59a1d01e45c6aa4` subsequently passed
+[Tier 5 run 38508480912](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38508480912):
+fresh provisioning, both authenticated-app smoke cases and the governed golden
+journey. [Hosted verification](hosted-verification.md) distinguishes that actual
+PostgreSQL/server/Chromium proof from the local PGlite object-contract proof
+and from production deployment evidence.

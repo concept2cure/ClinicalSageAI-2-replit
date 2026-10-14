@@ -1,0 +1,13 @@
+
+> concept2cure-riai@1.0.0 ci:ana-surface-context
+> node scripts/ci/check-ana-surface-context.mjs
+
+
+[ci:ana-surface-context] OK — 116 of 121 routable surface ids publish screen state (baseline 116 exact), 5 exempt, 0 still blind.
+  113 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) — full-width surfaces may
+  publish saved context and hand requests to the canonical conversation.
+  123 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (78 surface file(s) hold a call).

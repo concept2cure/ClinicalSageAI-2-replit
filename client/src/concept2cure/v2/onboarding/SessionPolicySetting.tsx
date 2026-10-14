@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getJwtOrgId } from '@/utils/authToken';
 import { serverMessage } from '@/lib/queryClient';
 import {
@@ -12,6 +12,7 @@ import '../styles/translation-v2.css';
 interface Policy { idleMinutes: number; concurrentSessions: number }
 interface SettingsPayload { settings: Record<string, unknown>; success?: boolean }
 type Note = { error: boolean; text: string } | null;
+const ORGANIZATION_CHANGED = 'Your organization changed. Reopen setup to read its current session policy.';
 const policyOf = (settings: unknown): Policy => ({ idleMinutes: idleWindowSecondsOf(settings) / 60, concurrentSessions: maxConcurrentSessionsOf(settings) });
 const isSettings = (body: unknown): body is SettingsPayload => body !== null && typeof body === 'object' &&
   (body as SettingsPayload).success !== false &&
@@ -26,18 +27,25 @@ function savedPolicy(body: unknown, idle: string, concurrent: string): Policy | 
   return policyOf(body.settings);
 }
 
-function PolicyFields({ saved, path }: { saved: Policy; path: string }) {
+function PolicyFields({ saved, path, organizationId }: { saved: Policy; path: string; organizationId: string }) {
   const [idle, setIdle] = useState(String(saved.idleMinutes));
   const [concurrent, setConcurrent] = useState(String(saved.concurrentSessions));
   const [baseline, setBaseline] = useState(saved);
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState<Note>(null);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const current = () => mounted.current && getJwtOrgId() === organizationId;
   const dirty = Number(idle) !== baseline.idleMinutes || Number(concurrent) !== baseline.concurrentSessions;
   const valid = boundedInteger(idle, MIN_IDLE_MINUTES, MAX_IDLE_MINUTES) &&
     boundedInteger(concurrent, MIN_MAX_CONCURRENT_SESSIONS, MAX_MAX_CONCURRENT_SESSIONS);
 
   async function save() {
+    if (!current()) {
+      setNote({ error: true, text: ORGANIZATION_CHANGED });
+      return;
+    }
     if (saving || !dirty) return;
     if (!valid || reason.trim().length < 3) {
       setNote({ error: true, text: 'Enter whole numbers within the stated limits and a reason of at least 3 characters.' });
@@ -49,7 +57,12 @@ function PolicyFields({ saved, path }: { saved: Policy; path: string }) {
       settings: { security: { sessionTimeoutMinutes: Number(idle), maxConcurrentSessions: Number(concurrent) } },
       reason: reason.trim(),
     });
+    if (!mounted.current) return;
     setSaving(false);
+    if (!current()) {
+      setNote({ error: true, text: ORGANIZATION_CHANGED });
+      return;
+    }
     const persisted = savedPolicy(result.data, idle, concurrent);
     if (result.error || !persisted) {
       setNote({ error: true, text: serverMessage({ message: result.error }) ?? 'The session policy could not be confirmed as saved. Your changes are still here; try again.' });
@@ -62,6 +75,7 @@ function PolicyFields({ saved, path }: { saved: Policy; path: string }) {
     setNote({ error: false, text: 'Session policy saved with your reason in the audit trail. The idle window applies at new sign-in; the concurrent-session limit is checked when a session is opened. Existing sessions keep their idle window.' });
   }
 
+  if (getJwtOrgId() !== organizationId) return <p className="txw-help" data-tone="warn" role="alert">{ORGANIZATION_CHANGED}</p>;
   return <div className="txw-set-body">
     <div className="txw-row"><div className="txw-row-l">Idle sign-out<small>For new sign-ins. {MIN_IDLE_MINUTES}–{MAX_IDLE_MINUTES} minutes.</small></div><div className="txw-row-r">
       <input aria-label="Idle sign-out in minutes" type="number" inputMode="numeric" className="ob-in" min={MIN_IDLE_MINUTES} max={MAX_IDLE_MINUTES} step={1} value={idle} disabled={saving} onChange={(e) => setIdle(e.target.value)} />
@@ -82,13 +96,15 @@ function PolicyFields({ saved, path }: { saved: Policy; path: string }) {
 export function SessionPolicySetting() {
   const organizationId = useMemo(() => getJwtOrgId(), []);
   const path = `/api/organizations/${encodeURIComponent(organizationId)}/settings`;
+  const current = Boolean(organizationId) && getJwtOrgId() === organizationId;
   const [epoch, setEpoch] = useState(0);
-  const live = useLiveData<SettingsPayload>(path, [path, epoch], isSettings);
-  const saved = live.data ? policyOf(live.data.settings) : null;
+  const live = useLiveData<SettingsPayload>(current ? path : null, [path, epoch, current], isSettings);
+  const saved = current && live.data ? policyOf(live.data.settings) : null;
   return <section className="txw-set-card" aria-label="Session security policy">
     <div className="txw-set-head"><div className="txw-set-head-l"><div className="txw-set-eyebrow">Security</div><h2 className="txw-set-title">Session policy</h2><p className="txw-set-sub">Effective organization policy for new sign-ins, including platform defaults when a value has not been set. Changes are saved with a reason and an audit record.</p></div></div>
-    {live.loading && <p className="txw-help" role="status">Reading your session policy…</p>}
-    {live.error && <div className="txw-help" data-tone="warn" role="alert">The session policy could not be read, so no values are shown for editing. <button type="button" className="btn ghost small" onClick={() => setEpoch((n) => n + 1)}>Retry session policy</button></div>}
-    {!live.loading && !live.error && saved && <PolicyFields key={`${epoch}-${saved.idleMinutes}-${saved.concurrentSessions}`} saved={saved} path={path} />}
+    {!current && <p className="txw-help" data-tone="warn" role="alert">{ORGANIZATION_CHANGED}</p>}
+    {current && live.loading && <p className="txw-help" role="status">Reading your session policy…</p>}
+    {current && live.error && <div className="txw-help" data-tone="warn" role="alert">The session policy could not be read, so no values are shown for editing. <button type="button" className="btn ghost small" onClick={() => setEpoch((n) => n + 1)}>Retry session policy</button></div>}
+    {current && !live.loading && !live.error && saved && <PolicyFields key={`${epoch}-${saved.idleMinutes}-${saved.concurrentSessions}`} saved={saved} path={path} organizationId={organizationId} />}
   </section>;
 }

@@ -87,9 +87,18 @@ const invitationName = (invitation: Invitation) => invitation.organizationName?.
 function invitationResponseAllowed(invitation: Invitation, action: 'accept' | 'decline', locked: boolean): boolean {
   return !locked && (action !== 'accept' || Boolean(invitationName(invitation)));
 }
-function invitationResponseNote(invitation: Invitation, action: 'accept' | 'decline'): string {
+/** The canonical membership store permits existing roles beyond the invitation
+ * picker. This confirms the server's actual role; it does not grant access. */
+function acceptedMembershipRole(data: unknown, invitation: Invitation, userId: string): string | null {
+  if (!isObject(data) || String(data.invitationId) !== String(invitation.id) ||
+      String(data.organizationId) !== String(invitation.organizationId) || String(data.userId) !== userId ||
+      data.status !== 'accepted' || typeof data.role !== 'string' || !data.role.trim()) return null;
+  return data.role.trim();
+}
+function invitationResponseNote(invitation: Invitation, action: 'accept' | 'decline', role: string | null): string {
   const name = invitationName(invitation);
-  return `Invitation ${action === 'accept' ? 'accepted' : 'declined'}${name ? ` for ${name}` : ''}. Your current workspace remains active.`;
+  const preservedRole = action === 'accept' && role !== invitation.role ? ` Your existing membership role remains ${role}.` : '';
+  return `Invitation ${action === 'accept' ? 'accepted' : 'declined'}${name ? ` for ${name}` : ''}.${preservedRole} Your current workspace remains active.`;
 }
 
 function InvitationsSection({ userId, onMembershipChange }: { userId: string; onMembershipChange: () => void }) {
@@ -111,13 +120,12 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
       if (!isObject(result) || result.success !== true) {
         throw new Error('The server did not confirm the invitation response. Reload invitations before trying again.');
       }
-      if (action === 'accept' && (!isObject(result.data) || String(result.data.invitationId) !== String(invitation.id) ||
-          String(result.data.organizationId) !== String(invitation.organizationId) || String(result.data.userId) !== userId ||
-          result.data.role !== invitation.role || result.data.status !== 'accepted')) {
+      const role = action === 'accept' ? acceptedMembershipRole(result.data, invitation, userId) : null;
+      if (action === 'accept' && role === null) {
         throw new Error('The server did not confirm membership for this invitation. Reload invitations before trying again.');
       }
       setConfirm(null);
-      setNote(invitationResponseNote(invitation, action));
+      setNote(invitationResponseNote(invitation, action, role));
       if (action === 'accept') onMembershipChange();
       await load();
     } catch (failure) {

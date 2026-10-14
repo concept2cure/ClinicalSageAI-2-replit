@@ -95,6 +95,9 @@ import {
 import { createDocument, createSection } from '../services/authoring/authoring-documents';
 import { importSourceDocument } from '../services/authoring/authoring-source-import';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
+import { getIndAuthoringTemplates, indTemplateReference } from '../services/authoring/ind-authoring-templates';
+import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
+import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
 import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
 import {
   createDocumentFromDraft,
@@ -1114,7 +1117,13 @@ router.get('/templates', async (req: Request, res: Response) => {
       globalCatalog = 'unavailable';
     }
 
-    const merged = [...orgRows, ...globalRows];
+    const builtinRows = getIndAuthoringTemplates().filter(template =>
+      (!category || String(category) === 'IND pyramid') && (!template_type || String(template_type) === 'IND') &&
+      (!search || `${template.name} ${template.description}`.toLowerCase().includes(String(search).toLowerCase())))
+      .map(template => ({ ...indTemplateReference(template), name: template.name, template_name: template.name,
+        template_type: 'IND', category: 'IND pyramid', regions: ['FDA'], description: template.description,
+        section_count: template.sections.length, active: true }));
+    const merged = [...orgRows, ...globalRows, ...builtinRows];
     res.json({
       success: true,
       templates: merged,
@@ -1223,9 +1232,11 @@ router.post(
 router.get('/guidance/:sectionId', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
+    if (typeof sectionId !== 'string') return res.status(400).json({ success: false, error: 'A section identifier is required.' });
     const tenantId = getTenantId(req);
 
     // Get section-specific guidance
+    const templateGuidance = await savedTemplateGuidance(pool, tenantId, sectionId, authoringPrincipalFromRequest(req));
     const guidanceResult = await pool.query(
       `SELECT id, section_id, document_type, guidance_type, content, metadata, priority, created_at, updated_at, tenant_id FROM section_guidance
        WHERE section_id = $1 AND tenant_id = $2
@@ -1234,20 +1245,14 @@ router.get('/guidance/:sectionId', async (req: Request, res: Response) => {
     );
 
     // Get template guidance if section is from a template
-    const templateGuidanceResult = await pool.query(
-      `SELECT tg.id, tg.template_id, tg.section_name, tg.section_code, tg.guidance_text, tg.examples, tg.regulatory_references, tg.ai_prompts, tg.compliance_checklist, tg.created_at, tg.updated_at, tg.tenant_id FROM template_guidance tg
-       JOIN authoring_sections s ON s.code = tg.section_code
-       WHERE s.id = $1 AND tg.tenant_id = $2`,
-      [sectionId, tenantId]
-    );
-
     res.json({
       success: true,
       guidance: guidanceResult.rows,
-      template_guidance: templateGuidanceResult.rows,
+      template_guidance: templateGuidance,
       section_id: sectionId,
     });
   } catch (error) {
+    if (error instanceof TemplateGuidanceError || error instanceof AuthoringProgramAccessError) return res.status(error.status).json({ success: false, error: error.message });
     console.error('Error fetching guidance:', error);
     return serverError(res, logger, 'loading guidance', error);
   }

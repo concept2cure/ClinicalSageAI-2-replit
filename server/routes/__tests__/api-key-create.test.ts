@@ -1,10 +1,12 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Pool } from 'pg';
+import { LazyRequestDbClient } from '../../middleware/lazyRequestDbClient';
 
-const h = vi.hoisted(() => ({ generate: vi.fn(), revoke: vi.fn(), audit: vi.fn(), chain: vi.fn(), admin: true, auditFails: false, log: [] as string[], client: { query: vi.fn() } }));
+const h = vi.hoisted(() => ({ generate: vi.fn(), revoke: vi.fn(), audit: vi.fn(), chain: vi.fn(), sharedTransaction: vi.fn(), admin: true, auditFails: false, hasRequestContext: true, requestClient: null as unknown, transactionOpen: false, log: [] as string[], client: { query: vi.fn(), release: vi.fn() } }));
 vi.mock('../../auth.js', () => ({
-  authMiddleware: (req: any, _res: any, next: () => void) => { req.tenantId = 7; req.userId = 42; next(); },
+  authMiddleware: (req: any, _res: any, next: () => void) => { req.tenantId = 7; req.userId = 42; if (h.hasRequestContext) req.dbClient = h.requestClient ?? h.client; next(); },
   requireAdminRole: (_req: any, res: any, next: () => void) => h.admin ? next() : res.status(403).json({ error: 'Admin role required' }),
 }));
 vi.mock('../../services/api-key-service.js', () => ({
@@ -13,18 +15,24 @@ vi.mock('../../services/api-key-service.js', () => ({
 }));
 vi.mock('../../services/auditService', () => ({ default: { logAction: h.audit }, writeChainedAuditRow: h.chain }));
 vi.mock('../../db/runtime', () => ({
-  transaction: async (callback: (client: unknown) => Promise<unknown>) => {
-    await h.client.query('BEGIN');
-    try { const out = await callback(h.client); await h.client.query('COMMIT'); return out; }
-    catch (error) { await h.client.query('ROLLBACK'); throw error; }
-  },
+  transaction: h.sharedTransaction,
 }));
 import router from '../api-keys';
 
 const app = express(); app.use(express.json()); app.use('/api/api-keys', router);
 beforeEach(() => {
-  h.admin = true; h.auditFails = false; h.log = [];
-  h.client.query.mockReset().mockImplementation(async (sql: string) => { h.log.push(sql); return { rows: [] }; });
+  h.admin = true; h.auditFails = false; h.hasRequestContext = true; h.log = [];
+  h.requestClient = null; h.transactionOpen = false;
+  h.sharedTransaction.mockReset().mockImplementation(() => { throw new Error('A pooled transaction must never replace request context'); });
+  h.client.query.mockReset().mockImplementation(async (sql: string) => {
+    h.log.push(sql);
+    if (sql === 'BEGIN') {
+      if (h.transactionOpen) throw new Error('Nested BEGIN is unsafe');
+      h.transactionOpen = true;
+    }
+    if (sql === 'COMMIT' || sql === 'ROLLBACK') h.transactionOpen = false;
+    return { rows: [] };
+  });
   h.generate.mockReset().mockImplementation(async () => { h.log.push('CREATE KEY'); return { rawKey: 'c2c_unit_secret', keyId: 9, keyPrefix: 'c2c_unit' }; });
   h.revoke.mockReset().mockImplementation(async () => { h.log.push('REVOKE KEY'); return true; });
   h.audit.mockReset().mockResolvedValue({ persisted: true });
@@ -43,6 +51,7 @@ describe('API-key create contract used by the admin drawer', () => {
     expect(h.chain).toHaveBeenCalledWith(h.client, expect.objectContaining({ tenantId: 7, userId: 42, reason, details: expect.objectContaining({ reason, scopes: ['documents:read'] }) }));
     expect(JSON.stringify(h.chain.mock.calls)).not.toContain('c2c_unit_secret');
     expect(h.log).toEqual(['BEGIN', 'CREATE KEY', 'AUDIT KEY', 'COMMIT']);
+    expect(h.sharedTransaction).not.toHaveBeenCalled();
     expect(res.body.apiKey).toBe('c2c_unit_secret');
   });
 
@@ -79,5 +88,36 @@ describe('API-key create contract used by the admin drawer', () => {
     expect(res.status).toBe(500);
     expect(h.revoke).toHaveBeenCalledWith(9, 7, h.client);
     expect(h.log).toEqual(['BEGIN', 'REVOKE KEY', 'AUDIT KEY', 'ROLLBACK']);
+  });
+
+  it('refuses creation and revocation without a tenant-pinned request client, with no pooled fallback', async () => {
+    h.hasRequestContext = false;
+    const created = await request(app).post('/api/api-keys').send({ name: 'Reporting', scopes: ['documents:read'] });
+    expect(created.status).toBe(500);
+    expect(created.body.apiKey).toBeUndefined();
+    const revoked = await request(app).delete('/api/api-keys/9');
+    expect(revoked.status).toBe(500);
+    expect(h.generate).not.toHaveBeenCalled();
+    expect(h.revoke).not.toHaveBeenCalled();
+    expect(h.chain).not.toHaveBeenCalled();
+    expect(h.sharedTransaction).not.toHaveBeenCalled();
+    expect(h.log).toEqual([]);
+  });
+
+  it('opens exactly one transaction after the real lazy wrapper establishes tenant session scope', async () => {
+    const connect = vi.fn(async () => h.client);
+    const lazy = new LazyRequestDbClient({ connect } as unknown as Pool, async client => {
+      expect(h.transactionOpen).toBe(false);
+      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", ['7']);
+    });
+    h.requestClient = lazy;
+    try {
+      const res = await request(app).post('/api/api-keys').send({ name: 'Reporting', scopes: ['documents:read'] });
+      expect(res.status).toBe(201);
+      expect(connect).toHaveBeenCalledTimes(1);
+      expect(h.log).toEqual(["SELECT set_config('app.current_tenant_id', $1, false)", 'BEGIN', 'CREATE KEY', 'AUDIT KEY', 'COMMIT']);
+      expect(h.transactionOpen).toBe(false);
+      expect(h.sharedTransaction).not.toHaveBeenCalled();
+    } finally { await lazy.release(); }
   });
 });

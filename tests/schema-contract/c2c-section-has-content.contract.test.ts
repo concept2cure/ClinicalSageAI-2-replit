@@ -51,7 +51,7 @@ const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql
 const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql');
 const AUTHORING = path.join(REPO_ROOT, 'db/migrations/20260725_authoring_document_loop_tables.sql');
 const COMMENTS = path.join(REPO_ROOT, 'db/migrations/20260730_authoring_comments_router_columns.sql');
-const REVISIONS = path.join(REPO_ROOT, 'db/migrations/20260817_doc_revisions_immutable_ledger.sql');
+const REVISION_LEDGER = path.join(REPO_ROOT, 'db/migrations/20260817_doc_revisions_immutable_ledger.sql');
 const BINDING = path.join(REPO_ROOT, 'migrations/20260728_authoring_document_governed_binding.sql');
 // The section save writes content and its span lineage in ONE transaction and
 // refuses to commit either alone, so this table is a prerequisite for the save
@@ -120,7 +120,7 @@ beforeEach(async () => {
   // governed binding present on the deployed schema.
   await pg.exec(fs.readFileSync(AUTHORING, 'utf8'));
   await pg.exec(fs.readFileSync(COMMENTS, 'utf8'));
-  await pg.exec(fs.readFileSync(REVISIONS, 'utf8'));
+  await pg.exec(fs.readFileSync(REVISION_LEDGER, 'utf8'));
   await pg.exec(fs.readFileSync(BINDING, 'utf8'));
   await pg.exec(fs.readFileSync(LINEAGE, 'utf8'));
   await pg.exec(fs.readFileSync(MACHINE_KIND, 'utf8'));

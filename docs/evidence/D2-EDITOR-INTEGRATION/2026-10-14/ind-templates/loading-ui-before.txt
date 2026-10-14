@@ -1,0 +1,4800 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > filters Modules 1–5 and displays the actual preparation limits 5216ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_0_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_0_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > posts exact template/project identity and retains the created ID if the host keeps its leave guard open 5033ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_2_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_2_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_2_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_2_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > keeps a renamed working document reachable by its saved template ID 5021ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_4_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_4_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_4_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_4_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > prevents duplicate creates while the exact request is pending 5022ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_6_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_6_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_6_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_6_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"client_program_id":"22222222-2222-4222-8222-222222222222"} without opening it 5021ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_8_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_8_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_8_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_8_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"template_id":"44444444-4444-4444-8444-444444444444"} without opening it 5019ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_a_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_a_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_a_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_a_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > offers a real retry for a refused create 5024ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_c_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_c_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_c_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_c_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project 5033ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_e_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_e_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_e_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_e_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+stderr | client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > submits the second exact ID when two templates have the same display name
+Encountered two children with the same key, `Repeated template name`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > holds creation when the existing working documents could not be checked 5026ms
+   → Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_g_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_g_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"assertive"[39m
+          [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-error-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-t"[39m
+            [36m>[39m
+              [0mWorking documents could not be checked[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-error-retry"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mTry again[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_g_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_g_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"assertive"[39m
+          [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-error-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-t"[39m
+            [36m>[39m
+              [0mWorking documents could not be checked[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-error-retry"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mTry again[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > submits the second exact ID when two templates have the same display name 65ms
+   → expected [ 'Repeated template name', …(1) ] to deeply equal [ …(2) ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > filters Modules 1–5 and displays the actual preparation limits
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_0_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_0_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_1_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:63:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > posts exact template/project identity and retains the created ID if the host keeps its leave guard open
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_2_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_2_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_2_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_2_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_3_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:74:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > keeps a renamed working document reachable by its saved template ID
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_4_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_4_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_4_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_4_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_5_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:87:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > prevents duplicate creates while the exact request is pending
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_6_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_6_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_6_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_6_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_7_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:97:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"client_program_id":"22222222-2222-4222-8222-222222222222"} without opening it
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_8_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_8_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_8_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_8_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_9_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:107:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"template_id":"44444444-4444-4444-8444-444444444444"} without opening it
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_a_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_a_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_a_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_a_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_b_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:107:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > offers a real retry for a refused create
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_c_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_c_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_c_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_c_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_d_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:120:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_e_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_e_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_e_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_e_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_f_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:132:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > holds creation when the existing working documents could not be checked
+TestingLibraryElementError: Unable to find role="button" and name "Create from template"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_g_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_g_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"assertive"[39m
+          [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-error-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-t"[39m
+            [36m>[39m
+              [0mWorking documents could not be checked[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-error-retry"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mTry again[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pf-library"[39m
+      [33mdata-testid[39m=[32m"ind-document-library"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pf-search pf-library-head"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-sel-m"[39m
+        [36m>[39m
+          [0mDocument types across all IND phases. Expand a type to find sources or work with AnA.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"IND document list"[39m
+          [33mclass[39m=[32m"cdl-scope"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mPyramid deliverables[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"cdl-scope-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mCTD sections[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"sr-only"[39m
+          [33mfor[39m=[32m"_r_g_"[39m
+        [36m>[39m
+          [0mFind an IND document type[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_g_"[39m
+          [33mplaceholder[39m=[32m"Find a document type…"[39m
+          [33mtype[39m=[32m"search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [0mPhase[0m
+        [36m</label>[39m
+        [36m<select[39m
+          [33mclass[39m=[32m"c2c-input"[39m
+          [33mid[39m=[32m"_r_h_"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"all"[39m
+          [36m>[39m
+            [0mAll phases[0m
+          [36m</option>[39m
+        [36m</select>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"false"[39m
+        [33mclass[39m=[32m"pf-list"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"assertive"[39m
+          [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+          [33mrole[39m=[32m"alert"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-error-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 9v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 17h.01"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-t"[39m
+            [36m>[39m
+              [0mWorking documents could not be checked[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-error-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"c2c-error-retry"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mTry again[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pf-count"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0m2[0m
+          [0m entries · showing [0m
+          [0m2[0m
+          [0m.[0m
+        [36m</p>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+          [33mopen[39m=[32m""[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm4.2.3.2 · [0m
+            [0mRepeat-Dose Toxicity[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"pf-sel-m"[39m
+            [36m>[39m
+              [0mUse the original form or data file. Review extracted text against the original.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pf-sel pf-library-entry"[39m
+        [36m>[39m
+          [36m<summary[39m
+            [33mclass[39m=[32m"pf-sel-t"[39m
+          [36m>[39m
+            [0mm5.3.5.1 · [0m
+            [0mControlled Study Reports[0m
+          [36m</summary>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"pf-library-detail"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"pf-actions"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ showType client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:45:17
+     43|   fireEvent.click(screen.getByRole('button', { name: 'CTD sections' })…
+     44|   fireEvent.click(await screen.findByText('m4.2.3.2 · Repeat-Dose Toxi…
+     45|   return screen.findByRole('button', { name: 'Create from template' });
+       |                 ^
+     46| }
+     47|
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:145:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > submits the second exact ID when two templates have the same display name
+AssertionError: expected [ 'Repeated template name', …(1) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "33333333-3333-4333-8333-333333333333",
+-   "44444444-4444-4444-8444-444444444444",
++   "Repeated template name",
++   "Repeated template name",
+  ]
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:159:130
+    157|     const choice = await screen.findByLabelText('Start from');
+    158|     await waitFor(() => expect(screen.getAllByRole('option', { name: '…
+    159|     expect(screen.getAllByRole('option', { name: 'Repeated template na…
+       |                                                                                                                                  ^
+    160|     fireEvent.change(choice, { target: { value: SECOND_TEMPLATE } });
+    161|     fireEvent.change(screen.getByLabelText('Document title'), { target…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  03:37:31
+   Duration  46.61s (transform 287ms, setup 136ms, import 379ms, tests 45.49s, environment 437ms)

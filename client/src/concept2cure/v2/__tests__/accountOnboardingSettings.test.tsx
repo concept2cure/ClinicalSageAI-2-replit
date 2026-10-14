@@ -79,6 +79,32 @@ describe('self-service onboarding in Account', () => {
     expect(screen.getByText(/Your current session stays in its existing organisation/)).toBeTruthy();
   });
 
+});
+
+describe('preserved membership role on invitation acceptance', () => {
+  it.each(['member', 'admin', 'owner'])('confirms a preserved existing %s role instead of requiring the invitation’s suggested role', async role => {
+    let accepted = false;
+    routes.set(`GET ${INBOX}`, () => json(200, accepted ? [] : [invitation]));
+    routes.set('GET /api/organizations?membershipOnly=true', () => json(200, {
+      success: true, organizations: [{ id: '1', name: null }, ...(accepted ? [{ id: '71', name: 'Inviting sponsor' }] : [])],
+    }));
+    routes.set('POST /api/tenant-users/invitations/52/accept', () => {
+      accepted = true;
+      return json(200, { success: true, data: { invitationId: 52, organizationId: 71, userId: 33, role, status: 'accepted' } });
+    });
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept invitation to Inviting sponsor' }));
+    expect(await screen.findByText(new RegExp(`Your existing membership role remains ${role}`))).toBeTruthy();
+    expect(await screen.findByText('No pending invitations.')).toBeTruthy();
+    expect(await screen.findByRole('option', { name: 'Inviting sponsor' })).toBeTruthy();
+    expect(mocks.user?.organizationId).toBe('1');
+    expect(mocks.request.mock.calls.filter(([method, path]) => method === 'GET' && path === INBOX)).toHaveLength(2);
+    expect(mocks.request.mock.calls.filter(([method, path]) => method === 'GET' && path === '/api/organizations?membershipOnly=true')).toHaveLength(2);
+  });
+
+});
+
+describe('self-service invitation recovery', () => {
   it('confirms a decline calmly and allows cancellation before the server mutation', async () => {
     routes.set(`GET ${INBOX}`, () => json(200, [invitation]));
     routes.set('POST /api/tenant-users/invitations/52/decline', () => json(200, { success: true }));
@@ -143,6 +169,25 @@ describe('self-service onboarding in Account', () => {
     expect(mocks.user?.organizationId).toBe('1');
   });
 
+});
+
+describe('accepted invitation response proof', () => {
+  it.each([
+    { role: null }, { role: '' }, { role: '  ' }, { role: ['owner'] },
+    { invitationId: 53 }, { organizationId: 72 }, { userId: 34 }, { status: 'pending' },
+  ])('refuses malformed or mismatched confirmation %j without refreshing membership or announcing acceptance', async changed => {
+    routes.set(`GET ${INBOX}`, () => json(200, [invitation]));
+    routes.set('POST /api/tenant-users/invitations/52/accept', () => json(200, {
+      success: true, data: { invitationId: 52, organizationId: 71, userId: 33, role: 'owner', status: 'accepted', ...changed },
+    }));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept invitation to Inviting sponsor' }));
+    expect(await within(section('Invitations')).findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('did not confirm membership'));
+    expect(screen.queryByText(/Invitation accepted for/)).toBeNull();
+    expect(mocks.user?.organizationId).toBe('1');
+    expect(mocks.request.mock.calls.filter(([method, path]) => method === 'GET' && path === INBOX)).toHaveLength(1);
+    expect(mocks.request.mock.calls.filter(([method, path]) => method === 'GET' && path === '/api/organizations?membershipOnly=true')).toHaveLength(1);
+  });
 });
 
 describe('reporting role in Account', () => {

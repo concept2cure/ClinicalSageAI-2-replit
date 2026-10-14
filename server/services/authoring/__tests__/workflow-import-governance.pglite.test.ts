@@ -92,8 +92,8 @@ async function adoptedCopy(includeChain = true): Promise<string> {
   [input.doc.id,ORG,JSON.stringify({ signatureId,workflowSourceAdoption: adoption })]);
   if (includeChain) {
     const details = { signatureId,workflowSourceAdoption: adoption };
-    await q.query(`INSERT INTO audit_logs(tenant_id,record_id,action,new_values,payload_hash)
-      VALUES($1,$2,'authoring.document.e-sign',$3::json,$4)`, [ORG,input.doc.id,JSON.stringify(details),hashPayload(details)]);
+    await q.query(`INSERT INTO audit_logs(id,tenant_id,record_id,action,new_values,payload_hash)
+      VALUES($1,$2,$3,'authoring.document.e-sign',$4::json,$5)`, [randomUUID(),ORG,input.doc.id,JSON.stringify(details),hashPayload(details)]);
   }
   return signatureId;
 }

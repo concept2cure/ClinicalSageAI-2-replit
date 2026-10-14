@@ -26,7 +26,7 @@ import {
 import { API_KEY_SCOPES } from '../../shared/schema/api-keys.js';
 import { writeChainedAuditRow } from '../services/auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
-import { transaction } from '../db/runtime';
+import { requestPgClient } from '../db/requestDb';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('api-keys');
@@ -59,6 +59,22 @@ const createApiKeySchema = z.object({
 // All routes require authentication + admin role
 router.use(authMiddleware);
 router.use(requireAdminRole);
+
+/** The auth boundary pins an idle connection and sets session scope; it does
+ * not open a transaction. Each mutation owns one transaction on that connection,
+ * and the credential and chained row use that same client. No pooled fallback. */
+async function apiKeyTransaction<T>(req: Request, callback: (client: Pick<PoolClient, 'query'>) => Promise<T>): Promise<T> {
+  const client = requestPgClient(req) as Pick<PoolClient, 'query'>;
+  await client.query('BEGIN');
+  try {
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  }
+}
 
 /**
  * Successful creation and revocation enlist their chained audit row on the
@@ -131,7 +147,7 @@ router.post('/', async (req: Request, res: Response) => {
     const { name, scopes, expiresAt, rateLimit, metadata, reason } = parsed.data;
     const parsedExpiry: Date | undefined = expiresAt;
 
-    const result = await transaction(async client => {
+    const result = await apiKeyTransaction(req, async client => {
       const key = await generateApiKey(
         { organizationId, name, scopes, createdBy: userId, expiresAt: parsedExpiry,
           rateLimit: typeof rateLimit === 'number' && rateLimit > 0 ? rateLimit : 60, metadata },
@@ -204,7 +220,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid key ID' });
     }
 
-    const revoked = await transaction(async client => {
+    const revoked = await apiKeyTransaction(req, async client => {
       const changed = await revokeApiKey(keyId, organizationId, client);
       if (changed) {
         await auditApiKeyEvent({

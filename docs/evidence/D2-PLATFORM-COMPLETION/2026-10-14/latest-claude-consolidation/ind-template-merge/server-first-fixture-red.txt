@@ -1,0 +1,1143 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "timestamp": "2026-10-14T05:58:54.549Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "timestamp": "2026-10-14T05:58:54.815Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:54.816Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+{
+  "timestamp": "2026-10-14T05:58:54.816Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > save { text } → the outline reports has_content 7945ms
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "timestamp": "2026-10-14T05:58:58.849Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "timestamp": "2026-10-14T05:58:58.855Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:58:58.856Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content
+{
+  "timestamp": "2026-10-14T05:58:58.856Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the shape the editor saves survives a round trip > an untouched section still reports no content 2652ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > editor default  { text } 2182ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > backfill shape  { paragraphs } 1642ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { markdown } 1632ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > { xml } 1641ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > every body shape the reader accepts counts as content > bare JSON string 1622ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > scaffold placeholder {} → no content 1641ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty text → no content 1671ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > whitespace-only text → no content 1700ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty paragraphs list → no content 1621ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > unrelated keys only → no content 1841ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > empty JSON string → no content 1648ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > an outline is not a draft > a NULL content column does not error 1625ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > the key useSectionSave.ts actually sends is one the predicate accepts 1628ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the predicate cannot drift from the writer again > no route computes has_content from the paragraphs key alone 3326ms
+ ✓ tests/schema-contract/c2c-section-has-content.contract.test.ts > the fragment is not an injection surface > refuses anything that is not a plain or qualified identifier 1627ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > is in C2C_MIGRATION_FILES, and is the LAST entry 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the batch-2 files are wired ahead of it 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > the once-excluded files are now wired, having been RESOLVED not skipped 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > still refuses the _consolidated tree, which was never merely unwired 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is positioned to see everything the set creates > DOES wire enhanced_cortex, whose identity conflict C-36 resolved 0ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the canonical lumen_data_atoms.id is an integer, not a uuid 11ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > every atom-referencing column is an integer, so the FKs are implementable 11ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the two previously-impossible foreign keys now exist 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-36: enhanced cortex keys atoms the way the canonical store does > the services' real JOIN typechecks (it could not before) 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > creates tables and leaves NO integer-keyed tenant table unpoliced 28ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > policies electronic_signatures — the Part 11 record that had no tenant key 6ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the batch applies in set order, twice, and ends fully isolated > actually blocks a cross-tenant read on a table it sweeps 110ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > a TEXT tenant key is SKIPPED, not raised — a deploy must not halt on pre-existing drift 3ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > never clobbers a policy a subsystem installed for itself 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > FORCES a table that had the policy but no FORCE (owner-bypass close, C-43) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a policy-LESS RLS table un-forced (no owner default-deny surprise) 17ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > HEALS an allowlisted table an earlier revision wrongly policied (api_keys pre-auth break, C-44) 2ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > leaves a clean allowlisted table unpoliced (the first loop honors the allowlist) 1ms
+ ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts > C-33: the sweep is deploy-safe > skips the allowlist, tables with no tenant column, and views 2ms
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:59:39.492Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:59:39.494Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:59:39.494Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:59:39.703Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > finds conflicting subject counts across actual saved sections in one pinned transaction 85ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > keeps frozen saved documents readable for oversight without edit permission or writes 33ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > excludes unaccepted insertion text while retaining the proposed deletion in the accepted record 39ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > does not hide a cross-section conflict merely because the conflicting saved prose is marked for deletion 32ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > the executed actor-email query reads only membership in the current organization 52ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses current project revocation after a successful review 33ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a revoked document grant even while current project access remains 38ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > resolves email-only document grants from the current user record 35ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > does not allow a section-only grant to authorize a whole-document read 25ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000042 21ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000051 26ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":7,"projectRef":null} 17ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":null,"projectRef":"11111111-2222-4333-8444-000000000011"} 16ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":null,"userId":7,"projectRef":"11111111-2222-4333-8444-000000000011"} 14ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a foreign program even if the prompt requests a document in this organization 14ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > walks every section and finding through bounded pages including escaped saved titles 105ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved content changes, even without a new timestamp 37ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved document title changes, even without a new timestamp 36ms
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review pre-enable workload measurement > records a realistic multi-section calculation without imposing a timing threshold
+saved-document-critique-benchmark {
+  sectionCount: 96,
+  textChars: 187392,
+  elapsedMs: 84.87,
+  serializedChars: 4926,
+  paginationTotal: 96
+}
+
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rechecks document permission before returning a continuation 39ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1} before a database checkout 15ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":-1} before a database checkout 14ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":"1"} before a database checkout 13ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":0.5} before a database checkout 13ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1,"expected_snapshot":"unverified"} before a database checkout 12ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review pre-enable workload measurement > records a realistic multi-section calculation without imposing a timing threshold 103ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > resolves the registered eligible source in the current section 64ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > keeps another uploader’s unbound source unresolved for an otherwise permitted saved-document reviewer 53ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > refuses a new cited-document verdict after requester membership revocation without reading source metadata 52ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not lend a sibling section association to an unregistered pasted marker 56ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual remove_data withdrawal as a high record finding 50ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual supersede withdrawal as a high record finding 49ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after source deleted 43ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after association removed 51ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > refuses continuation of a formerly eligible source snapshot after data withdrawal 120ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > retains an eligible historical source already registered to this section 50ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not resolve a source that now belongs to another program 49ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports a registered source without printable metadata as unresolved 50ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses a saved document with no sections 22ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section title rather than reviewing the remaining valid section 23ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section updated_at rather than reviewing the remaining valid section 22ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses more than 512 saved sections before selecting their content 25ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > uses the eight MiB byte limit, including non-ASCII content, before selecting the body 187ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > rejects mixing a saved document with caller-supplied replacement sections 17ms
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts
+{
+  "timestamp": "2026-10-14T05:59:46.026Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringTemplateStartFrom.test.ts
+{
+  "timestamp": "2026-10-14T05:59:46.275Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:59:46.275Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts
+{
+  "timestamp": "2026-10-14T05:59:46.275Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringTemplateStartFrom.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written
+{
+  "timestamp": "2026-10-14T05:59:48.514Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "994387d9-78ba-487c-b1b0-4800139d03ff",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written
+{
+  "timestamp": "2026-10-14T05:59:48.515Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 994387d9-78ba-487c-b1b0-4800139d03ff by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written
+{
+  "timestamp": "2026-10-14T05:59:48.518Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 994387d9-78ba-487c-b1b0-4800139d03ff by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written
+{
+  "timestamp": "2026-10-14T05:59:48.519Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "994387d9-78ba-487c-b1b0-4800139d03ff",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > falls back to the org template store and seeds ITS content
+{
+  "timestamp": "2026-10-14T05:59:48.585Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "6d9ef7ad-97e6-4009-8f5d-8fa997ce48f2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > falls back to the org template store and seeds ITS content
+{
+  "timestamp": "2026-10-14T05:59:48.585Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6d9ef7ad-97e6-4009-8f5d-8fa997ce48f2 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > falls back to the org template store and seeds ITS content
+{
+  "timestamp": "2026-10-14T05:59:48.586Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "6d9ef7ad-97e6-4009-8f5d-8fa997ce48f2",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written 111ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > falls back to the org template store and seeds ITS content 62ms
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > fail-soft: an unreachable global store still lists the org templates
+{
+  "timestamp": "2026-10-14T05:59:48.737Z",
+  "level": "warn",
+  "message": "[authoring-router] Global template store unavailable; listing org templates only",
+  "context": {
+    "error": "relation \"intelligence.document_templates\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses an id that resolves nothing in either store — and writes NO document 55ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses a malformed template_id with a clean 400 before any query can throw 34ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > merges global reference templates after the org rows, dropping sectionless globals 31ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > drops sectionless ORG rows too — the picker must not offer what POST /docs refuses 27ms
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create-with-seed is one transaction > a mid-seed failure rolls the whole create back, so "nothing was persisted" is true
+{
+  "timestamp": "2026-10-14T05:59:48.804Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "055d4284-3a40-43ab-9494-2c04eca95341",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create-with-seed is one transaction > a mid-seed failure rolls the whole create back, so "nothing was persisted" is true
+{
+  "timestamp": "2026-10-14T05:59:48.804Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 055d4284-3a40-43ab-9494-2c04eca95341 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create-with-seed is one transaction > a mid-seed failure rolls the whole create back, so "nothing was persisted" is true
+Error creating document: Error: audit store unavailable
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoringTemplateStartFrom.test.ts:331:41
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoringTemplateStartFrom.test.ts:98:105
+    at mockQuery (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at Object.query (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoringTemplateStartFrom.test.ts:33:35)
+    at insertDocumentTx (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-documents.ts:288:38)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at createDocument (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-documents.ts:476:33)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:1460:21
+{
+  "timestamp": "2026-10-14T05:59:48.822Z",
+  "level": "error",
+  "message": "[authoring-router] saving docs failed",
+  "context": {
+    "err": "audit store unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > fail-soft: an unreachable global store still lists the org templates 28ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create-with-seed is one transaction > a mid-seed failure rolls the whole create back, so "nothing was persisted" is true 61ms
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > every IND template reaches the existing saved document editor > lists all 200 exact builtin identities and their complete catalogue/module coverage
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > every IND template reaches the existing saved document editor > creates and reopens every template with empty bodies, exact provenance and atomic section evidence
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > saved template guidance follows actual identity and current access > reads the section:m1.2 saved guidance snapshot without unrelated code-matched instructions
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > saved template guidance follows actual identity and current access > reads the section:m2.3 saved guidance snapshot without unrelated code-matched instructions
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > saved template guidance follows actual identity and current access > reads the section:m3.2.S.4 saved guidance snapshot without unrelated code-matched instructions
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > saved template guidance follows actual identity and current access > reads the section:m4.2.3.2 saved guidance snapshot without unrelated code-matched instructions
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > saved template guidance follows actual identity and current access > reads the section:m5.3.5.1 saved guidance snapshot without unrelated code-matched instructions
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > saved template guidance follows actual identity and current access > refuses guidance after project access is withdrawn, even for a previously created owner copy
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > IND template creation retains authority and failure boundaries > refuses module before any authoring evidence is created
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > IND template creation retains authority and failure boundaries > refuses foreign-project before any authoring evidence is created
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > IND template creation retains authority and failure boundaries > refuses unknown-template before any authoring evidence is created
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > IND template creation retains authority and failure boundaries > refuses a current revoked membership despite the old authenticated token
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > IND template creation retains authority and failure boundaries > refuses a current reader membership despite the old authenticated token
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > IND template creation retains authority and failure boundaries > rolls back the document, first section, revision and audit when a later section cannot be persisted
+ ↓ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts > IND template creation retains authority and failure boundaries > refuses an inactive global template that has real saved sections, without creating a phantom document
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+{
+  "timestamp": "2026-10-14T05:59:55.087Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+{
+  "timestamp": "2026-10-14T05:59:55.170Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:59:55.171Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+{
+  "timestamp": "2026-10-14T05:59:55.171Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > REGRESSION: an AnA-mediated edit records the action that produced it 3255ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+{
+  "timestamp": "2026-10-14T05:59:57.378Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+{
+  "timestamp": "2026-10-14T05:59:57.385Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:59:57.385Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+{
+  "timestamp": "2026-10-14T05:59:57.386Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > still records author_kind, which already worked 2065ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+{
+  "timestamp": "2026-10-14T05:59:59.382Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+{
+  "timestamp": "2026-10-14T05:59:59.388Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:59:59.389Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+{
+  "timestamp": "2026-10-14T05:59:59.389Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > a human edit with no action leaves the backlink NULL, not invented 2004ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+{
+  "timestamp": "2026-10-14T06:00:01.369Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+{
+  "timestamp": "2026-10-14T06:00:01.375Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:01.375Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+{
+  "timestamp": "2026-10-14T06:00:01.376Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > an action id that is not in the ledger does not break the save 1991ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+{
+  "timestamp": "2026-10-14T06:00:03.496Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+{
+  "timestamp": "2026-10-14T06:00:03.503Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:03.504Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+{
+  "timestamp": "2026-10-14T06:00:03.504Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the backlink does not leak from one save to the next 2134ms
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+{
+  "timestamp": "2026-10-14T06:00:05.566Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+{
+  "timestamp": "2026-10-14T06:00:05.572Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:05.572Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+{
+  "timestamp": "2026-10-14T06:00:05.573Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-ana-backlink.contract.test.ts > c2c section version — AnA action backlink > the Part 11 reason is still the caller text, unaffected 2055ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+{
+  "timestamp": "2026-10-14T06:00:08.886Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+{
+  "timestamp": "2026-10-14T06:00:08.960Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:08.961Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+{
+  "timestamp": "2026-10-14T06:00:08.961Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > returns 200 and creates the section — not 500 3183ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+{
+  "timestamp": "2026-10-14T06:00:11.095Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+{
+  "timestamp": "2026-10-14T06:00:11.101Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:11.102Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+{
+  "timestamp": "2026-10-14T06:00:11.102Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > a second save updates the same row and bumps the version 2006ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+{
+  "timestamp": "2026-10-14T06:00:13.114Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+{
+  "timestamp": "2026-10-14T06:00:13.121Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:13.122Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+{
+  "timestamp": "2026-10-14T06:00:13.122Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > the Part 11 attribution GUC really does reach the trigger 2022ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+{
+  "timestamp": "2026-10-14T06:00:15.213Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+{
+  "timestamp": "2026-10-14T06:00:15.219Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:15.219Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+{
+  "timestamp": "2026-10-14T06:00:15.219Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the section save actually persists > audits in the same transaction as the write 2078ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+{
+  "timestamp": "2026-10-14T06:00:17.408Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+{
+  "timestamp": "2026-10-14T06:00:17.415Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:17.415Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+{
+  "timestamp": "2026-10-14T06:00:17.415Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > AnA-drafted text is not recorded as human-authored 2254ms
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+{
+  "timestamp": "2026-10-14T06:00:19.604Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+{
+  "timestamp": "2026-10-14T06:00:19.611Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:19.611Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+{
+  "timestamp": "2026-10-14T06:00:19.612Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > the version ledger records how the superseded content was authored > human-authored text stays human 2154ms
+ ✓ tests/schema-contract/c2c-section-save.contract.test.ts > no route may set a GUC with a bind parameter > server/ contains no parameterised SET — the whole bug class, fenced 2108ms
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:00:22.759Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:22.761Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:00:22.761Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:00:22.808Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a copy when a current fingerprint and unknown/template metadata are its only evidence 67ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a review verdict and an unchecked REVIEWER signature are not explicit adoption 31ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows unknown source after a current full-hash signed assigned adoption 32ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows template source after a current full-hash signed assigned adoption 22ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a signature and editable audit-shaped metadata without the chained act do not release 23ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > rejects the author adopting their own copy and an unassigned reviewer 18ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model null even after explicit adoption 28ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model a-model-name even after explicit adoption 21ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > immutable genesis and current source facts win over relabeling the displayed origin 13ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > moving copied machine prose to another section cannot launder it as a local human save 31ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > formatting and whitespace changes are not replacement by human words 16ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > punctuation-only edits do not clear a positive machine source hold 20ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > a genuine governed human rewrite clears qualification hold but requires a fresh full-document adoption 49ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > fails closed when source access or fingerprint verification fails, including a previously adopted copy 16ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a title change invalidates adoption even when signature prose hash is unchanged 20ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a reopened review assignment invalidates its earlier signed adoption 21ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a signature with an invalid recomputable digest is not adoption 23ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > refuses a write whose present text no longer matches its live lineage 11ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > uncontrolled review copies retain the real qualification hold > renders a working DOCX with NOT FINAL and qualification disclosure while controlled rendition refuses 239ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > preserves metadata/expiry/rate normalization and records the trimmed reason on the same client 880ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > legacy reason omission and body tenant/actor spoofing preserve authenticated generation and audit scope 9ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > rejects a blank supplied reason before opening a transaction 7ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > rejects a over 2000 characters supplied reason before opening a transaction 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > rejects a null supplied reason before opening a transaction 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 1 characters are accepted 7ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 2 characters are accepted 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 501 characters are accepted 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > keeps the upstream trimmed reason policy: 2000 characters are accepted 9ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > a refused chained audit rolls creation back and returns 500 without any credential or mutation claim 8ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > a failed COMMIT returns no key or persisted audit claim even though the chained write was attempted 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery requires a committed chained audit > a later list never returns the raw key from a successful committed creation 7ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — revocation and the chained record commit together > returns a committed auditTrail and keeps the credential and audit scoped to the authenticated tenant 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — revocation and the chained record commit together > a refused chained audit rolls revocation back, leaves the key active and returns 500 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — revocation and the chained record commit together > a failed revocation COMMIT preserves the active key and reports no persisted success 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a chained attempt audit remains 404 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a tamper-proof-only attempt audit remains 404 5ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a lost attempt audit remains 404 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > refused revocation — no credential mutation, real canonical attempt audit outcome > a missing/foreign/already-revoked key with a rejected attempt audit remains 404 4ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > IND Module 2 and 3 templates are loadable from every canonical type > offers an exact editor template reference for every M2 section 208ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > IND Module 2 and 3 templates are loadable from every canonical type > offers an exact editor template reference for every M3 section 119ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.2' as the exact first section, with empty facts and only its own descendants 5ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3' as the exact first section, with empty facts and only its own descendants 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S.1' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S.2' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S.3' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S.4' as the exact first section, with empty facts and only its own descendants 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S.5' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S.6' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.S.7' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.1' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.2' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.3' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.4' as the exact first section, with empty facts and only its own descendants 15ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.5' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.6' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.7' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.P.8' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.3.A' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.4' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.5' as the exact first section, with empty facts and only its own descendants 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6.1' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6.2' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6.3' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6.4' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6.5' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6.6' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.6.7' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm2.7' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S' as the exact first section, with empty facts and only its own descendants 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S.1' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S.2' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S.3' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S.4' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S.5' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S.6' as the exact first section, with empty facts and only its own descendants 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.S.7' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P' as the exact first section, with empty facts and only its own descendants 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.1' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.2' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.3' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.4' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.5' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.6' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.7' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.P.8' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.A' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > preserves 'm3.2.R' as the exact first section, with empty facts and only its own descendants 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > keeps all recorded QOS substance/product leaves and the recorded regional guidance 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > keeps all six recorded expert-report headings as local working identifiers under the exact 2.4 root 6ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > expands nonclinical written and tabulated scopes without manufacturing their tables or results 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > includes all six recorded clinical components of m2.5 without importing another summary scope 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > includes all six recorded clinical components of m2.7 without importing another summary scope 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > loads detailed substance controls and only the requested drug-product development scope 5ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > retains complete canonical instructions, evidence requirements, pitfalls and reference provenance 37ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > uses the shared CTD order for substance, product, appendices and regional information 2ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > returns independent guidance arrays without mutating source reference records 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts > source-derived Module 2 and 3 working outlines > refuses unknown, malformed, foreign-module and mismatched scope instead of inventing an outline 2ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > uses the authenticated tenant and actor, and records reason and scopes without the secret 197ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"scopes":[]} 9ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"scopes":["documents:write"]} 10ms
+stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > fails closed and returns no credential when the chained audit write fails
+{
+  "timestamp": "2026-10-14T06:00:31.641Z",
+  "level": "error",
+  "message": "[api-keys] Failed to create API key",
+  "context": {
+    "err": "audit unavailable"
+  }
+}
+
+stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > rolls revocation back when its chained audit cannot be written
+{
+  "timestamp": "2026-10-14T06:00:31.646Z",
+  "level": "error",
+  "message": "[api-keys] Failed to revoke API key",
+  "context": {
+    "err": "audit unavailable"
+  }
+}
+
+stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses creation and revocation without a tenant-pinned request client, with no pooled fallback
+{
+  "timestamp": "2026-10-14T06:00:31.650Z",
+  "level": "error",
+  "message": "[api-keys] Failed to create API key",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses creation and revocation without a tenant-pinned request client, with no pooled fallback
+{
+  "timestamp": "2026-10-14T06:00:31.652Z",
+  "level": "error",
+  "message": "[api-keys] Failed to revoke API key",
+  "context": {
+    "err": "Request-scoped database context is required"
+  }
+}
+
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"rateLimit":0} 9ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"expiresAt":"2020-01-01"} 4ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses invalid create fields before minting: {"reason":"   "} 5ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > keeps existing API callers compatible when no reason is supplied 8ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > requires admin access before minting 4ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > fails closed and returns no credential when the chained audit write fails 6ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > rolls revocation back when its chained audit cannot be written 4ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > refuses creation and revocation without a tenant-pinned request client, with no pooled fallback 5ms
+ ✓ server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > opens exactly one transaction after the real lazy wrapper establishes tenant session scope 3ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.1 5ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.1.1 2ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.1.2 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.1.3 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.1.4 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.2 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.2.1 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.2.2 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.2.3 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.2.4 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.2.5 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.2.6 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3.1 2ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3.2 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3.3 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3.4 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3.5 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3.6 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > offers recorded evidence requirements without filling the original study: m4.2.3.7 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 4 working outlines preserve the single recorded study report structure > does not execute model initialization through the pure record projection 4ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > retains the complete deep ICH E3 heading tree for m5.3.5.1 3ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > retains the complete deep ICH E3 heading tree for m5.3.5.2 2ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > never infers a protocol from the filing code or shared pyramid task 2ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > projects current M11 only for an explicit protocol document type 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > uses targeted E3 analysis requirements for pooled studies without inventing a trial execution report 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > keeps previous human experience distinct and names actual withdrawals and evidence gaps 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > loads m5.3.7 as source preparation without fabricating forms or literature 1ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > loads m5.4 as source preparation without fabricating forms or literature 0ms
+ ✓ server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts > Module 5 uses the actual report or protocol record > does not supply another module through this builder 0ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > gives every module section and pyramid deliverable an editor-loadable template identity 150ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > offers tabulated summaries and recorded certificates only as preparation 70ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every phase and every task deliverable, including pre-IND work 48ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > includes every canonical IND section and preserves form/manual drafting limits 60ms
+ ✓ server/services/authoring/__tests__/ind-document-catalog.test.ts > the editor catalogue derives the entire canonical IND work pyramid > keeps official forms, signatures, datasets and agency receipts out of narrative-draft offers 76ms
+ ✓ server/startup/__tests__/authoring-import-cycle.boot.test.ts > the shipped module graph completes authoring initialization > reaches the composition root’s production posture refusal instead of waiting on circular init promises 12253ms
+stdout | server/services/ana/__tests__/ind-template-reference.test.ts
+{
+  "timestamp": "2026-10-14T06:00:53.300Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:00:53.301Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-template-reference.test.ts
+{
+  "timestamp": "2026-10-14T06:00:53.301Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ind-template-reference.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > accepts the exact builtin template UUID discovered in the IND catalogue 83ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > pages complete reference requirements and headings without omitting middle entries 1415ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"market":"EU"} 51ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"family":"ctis"} 43ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"registry_id":"US_NDA"} 42ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"offset":999999} 48ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > makes every section and deliverable template ID discoverable through the existing IND requirement pages 506ms
+ ✓ server/services/authoring/__tests__/authoring-content-digests.test.ts > the recorded authoring digest recipes > preserves the known empty-document SHA-256 value 2ms
+ ✓ server/services/authoring/__tests__/authoring-content-digests.test.ts > the recorded authoring digest recipes > preserves section codes, recorded row order and the existing null-content representation 1ms
+ ✓ server/services/authoring/__tests__/authoring-content-digests.test.ts > the recorded authoring digest recipes > retains exact UTF-8 content and line endings without normalization 0ms
+ ✓ server/services/authoring/__tests__/authoring-content-digests.test.ts > the recorded authoring digest recipes > preserves the versioned signature digest with and without covered content 0ms
+ ✓ server/services/authoring/__tests__/authoring-content-digests.test.ts > the recorded authoring digest recipes > keeps the export service’s public functions as the canonical helper exports 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts [ server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts ]
+error: column "status" of relation "projects" already exists
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 133, severity: 'ERROR', code: '42701', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'tablecmds.c', routine: 'check_for_column_name_collision', query: 'ALTER TABLE projects ADD COLUMN status text DEFAULT \'active\';\n    CREATE TABLE client_workspaces(id integer PRIMARY KEY, organization_id integer);\n    CREATE SCHEMA intelligence;\n    CREATE TABLE intelligence.document_templates(id uuid PRIMARY KEY,template_name text,document_type text,agency text,description text,created_at timestamptz DEFAULT now(),status text);\n    CREATE TABLE intelligence.template_sections(template_id uuid,section_code text,section_title text,ordering integer);', params: undefined, queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 15 passed (16)
+      Tests  260 passed | 15 skipped (275)
+   Start at  05:58:47
+   Duration  128.26s (transform 5.93s, setup 355ms, import 12.93s, tests 111.47s, environment 2ms)

@@ -592,7 +592,8 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   description:
     'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
     'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. ' +
-    '`offset`/`limit` page results. `market`+`prepare` adds a regional route and at most 3 focused questions. ' +
+    '`offset`/`limit` page results. IND catalogue template UUIDs read the same editor outline and source checks. ' +
+    '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
     '`discussed_topics` only prevents re-asking. ' +
     "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +
     `Record-derived: ${recordDerivedOutlines}. ` +

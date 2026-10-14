@@ -63,6 +63,17 @@ Neither links nor discovery narratives are automatically published to AnA.
 - `browser-verification.txt` and discovery screenshots check actual Vite-rendered
   components at desktop/390px widths and settled light/dark themes, with
   synthetic replies. The authoring browser evidence follows the same boundary.
+- [Hosted verification](hosted-verification.md) records the successful real
+  PostgreSQL/server/Chromium smoke and governed journey on the schema-repair
+  head, with its distinct scope and remaining CI status.
+- [Report tenant index repair](report-index-repair.md) records the inherited
+  fresh-install defect, narrow replayable migration, and 405 installer/schema
+  checks that enabled that hosted browser proof.
+- [Final CI follow-up](ci-followup-repairs.md) records request-pinned API-key
+  writes, canonical fixtures, tenant-qualified actor identity and the inherited
+  production-bundle import-cycle repair. It links their negative controls and
+  focused checks, plus the seven independently verified historical checksum
+  dispositions.
 
 Final local checks passed: 354 tests in 36 consolidated suites; 43 additional
 post-merge editor/onboarding checks and the canonical Access reachability test;
@@ -87,18 +98,27 @@ shrink from three to two after the list moved to the tenant-parameterized query
 constant. The baseline was lowered, preserving the guard's smaller budget; no
 new interpolation exception or bypass was added.
 
+The final CI follow-up also passes full TypeScript checking and the complete
+client/server build on Node 22.23.3. Their command logs are
+`typecheck-followup.txt` and `build-followup.txt`. Its focused checks and
+successful pinned full-history rescan are recorded in the linked follow-up
+and checksum-disposition evidence; their subset totals overlap earlier runs.
+
 ## Limits
 
-No new dependency, database migration, model call or production capability flag
-is introduced. Stored notification/display preferences lack active consumers,
+No new dependency, model call or production capability flag is introduced. The
+one database migration restores the already-required report tenant index;
+it adds no table, column, data or access policy. Stored notification/display
+preferences lack active consumers,
 and stored project rules lack their event executor, so a UI that only saves
 those fields would not complete their behavior. Intentionally excluded or
 unmapped APIs remain recorded in the inventory rather than reopened implicitly.
 
-This work supplies implementation and local validation evidence. The session
-has no production runtime or deployment credentials. It does not establish
-hosted availability, successful live SMTP/SSO/payment delivery, or complete the
-production launch rows that require those proofs.
+This work supplies implementation, local validation and isolated hosted CI
+browser evidence. The session has no production runtime or deployment
+credentials. It does not establish production availability, successful live
+SMTP/SSO/payment delivery, or complete the production launch rows that require
+those proofs.
 
 ## Consolidation with concurrent setup safeguards
 
@@ -108,3 +128,13 @@ session policy and transaction-bound SCIM IP-rule audit controls. Parallel
 discovery and API-key UI implementations were migrated and removed. Final
 merged verification and replacement paths are recorded in
 [the W1/D2 consolidation evidence](../../W1/2026-10-14-discovery-onboarding/README.md).
+
+[Final canonical-branch verification](final-consolidation.md) records the
+follow-up integration of tenant-pinned API-key audit outcomes, preserved-role
+invitation acceptance and stale-organization session-policy guards, together
+with the 77-suite regression list and final build. All 827 tests in that final
+consolidated run passed; the complete reconciled client/server build passed.
+The subsequent concurrent IND-template update was preserved and verified with
+301 editor/backend/startup checks, 26 creation-picker checks and a fresh build.
+Its evidence checksum/prose scan dispositions and exact range proof are linked
+from that final verification record.

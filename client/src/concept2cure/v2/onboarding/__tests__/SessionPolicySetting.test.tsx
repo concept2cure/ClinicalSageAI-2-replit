@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 const apiRequest = vi.hoisted(() => vi.fn());
+const session = vi.hoisted(() => ({ organizationId: '37' }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
-vi.mock('@/utils/authToken', () => ({ getJwtOrgId: () => '37', getAuthToken: () => 'test-token', getOrgId: () => '99' }));
+vi.mock('@/utils/authToken', () => ({ getJwtOrgId: () => session.organizationId, getAuthToken: () => 'test-token', getOrgId: () => '99' }));
 import { SessionPolicySetting } from '../SessionPolicySetting';
 import { ApiRequestError } from '@/lib/queryClient';
 
@@ -17,7 +18,7 @@ const edit = async () => {
   fireEvent.change(field('Maximum concurrent sessions'), { target: { value: '2' } });
   fireEvent.change(screen.getByRole('textbox', { name: 'Reason for session policy change' }), { target: { value: 'Reduce idle access window for onboarding' } });
 };
-beforeEach(() => { apiRequest.mockReset(); apiRequest.mockImplementation(async () => json(200, payload)); });
+beforeEach(() => { session.organizationId = '37'; apiRequest.mockReset(); apiRequest.mockImplementation(async () => json(200, payload)); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('governed session security policy', () => {
@@ -86,5 +87,51 @@ describe('governed session security policy', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save session policy' }));
     expect(await screen.findByText(/could not be confirmed as saved/i)).toBeTruthy();
     expect(field('Idle sign-out in minutes')).toHaveProperty('value', '35');
+  });
+});
+
+describe('session policy remains bound to the original workspace', () => {
+  it('refuses PATCH after the current organization changes', async () => {
+    render(<SessionPolicySetting />);
+    await edit();
+    session.organizationId = '38';
+    fireEvent.click(screen.getByRole('button', { name: 'Save session policy' }));
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+    expect(await screen.findByText(/organization changed.*reopen setup/i)).toBeTruthy();
+    expect(screen.queryByRole('spinbutton')).toBeNull();
+  });
+
+  it('discards a read completed after the current organization changes', async () => {
+    let finish!: (value: Response) => void;
+    apiRequest.mockReturnValue(new Promise<Response>(resolve => { finish = resolve; }));
+    render(<SessionPolicySetting />);
+    session.organizationId = '38';
+    await act(async () => { finish(json(200, payload)); });
+    expect(await screen.findByText(/organization changed.*reopen setup/i)).toBeTruthy();
+    expect(screen.queryByRole('spinbutton')).toBeNull();
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/organizations/37/settings');
+  });
+
+  it('does not confirm a save response received after the organization changes', async () => {
+    let finish!: (value: Response) => void;
+    apiRequest.mockImplementation((method: string) => method === 'GET' ? Promise.resolve(json(200, payload)) : new Promise<Response>(resolve => { finish = resolve; }));
+    render(<SessionPolicySetting />);
+    await edit();
+    fireEvent.click(screen.getByRole('button', { name: 'Save session policy' }));
+    await waitFor(() => expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(true));
+    session.organizationId = '38';
+    await act(async () => { finish(json(200, { success: true, settings: { security: { sessionTimeoutMinutes: 35, maxConcurrentSessions: 2 } } })); });
+    expect(await screen.findByText(/organization changed.*reopen setup/i)).toBeTruthy();
+    expect(screen.queryByText(/session policy saved/i)).toBeNull();
+    expect(screen.queryByRole('spinbutton')).toBeNull();
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'PATCH')).toHaveLength(1);
+  });
+
+  it('does not read or write policy without an organization identity', async () => {
+    session.organizationId = '';
+    render(<SessionPolicySetting />);
+    await waitFor(() => expect(screen.queryByRole('spinbutton')).toBeNull());
+    expect(apiRequest).not.toHaveBeenCalled();
   });
 });

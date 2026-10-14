@@ -736,7 +736,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
     } else {
       summary =
         `Workspace setup wizard, step ${step + 1} of ${STEPS.length} (${STEPS[step]}). ` +
-        'Discovery drafts can be saved during setup. Organization changes, invitations and billing run only on activation.';
+        'Discovery drafts and session policy can be saved explicitly during setup. Activation handles the organization profile, invitations and billing steps.';
     }
     return {
       summary,
