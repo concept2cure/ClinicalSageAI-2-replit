@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T22:06:38.437Z",
+  "generatedAt": "2026-10-14T22:20:56.125Z",
   "git": {
-    "sha": "1bd3af0bc5abaff99f9eea0a0c139617842a32a2",
+    "sha": "2df2adde85d0c83695f3090557f68151605d79ed",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -341,6 +341,17 @@
         ]
       },
       {
+        "basename": "probe",
+        "count": 5,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx"
+        ]
+      },
+      {
         "basename": "analytics",
         "count": 4,
         "paths": [
@@ -428,16 +439,6 @@
           "server/routes/orchestration.ts",
           "shared/schema/orchestration.ts",
           "shared/types/orchestration.ts"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 4,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx"
         ]
       },
       {
@@ -2188,7 +2189,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 301345
+        "bytes": 303081
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2414,7 +2415,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6142
+        "lines": 6168
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2864,7 +2865,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 170,
+      "duplicateGroups": 171,
       "largeByBytes": 2,
       "largeByLines": 8
     },
