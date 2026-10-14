@@ -12,6 +12,15 @@ and production build. These overlap the main run and are not added to its
 unique count. Exact incoming fixture checksum dispositions are retained in
 [security evidence](security/README.md).
 
+The first publication attempt was stopped before sending by the undefined CSS
+class gate. Removing the unused class preserves the defined native document
+style; the gate, 18 affected dialog tests and production build passed again.
+The incoming editor's hosted Semgrep finding in its synthetic fixture generator
+was repaired by using existing `plainTextToHtml`, with no suppression and a
+byte-identical generated contract. Original browser evidence remains historical.
+[Generator proof](fixture-generator-repair.json) and release metadata distinguish
+these repairs from the earlier runs.
+
 The existing Review board now opens the complete saved Authoring document with
 the native section/table/figure renderer before recording a decision. A decision
 starts unstated, captures the actor, organization, saved snapshot and request,

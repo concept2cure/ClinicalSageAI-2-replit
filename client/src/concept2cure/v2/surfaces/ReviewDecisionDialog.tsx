@@ -54,7 +54,7 @@ function SavedReviewRead({ context }: { context: AuthoringReviewContext }) {
     {snapshot.sections.length === 0 && <p>No saved sections are present in this document.</p>}
     {snapshot.sections.map((section) => <section key={section.id} className="rv-decision-section">
       <h4>{section.code}{section.title ? ` · ${section.title}` : ''}</h4>
-      {section.content ? <AuthoredHtml html={section.content} className="ed-prose ed-full-sec-body" /> : <p>No saved content in this section.</p>}
+      {section.content ? <AuthoredHtml html={section.content} className="ed-full-sec-body" /> : <p>No saved content in this section.</p>}
     </section>)}
   </section>;
 }

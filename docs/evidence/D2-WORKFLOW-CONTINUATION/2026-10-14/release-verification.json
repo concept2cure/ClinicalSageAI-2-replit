@@ -77,14 +77,37 @@
     "exactExceptions": "security/README.md",
     "newRangeAfterExactDispositions": {
       "baseExclusive": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
-      "headInclusive": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
-      "commits": 2,
+      "headInclusive": "0d6243ab32551acc89bc90b53424a8c37daf756d",
+      "commits": 3,
       "findings": 0,
       "passed": true
     },
     "stagedReleaseMetadata": {
       "findings": 0,
       "passed": true
+    }
+  },
+  "publicationRepairs": {
+    "firstPushGateRefusal": {
+      "gate": "ci:undefined-css-classes",
+      "published": false,
+      "repair": "Removed undefined ed-prose; retained defined native ed-full-sec-body.",
+      "gateRecheckPassed": true
+    },
+    "dialogReplay": {
+      "files": 2,
+      "passed": 18,
+      "failed": 0,
+      "includedInCombinedUniqueCount": true
+    },
+    "buildPassed": true,
+    "incomingSemgrep": {
+      "run": 38628716225,
+      "finding": "javascript.express.security.injection.raw-html-format.raw-html-format",
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
+      "repair": "Reuse shared/authoring/plain-text-html plainTextToHtml. No suppression.",
+      "generatedContractIdentical": true,
+      "fixedHostedScan": "pending"
     }
   }
 }

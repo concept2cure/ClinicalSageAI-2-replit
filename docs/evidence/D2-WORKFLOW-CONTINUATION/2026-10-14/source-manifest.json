@@ -85,7 +85,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx",
-      "sha256": "a28e540bdaffb7c711c32e7773f87b7f4710789efa836d0e22b12af33929b20b"
+      "sha256": "677464c73de5098d2eeb84b33df3176ff16ca3b22f24d55d14ddcd363236c447"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts",
@@ -218,9 +218,14 @@
     {
       "path": "shared/authoring/peer-review.ts",
       "sha256": "e617464e75bbd54571d39b43934fcade659ee9592195e1a9e8ee04dc30157204"
+    },
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
+      "sha256": "fd3d631674f7c6cfef88848277f781d75c0ef8985c148afd3005321703c9ea87"
     }
   ],
   "featureCommit": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
   "integratedEditorCommit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
-  "verifiedMergedSourceCommit": "7c33c547dbbfcef0b61ea8072c06dd287b055f07"
+  "verifiedMergedSourceCommit": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
+  "publicationRepairs": "Removed unused dialog CSS class; existing canonical plainTextToHtml replaces raw fixture interpolation, with byte-identical generated contract."
 }

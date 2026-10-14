@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { getIndAuthoringTemplates, indTemplateSnapshot } from '../../../../../../server/services/authoring/ind-authoring-templates';
+import { plainTextToHtml } from '../../../../../../shared/authoring/plain-text-html';
 
 const templates = getIndAuthoringTemplates();
 const entries = [
@@ -25,7 +26,7 @@ const cases = entries.map((entry, i) => {
     status: 'DRAFT', updated_at: at, section_count: 1, created_by: 1, product_code: null, c2c_document_id: null,
     provenance: { source: 'template', governedWrite: 'unverified', templateSource: source } };
   const section = { id: sectionId, doc_id: id, code: first.code, title: first.title,
-    content: `<p>${entry.body}</p>`, order_index: 0, updated_at: at };
+    content: plainTextToHtml(entry.body), order_index: 0, updated_at: at };
   const guidance = { template_guidance: [{ id: `synthetic-guidance-${i + 1}`, ...first.guidance,
     template_source: source, source: 'section-create-audit' }] };
   return { key: entry.key, source, document, sections: [section], guidance, plainBody: entry.body };
