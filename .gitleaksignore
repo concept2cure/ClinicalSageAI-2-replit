@@ -300,3 +300,26 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:22
 4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:27
 4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:32
+
+# status: not a secret
+# reason: Sixteen exact regional-template evidence values are SHA-256 pins of
+# original committed synthetic api-contract.json/mock-api.mjs bytes at34389d3af.
+# Lead and independent reviewers recomputed every target from original Git blobs;
+# historical helper differences are scoped separately. No rule or path suppression.
+# Evidence: docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/security/regional-{lead,independent}.json
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-diagnostic-summary.json:generic-api-key:52
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-fixture-lint.json:generic-api-key:11
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-lint-helpers-summary.json:generic-api-key:52
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-pre-picker-copy-summary.json:generic-api-key:52
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:27
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:32
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-preintegration-summary.json:generic-api-key:37
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:42
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:47
+34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:52

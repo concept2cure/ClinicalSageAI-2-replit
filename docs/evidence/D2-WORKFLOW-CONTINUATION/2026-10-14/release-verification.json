@@ -171,6 +171,18 @@
       "findings": 0,
       "passed": true,
       "scope": "Final fixture, queue-copy, work-order and evidence delta; redacted report retained privately."
+    },
+    "regionalIncoming": {
+      "initialFindings": 16,
+      "exactOriginalFixtureChecksums": 16,
+      "independentProof": "security/regional-independent.json",
+      "leadProof": "security/regional-lead.json",
+      "noRuleOrPathSuppression": true,
+      "rescanned": {
+        "commits": 2,
+        "findings": 0,
+        "passed": true
+      }
     }
   },
   "publicationRepairs": {
@@ -234,5 +246,17 @@
     "failed": 0,
     "durationSeconds": 873.42,
     "log": "final-proof-tier.txt"
+  },
+  "postRegionalIntegration": {
+    "commit": "34389d3af6330effb361c28ee69d9988dea10df2",
+    "mergeCommit": "a893c9eaa39e24889c3bbeeb9fd9bb5ccf8ebf51",
+    "tests": {
+      "files": 6,
+      "passed": 201,
+      "failed": 0,
+      "separateOverlappingRun": true
+    },
+    "buildPassed": true,
+    "independentPeerReviewOverlapAssessment": "No snapshot, round, SOD, authorization or adoption/release gate change. Existing creator and audit path reused."
   }
 }

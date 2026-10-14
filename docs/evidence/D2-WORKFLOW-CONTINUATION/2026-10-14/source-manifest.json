@@ -145,7 +145,7 @@
     },
     {
       "path": "server/routes/authoring.router.ts",
-      "sha256": "3ba318c09047fa184598e0d2c970dfac723417c9a6db0744c61840e045f5aa5e"
+      "sha256": "d9343ee617f6bee65128b5a8e6648e63747c9415420207f0de1f11d0e9781614"
     },
     {
       "path": "server/routes/review-board-routes.ts",
@@ -241,5 +241,7 @@
   "verifiedMergedSourceCommit": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
   "publicationRepairs": "Removed unused dialog CSS class; existing canonical plainTextToHtml replaces raw fixture interpolation, with byte-identical generated contract.",
   "initialPublishedFeatureCommit": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
-  "finalFileScope": "These final source pins include the follow-up migration/wire/auth fixture repairs and queue copy. Hosted successes are pinned to the initial published feature commit; follow-up hosted outcomes are separate."
+  "finalFileScope": "These final source pins include the follow-up migration/wire/auth fixture repairs and queue copy. Hosted successes are pinned to the initial published feature commit; follow-up hosted outcomes are separate.",
+  "additionalIntegratedCommit": "34389d3af6330effb361c28ee69d9988dea10df2",
+  "postRegionalMergeCommit": "a893c9eaa39e24889c3bbeeb9fd9bb5ccf8ebf51"
 }

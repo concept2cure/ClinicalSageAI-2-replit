@@ -92,6 +92,17 @@ it is not described as an overall CI pass. The fixture, queue-copy and evidence
 follow-up has separate hosted status. Exact final files are pinned in the source
 manifest. Current content binding is distinct from final sign-off; the queue
 action's wording now makes that explicit.
+
+Final synchronization also integrated regional-template creator/editor support
+`34389d3af` at merge `a893c9eaa`. Its overlap with native review, creation,
+saved-template oversight and existing IND paths passed 201/201 tests in six
+suites and the production build. Independent source review found no change to
+snapshot, request-round, contributor, authorization or adoption/release gates.
+The sixteen incoming scanner alerts are exact checksums of original committed
+synthetic fixtures, recomputed by both reviewers; precise dispositions are in
+[regional lead](security/regional-lead.json) and
+[independent proof](security/regional-independent.json). Historical browser
+helper pins are explicitly separate from the sixteen targeted checksum values.
 - Real Chromium, actual AuthProvider/Review/components and canonical transport,
   with explicitly synthetic API responses: two-section complete saved read,
   native table, unstated decision, exact request/binding headers, confirmed
