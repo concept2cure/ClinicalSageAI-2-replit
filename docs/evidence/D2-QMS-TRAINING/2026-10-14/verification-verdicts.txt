@@ -60,3 +60,11 @@ Two test-file strict lint:0warnings;4 unchanged nonblocking Semgrep PartialParsi
 Full-history Gitleaks:10227commits/~632.23MB scanned,no leaks,after two exact apiContractSha256 fingerprint exceptions.
 Both exceptions match original committed API-contract bytes; no path/rule-wide exception or Semgrep suppression.
 Hosted Tier5 authenticated browser/DB smoke on a80d2fa65:success(run38530612866).
+
+Generated-style closure:
+Canonical v2 surface text ramp adds only4 QMSselectors; mdx/pdev generated sheets byte-identical.
+Generator --check, shell CSS collision gate, frozen theme aliases, and131 tokencontrast pairs pass (existing15 documented exceptions unchanged).
+Final actual-browser replay includes surface-text-ramp.css and passes both editor/reader/receipt flows.
+Final production client build31.35s; server buildcomplete; qms-final-ramp-build.log.
+Hosted cd2633914 Tier5 browser/DB smoke success(run38532840371); blocking Semgrep step success(run38532840246).
+Broader old CI project-access/stream fixture failures are documented in README; whole-CI green not claimed.

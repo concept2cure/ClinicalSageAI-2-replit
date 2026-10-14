@@ -88,3 +88,21 @@ commit/file/rule/line fingerprints are excepted; the proof is retained in
 [security-verification.json](security-verification.json). The resulting local
 full-history scan passes across 10,227 commits. Production source is unchanged
 by this qualification follow-up.
+
+## Generated typography and broader CI boundary
+
+The canonical text-ramp generator now includes the four new Quality notice,
+receipt, unavailable-text and overlay selectors. Existing selector/token values
+and other generated sheets are unchanged. Generator consistency, shell CSS
+collisions, frozen-theme aliases and 131 token-contrast pairs pass. The final
+build and actual desktop/dark-mobile browser replay include this generated
+stylesheet and pass.
+
+The earlier CI run `38530612922` also exposes pre-QMS platform failures: CER and
+device golden journeys lack current organization-membership fixtures, the
+project-route-access shared-pool guard is unsettled, and the AnA readiness stream
+fixture lacks request DB context. Their sources/tests are byte-identical to the
+pre-QMS snapshot and trace to upstream `14362ef006` (with SQL-shape reconciliation
+in `834116c356`). They are outside this controlled-document change; whole-CI
+success is not claimed. The QMS-owned secret, Semgrep and generated-style
+findings have been repaired and separately verified.
