@@ -29,6 +29,14 @@ followed the source hashes recorded in `browser-final-checks.json`.
   extension integrity. Individual gate logs are retained.
 - `git diff --check` passed. Normal commit/push hooks are used; none are bypassed.
 
+The first normal push was refused by the tracked-import gate: saved browser
+fixture paths were relative to the ignored test directory. The bundle now runs
+directly from its committed folder, with imports resolving to tracked sources
+and a bundle-local API snapshot. The same import gate and strict lint pass,
+and the directly executed bundle passed the full four-context matrix again.
+Application source hashes and the API snapshot are unchanged. The rejection
+and final import evidence are retained.
+
 The initial meaningful failures and four-context target-size before case are
 retained. The AnA-link target uses existing 24px desktop/44px touch sizing.
 Browser APIs are synthetic, and no live model/provider or deployment was used.

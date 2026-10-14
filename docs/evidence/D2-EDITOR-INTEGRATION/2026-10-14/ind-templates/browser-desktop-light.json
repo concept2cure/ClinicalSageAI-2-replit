@@ -34,7 +34,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "15bea5bd-9a8e-48ba-9101-b47b738b3904",
+            "id": "648cdcb3-f544-4590-939c-f553bedab7d6",
             "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
             "module": "M1",
             "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
@@ -65,18 +65,18 @@
       "heldCallbackNoDuplicate": true,
       "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "15bea5bd-9a8e-48ba-9101-b47b738b3904",
-        "sectionId": "835798e6-e045-49b0-a006-87b9b5554032",
+        "docId": "648cdcb3-f544-4590-939c-f553bedab7d6",
+        "sectionId": "d2f6bcb0-71ef-47a5-8f45-863eb3cdb8e5",
         "sectionCode": "1.1.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "e9a3e9dc-a3bc-4922-8c79-dda412051a1e",
+        "id": "9f86d437-e84b-4118-8376-a5874ecbf19a",
         "code": "1.1.1:work:1",
         "title": "Name, address, and telephone of sponsor",
         "bridge": {
-          "docId": "15bea5bd-9a8e-48ba-9101-b47b738b3904",
-          "sectionId": "e9a3e9dc-a3bc-4922-8c79-dda412051a1e",
+          "docId": "648cdcb3-f544-4590-939c-f553bedab7d6",
+          "sectionId": "9f86d437-e84b-4118-8376-a5874ecbf19a",
           "sectionCode": "1.1.1:work:1",
           "editable": true
         }
@@ -309,7 +309,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
+            "id": "b9533cb5-4398-4169-b0a8-751ec7894820",
             "title": "2.5 · Clinical Overview",
             "module": "M2",
             "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
@@ -338,18 +338,18 @@
       },
       "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
-        "sectionId": "16903129-9ab6-40c9-bfe9-e6fc8095707b",
+        "docId": "b9533cb5-4398-4169-b0a8-751ec7894820",
+        "sectionId": "48f37cc2-bd3f-4dbc-9aff-c9a5ea0523b6",
         "sectionCode": "2.5",
         "editable": true
       },
       "selectedSection": {
-        "id": "5a75389f-0c8b-43bf-9f8f-bb4cafa91a7c",
+        "id": "2de6f1fa-49e8-4cab-8819-8d6e65ff87ea",
         "code": "2.5.1",
         "title": "Product Development Rationale",
         "bridge": {
-          "docId": "9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
-          "sectionId": "5a75389f-0c8b-43bf-9f8f-bb4cafa91a7c",
+          "docId": "b9533cb5-4398-4169-b0a8-751ec7894820",
+          "sectionId": "2de6f1fa-49e8-4cab-8819-8d6e65ff87ea",
           "sectionCode": "2.5.1",
           "editable": true
         }
@@ -574,7 +574,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "0815a7d7-82d3-470a-a73f-690c10824b96",
+            "id": "1435a1ae-09a5-4b6c-a853-46d43871c809",
             "title": "3.2.S.1 · General Information",
             "module": "M3",
             "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
@@ -603,18 +603,18 @@
       },
       "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "0815a7d7-82d3-470a-a73f-690c10824b96",
-        "sectionId": "6b1a870f-be44-4991-b3d6-55b75839ff00",
+        "docId": "1435a1ae-09a5-4b6c-a853-46d43871c809",
+        "sectionId": "6fece971-fbb1-422c-ae9f-b5d24ad18f43",
         "sectionCode": "3.2.S.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "476fedeb-3b81-423b-a253-2675afd17b73",
+        "id": "e577928d-8b56-4edc-87b8-0f1f603705de",
         "code": "3.2.S.1.1",
         "title": "Nomenclature",
         "bridge": {
-          "docId": "0815a7d7-82d3-470a-a73f-690c10824b96",
-          "sectionId": "476fedeb-3b81-423b-a253-2675afd17b73",
+          "docId": "1435a1ae-09a5-4b6c-a853-46d43871c809",
+          "sectionId": "e577928d-8b56-4edc-87b8-0f1f603705de",
           "sectionCode": "3.2.S.1.1",
           "editable": true
         }
@@ -852,7 +852,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
+            "id": "3715db3f-675f-4882-b92d-adbb427679e7",
             "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
             "module": "M4",
             "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
@@ -882,18 +882,18 @@
       },
       "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
-        "sectionId": "df28d9fa-9520-49ee-a8ad-b04493e96c05",
+        "docId": "3715db3f-675f-4882-b92d-adbb427679e7",
+        "sectionId": "a0ded8a4-2612-4cca-82c1-1f1062b62322",
         "sectionCode": "4.2.3.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "047c7d4d-3612-4497-a414-af9957f78de9",
+        "id": "60cb95a1-58d3-492c-a792-e269f5ea9be7",
         "code": "m4.2.3.1:work:1",
         "title": "Title Page",
         "bridge": {
-          "docId": "b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
-          "sectionId": "047c7d4d-3612-4497-a414-af9957f78de9",
+          "docId": "3715db3f-675f-4882-b92d-adbb427679e7",
+          "sectionId": "60cb95a1-58d3-492c-a792-e269f5ea9be7",
           "sectionCode": "m4.2.3.1:work:1",
           "editable": true
         }
@@ -1126,7 +1126,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "aba79497-035f-4a67-9057-b7e2fe2265b5",
+            "id": "53874c3c-5275-41a7-9396-5739ff6c923a",
             "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
             "module": "M5",
             "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
@@ -1155,18 +1155,18 @@
       },
       "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "aba79497-035f-4a67-9057-b7e2fe2265b5",
-        "sectionId": "a627cc49-2962-4660-98ca-9f5c00eb8e61",
+        "docId": "53874c3c-5275-41a7-9396-5739ff6c923a",
+        "sectionId": "8fe700d5-887c-4ab1-a101-f37de76d3ec6",
         "sectionCode": "5.3.5.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "205a020e-a39c-41f6-801b-efa2a0a59544",
+        "id": "21bc9325-db99-479a-9717-d6ee92d4301f",
         "code": "m5.3.5.1:work:1",
         "title": "1 Title Page",
         "bridge": {
-          "docId": "aba79497-035f-4a67-9057-b7e2fe2265b5",
-          "sectionId": "205a020e-a39c-41f6-801b-efa2a0a59544",
+          "docId": "53874c3c-5275-41a7-9396-5739ff6c923a",
+          "sectionId": "21bc9325-db99-479a-9717-d6ee92d4301f",
           "sectionCode": "m5.3.5.1:work:1",
           "editable": true
         }
@@ -1524,12 +1524,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/15bea5bd-9a8e-48ba-9101-b47b738b3904",
+      "path": "/api/authoring/docs/648cdcb3-f544-4590-939c-f553bedab7d6",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/15bea5bd-9a8e-48ba-9101-b47b738b3904/sections",
+      "path": "/api/authoring/docs/648cdcb3-f544-4590-939c-f553bedab7d6/sections",
       "query": ""
     },
     {
@@ -1554,62 +1554,62 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/15bea5bd-9a8e-48ba-9101-b47b738b3904/citations",
+      "path": "/api/authoring/docs/648cdcb3-f544-4590-939c-f553bedab7d6/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/15bea5bd-9a8e-48ba-9101-b47b738b3904",
+      "path": "/api/authoring/docs/648cdcb3-f544-4590-939c-f553bedab7d6",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/15bea5bd-9a8e-48ba-9101-b47b738b3904/sections",
+      "path": "/api/authoring/docs/648cdcb3-f544-4590-939c-f553bedab7d6/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/835798e6-e045-49b0-a006-87b9b5554032",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=835798e6-e045-49b0-a006-87b9b5554032"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/835798e6-e045-49b0-a006-87b9b5554032/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/e9a3e9dc-a3bc-4922-8c79-dda412051a1e",
+      "path": "/api/authoring/guidance/d2f6bcb0-71ef-47a5-8f45-863eb3cdb8e5",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=e9a3e9dc-a3bc-4922-8c79-dda412051a1e"
+      "query": "?documentTable=authoring_sections&documentId=d2f6bcb0-71ef-47a5-8f45-863eb3cdb8e5"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/e9a3e9dc-a3bc-4922-8c79-dda412051a1e/sources",
+      "path": "/api/authoring/sections/d2f6bcb0-71ef-47a5-8f45-863eb3cdb8e5/sources",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/3a349471-d9f7-4e2e-b06d-dde689cb7db1",
+      "path": "/api/authoring/guidance/9f86d437-e84b-4118-8376-a5874ecbf19a",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=3a349471-d9f7-4e2e-b06d-dde689cb7db1"
+      "query": "?documentTable=authoring_sections&documentId=9f86d437-e84b-4118-8376-a5874ecbf19a"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/3a349471-d9f7-4e2e-b06d-dde689cb7db1/sources",
+      "path": "/api/authoring/sections/9f86d437-e84b-4118-8376-a5874ecbf19a/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/4d37c6f2-323a-4783-abf1-f40363c5044f",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=4d37c6f2-323a-4783-abf1-f40363c5044f"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/4d37c6f2-323a-4783-abf1-f40363c5044f/sources",
       "query": ""
     },
     {
@@ -1624,12 +1624,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
+      "path": "/api/authoring/docs/b9533cb5-4398-4169-b0a8-751ec7894820",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5/sections",
+      "path": "/api/authoring/docs/b9533cb5-4398-4169-b0a8-751ec7894820/sections",
       "query": ""
     },
     {
@@ -1654,47 +1654,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5/citations",
+      "path": "/api/authoring/docs/b9533cb5-4398-4169-b0a8-751ec7894820/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
+      "path": "/api/authoring/docs/b9533cb5-4398-4169-b0a8-751ec7894820",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5/sections",
+      "path": "/api/authoring/docs/b9533cb5-4398-4169-b0a8-751ec7894820/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/16903129-9ab6-40c9-bfe9-e6fc8095707b",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=16903129-9ab6-40c9-bfe9-e6fc8095707b"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/16903129-9ab6-40c9-bfe9-e6fc8095707b/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/5a75389f-0c8b-43bf-9f8f-bb4cafa91a7c",
+      "path": "/api/authoring/guidance/48f37cc2-bd3f-4dbc-9aff-c9a5ea0523b6",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=5a75389f-0c8b-43bf-9f8f-bb4cafa91a7c"
+      "query": "?documentTable=authoring_sections&documentId=48f37cc2-bd3f-4dbc-9aff-c9a5ea0523b6"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/5a75389f-0c8b-43bf-9f8f-bb4cafa91a7c/sources",
+      "path": "/api/authoring/sections/48f37cc2-bd3f-4dbc-9aff-c9a5ea0523b6/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/2de6f1fa-49e8-4cab-8819-8d6e65ff87ea",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=2de6f1fa-49e8-4cab-8819-8d6e65ff87ea"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/2de6f1fa-49e8-4cab-8819-8d6e65ff87ea/sources",
       "query": ""
     },
     {
@@ -1709,12 +1709,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/0815a7d7-82d3-470a-a73f-690c10824b96",
+      "path": "/api/authoring/docs/1435a1ae-09a5-4b6c-a853-46d43871c809",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/0815a7d7-82d3-470a-a73f-690c10824b96/sections",
+      "path": "/api/authoring/docs/1435a1ae-09a5-4b6c-a853-46d43871c809/sections",
       "query": ""
     },
     {
@@ -1739,47 +1739,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/0815a7d7-82d3-470a-a73f-690c10824b96/citations",
+      "path": "/api/authoring/docs/1435a1ae-09a5-4b6c-a853-46d43871c809/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/0815a7d7-82d3-470a-a73f-690c10824b96",
+      "path": "/api/authoring/docs/1435a1ae-09a5-4b6c-a853-46d43871c809",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/0815a7d7-82d3-470a-a73f-690c10824b96/sections",
+      "path": "/api/authoring/docs/1435a1ae-09a5-4b6c-a853-46d43871c809/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/6b1a870f-be44-4991-b3d6-55b75839ff00",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=6b1a870f-be44-4991-b3d6-55b75839ff00"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/6b1a870f-be44-4991-b3d6-55b75839ff00/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/476fedeb-3b81-423b-a253-2675afd17b73",
+      "path": "/api/authoring/guidance/6fece971-fbb1-422c-ae9f-b5d24ad18f43",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=476fedeb-3b81-423b-a253-2675afd17b73"
+      "query": "?documentTable=authoring_sections&documentId=6fece971-fbb1-422c-ae9f-b5d24ad18f43"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/476fedeb-3b81-423b-a253-2675afd17b73/sources",
+      "path": "/api/authoring/sections/6fece971-fbb1-422c-ae9f-b5d24ad18f43/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/e577928d-8b56-4edc-87b8-0f1f603705de",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=e577928d-8b56-4edc-87b8-0f1f603705de"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/e577928d-8b56-4edc-87b8-0f1f603705de/sources",
       "query": ""
     },
     {
@@ -1794,12 +1794,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
+      "path": "/api/authoring/docs/3715db3f-675f-4882-b92d-adbb427679e7",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/b2ea65a5-1eb1-477d-8b86-d1cc86c0f918/sections",
+      "path": "/api/authoring/docs/3715db3f-675f-4882-b92d-adbb427679e7/sections",
       "query": ""
     },
     {
@@ -1824,47 +1824,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/b2ea65a5-1eb1-477d-8b86-d1cc86c0f918/citations",
+      "path": "/api/authoring/docs/3715db3f-675f-4882-b92d-adbb427679e7/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
+      "path": "/api/authoring/docs/3715db3f-675f-4882-b92d-adbb427679e7",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/b2ea65a5-1eb1-477d-8b86-d1cc86c0f918/sections",
+      "path": "/api/authoring/docs/3715db3f-675f-4882-b92d-adbb427679e7/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/df28d9fa-9520-49ee-a8ad-b04493e96c05",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=df28d9fa-9520-49ee-a8ad-b04493e96c05"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/df28d9fa-9520-49ee-a8ad-b04493e96c05/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/047c7d4d-3612-4497-a414-af9957f78de9",
+      "path": "/api/authoring/guidance/a0ded8a4-2612-4cca-82c1-1f1062b62322",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=047c7d4d-3612-4497-a414-af9957f78de9"
+      "query": "?documentTable=authoring_sections&documentId=a0ded8a4-2612-4cca-82c1-1f1062b62322"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/047c7d4d-3612-4497-a414-af9957f78de9/sources",
+      "path": "/api/authoring/sections/a0ded8a4-2612-4cca-82c1-1f1062b62322/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/60cb95a1-58d3-492c-a792-e269f5ea9be7",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=60cb95a1-58d3-492c-a792-e269f5ea9be7"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/60cb95a1-58d3-492c-a792-e269f5ea9be7/sources",
       "query": ""
     },
     {
@@ -1879,12 +1879,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/aba79497-035f-4a67-9057-b7e2fe2265b5",
+      "path": "/api/authoring/docs/53874c3c-5275-41a7-9396-5739ff6c923a",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/aba79497-035f-4a67-9057-b7e2fe2265b5/sections",
+      "path": "/api/authoring/docs/53874c3c-5275-41a7-9396-5739ff6c923a/sections",
       "query": ""
     },
     {
@@ -1909,47 +1909,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/aba79497-035f-4a67-9057-b7e2fe2265b5/citations",
+      "path": "/api/authoring/docs/53874c3c-5275-41a7-9396-5739ff6c923a/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/aba79497-035f-4a67-9057-b7e2fe2265b5",
+      "path": "/api/authoring/docs/53874c3c-5275-41a7-9396-5739ff6c923a",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/aba79497-035f-4a67-9057-b7e2fe2265b5/sections",
+      "path": "/api/authoring/docs/53874c3c-5275-41a7-9396-5739ff6c923a/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/a627cc49-2962-4660-98ca-9f5c00eb8e61",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=a627cc49-2962-4660-98ca-9f5c00eb8e61"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/a627cc49-2962-4660-98ca-9f5c00eb8e61/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/205a020e-a39c-41f6-801b-efa2a0a59544",
+      "path": "/api/authoring/guidance/8fe700d5-887c-4ab1-a101-f37de76d3ec6",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=205a020e-a39c-41f6-801b-efa2a0a59544"
+      "query": "?documentTable=authoring_sections&documentId=8fe700d5-887c-4ab1-a101-f37de76d3ec6"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/205a020e-a39c-41f6-801b-efa2a0a59544/sources",
+      "path": "/api/authoring/sections/8fe700d5-887c-4ab1-a101-f37de76d3ec6/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/21bc9325-db99-479a-9717-d6ee92d4301f",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=21bc9325-db99-479a-9717-d6ee92d4301f"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/21bc9325-db99-479a-9717-d6ee92d4301f/sources",
       "query": ""
     }
   ],
@@ -1984,57 +1984,57 @@
   "openEvents": [
     {
       "kind": "open",
-      "id": "15bea5bd-9a8e-48ba-9101-b47b738b3904",
+      "id": "648cdcb3-f544-4590-939c-f553bedab7d6",
       "held": true
     },
     {
       "kind": "open",
-      "id": "15bea5bd-9a8e-48ba-9101-b47b738b3904",
+      "id": "648cdcb3-f544-4590-939c-f553bedab7d6",
       "held": false
     },
     {
       "kind": "open",
-      "id": "15bea5bd-9a8e-48ba-9101-b47b738b3904",
+      "id": "648cdcb3-f544-4590-939c-f553bedab7d6",
       "held": false
     },
     {
       "kind": "open",
-      "id": "9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
+      "id": "b9533cb5-4398-4169-b0a8-751ec7894820",
       "held": false
     },
     {
       "kind": "open",
-      "id": "9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
+      "id": "b9533cb5-4398-4169-b0a8-751ec7894820",
       "held": false
     },
     {
       "kind": "open",
-      "id": "0815a7d7-82d3-470a-a73f-690c10824b96",
+      "id": "1435a1ae-09a5-4b6c-a853-46d43871c809",
       "held": false
     },
     {
       "kind": "open",
-      "id": "0815a7d7-82d3-470a-a73f-690c10824b96",
+      "id": "1435a1ae-09a5-4b6c-a853-46d43871c809",
       "held": false
     },
     {
       "kind": "open",
-      "id": "b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
+      "id": "3715db3f-675f-4882-b92d-adbb427679e7",
       "held": false
     },
     {
       "kind": "open",
-      "id": "b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
+      "id": "3715db3f-675f-4882-b92d-adbb427679e7",
       "held": false
     },
     {
       "kind": "open",
-      "id": "aba79497-035f-4a67-9057-b7e2fe2265b5",
+      "id": "53874c3c-5275-41a7-9396-5739ff6c923a",
       "held": false
     },
     {
       "kind": "open",
-      "id": "aba79497-035f-4a67-9057-b7e2fe2265b5",
+      "id": "53874c3c-5275-41a7-9396-5739ff6c923a",
       "held": false
     }
   ],
@@ -2049,7 +2049,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "15bea5bd-9a8e-48ba-9101-b47b738b3904",
+          "id": "648cdcb3-f544-4590-939c-f553bedab7d6",
           "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
           "module": "M1",
           "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
@@ -2087,7 +2087,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "9011f9c7-13e1-42c0-8bcf-0d1de03cc7b5",
+          "id": "b9533cb5-4398-4169-b0a8-751ec7894820",
           "title": "2.5 · Clinical Overview",
           "module": "M2",
           "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
@@ -2124,7 +2124,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "0815a7d7-82d3-470a-a73f-690c10824b96",
+          "id": "1435a1ae-09a5-4b6c-a853-46d43871c809",
           "title": "3.2.S.1 · General Information",
           "module": "M3",
           "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
@@ -2161,7 +2161,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "b2ea65a5-1eb1-477d-8b86-d1cc86c0f918",
+          "id": "3715db3f-675f-4882-b92d-adbb427679e7",
           "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
           "module": "M4",
           "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
@@ -2199,7 +2199,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "aba79497-035f-4a67-9057-b7e2fe2265b5",
+          "id": "53874c3c-5275-41a7-9396-5739ff6c923a",
           "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
           "module": "M5",
           "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",

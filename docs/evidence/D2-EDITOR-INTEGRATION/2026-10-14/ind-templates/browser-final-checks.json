@@ -1,12 +1,12 @@
 {
   "status": "pass",
-  "testedHead": "f566951ef78d459355f66eedc14db33b567c473b",
+  "testedHead": "013e54ba82d59f3eb74c854a324d27404b719af5",
   "testedSourceSha256": {
     "client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx": "1d5f1bae0f8521032af536b74588241cc266f5e97a7e23ef31dde516ed902260",
     "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "5dac26bbe5c2a53029b315f6603ab8c0bcfdfcf65462f45b4a941e82753bce96",
     "client/src/concept2cure/v2/styles/rich-section-editor.css": "5653d4aa6e86f91a60b66c3faf4d6474129b5aad5e8f8f04f65c5c2cd0367c71"
   },
-  "completedAt": "2026-10-14T04:55:48.283Z",
+  "completedAt": "2026-10-14T05:06:19.804Z",
   "apiContractSha256": "ee58e2b7a35a7f075111acd4cd6f09878dd31e22957ecf7593c14a1bb048009f",
   "contexts": 4,
   "representativeNativeCreates": 20,
@@ -77,7 +77,8 @@
     56382,
     60646,
     62695,
-    64028
+    64028,
+    65827
   ],
   "fixturePort": 5175,
   "fixturePortListening": false,
@@ -88,10 +89,10 @@
   "pushes": false,
   "allApisSynthetic": true,
   "reproductionFixtureSha256": {
-    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs": "dc1d6836f208d9715a1852865efd6eb8960b187c44b7bdd168c3b61ed756ade8",
-    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts": "f2f6b41260be7b1e5fcf5a15312aeda0677514fc6bf8cd84702e45311bc25444",
-    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx": "9f3afc8eb93ce375308364c734739995e62ae4023c8570d7d05682b97dd2534b",
-    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs": "061d3503c4fc556937f94aa35165be965cf2d174084b8b1b380ac7106044037f"
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs": "395a9cef3d0680895d961fe5b1b3ec5bb84611a625c47a1dafade5e1c92f76ea",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts": "8c5bd3414ef35cd770546e730af1c53ac8822b65364b78c668d266dec7606d1a",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx": "23bb7481676a3d63dcb305aa85ef7c11d0f5d5c178f628e2e636db3d3340bf57",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs": "6e2f774587db006875b29e9a6ef181c882a578bd6681af25c2391f42c08d8890"
   },
   "reproductionStrictLint": {
     "status": "pass",
@@ -107,14 +108,23 @@
       "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs"
     ],
     "fixtureSha256": {
-      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs": "dc1d6836f208d9715a1852865efd6eb8960b187c44b7bdd168c3b61ed756ade8",
-      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts": "f2f6b41260be7b1e5fcf5a15312aeda0677514fc6bf8cd84702e45311bc25444",
-      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx": "9f3afc8eb93ce375308364c734739995e62ae4023c8570d7d05682b97dd2534b",
-      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs": "061d3503c4fc556937f94aa35165be965cf2d174084b8b1b380ac7106044037f"
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs": "395a9cef3d0680895d961fe5b1b3ec5bb84611a625c47a1dafade5e1c92f76ea",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts": "8c5bd3414ef35cd770546e730af1c53ac8822b65364b78c668d266dec7606d1a",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx": "23bb7481676a3d63dcb305aa85ef7c11d0f5d5c178f628e2e636db3d3340bf57",
+      "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs": "6e2f774587db006875b29e9a6ef181c882a578bd6681af25c2391f42c08d8890"
     },
     "suppressionsAdded": false,
     "baselineChanged": false,
-    "ignoredRunnerEquivalent": true,
-    "ignoredGeneratorEquivalent": true
-  }
+    "ignoredLaunchersUseTrackedBundle": true,
+    "directTrackedBundleExecuted": true
+  },
+  "reproductionImports": {
+    "status": "pass",
+    "trackedRelativeImportsResolve": true,
+    "sourceFilesChecked": 34,
+    "ignoresAdded": false,
+    "tsconfigChanged": false
+  },
+  "reproductionDirectTrackedBundle": true,
+  "reproductionUsesBundleLocalApiContract": true
 }

@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import '../../design-system/colors_and_type.css';
-import '../../client/src/concept2cure/v2/styles/app-v2.css';
-import '../../client/src/concept2cure/v2/styles/journey-v2.css';
-import '../../client/src/concept2cure/v2/styles/coverage-v2.css';
-import '../../client/src/concept2cure/v2/styles/authoring-v2.css';
-import '../../client/src/concept2cure/v2/styles/misc-surfaces-v2.css';
-import '../../client/src/concept2cure/v2/styles/surface-text-ramp.css';
-import { IndDocumentLibrary } from '../../client/src/concept2cure/v2/editor/IndDocumentLibrary';
-import { DocumentCanvas } from '../../client/src/concept2cure/v2/editor/DocumentCanvas';
-import { AuthProvider } from '../../client/src/services/portal/authService';
-import { publishShellProject } from '../../client/src/concept2cure/v2/shellProject';
+import '../../../../../../design-system/colors_and_type.css';
+import '../../../../../../client/src/concept2cure/v2/styles/app-v2.css';
+import '../../../../../../client/src/concept2cure/v2/styles/journey-v2.css';
+import '../../../../../../client/src/concept2cure/v2/styles/coverage-v2.css';
+import '../../../../../../client/src/concept2cure/v2/styles/authoring-v2.css';
+import '../../../../../../client/src/concept2cure/v2/styles/misc-surfaces-v2.css';
+import '../../../../../../client/src/concept2cure/v2/styles/surface-text-ramp.css';
+import { IndDocumentLibrary } from '../../../../../../client/src/concept2cure/v2/editor/IndDocumentLibrary';
+import { DocumentCanvas } from '../../../../../../client/src/concept2cure/v2/editor/DocumentCanvas';
+import { AuthProvider } from '../../../../../../client/src/services/portal/authService';
+import { publishShellProject } from '../../../../../../client/src/concept2cure/v2/shellProject';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const theme = new URLSearchParams(location.search).get('theme') === 'dark' ? 'dark' : 'light';

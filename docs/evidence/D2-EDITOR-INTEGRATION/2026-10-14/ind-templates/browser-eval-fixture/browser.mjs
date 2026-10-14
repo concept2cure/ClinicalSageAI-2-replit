@@ -1,14 +1,19 @@
 import { chromium } from '/opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { randomUUID, createHash } from 'node:crypto';
-const ROOT='/workspace/ClinicalSageAI';
-const OUT=ROOT+'/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates';
-const apiContractText=readFileSync(ROOT+'/.visual-qa/ind-template-eval/api-contract.json','utf8');
+import {fileURLToPath} from 'node:url';
+import {resolve,relative,sep} from 'node:path';
+import {execFileSync} from 'node:child_process';
+const BUNDLE=fileURLToPath(new URL('.',import.meta.url));
+const ROOT=resolve(fileURLToPath(new URL('../../../../../../',import.meta.url)));
+const OUT=resolve(BUNDLE,'..');
+const fixtureUrl='/'+relative(ROOT,BUNDLE).split(sep).join('/')+'/';
+const apiContractText=readFileSync(new URL('./api-contract.json',import.meta.url),'utf8');
 const apiContractSha256=createHash('sha256').update(apiContractText).digest('hex');
 const contract=JSON.parse(apiContractText);
 const testedSourceSha256=Object.fromEntries(['client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx','client/src/concept2cure/v2/editor/DocumentWorkbench.tsx','client/src/concept2cure/v2/styles/rich-section-editor.css'].map(path=>[path,createHash('sha256').update(readFileSync(ROOT+'/'+path)).digest('hex')]));
 const PROGRAM='11111111-1111-4111-8111-111111111111';
-const TESTED_HEAD='f566951ef78d459355f66eedc14db33b567c473b';
+const TESTED_HEAD=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
 const DATE='2026-10-14T05:00:00.000Z';
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 const choices=['m1.1.1','m2.5','m3.2.S.1','m4.2.3.1','m5.3.5.1'].map(code=>contract.catalog.sections.find(s=>s.code===code));
@@ -74,7 +79,7 @@ async function startPage(label,width,theme){
   page.on('pageerror',e=>state.pageErrors.push(e.message));
   await page.route('**/api/**',route=>handleApiRoute(route,state));
   await page.addInitScript(()=>{localStorage.setItem('trialsage_access_token','synthetic-browser-token');localStorage.setItem('trialsage_user',JSON.stringify({id:1,email:'synthetic@example.invalid',organizationId:1,roles:['regulatory-author']}));});
-  await page.goto(`http://127.0.0.1:5175/.visual-qa/ind-template-eval/?theme=${theme}`);
+  await page.goto(`http://127.0.0.1:5175${fixtureUrl}?theme=${theme}`);
   await page.locator('[data-testid="ind-document-library"] .pf-count').waitFor();
   return {context,page,state,label,width,theme};
 }
