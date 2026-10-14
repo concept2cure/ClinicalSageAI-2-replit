@@ -1,0 +1,85 @@
+[ci:eslint-warning-ratchet] --since origin/concept2cure-v2 (9ba70078f) -- 248 lintable file(s) changed; linting both versions of each...
+
+    +9  server/services/vault/document-catalog.service.ts  (0 -> 9)
+         server/services/vault/document-catalog.service.ts:208:17  no-redeclare  'loadDocumentForOrg' is already defined.
+         server/services/vault/document-catalog.service.ts:210:8  complexity  Async function 'loadDocumentForOrg' has a complexity of 16. Maximum allowed is 15.
+         server/services/vault/document-catalog.service.ts:210:23  no-redeclare  'loadDocumentForOrg' is already defined.
+         server/services/vault/document-catalog.service.ts:356:8  complexity  Async function 'completeCatalog' has a complexity of 23. Maximum allowed is 15.
+         server/services/vault/document-catalog.service.ts:528:17  no-redeclare  'listProjectDocuments' is already defined.
+         server/services/vault/document-catalog.service.ts:529:23  no-redeclare  'listProjectDocuments' is already defined.
+         server/services/vault/document-catalog.service.ts:648:1  max-lines  File has too many lines (603). Maximum allowed is 500.
+         server/services/vault/document-catalog.service.ts:727:17  no-redeclare  'getCatalogBootstrapDigest' is already defined.
+         server/services/vault/document-catalog.service.ts:728:23  no-redeclare  'getCatalogBootstrapDigest' is already defined.
+    +4  server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts  (0 -> 4)
+         server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts:7:1  max-params  Function 'derive' has too many parameters (8). Maximum allowed is 5.
+         server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts:10:16  no-undef  'structuredClone' is not defined.
+         server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts:26:87  no-undef  'structuredClone' is not defined.
+         server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts:57:73  no-undef  'structuredClone' is not defined.
+    +4  server/services/vault/__tests__/fixtures/scientific-source-facts.ts  (0 -> 4)
+         server/services/vault/__tests__/fixtures/scientific-source-facts.ts:43:146  no-undef  'structuredClone' is not defined.
+         server/services/vault/__tests__/fixtures/scientific-source-facts.ts:46:1  max-params  Function 'fixture' has too many parameters (10). Maximum allowed is 5.
+         server/services/vault/__tests__/fixtures/scientific-source-facts.ts:51:1  max-params  Function 'alter' has too many parameters (6). Maximum allowed is 5.
+         server/services/vault/__tests__/fixtures/scientific-source-facts.ts:52:13  no-undef  'structuredClone' is not defined.
+    +3  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/probe-hold-lock.mjs  (0 -> 3)
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/probe-hold-lock.mjs:7:58  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/probe-hold-lock.mjs:8:14  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/probe-hold-lock.mjs:11:52  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +3  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-owned-postgres-fixture.mjs  (0 -> 3)
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-owned-postgres-fixture.mjs:68:11  prefer-const  'identity' is never reassigned. Use 'const' instead.
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-owned-postgres-fixture.mjs:81:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-owned-postgres-fixture.mjs:103:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +3  docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-owned-postgres-fixture.mjs  (0 -> 3)
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-owned-postgres-fixture.mjs:61:11  prefer-const  'identity' is never reassigned. Use 'const' instead.
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-owned-postgres-fixture.mjs:74:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-owned-postgres-fixture.mjs:96:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +3  docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-owned-postgres-fixture.mjs  (0 -> 3)
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-owned-postgres-fixture.mjs:61:11  prefer-const  'identity' is never reassigned. Use 'const' instead.
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-owned-postgres-fixture.mjs:74:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-owned-postgres-fixture.mjs:96:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +2  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-final-regression.mjs  (0 -> 2)
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-final-regression.mjs:166:53  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-final-regression.mjs:170:1  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +2  docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-final-regression.mjs  (0 -> 2)
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-final-regression.mjs:151:53  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-final-regression.mjs:155:1  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +2  docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-tools-scoped-check.mjs  (0 -> 2)
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-tools-scoped-check.mjs:37:1  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-tools-scoped-check.mjs:38:1  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +2  docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres-fixture.mjs  (0 -> 2)
+         docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres-fixture.mjs:74:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+         docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres-fixture.mjs:92:3  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +2  docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-final-regression.mjs  (0 -> 2)
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-final-regression.mjs:51:53  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-final-regression.mjs:55:1  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +2  server/services/vault/document-catalog-search.ts  (0 -> 2)
+         server/services/vault/document-catalog-search.ts:97:17  no-redeclare  'searchCatalog' is already defined.
+         server/services/vault/document-catalog-search.ts:98:23  no-redeclare  'searchCatalog' is already defined.
+    +1  docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-independent.mjs  (0 -> 1)
+         docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/run-independent.mjs:29:47  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+    +1  docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-independent.mjs  (0 -> 1)
+         docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/run-independent.mjs:48:50  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+    +1  docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/run-independent-review.mjs  (0 -> 1)
+         docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/run-independent-review.mjs:60:54  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+    +1  docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-core.mjs  (0 -> 1)
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-core.mjs:31:47  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+    +1  docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-program-snapshot.mjs  (0 -> 1)
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-program-snapshot.mjs:24:50  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+    +1  docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-tools.mjs  (0 -> 1)
+         docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/run-independent-tools.mjs:23:50  no-control-regex  Unexpected control character(s) in regular expression: \x1b.
+    +1  docs/reports/data-room-catalog-context-probe.mjs  (0 -> 1)
+         docs/reports/data-room-catalog-context-probe.mjs:20:1  no-console  Unexpected console statement. Only these console methods are allowed: warn, error, info.
+    +1  server/routes/ana-ri/stream.ts  (23 -> 24)
+         server/routes/ana-ri/stream.ts:2562:27  complexity  Async arrow function has a complexity of 19. Maximum allowed is 15.
+    +1  server/routes/c2c/projects.ts  (5 -> 6)
+         server/routes/c2c/projects.ts:1555:63  complexity  Async arrow function has a complexity of 16. Maximum allowed is 15.
+    +1  server/services/document-data-disposition/service.ts  (0 -> 1)
+         server/services/document-data-disposition/service.ts:68:3  complexity  Async function 'scoped' has a complexity of 17. Maximum allowed is 15.
+    +1  server/services/vault/document-catalog-governance.service.ts  (0 -> 1)
+         server/services/vault/document-catalog-governance.service.ts:556:8  complexity  Async function 'readCatalogRecord' has a complexity of 16. Maximum allowed is 15.
+    -1  server/routes/chat/upload.ts  (4 -> 3)
+
+[ci:eslint-warning-ratchet] net +51 warning(s) across the files changed since origin/concept2cure-v2.
+  Those lines are what the ratchet is refusing. Fix them -- do not regenerate
+  the baseline to make room.
+
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 51 warning(s) (listed above).

@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts [ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts ]
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts [ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts ]
+Error: Transform failed with 1 error:
+/workspace/Concept2Cure/server/services/ana/step-presentation.ts:412:0: ERROR: Unexpected "<<"
+  Plugin: vite:esbuild
+  File: /workspace/Concept2Cure/server/services/ana/step-presentation.ts:412:0
+  
+  Unexpected "<<"
+  410|  }
+  411|  
+  412|  <<<<<<< HEAD
+     |  ^
+  413|  interface TitleScopeContext {
+  414|    userId?: number | null;
+  
+ ❯ failureErrorWithLog node_modules/vite/node_modules/esbuild/lib/main.js:1467:15
+ ❯ node_modules/vite/node_modules/esbuild/lib/main.js:736:50
+ ❯ responseCallbacks.<computed> node_modules/vite/node_modules/esbuild/lib/main.js:603:9
+ ❯ handleIncomingPacket node_modules/vite/node_modules/esbuild/lib/main.js:658:12
+ ❯ Socket.readFromStdout node_modules/vite/node_modules/esbuild/lib/main.js:581:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/c2c/__tests__/vault-catalog-source-review.test.ts [ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts ]
+Error: Transform failed with 1 error:
+/workspace/Concept2Cure/server/services/clinical-regulatory-evidence/evidence-spine.service.ts:16:0: ERROR: Unexpected "<<"
+  Plugin: vite:esbuild
+  File: /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/evidence-spine.service.ts:16:0
+  
+  Unexpected "<<"
+  14 |  
+  15 |  import { pool } from '../../db';
+  16 |  <<<<<<< HEAD
+     |  ^
+  17 |  import { sourceProcessingSummary } from './data-room-processing-read.js';
+  18 |  =======
+  
+ ❯ failureErrorWithLog node_modules/vite/node_modules/esbuild/lib/main.js:1467:15
+ ❯ node_modules/vite/node_modules/esbuild/lib/main.js:736:50
+ ❯ responseCallbacks.<computed> node_modules/vite/node_modules/esbuild/lib/main.js:603:9
+ ❯ handleIncomingPacket node_modules/vite/node_modules/esbuild/lib/main.js:658:12
+ ❯ Socket.readFromStdout node_modules/vite/node_modules/esbuild/lib/main.js:581:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-private-project.test.ts [ server/routes/chat/__tests__/send-message-private-project.test.ts ]
+Error: Transform failed with 1 error:
+/workspace/Concept2Cure/server/services/advancedRAGPipeline.ts:334:0: ERROR: Unexpected "<<"
+  Plugin: vite:esbuild
+  File: /workspace/Concept2Cure/server/services/advancedRAGPipeline.ts:334:0
+  
+  Unexpected "<<"
+  332|    options.artifactScope?.organizationUuid ?? options.organizationUuid;
+  333|  
+  334|  <<<<<<< HEAD
+     |  ^
+  335|  function pinActorRetrievalOptions(options: RetrievalOptions): RetrievalOptions {
+  336|    if (!options.sourceReadScope) return options;
+  
+ ❯ failureErrorWithLog node_modules/vite/node_modules/esbuild/lib/main.js:1467:15
+ ❯ node_modules/vite/node_modules/esbuild/lib/main.js:736:50
+ ❯ responseCallbacks.<computed> node_modules/vite/node_modules/esbuild/lib/main.js:603:9
+ ❯ handleIncomingPacket node_modules/vite/node_modules/esbuild/lib/main.js:658:12
+ ❯ Socket.readFromStdout node_modules/vite/node_modules/esbuild/lib/main.js:581:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  no tests
+   Start at  21:12:00
+   Duration  4.40s (transform 1.58s, setup 116ms, import 0ms, tests 0ms, environment 0ms)
+

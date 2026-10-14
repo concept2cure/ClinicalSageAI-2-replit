@@ -1,0 +1,20 @@
+{
+  "path": "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+  "compilerVersion": "5.6.3",
+  "compilerOptions": {
+    "target": 9,
+    "module": 99,
+    "jsx": 1,
+    "sourceMap": false,
+    "inlineSourceMap": false,
+    "removeComments": false
+  },
+  "beforeSourceSha256": "e3863f3d8475951f419976b084043782628fe163e42c32efb99514ab7c6cc9a8",
+  "afterSourceSha256": "37399cb3abcc1ed08bdf83d5e69b0d8648b5ab45e3a64bf67c13a9fa110a7866",
+  "beforeEmittedJavaScriptSha256": "1bd7c2bac18ac06e4157ceca11c7f4f921e0ea6cca1bd2a023f7699b0663e80e",
+  "afterEmittedJavaScriptSha256": "1bd7c2bac18ac06e4157ceca11c7f4f921e0ea6cca1bd2a023f7699b0663e80e",
+  "emittedJavaScriptByteIdentical": true,
+  "beforeDiagnostics": 0,
+  "afterDiagnostics": 0,
+  "change": "Only explicit Record<string, unknown> generic row type on existing PGlite selected-parent SELECT; runtime SQL/parameters/logic unchanged."
+}

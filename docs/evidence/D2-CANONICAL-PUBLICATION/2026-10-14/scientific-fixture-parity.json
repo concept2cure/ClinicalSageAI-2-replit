@@ -1,0 +1,31 @@
+{
+  "before": [
+    {
+      "path": "server/services/vault/__tests__/fixtures/scientific-source-facts.ts",
+      "count": 47,
+      "exportedCorpusSha256": "73049a64d6d6d963929565445412fc5946f764efa0b42768021e93eca5e9d546",
+      "sourceSha256": "29e7107105aa72fb919f215b765e2d9e36b3fef5b128bccf0479394f69c7802d"
+    },
+    {
+      "path": "server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts",
+      "count": 23,
+      "exportedCorpusSha256": "12c2e149bdaabb7fb031ead32aaf554d0fc4ff95fd7570691d4d6081d69e1e44",
+      "sourceSha256": "b0234fa4093a8a120131fab3bece3570cc06b116d6433df06429a79937d1d6e0"
+    }
+  ],
+  "after": [
+    {
+      "path": "server/services/vault/__tests__/fixtures/scientific-source-facts.ts",
+      "count": 47,
+      "exportedCorpusSha256": "73049a64d6d6d963929565445412fc5946f764efa0b42768021e93eca5e9d546",
+      "sourceSha256": "7f96ee9fdfa55acac8d1beaf33b9dcefebf996de37d928b19198a3271aede9d7"
+    },
+    {
+      "path": "server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts",
+      "count": 23,
+      "exportedCorpusSha256": "12c2e149bdaabb7fb031ead32aaf554d0fc4ff95fd7570691d4d6081d69e1e44",
+      "sourceSha256": "e45297def1ded596ac6e67455ef3f43968567e6edfaaeba47e81191c72cd8fea"
+    }
+  ],
+  "allExportedCorpusHashesIdentical": true
+}

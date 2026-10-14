@@ -1,0 +1,227 @@
+﻿The AnA Authoring Environment — Architecture & Capability Specification
+ARCHITECTURE & CAPABILITY SPECIFICATION
+The AnA Authoring Environment
+A device-native regulatory authoring system
+Target state, architectural thesis and sequenced build for the Concept2Cure.RI document editor, specified for Medical Device and Diagnostics clients.
+FIELD
+	DETAIL
+	Date
+	14 August 2026
+	Scope
+	Document authoring environment, MDX lane
+	Companion document
+	Concept2Cure.RI — MDX UAT Advisory & Needs Report, §9
+	Premise
+	The editor should be the most advanced regulatory authoring environment available, not a Word substitute with an audit trail
+	________________
+
+
+Contents
+
+
+
+
+1. The thesis
+The document is not the artifact. It is a view over a structured product record. Every tool in this market — Word, Veeva Vault RIM, MasterControl, Greenlight Guru, Rimsys — treats the document as the unit of truth. Text is typed into it. The same fact is retyped across the 510(k) Summary, the Device Description, the Indications for Use, the IFU, the labeling, the technical file, the risk file and the Declaration of Conformity. Then it drifts, and humans hunt for the drift.
+The advanced move is to invert that. Facts live once, in the product record. Documents bind to them. The substantial-equivalence comparison is not authored — it is generated from the device profile and the predicate record, and stays live. Indications for Use is a single governed object that renders into Form FDA 3881, §5.5 of the 510(k) Summary, the IFU and the labeling. Change it once and every binding is flagged with an impact report before anything is filed.
+That is the difference between a very good editor and a category-defining one. Word will never do it, because Word has no product record. RIM suites do not do it, because their document layer and their registration data model were built by different teams a decade apart.
+1.1 Why Word-parity is the wrong target
+Chasing Word feature-for-feature is a race that cannot be won and would not matter if it were. Microsoft has thirty years of head start on comment threading and equation editors. Meanwhile the things a device regulatory writer actually loses sleep over are things Word cannot help with at all:
+* Did the accuracy claim in the SE table match the accuracy in the performance test report, the IFU and the labeling?
+* Is the guidance document cited in the software section still current?
+* Does every claim in the submission have evidence behind it that actually exists in the record?
+* If the predicate is superseded, which of my seventeen documents are now wrong?
+* Which of the twenty required eSTAR sections are genuinely complete, and which merely have text in them?
+None of those are formatting problems. All of them are solvable if the content is structured and bound. That is where the ambition should go.
+1.2 What must be true for this to work
+One technical decision gates everything: content must be stored as a typed structure, not as a text blob. A plain string can be spell-checked. A typed block graph can be validated, bound, transcluded, diffed semantically, rendered into an eSTAR AcroForm field, and reasoned about by a model under constraint. Every capability in this specification is downstream of that one choice.
+This also solves a current blocker outright. The 510(k) workbench cannot populate the eSTAR AcroForm field map today. With typed content, field mapping becomes mechanical rather than a manual enumeration exercise.
+2. The eight layers
+Each layer depends on the one below it. The ordering is not a preference; it is a dependency chain.
+Layer 1 — Structured content
+A block-based document schema (ProseMirror, TipTap or Lexical class) in place of the current textarea. Every block is typed and validated. The stored artifact is a document graph, not a string.
+Unlocks: everything above. Also makes XML export meaningful and eSTAR field mapping tractable.
+Layer 2 — Regulatory-native blocks
+Not generic tables and paragraphs, but block types that know what they are. This is where the product stops resembling a word processor. See §3 for the full library.
+Unlocks: validation, generation and binding, because the system understands the semantics of what is on the page.
+Layer 3 — Binding and single-sourcing
+Blocks bind to records — the device profile, the predicate, a test result, a hazard, a standard, a design input. A bound block is a live projection with an explicit version pin, not a copy. Changing the source produces an impact report listing every document, section and claim affected.
+Unlocks: the elimination of drift as a class of problem, rather than its detection after the fact.
+Layer 4 — Live compliance intelligence
+Checks that run while writing, in the margin, not as a module the user must remember to visit:
+* Completeness — which required sections for this filing type are missing or thin, against the full eSTAR set.
+* Claim without evidence — an assertion with no bound test result, study or standard behind it.
+* Cross-document inconsistency — this value contradicts the same value elsewhere in the dossier.
+* Regulatory currency — you have cited a superseded guidance, a withdrawn standard, or a de-recognised consensus standard.
+* Predicate risk — this difference from the predicate is the kind that historically triggers an Additional Information request.
+* Plain-language check — for OTC IFU content, where FDA expects lay comprehension.
+Worked example. The AeroFlow package supplied for UAT cites the May 2005 software guidance and the retired "Level of Concern" construct, both superseded by the June 2023 device software guidance and its Basic/Enhanced Documentation Level. It also states a regulation number that appears mismatched to its product code. A currency check at Layer 4 catches both as they are typed — before a reviewer, a consultant or FDA does.
+Layer 5 — AI that operates on structure
+Because content is typed, the model can be constrained rather than merely prompted. AnA proposes structured edits — a table row, a claim with its citation, a completed conformity entry — delivered as tracked changes attributed to AnA with SourceLinks recorded. Rules become enforceable: this block type may not be authored without a bound evidence record.
+This is also where the product finally keeps its own promise. "AnA proposes; you accept and save" is the right governance posture and is already stated in the UI. Today there is no Accept control. At Layer 5 it exists, and what it accepts is a structured, attributed, provenance-carrying revision.
+Layer 6 — Provenance and Part 11
+Already largely designed and correct: per-section revisions, hash-sealed freeze, §11.50 meaning-of-signature with Authorship / Review / Approval, and SourceLinks that store the source's content identity so a section is flagged when its source changes.
+Do not rebuild this. Build the new editing surface underneath it. It is the strongest asset the current implementation has.
+Layer 7 — Rendering to many outputs
+One record, many projections: eSTAR AcroForm, Word for circulation, PDF for filing, XML, EUDAMED payloads, IFU artwork feeds. Because content is typed, each renderer is a mapping rather than a reformatting exercise.
+Unlocks: the submittable eSTAR the workbench currently cannot produce.
+Layer 8 — Collaboration
+Real-time co-authoring (CRDT-backed), tracked changes, redline compare between any two revisions, comment threads anchored to blocks, role-gated review, and an external reviewer mode with comment-only rights for consultants and notified-body contacts.
+Why it matters: if review cannot happen inside the system, documents get exported to Word, edited outside, and re-imported — which destroys the audit trail everything else is built to protect.
+3. The regulatory-native block library
+This is the concrete expression of Layer 2, and the part a device regulatory professional would recognise immediately as built for them.
+BLOCK
+	WHAT IT DOES
+	BINDS TO
+	SE Comparison
+	Subject-versus-predicate table with an attribute column, subject column, predicate column and verdict column. Pre-populated from the device profile and predicate record. Flags every "Different" row as requiring a supporting rationale and evidence link.
+	Device profile · predicate record · performance test results
+	Indications for Use
+	A single governed statement with prescription/OTC declaration. Renders into Form FDA 3881, the 510(k) Summary, the IFU and labeling. Edited once.
+	Program record · labeling · IFU
+	Standards Conformity
+	Standard, edition, clause, extent of conformity, and evidence. Warns when FDA recognition status changes or the edition is superseded.
+	FDA recognized consensus standards database
+	Test Result
+	Test, method, standard, acceptance criteria, result, verdict, sample size. Cannot be marked complete without a bound study record.
+	Bench, biocompatibility, EMC, software V&V records
+	Hazard / Risk
+	Hazard, hazardous situation, harm, severity, probability, risk control, residual risk, benefit-risk conclusion.
+	ISO 14971 risk file
+	Requirement / Trace
+	Design input with its outputs, verification and validation — rendered inline, showing gaps.
+	Design controls traceability matrix
+	GSPR / Essential Principles
+	Requirement, applicability, method of conformity, evidence reference. Correct count and structure per MDR Annex I (23) or IVDR Annex I (20).
+	Technical file · harmonised standards
+	Analytical Performance
+	LoB, LoD, LoQ, precision, linearity, interference, method comparison, stability — structured per the relevant CLSI EP protocol.
+	IVD validation studies
+	Clinical Performance
+	2×2 contingency with sensitivity, specificity, PPV, NPV and confidence intervals computed rather than typed.
+	Clinical study record
+	Claim
+	A marked assertion. Carries required evidence, a confidence state, and a risk flag. The unit the consistency and claim-check engines operate on.
+	Evidence records · precedent corpus
+	Citation
+	Regulation, guidance or standard with a pinned version. Surfaces currency warnings.
+	Regulatory intelligence corpus
+	Figure
+	Image with caption, auto-numbering and cross-reference target. Device photographs, assembly diagrams, labeling artwork, HF screen captures.
+	Artifact vault
+	Declaration
+	Standard statements — Truthful and Accurate (807.87(k)), 510(k) Statement/Summary (807.92/93), Class III certification — pre-populated from the program record.
+	Program record · signatory
+	Reusable block
+	Named content authored once and transcluded, with change propagation and an impact report. Company boilerplate, device description, IFU text.
+	Content library
+	4. The three differentiators nobody has
+Most of the specification above brings the editor to industry standard. These three would put it beyond anything currently on the market.
+4.1 Generated substantial-equivalence tables that stay live
+The SE comparison is the intellectual core of a 510(k) and today is hand-built in Word, every time, by every company. If the device profile and the predicate record are structured, the table is generated: attributes aligned, identical rows marked, differences isolated, and each difference demanding a rationale and an evidence link before the section can be marked complete.
+When the predicate record changes — a new clearance, a recall, a superseding device — every SE table bound to it is flagged. No one does this. It is also the most natural possible use of the precedent intelligence engine, once that engine is connected to the FDA registries.
+4.2 Regulatory currency as a live property of the text
+Guidance documents are superseded. Standards are revised and de-recognised. Regulations change — QMSR replaced the Part 820 design-control framework in February 2026, and a great deal of existing device documentation still cites 820.30.
+If citations are typed objects with pinned versions, the system can tell a writer, in the margin, that the guidance they just cited was superseded and what replaced it — and can sweep an entire back catalogue for the same problem. This is a genuine and recurring pain for every device company, and it is invisible to every document tool on the market.
+4.3 Claim–evidence binding enforced at authoring time
+Today, claims are written and then — optionally, later, by a human or a bolt-on checker — reconciled against evidence. Inverted: a Claim block cannot reach "complete" without bound evidence, and the binding is visible while writing. Evidence that is later withdrawn or superseded flags every claim that rests on it.
+This converts submission review from an archaeology exercise into a state check, and it is the single most defensible thing a regulatory platform can offer a QA organisation.
+5. What Concept2Cure already has
+This specification is ambitious but it is not speculative. Most of the hard conceptual work exists in the codebase already, in the wrong place or unconnected.
+EXISTING ASSET
+	ROLE IN THE TARGET STATE
+	SourceLinks with typed source classes and content identity
+	Layer 6 provenance — already the right model, including the "flag when the source changes" semantics
+	Part 11 freeze, hash-seal and §11.50 e-signature
+	Layer 6, essentially complete and better than several commercial suites
+	Per-section revision recording
+	Layer 6 — the audit substrate for tracked changes
+	Design-controls traceability computation
+	Layer 3 binding target for the Requirement / Trace block
+	ISO 14971 risk file model
+	Layer 3 binding target for the Hazard / Risk block
+	IVDR Annex VIII rule engine, 2×2 clinical performance, LoD/LoQ/CV fields
+	Layer 2 block definitions for the diagnostics lane, already specified correctly
+	Filing-readiness engine with 16 submission types
+	Layer 4 completeness checking — needs the full section model and to run inside the editor
+	Inconsistency Intelligence
+	Layer 4 — exists as a module; belongs in the margin
+	Precedent intelligence engine
+	Layer 3 and 4.1 — the predicate binding source, once connected to the FDA registries
+	Template library with OOXML brand extraction
+	Layer 7 rendering — a genuine differentiator for client-branded output
+	eSTAR section and readiness vocabulary
+	Layer 2 and 7 — the dossier structure provider
+	The gap is not capability. It is connection. These pieces were each built well and mounted as separate routes. The authoring environment is where they become a product rather than a collection of modules — which is the same conclusion the consolidation analysis reaches from the navigation side.
+6. Architecture decisions
+DECISION
+	RECOMMENDATION
+	RATIONALE
+	Editor framework
+	ProseMirror (or TipTap over it). Lexical is a defensible alternative.
+	Mature custom node types, collaborative editing, strict schema validation, and a well-trodden path for domain-specific blocks.
+	Content storage
+	Typed document graph (JSON), versioned per section, with the rendered form derived rather than stored.
+	Enables binding, semantic diff, validation and multi-target rendering. The current text blob forecloses all four.
+	Binding model
+	Explicit reference with a version pin plus a live/pinned mode per block.
+	Regulatory documents must be reproducible as filed, while drafts should track upstream change. Both are required.
+	Change propagation
+	Event-driven impact analysis producing a report, never a silent rewrite.
+	A governed record may not change underneath a signatory. The user decides; the system informs.
+	Collaboration
+	CRDT (Yjs) over the ProseMirror document.
+	Real-time co-authoring without lock contention, and offline tolerance.
+	Diff and redline
+	Semantic diff over the block graph, rendered as familiar redline.
+	Structural diff is far more accurate than text diff for tables and lists — which is most of a device dossier.
+	Word round-trip
+	Structured mapping to OOXML in both directions, reusing the existing template engine.
+	Import the client back catalogue; export something a consultant can redline. Table and style fidelity is the acceptance test.
+	eSTAR rendering
+	Deterministic map from block types to AcroForm fields.
+	Removes the current manual field-map blocker and makes the submittable eSTAR achievable.
+	AI integration
+	Constrained structured-output proposals into a tracked-change queue, never direct writes.
+	Preserves the "AnA proposes; you accept" governance promise and keeps provenance intact.
+	7. Sequenced build
+One caution. "Most advanced" is a real risk if it is attempted top-down. Layers 3 through 5 are worthless without Layer 1, and none of it is demonstrable while project creation returns 503 and there is no document ingestion path. The ambition is right; the sequence has to be boring.
+PHASE
+	SCOPE
+	PROVES
+	0
+prerequisites
+	Project persistence; device data model; document ingestion; MDX entry point to the editor.
+	That a device program can exist at all. Nothing below is demonstrable without this.
+	1
+industry standard
+	Block editor. Headings, lists, formatting, symbols, figures and TABLES. Hierarchical ordered sections with reorder. Word export repaired. Dossier-structure provider seeding eSTAR / PMA / MDR / IVDR skeletons.
+	That a device writer can produce a real substantial-equivalence table. The minimum for an MDX demo.
+	2
+device-native
+	Regulatory block library (§3). Section-level citation, ownership and status. Declarations pre-populated from the program record. Word import round-trip.
+	That this is a device tool, not a pharma tool accepting device content.
+	3
+collaborative
+	Tracked changes, semantic redline, anchored comments, accept/reject, reviewer roles, external comment-only access, real-time co-authoring.
+	That review happens inside the system, so the audit trail survives contact with reality.
+	4
+bound
+	Binding and single-sourcing with impact analysis. Generated SE tables. Reusable content blocks. eSTAR field rendering.
+	That drift is eliminated rather than detected. The first genuinely differentiated capability.
+	5
+intelligent
+	Live margin checks — completeness, claim-evidence, inconsistency, regulatory currency, predicate risk. AnA accept-into-section with provenance.
+	That the environment actively defends the submission while it is being written.
+	7.1 The acceptance test for each phase
+1. Phase 1: a regulatory writer reproduces the AeroFlow §5.6 comparison table — 13 rows, 4 columns — inside the editor, and exports it to Word with the table intact.
+2. Phase 2: creating a 510(k) project seeds a document with the full required section skeleton, numbered, citation-tagged, with completion state per section.
+3. Phase 3: an external consultant reviews a draft in redline and returns it without the document ever leaving the system.
+4. Phase 4: changing the predicate on the program record flags every affected SE table and produces an impact report.
+5. Phase 5: typing a citation to a superseded guidance produces a margin warning naming its replacement.
+8. Closing
+The ambition is correct and the market position is real. There is no device-native, structurally-bound regulatory authoring environment on the market. Word has no product record. RIM suites bolted their document layer and their data model together long after both were built. A system where the substantial-equivalence table generates itself, claims cannot exist without evidence, and superseded citations announce themselves would not be a better editor — it would be a different category of tool.
+The constraint is sequence, not ambition. Every advanced capability in this specification rests on one unglamorous decision: store content as a typed structure rather than a string. Make that change and the rest becomes incremental. Skip it and none of it is reachable, however much is invested in the surface.
+And protect what already works. The freeze, the hash seal, the §11.50 signature model and the SourceLinks provenance concept are the strongest work in the product. The failure today is not that they were built badly — it is that they were built around a textarea. Put a real document model underneath them and the governance architecture that already exists becomes the thing that makes the advanced capabilities defensible.
+Concept2Cure.RI — AnA Authoring Environment: Architecture & Capability Specification · 14 August 2026 · companion to the MDX UAT Advisory & Needs Report. Regulatory references reflect FDA, EU MDR/IVDR and CLIA practice current as of this date and are provided for product-development guidance, not as regulatory advice.
+Page  of

@@ -1,0 +1,40 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts > independent merged recorded-parent and actor controls > an exact artifact/file relationship resolves legacy numeric scope and fails after its private share is removed
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts > independent merged recorded-parent and actor controls > coincident numeric project IDs cannot replace the exact artifact and upload identity
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts > independent merged recorded-parent and actor controls > a creator-owned unbound capture retains a same-byte private ancestor even when deleted=false
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts > independent merged recorded-parent and actor controls > a creator-owned unbound capture retains a same-byte private ancestor even when deleted=true
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts > independent merged recorded-parent and actor controls > a custom persisted role can read its explicit share while inactive current actor refuses unchanged source metadata
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts > independent merged recorded-parent and actor controls > disposition reserves impacts before holding actor rows and refuses a persisted downgrade after that checkpoint 118ms
+   → expected DispositionError: The complete source imp… { …(2) } to match object { status: 403, code: 'FORBIDDEN' }
+(1 matching property omitted from actual)
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  21:26:55
+   Duration  3.97s (transform 729ms, setup 0ms, import 1.84s, tests 1.92s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts > independent merged recorded-parent and actor controls > disposition reserves impacts before holding actor rows and refuses a persisted downgrade after that checkpoint
+AssertionError: expected DispositionError: The complete source imp… { …(2) } to match object { status: 403, code: 'FORBIDDEN' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "FORBIDDEN",
+-   "status": 403,
++ DispositionError {
++   "code": "IMPACT_UNAVAILABLE",
++   "status": 503,
+  }
+
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/independent-disposition-counterfactual.test.mts:80:151
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

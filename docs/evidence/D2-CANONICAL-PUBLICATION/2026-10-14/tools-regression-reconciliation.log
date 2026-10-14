@@ -1,0 +1,106 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-14T21:28:36.755Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:28:36.756Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-14T21:28:36.757Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-sections.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts
+{
+  "timestamp": "2026-10-14T21:28:37.531Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > reports an invalid section in its original slot while keeping the valid draft
+{
+  "timestamp": "2026-10-14T21:28:45.055Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/c2c/program-access.ts:221:33",
+    "queryPreview": "SELECT regulatory_program_id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses actual processed source records and returns version-bound receipts without copying raw text
+{
+  "timestamp": "2026-10-14T21:28:45.059Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/c2c/program-access.ts:183:25",
+    "queryPreview": "SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > is registered 3ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors on an empty sections array 2ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > errors above the 20-section cap 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > drafts valid sections in parallel and shapes the result 46ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch_draft_sections > reports an invalid section in its original slot while keeping the valid draft 45ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses actual processed source records and returns version-bound receipts without copying raw text 4ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > blocks generation for unavailable selected sources while retaining other section drafts 2ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > uses the open program UUID before a legacy project ID for drafting context 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > preserves successful drafts and names only failed original slots for retry 2ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > does not throw on null or non-object slots or lose their position 1ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > errors when every section is invalid 0ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > reports no usable blank draft as a failure rather than success 8ms
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts > batch draft recovery receipts > a failed batch retains actionable slots without exposing the thrown provider detail 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 2ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 2ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > current body delivery survives its metadata-only final guard, whose receipt projection is false 21ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > historical text remains readable without current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > stored legacy text is readable without a backfill write 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > same-length extraction mutation during coverage withdraws content even outside settling host 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > access revocation during coverage withdraws content even outside settling host 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > the three Vault tools are offered whatever the catalog flag says 3ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > search_project_documents finds a document by full text, with no key and no catalog 18ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > with the catalog on and no embedding provider, the full-text hits still come back 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > a document found both ways is one hit that says so 1ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > nothing found is said as nothing found, not as unavailable 0ms
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts > AnA reaches the Vault with no key and the catalog off > list_project_documents and read_project_document do not refuse when the catalog is off 3ms
+
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+   Start at  21:28:34
+   Duration  12.98s (transform 7.36s, setup 106ms, import 12.11s, tests 194ms, environment 0ms)
+

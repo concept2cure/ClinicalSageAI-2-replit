@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-14T22:00:44.390Z",
+  "scope": "post-focused-verification selected source and test bindings; attempt-local workspace admission, not durable provenance; lead owns whole integrated and native proof",
+  "sourceSha256": {
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "eb69cebddaf48093854b4f801432e9bb8e726dce8830263892bca65773677f3b",
+    "server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts": "bd9cdb6f173d0996bd828488efda0fa38e6d1bb24031fef59eb63b6c3fac4bdb",
+    "server/services/c2c/program-access.ts": "7b49fec6cebaec49b7ad66d4ea1f1561e28e752d2ee1ef017e694ee857d09e0d",
+    "server/services/c2c/program-project-anchor.ts": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496"
+  },
+  "processingStoreInterpolationCount": 3
+}

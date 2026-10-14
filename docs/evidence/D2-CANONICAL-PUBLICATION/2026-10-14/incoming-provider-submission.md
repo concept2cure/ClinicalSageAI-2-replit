@@ -1,0 +1,5 @@
+# Incoming provider and submission integration check
+
+Read-only targeted verification on the clean incoming integration passes **107 tests across 5 suites** on Node22: embedding provider, embedding provider election, submission-leaf retained-source evidence, source-aware pathway manifests and request-current-access submission readers. `incoming-provider-submission.log` records the complete run; `incoming-provider-submission.json` records its command scope, commit context and **18 selected source/test bindings**, all unchanged before/after execution.
+
+Provider SDK calls and retained storage are explicit test stubs; SQL integration uses PGlite. These checks qualify the selected integration behavior, including election refusals, retained-source pin/currentness, private-project access and honest unknown-content manifests. They do not qualify live provider delivery, native PostgreSQL RLS/concurrency, deployment or agency acceptance. No application, runner, baseline or root README was changed. The lead retains whole-integration verification and canonical publication ownership.

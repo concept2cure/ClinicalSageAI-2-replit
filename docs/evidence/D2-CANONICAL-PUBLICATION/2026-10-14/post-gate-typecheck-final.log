@@ -1,0 +1,9 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 2 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 2 exceeds baseline 0 (+2).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts(140,52): error TS2345: Argument of type '{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; connect: () => Promise<{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; release: () => undefined; }>; }' is not assignable to parameter of type 'RequestSqlClient'.
+    server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts(149,40): error TS2345: Argument of type '{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; connect: () => Promise<{ query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; }>; release: () => undefined; }>; }' is not assignable to parameter of type 'RequestSqlClient'.

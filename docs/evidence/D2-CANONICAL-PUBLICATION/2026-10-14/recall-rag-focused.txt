@@ -1,0 +1,178 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 13ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 3ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 6ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > withholds both catalogue arms when access changes after their prose and counts were read 4ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > bounds a stalled final access read within the original turn budget and discards catalogue results 5ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > does not start any prose loader for an inactive or unavailable current actor 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > never turns an unresolved open project into a library recall 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > keeps genuine evaluated catalogue emptiness distinct from unavailable access 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > does not inject recall for a session without an authenticated actor 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > names refused source reads without exposing SQL or private details 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > keeps organization recall actor-filtered with no invented project 1ms
+stdout | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+{
+  "timestamp": "2026-10-14T21:18:27.439Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:18:27.441Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+{
+  "timestamp": "2026-10-14T21:18:27.441Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/advancedRAGPipeline-mmr.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > falls back to lexical similarity when embedding the straggler fails
+[RAG] MMR embedding failed for uncarried candidates, using lexical fallback: Error: embedding down
+    at Object.<anonymous> (/workspace/Concept2Cure/server/services/__tests__/advancedRAGPipeline-mmr.test.ts:134:13)
+    at Object.Mock [as embedBatch] (file:///workspace/Concept2Cure/node_modules/@vitest/spy/dist/index.js:332:34)
+    at AdvancedRAGPipeline.applyMmr (/workspace/Concept2Cure/server/services/advancedRAGPipeline.ts:1126:49)
+    at /workspace/Concept2Cure/server/services/__tests__/advancedRAGPipeline-mmr.test.ts:141:25
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/Concept2Cure/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > parses the pgvector text form 2ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > accepts an already-parsed numeric array 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > parsePgVector > returns undefined for malformed or empty input 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > normalize / dotProduct > dot of unit vectors equals cosine similarity 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > normalize / dotProduct > maps a zero vector to zeros (no NaN) 0ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > reuses carried vectors without calling the embedding service 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > embeds only the candidates that arrive without a carried vector 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-mmr.test.ts > applyMmr > falls back to lexical similarity when embedding the straggler fails 6ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 4ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 6ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+stdout | server/services/__tests__/ragRouter.test.ts
+{
+  "timestamp": "2026-10-14T21:18:29.498Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:18:29.499Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ragRouter.test.ts
+{
+  "timestamp": "2026-10-14T21:18:29.499Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ragRouter.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > regulatory_qa (and default) uses advanced + rerank + mmr at lambda 0.7 6ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > falls back to regulatory_qa policy when intent is omitted 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > project_scoped favours precision (lambda 0.8) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > foresight favours diversity (lambda 0.6) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > enables dense+full-text hybrid (RRF) by default on every intent 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > enables small-to-big context expansion on the document-Q&A intents 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > intent defaults > does NOT default the generation-path corrective loop on any intent (stays opt-in) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > an explicit false overrides a default true (not truthiness-based) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > an explicit useHybrid:false overrides the intent default 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > self-query is opt-in: undefined by default, passed through when set 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > overrides strategy, mmrLambda, and limit 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > passes through scope, threshold, filters, persistCitations 1ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > explicit overrides > leaves threshold undefined when not provided (pipeline default applies) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > defaults corpus to undefined (pipeline reads the vault) 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > passes through corpus rag_chunks + integer organizationId 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > passes through the client_memory corpus + memoryScope 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > passes through the project_memory corpus + project scope 0ms
+ ✓ server/services/__tests__/ragRouter.test.ts > ragRouter optionsForIntent > corpus selection > the memory shims invoke a pure-similarity policy (basic, rerank/mmr/compression off) 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > returns empty and touches no params when filters is undefined 2ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > appends ILIKE predicates with placeholders sequential after existing params 1ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > respects an existing org-filter placeholder (filters start at $5) 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > expands a date range into >= and <= bounds 1ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > skips filters with no backing column on the corpus (vault has no source) 4ms
+ ✓ server/services/__tests__/rag-filters.test.ts > buildDocFilterClause > never applies domain (no corpus has a column for it) 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > the vault corpus filters on the document's program, as a bound uuid 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > a corpus with no program column refuses the scope rather than searching wider 1ms
+ ✓ server/services/__tests__/rag-filters.test.ts > a program scope (PF-10 S7) > survives the merge with self-query filters, alone or beside them 1ms
+ ✓ server/services/__tests__/rag-filters.test.ts > mergeFilters > returns undefined when neither side contributes anything 0ms
+ ✓ server/services/__tests__/rag-filters.test.ts > mergeFilters > lets explicit filters win field-by-field over extracted ones 0ms
+stdout | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+{
+  "timestamp": "2026-10-14T21:18:30.907Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:18:30.909Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+{
+  "timestamp": "2026-10-14T21:18:30.909Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/advancedRAGPipeline-cache.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > serves an identical request from cache without a second route call 3ms
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > evicts the least-recently-used entry; a hit refreshes recency 1ms
+ ✓ server/services/__tests__/advancedRAGPipeline-cache.test.ts > routeCached > drops expired entries instead of serving them 1ms
+
+ Test Files  6 passed (6)
+      Tests  75 passed (75)
+   Start at  21:18:22
+   Duration  8.38s (transform 2.60s, setup 202ms, import 6.77s, tests 128ms, environment 1ms)
+

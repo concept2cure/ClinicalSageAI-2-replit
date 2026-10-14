@@ -1,0 +1,6 @@
+
+/workspace/Concept2Cure/server/services/ana/step-presentation.ts
+  443:8  warning  Async function 'resolveStepDocumentTitles' has a complexity of 25. Maximum allowed is 15  complexity
+
+✖ 1 problem (0 errors, 1 warning)
+

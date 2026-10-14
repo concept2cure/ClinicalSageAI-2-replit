@@ -1,0 +1,29 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/authoring.router.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/routes/authoring.router.ts (8535 lines)
+  server/services/ana/submission-center-tool-defs.ts (974 lines)
+  server/services/authoring/authoring-documents.ts (645 lines)
+  server/services/market-specs/document-template-library.ts (644 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3240 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 c3b3ab4fe] Synchronize canonical global biotech template updates

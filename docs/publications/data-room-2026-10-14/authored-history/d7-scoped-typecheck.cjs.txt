@@ -1,0 +1,17 @@
+const ts = require('/workspace/Concept2Cure/node_modules/typescript');
+const path = require('node:path');
+const root = '/workspace/Concept2Cure';
+const target = path.resolve(root, process.argv[2]);
+const configPath = path.join(root, 'tsconfig.json');
+const raw = ts.readConfigFile(configPath, ts.sys.readFile);
+if (raw.error) throw new Error(ts.flattenDiagnosticMessageText(raw.error.messageText, '\n'));
+const config = ts.parseJsonConfigFileContent(raw.config, ts.sys, root, { noEmit: true }, configPath);
+const program = ts.createProgram({ rootNames: config.fileNames, options: config.options, projectReferences: config.projectReferences });
+const source = program.getSourceFile(target);
+if (!source) throw new Error(`Target absent from full configured program: ${target}`);
+const diagnostics = [...config.errors, ...program.getOptionsDiagnostics(), ...program.getGlobalDiagnostics(), ...program.getSyntacticDiagnostics(source), ...program.getSemanticDiagnostics(source)];
+const host = { getCurrentDirectory: () => root, getCanonicalFileName: x => x, getNewLine: () => '\n' };
+process.stdout.write(`Full configured roots: ${config.fileNames.length}; loaded sources: ${program.getSourceFiles().length}; semantic target: ${path.relative(root, target)}\n`);
+process.stdout.write(ts.formatDiagnosticsWithColorAndContext(diagnostics, host));
+process.stdout.write(`Target diagnostics: ${diagnostics.length}\n`);
+process.exitCode = diagnostics.some(x => x.category === ts.DiagnosticCategory.Error) ? 1 : 0;

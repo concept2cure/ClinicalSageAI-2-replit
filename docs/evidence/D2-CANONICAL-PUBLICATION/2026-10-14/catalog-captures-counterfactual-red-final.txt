@@ -1,0 +1,214 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T21:53:37.047Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:53:37.048Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+{
+  "timestamp": "2026-10-14T21:53:37.048Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts
+[database] Database connection successful
+
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > checks metadata-free candidate identities before SQL count and LIMIT
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > additional private upload parents cannot displace the authorized page or counts
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > creator-owned unbound chat capture is available only without an open project
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_creator
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_capture_creator
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: not_chat
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: workspace_mismatch
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: duplicate_anchor
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: foreign_org
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > refuses invalid capture identity before exposing headers: dead_parent
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: invalid_hash
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: changed_upload_hash
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: no_longer_current
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > rejects page/source drift before return: withdrawn
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown access/SQL state is unavailable instead of an empty authorized list
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > final upload parent revocation refuses already loaded headers
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > revocation of an upload outside the returned page cannot leave a stale authorized count
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > unknown extraction ledger remains unknown in an authorized result
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > keep_data discloses original unavailable and preserves eligible retained text discovery
+ ↓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor-scoped chat capture discovery > true authorized emptiness remains zero and does not scan a private top-N sample
+ × server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > lists a programme-bound capture whose client workspace differs from its project ID 87ms
+   → expected { uploads: [], total: +0, …(5) } to match object { total: 1, withheld: +0, …(1) }
+(11 matching properties omitted from actual)
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > lists a legacy workspace-only capture through its exact recorded artifact and file 70ms
+ × server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits a programme-bound capture with the wrong workspace without exposing its header 32ms
+   → This selected source needs a verified recorded parent before AnA can read it.
+stderr | server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > does not resolve ambiguous programme anchors through an accessible one
+{
+  "timestamp": "2026-10-14T21:53:40.243Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "73abab6b-76fd-4619-aa4e-c567f6849875",
+    "projectIds": [
+      7,
+      8
+    ]
+  }
+}
+
+ × server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: wrong-artifact 35ms
+   → This selected source needs a verified recorded parent before AnA can read it.
+ × server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: wrong-artifact-file 30ms
+   → This selected source needs a verified recorded parent before AnA can read it.
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: workspace-coincidence 36ms
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > does not resolve ambiguous programme anchors through an accessible one 35ms
+ × server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > refuses a legacy artifact association that has two matching retained bindings 29ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { Object (code) }
+(2 matching properties omitted from actual)
+ × server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > a private additional upload parent is excluded before counts and pagination 37ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > final canonical upload admission refuses parent revocation after the counted page loaded 34ms
+   → promise resolved "{ uploads: [], total: +0, …(5) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > lists a programme-bound capture whose client workspace differs from its project ID
+AssertionError: expected { uploads: [], total: +0, …(5) } to match object { total: 1, withheld: +0, …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "total": 1,
+-   "uploads": [
+-     {
+-       "fileId": "bbc0fb0c-7e55-4e6e-b7fe-90b8cb25aef5",
+-       "fileName": "recorded-study.pdf",
+-       "sourceId": 1,
+-     },
+-   ],
++   "total": 0,
++   "uploads": [],
+    "withheld": 0,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts:157:26
+    155|     expect(projectId).not.toBe(workspaceId);
+    156|     expect(await canonicalSelectedParent()).toBe(fixture.program);
+    157|     expect(await list()).toMatchObject({ total: 1, withheld: 0, upload…
+       |                          ^
+    158|     expect(h.access).toHaveBeenCalledTimes(2);
+    159|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits a programme-bound capture with the wrong workspace without exposing its header
+ FAIL  server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: wrong-artifact
+ FAIL  server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > omits an unresolved legacy binding: wrong-artifact-file
+AnaProjectScopeError: This selected source needs a verified recorded parent before AnA can read it.
+ ❯ admitRecordedScope server/services/ana/source-context-admission.ts:124:37
+    122|     if (error instanceof SourceReadAccessError || error instanceof Pro…
+    123|       if (error.status===503) return unavailable();
+    124|       if (error.status===409) throw new AnaProjectScopeError(409,'ANA_…
+       |                                     ^
+    125|       return deny();
+    126|     }
+ ❯ assertAnaUploadAccess server/services/ana/source-context-admission.ts:212:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'ANA_SOURCE_SCOPE_UNRESOLVED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > refuses a legacy artifact association that has two matching retained bindings
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { Object (code) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "ANA_UPLOAD_IDENTITY_UNAVAILABLE",
++ AnaProjectScopeError {
++   "code": "ANA_SOURCE_SCOPE_UNRESOLVED",
+  }
+
+ ❯ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts:193:24
+    191|       VALUES ($1,$2,$3,$4::json)`, [fixture.org, projectId, fixture.ar…
+    192|     await expect(canonicalSelectedParent()).rejects.toMatchObject({ co…
+    193|     await expect(list()).rejects.toMatchObject({ code: 'ANA_UPLOAD_IDE…
+       |                        ^
+    194|     expect(h.access).not.toHaveBeenCalled();
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > a private additional upload parent is excluded before counts and pagination
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts:206:22
+    204|       VALUES ($1,$2,'private-parent',$3::json)`, [fixture.org, parent.…
+    205|     expect(await list()).toMatchObject({ total: 0, uploads: [] });
+    206|     expect(h.access).toHaveBeenCalledTimes(1);
+       |                      ^
+    207|   });
+    208|   it('final canonical upload admission refuses parent revocation after…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts > actor capture discovery uses recorded workspace and artifact parents (PGlite) > final canonical upload admission refuses parent revocation after the counted page loaded
+AssertionError: promise resolved "{ uploads: [], total: +0, …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "actorFiltered": true,
++   "admittedScope": {
++     "accessibleProgramIds": [
++       "5f762153-be6d-4fd2-a717-c80d7d7e8eae",
++     ],
++     "actorFiltered": true,
++     "organizationId": 1010,
++     "programId": null,
++     "projectId": null,
++     "role": "viewer",
++     "userId": 43,
++   },
++   "hasMore": false,
++   "sourceAccessNotice": "This listing covers only the current actor’s accessible projects and eligible creator-owned unbound uploads. It does not describe every file in the organization.",
++   "total": 0,
++   "uploads": [],
++   "withheld": 0,
+  }
+
+ ❯ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts:216:25
+    214|       return result;
+    215|     } };
+    216|     await expect(list(q)).rejects.toMatchObject({ code: 'ANA_SOURCE_AC…
+       |                         ^
+    217|     expect(h.access).toHaveBeenCalledTimes(2);
+    218|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 3 passed | 20 skipped (30)
+   Start at  21:53:35
+   Duration  4.87s (transform 887ms, setup 69ms, import 1.36s, tests 3.21s, environment 0ms)
+

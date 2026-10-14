@@ -1,0 +1,62 @@
+{
+  "originReference": "origin/concept2cure-v2",
+  "originCommit": "9ba70078fb55520244b5376d5d17d5e3f09e4471",
+  "sourceFiles": [
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "sha256": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+      "bytes": 36497
+    },
+    {
+      "path": "server/services/vault/document-catalog-governance.service.ts",
+      "sha256": "ff609d34de4f3cabf3ad0240623642a24bf77976f042228b96b3db58ddcbd213",
+      "bytes": 30417
+    },
+    {
+      "path": "server/services/vault/document-catalog-search.ts",
+      "sha256": "9410d75a0b44ed665458728e28d1dfb851ce70bfe64497150b1371d48a1c2a05",
+      "bytes": 8429
+    },
+    {
+      "path": "server/services/vault/document-catalog-document.ts",
+      "sha256": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+      "bytes": 15295
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "sha256": "69ef76b16c46818dc7ebb4b36cc6d216ecd38771d5c449b12acdcc68155bf0ba",
+      "bytes": 9845
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-write-result.test.ts",
+      "sha256": "9a64c2323f7d3a1fcb72b52d07c2c23178d633398265f00dd077d2a02b03d72e",
+      "bytes": 5308
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-search-version.test.ts",
+      "sha256": "dc92d80a2c384f0334dd512a7b29743cabe759a091558f90bd114c5ae8e72b36",
+      "bytes": 3390
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-placement-current-writer.test.ts",
+      "sha256": "3e52ff348a5ee3c3cee081939d14a93fe7576abbf003fb1f95d484a56e827c78",
+      "bytes": 6594
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "productionFiles": 4
+  },
+  "focusedRegression": {
+    "files": 9,
+    "tests": 80,
+    "passed": 80,
+    "log": "catalog-lint-refactor-regression.txt"
+  },
+  "limits": [
+    "Focused tests use provider stubs; no live provider or agency calls.",
+    "PGlite current-version tests replace vector distance expression only; they do not prove pgvector scoring or deployed RLS.",
+    "Root owns combined cohort, PostgreSQL integration, Git gates and publication."
+  ]
+}
