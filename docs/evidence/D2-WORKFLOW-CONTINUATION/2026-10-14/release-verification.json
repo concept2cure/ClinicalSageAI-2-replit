@@ -47,7 +47,44 @@
     }
   },
   "publication": {
-    "state": "pending required hooks and scans"
+    "state": "verified; awaiting canonical push and hosted results"
   },
-  "productionQualification": "Not performed; see human and production boundary in README."
+  "productionQualification": "Not performed; see human and production boundary in README.",
+  "featureCommit": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
+  "integratedEditorCommit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "verifiedMergedSourceCommit": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
+  "postMergeVerification": {
+    "tests": {
+      "files": 4,
+      "passed": 74,
+      "failed": 0,
+      "overlapsCombinedUniqueCount": true
+    },
+    "typecheckErrors": 0,
+    "buildPassed": true
+  },
+  "security": {
+    "scanner": "Gitleaks 8.28.0",
+    "fullHistoryThroughFeature": {
+      "commits": 10236,
+      "findings": 0,
+      "passed": true
+    },
+    "incomingInitialRange": {
+      "findings": 3,
+      "verifiedFixtureChecksumFingerprints": 3
+    },
+    "exactExceptions": "security/README.md",
+    "newRangeAfterExactDispositions": {
+      "baseExclusive": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
+      "headInclusive": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
+      "commits": 2,
+      "findings": 0,
+      "passed": true
+    },
+    "stagedReleaseMetadata": {
+      "findings": 0,
+      "passed": true
+    }
+  }
 }

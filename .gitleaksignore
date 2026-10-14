@@ -291,3 +291,12 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 # status: not a secret
 # reason: Two apiContractSha256 fields equal SHA-256 of the original committed API-contract JSON.
 # Review: docs/evidence/D2-QMS-TRAINING/2026-10-14/security-verification.json.
+
+# status: not a secret
+# reason: Three fixture SHA-256 pins match the exact original Git blob bytes at
+# 4c5546cec143; lead and independent reviewers recomputed all three and checked
+# the synthetic fixture producer. No rule or path suppression.
+# Evidence: docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/security/
+4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:22
+4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:27
+4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:32

@@ -5,6 +5,13 @@ W1 / D2 continuation, 2026-10-14, canonical `concept2cure-v2`. Initial audit
 [technical contract](../../../design/AUTHORING_HUMAN_REVIEW_BINDING_2026-10-14.md).
 [Source manifest](source-manifest.json) pins the changed code and tests.
 
+Before publication, incoming editor context preservation `4c5546cec` was
+integrated at merge `7c33c547d`. The affected editor, review and saved-template
+paths passed a further 74/74 tests in four suites, the zero-baseline compiler
+and production build. These overlap the main run and are not added to its
+unique count. Exact incoming fixture checksum dispositions are retained in
+[security evidence](security/README.md).
+
 The existing Review board now opens the complete saved Authoring document with
 the native section/table/figure renderer before recording a decision. A decision
 starts unstated, captures the actor, organization, saved snapshot and request,
