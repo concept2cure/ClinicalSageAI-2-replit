@@ -74,3 +74,24 @@ The fixture adds no lint warnings. Production source is unchanged from the
 browser-verified delivery by this correction. That older failed workflow job
 retains its conclusion; this local result is not a claim that its historical
 status changed or that the broader CI run has completed.
+
+## Final security-fixture head
+
+Commit `0259c8f5505398749dd796a030bc37f709ae26b3` passed the hosted
+[Security Contract Tests job](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38518859745/job/115703706537),
+including the MCP SDK issuer check, at 2026-10-14 05:53:10 UTC. The same
+[main CI run](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38518859745)
+passed Security Scan and the full-history secret scan.
+[Tier 5 run 38518859782](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38518859782)
+also completed successfully at 05:53:50 UTC: fresh database provisioning,
+authenticated browser smoke and the governed golden journey all passed.
+
+The Semgrep blocking diff scan on the preceding application-source delivery
+identified one new test-only finding: a dynamic `RegExp` interpolating a
+bounded role fixture in `accountOnboardingSettings.test.tsx`. The assertion
+was changed to match the exact expected acceptance message as plain text.
+This preserves verification of the returned membership role without a dynamic
+regex, a suppression or a scanner configuration change. The production
+application source is unchanged by this assertion correction.
+The affected Account suite passed all 24 tests on Node 22.23.3; targeted
+ESLint reported zero errors and zero warnings.
