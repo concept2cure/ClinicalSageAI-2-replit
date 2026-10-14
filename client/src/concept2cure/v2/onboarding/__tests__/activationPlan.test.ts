@@ -23,8 +23,9 @@ import {
   inviteRoleToOrgRole,
   inviteNameFromEmail,
   checkoutRequestFor,
-} from '../activationPlan';
+} from '../../surfaces/Onboarding';
 import { LIC_ARCHETYPES, LIC_ROLES } from '../../fixtures/onboarding-data';
+import { ASSIGNABLE_ORG_ROLES } from '@shared/constants/org-roles';
 
 /* Mirrors PRIMARY_INDUSTRY in server/routes/mdx-industry-context.ts. */
 const PRIMARY_INDUSTRY = [
@@ -63,6 +64,9 @@ describe('archetypeToPrimaryIndustry', () => {
 });
 
 describe('inviteRoleToOrgRole', () => {
+  it('preserves every canonical assignable organization role, including signers', () => {
+    for (const role of ASSIGNABLE_ORG_ROLES) expect(inviteRoleToOrgRole(role)).toBe(role);
+  });
   it('maps every wizard-selectable platform role into the POST /api/tenant-users enum', () => {
     for (const r of LIC_ROLES) {
       expect(ORG_ROLES).toContain(inviteRoleToOrgRole(r.id));

@@ -18,7 +18,7 @@
  * is checked too. Each is sent through the real gate, built in production
  * posture from the real registry, and must reach the route. The retention
  * period is attributed to Setup, the surface whose card calls it; the rest of
- * the family to the Vault.
+ * the family to Setup's legal-hold controls and the Vault's record family.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -122,12 +122,12 @@ describe('Vault legal-hold routes under the production API gate', () => {
     expect(out.reached).toBe(true);
   });
 
-  it('attributes the retention period to Setup, which calls it, and the rest of the family to the Vault', () => {
+  it('attributes the retention period to Setup and the hold family to Setup and Vault', () => {
     const map = buildPrefixMap();
     const owners = (p: string) => [...(modulesForPath(p, map) ?? [])];
     expect(owners('/api/vault/legal-holds/retention')).toEqual(['setup']);
     for (const r of ROUTES.filter((x) => !x.path.endsWith('/retention'))) {
-      expect(owners(r.path), r.path).toEqual(['vault']);
+      expect(owners(r.path), r.path).toEqual(['vault', 'setup']);
     }
     for (const r of ROUTES) expect(owners(r.path).some((id) => LAUNCH_SURFACE_IDS.has(id)), r.path).toBe(true);
   });

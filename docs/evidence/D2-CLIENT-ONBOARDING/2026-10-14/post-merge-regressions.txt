@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > asks drug and device follow-ups for combination products and service questions for service providers 804ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > keeps incomplete discovery on its step and moves focus to the new step heading 206ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > lets a nonadministrator review saved answers but makes no writes 170ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > validates invitations and defaults to least-privilege membership 277ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > stops activation before any organization, invitation or billing write if discovery cannot be completed 529ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > shows private setup links before checkout and never sends them or discovery narratives to AnA 532ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > honestly confirms invitation email delivery using the server vocabulary 563ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx > intelligent discovery wizard > clears activation secrets and tenant drafts when the active organization changes 576ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > shows real names, scope, UTC dates and reasons from the open document 238ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > offers duplicate names with the actual email so members can be distinguished 725ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > posts the selected member, role, actual section, UTC expiry and required trimmed reason without a client-provided email 257ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > requires a reason before changing access 245ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > rejects past expiry dates and overlong reasons without sending 241ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > confirms revocation through the governed reason form and displays the server record 148ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > keeps the form and reason on an owner/admin refusal, without success or local grants 222ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > states the last-owner refusal and keeps the reason for correction 111ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > does not turn a forbidden or malformed access read into an empty list 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > retains access history but offers no new grants when members cannot be read 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > shows revoked and expired grants with their dates instead of calling them active 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > requires a reload after a network or unverified receipt outcome and suppresses duplicate changes 371ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > never confirms a changed row for another document or an unconfirmed audit entry 192ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > isolates late read results after selecting another document 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > does not invent a tenant or make requests without an open document 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > reads saved context and applies an attributed pending replacement without saving or approving 3780ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > refuses a stale saved base, leaving the current section intact 1530ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > shows the model refusal and never offers an unqualified answer as a fix 1307ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > offers the same proposal door when the editor is embedded in a conversation 1888ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > opens a known other section for a fix without applying it to the section currently open 30ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > holds a pulled working copy behind the existing unsaved guard in a pinned conversation editor 1476ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > document-review remedies open the actual section editor > opens another saved section in Section view before applying its tracked fix 3679ms
+stderr | client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > document-review remedies open the actual section editor > offers the same guarded Section-view transition for a fix in the currently selected section
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > document-review remedies open the actual section editor > offers the same guarded Section-view transition for a fix in the currently selected section 1029ms
+stderr | client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > document-review remedies open the actual section editor > opens a frozen section for reading while keeping the proposed fix disabled
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > document-review remedies open the actual section editor > opens a frozen section for reading while keeping the proposed fix disabled 754ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > view changes preserve the existing unsaved-work decision > holds Document view and Cancel keeps the same dirty editor and prior view 890ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > view changes preserve the existing unsaved-work decision > saves the retained section before entering Document view, then opens another remedy section 2620ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > view changes preserve the existing unsaved-work decision > leaves edits on the device only after explicit discard disposition and performs no save 799ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > view changes preserve the existing unsaved-work decision > holds the same editor and view if the deliberate save is refused 743ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx > keeps stored section/document titles in saved context and out of the person’s drafting request 43ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAnAUI.test.tsx > compact AnA oversight disclosure > keeps the saved-record caveat visible and routes every disclosed option through the existing handler 346ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAnAUI.test.tsx > compact AnA oversight disclosure > explains unavailable project scope outside the closed disclosure and keeps every review disabled 74ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAnAUI.test.tsx > compact AnA oversight disclosure > preserves selection gates and exposes the unsaved-record warning before expanding options 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAnAUI.test.tsx > AnA remedy reading and action disclosure > keeps the reason, guarded action and status visible while exact semantic redline text is disclosed 96ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAnAUI.test.tsx > AnA remedy reading and action disclosure > does not hide a frozen-document refusal inside the passage disclosure 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAnAUI.test.tsx > AnA remedy reading and action disclosure > identifies a deletion explicitly when its original passage is opened 29ms
+
+ Test Files  5 passed (5)
+      Tests  43 passed (43)
+   Start at  03:29:54
+   Duration  42.84s (transform 5.49s, setup 917ms, import 8.42s, tests 27.76s, environment 4.43s)
+

@@ -1,99 +1,180 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { emptyDiscovery } from '@shared/types/onboarding-discovery';
-import type { SurfaceViewProps } from '../surfaceViews';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { completeDiscovery } from './onboardingDiscoveryFixtures';
 import { Onboarding } from '../surfaces/Onboarding';
+import type { SurfaceViewProps } from '../surfaceViews';
+import type { OnboardingDiscoveryAnswers } from '@shared/types/onboarding-discovery';
 
-const state = vi.hoisted(() => ({ saved: null as unknown, readError: undefined as string | undefined,
-  settings: { settings: { onboardingDiscovery: null as unknown } }, profile: { primaryIndustry: 'biotech_pharma' }, organization: { organization: { name: 'Bright Biosciences' } },
-}));
-vi.mock('@/utils/authToken', () => ({ getOrgId: () => '7', getAuthHeaders: () => ({ Authorization: 'Bearer test' }) }));
-vi.mock('../dataConnect', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../dataConnect')>()),
-  useLiveData: (path: string) => ({ loading: false, error: path.endsWith('/settings') ? state.readError : undefined,
-    data: path.endsWith('/settings') ? state.settings
-      : path === '/api/mdx/industry-profile' ? state.profile : state.organization,
-  }),
-}));
-vi.mock('../surfaces/GatewayAccountsSetting', () => ({ GatewayAccountsSetting: () => <div>Agency account setup</div> }));
-const props = { surface: { id: 'onboarding' }, segment: 'biotech', onNav: vi.fn(), onAsk: vi.fn() } as unknown as SurfaceViewProps;
-let writes: Array<{ path: string; body: Record<string, any> }>;
-let refuseDiscovery: boolean;
+const { request, publish, identity } = vi.hoisted(() => ({ request: vi.fn(), publish: vi.fn(), identity: { orgId: 7 } }));
+vi.mock('@/lib/queryClient', () => ({ apiRequest: request, redactInternals: (message: string) => message, probeAuditRowOutcome: vi.fn(), serverMessage: () => null }));
+vi.mock('@/utils/authToken', () => ({ getOrgId: () => identity.orgId, getAuthHeaders: () => ({ Authorization: 'Bearer test' }) }));
+vi.mock('../surfaceContext', () => ({ usePublishSurfaceContext: publish }));
+vi.mock('../AccountPanel', () => ({ AccountPanel: ({ onClose }: { onClose: () => void }) => <button onClick={onClose}>Close Account</button> }));
+
+const props = { surface: { id: 'onboarding', label: 'Onboarding' }, segment: 'biotech', onAsk: vi.fn(), onNav: vi.fn() } as unknown as SurfaceViewProps;
+let answers: OnboardingDiscoveryAnswers;
+let revision: number;
+let canEdit: boolean;
+let completeRefused: boolean;
+let invitationDelivery: string;
+let invitationStatus: number;
+let invitationReply: unknown;
+const mutation = vi.fn();
+const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body });
+
 beforeEach(() => {
-  state.saved = null; state.readError = undefined; writes = []; refuseDiscovery = false;
-  state.settings = { settings: { onboardingDiscovery: null } };
-  vi.stubGlobal('fetch', vi.fn(async (path: string, init: { body?: unknown }) => {
-    writes.push({ path, body: JSON.parse(String(init.body)) });
-    const refused = path.endsWith('/settings') && refuseDiscovery;
-    return { ok: !refused, status: refused ? 403 : path === '/api/tenant-users' ? 201 : 200,
-      json: async () => refused ? { success: false, error: 'Organization admin role required.' }
-        : path === '/api/tenant-users' ? { success: true, createdNewUser: true, invitation: { delivery: 'link', setupUrl: 'https://app.test/concept2cure/password-reset?token=private' } }
-          : path === '/api/billing/dtc-checkout' ? { sessionId: 'free' } : { success: true },
-    } as Response;
-  }));
+  answers = completeDiscovery(); revision = 1; canEdit = true;
+  completeRefused = false; invitationDelivery = 'link'; invitationStatus = 201; invitationReply = undefined; identity.orgId = 7;
+  request.mockReset(); publish.mockClear(); mutation.mockReset();
+  request.mockImplementation(async (method: string, path: string, body?: { answers: OnboardingDiscoveryAnswers; complete: boolean }) => {
+    if (path === '/api/onboarding/discovery') {
+      if (method === 'PATCH') {
+        if (body?.complete && completeRefused) throw new Error('Discovery was not saved.');
+        answers = body!.answers; revision += 1;
+      }
+      return ok({ data: { canEdit, discovery: { schemaVersion: 1, revision, answers,
+        updatedAt: '2026-10-14T00:00:00.000Z', updatedBy: 9,
+        completedAt: body?.complete ? '2026-10-14T00:00:00.000Z' : null,
+      } } });
+    }
+    if (path.startsWith('/api/organizations/')) return ok({ organization: { name: 'Acme Pharma' } });
+    if (path === '/api/mdx/industry-profile') return ok({ primaryIndustry: 'biotech_pharma' });
+    if (path === '/api/v1/auth/session') return ok({ authenticated: true, user: { mfaEnabled: false } });
+    return ok({ accounts: [] });
+  });
+  mutation.mockImplementation(async (path: string) => {
+    if (path === '/api/tenant-users') return ok(invitationReply ?? { createdNewUser: true, invitation: { delivery: invitationDelivery, emailSent: invitationDelivery === 'email', setupUrl: 'https://example.test/concept2cure/password-reset?token=private-link' } }, invitationStatus);
+    if (path.includes('checkout')) return ok({ url: 'https://checkout.stripe.com/test' });
+    return ok({});
+  });
+  vi.stubGlobal('fetch', mutation);
+  localStorage.clear(); sessionStorage.clear();
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
-const next = () => fireEvent.click(screen.getByRole('button', { name: /Continue/ }));
-function startDiscovery() {
+
+async function next() {
+  const oldHeading = document.querySelector('.pj-card-b > h2')?.textContent;
+  const button = screen.getByRole('button', { name: /^(Save & continue|Continue)/ });
+  await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(button);
+  await waitFor(() => expect(document.querySelector('.pj-card-b > h2')?.textContent).not.toBe(oldHeading));
+}
+async function reviewWithInvite(role = 'member') {
   render(<Onboarding {...props} />);
-  next();
-  fireEvent.change(screen.getByLabelText('Company goals *'), { target: { value: 'Submit an IND for our lead asset.' } });
-  fireEvent.click(screen.getByLabelText('Prepare submissions'));
+  await next(); await next(); await next(); await next(); await next();
+  fireEvent.change(screen.getByLabelText('Email for invitee 1'), { target: { value: 'lee@example.test' } });
+  fireEvent.change(screen.getByLabelText('Role for invitee 1'), { target: { value: role } });
+  await next(); await next(); await next(); await next();
 }
-function review() {
-  next(); // project discovery
-  fireEvent.change(screen.getByLabelText('Planned project name'), { target: { value: 'Lead asset' } });
-  fireEvent.change(screen.getByLabelText('Product context'), { target: { value: 'drug' } });
-  next(); // pricing model
-  next(); // plan
-  fireEvent.click(screen.getByText('Researcher'));
-  next(); // invitations
-  fireEvent.change(screen.getByLabelText('Email for invitee 1'), { target: { value: 'reviewer@bright.bio' } });
-  fireEvent.change(screen.getByLabelText('Role for invitee 1'), { target: { value: 'reviewer' } });
-  next(); next(); next(); next(); // modules, agency, security, review
-}
-describe('discovery onboarding persists through governed setup and keeps outcomes reviewable', () => {
-  it('requires a company goal and a use before advancing', () => {
-    render(<Onboarding {...props} />); next();
-    expect((screen.getByRole('button', { name: /Continue/ }) as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.change(screen.getByLabelText('Company goals *'), { target: { value: 'IND readiness' } });
-    expect((screen.getByRole('button', { name: /Continue/ }) as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(screen.getByLabelText('Assess submission readiness'));
-    expect((screen.getByRole('button', { name: /Continue/ }) as HTMLButtonElement).disabled).toBe(false);
-  });
-  it('saves discovery first, writes markets/pathways to the existing industry profile and preserves the setup link', async () => {
-    startDiscovery();
-    fireEvent.change(screen.getByLabelText('Target markets'), { target: { value: 'US, EU' } });
-    fireEvent.change(screen.getByLabelText('Planned regulatory pathways'), { target: { value: 'IND, CTA' } });
-    review();
-    fireEvent.click(screen.getByRole('button', { name: 'Activate workspace' }));
-    await waitFor(() => expect(screen.getByText(/Saved to your organization's setup record/)).toBeTruthy());
-    expect(writes[0].path).toBe('/api/organizations/7/settings');
-    expect(writes[0].body.settings.onboardingDiscovery.company.goals).toBe('Submit an IND for our lead asset.');
-    expect(writes[0].body.settings.onboardingDiscovery.project.name).toBe('Lead asset');
-    expect(writes[0].body.reason.length).toBeGreaterThan(3);
-    expect(writes.find((w) => w.path === '/api/mdx/industry-profile')?.body).toMatchObject({ defaultMarkets: ['US', 'EU'], defaultPathways: ['IND', 'CTA'] });
-    expect(writes.find((w) => w.path === '/api/tenant-users')?.body.role).toBe('reviewer');
-    expect((screen.getByLabelText('Password setup link for reviewer@bright.bio') as HTMLInputElement).value).toBe('https://app.test/concept2cure/password-reset?token=private');
-    expect(screen.getByRole('button', { name: 'Copy setup link for reviewer@bright.bio' })).toBeTruthy();
-  });
-  it('keeps answers and does not invite or bill when saving discovery is refused', async () => {
-    refuseDiscovery = true;
-    startDiscovery(); review();
-    fireEvent.click(screen.getByRole('button', { name: 'Activate workspace' }));
-    await waitFor(() => expect(screen.getByText('Organization admin role required.')).toBeTruthy());
-    expect(writes.map((w) => w.path)).toEqual(['/api/organizations/7/settings']);
-    expect(screen.getByText('Lead asset', { selector: '.v' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Activate workspace' })).toBeTruthy();
-  });
-  it('loads previously recorded answers and never renders a failed read as an empty profile', () => {
-    const d = emptyDiscovery(); d.company.goals = 'Preserve this company strategy'; state.saved = d; state.settings = { settings: { onboardingDiscovery: d } };
-    render(<Onboarding {...props} />); next();
-    expect((screen.getByLabelText('Company goals *') as HTMLTextAreaElement).value).toBe(d.company.goals);
-    cleanup(); state.readError = 'Read failed';
+
+describe('intelligent discovery wizard', () => {
+  it('asks drug and device follow-ups for combination products and service questions for service providers', async () => {
+    answers.businessContext = 'service_provider'; answers.serviceScope = ['regulatory'];
+    answers.productModalities = ['combination']; answers.devicePurpose = 'Device delivery for adults.';
     render(<Onboarding {...props} />);
-    expect(screen.getByText(/Your saved discovery answers or industry profile could not be loaded/)).toBeTruthy();
+    await next();
+    expect(screen.getByText('Client services *')).toBeTruthy();
+    await next();
+    expect(screen.getByLabelText('Therapeutic areas *')).toBeTruthy();
+    expect(screen.getByLabelText('Device / diagnostic intended use *')).toBeTruthy();
+  });
+
+  it('keeps incomplete discovery on its step and moves focus to the new step heading', async () => {
+    answers.companyGoal = '';
+    render(<Onboarding {...props} />);
+    await next();
+    expect(document.activeElement?.textContent).toBe('Client discovery');
+    expect((screen.getByRole('button', { name: /Save & continue/ }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Company goal *'), { target: { value: 'Bring our first project into a controlled review process.' } });
+    await next();
+    expect(screen.getByTestId('discovery-project')).toBeTruthy();
+  });
+
+  it('lets a nonadministrator review saved answers but makes no writes', async () => {
+    canEdit = false;
+    render(<Onboarding {...props} />);
+    await next();
+    expect((screen.getByLabelText('Company goal *') as HTMLTextAreaElement).value).toBe(answers.companyGoal);
+    expect((screen.getByLabelText('Company goal *') as HTMLTextAreaElement).disabled).toBe(true);
+    await next();
+    expect(request.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it('validates invitations and defaults to least-privilege membership', async () => {
+    render(<Onboarding {...props} />);
+    await next(); await next(); await next(); await next(); await next();
+    expect((screen.getByLabelText('Role for invitee 1') as HTMLSelectElement).value).toBe('member');
+    expect(screen.getByRole('option', { name: 'Approver' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Reviewer' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Email for invitee 1'), { target: { value: 'bad-address' } });
+    expect((screen.getByRole('button', { name: /^Continue/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('alert').textContent).toMatch(/valid, distinct/);
+  });
+
+  it('stops activation before any organization, invitation or billing write if discovery cannot be completed', async () => {
+    await reviewWithInvite(); completeRefused = true;
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Discovery was not saved.');
+    expect(mutation).not.toHaveBeenCalled();
+  });
+
+  it('shows private setup links before checkout and never sends them or discovery narratives to AnA', async () => {
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByRole('button', { name: 'Continue to secure checkout' });
+    expect(document.activeElement?.textContent).toMatch(/Checkout ready/);
+    expect(screen.getByLabelText('Setup link for lee@example.test')).toBeTruthy();
+    expect(screen.getByText(/No invitation email was sent/)).toBeTruthy();
+    const context = JSON.stringify(publish.mock.calls);
+    expect(context).not.toContain('private-link'); expect(context).not.toContain('lee@example.test');
+    expect(context).not.toContain(answers.indication); expect(context).not.toContain(answers.companyGoal);
+    expect(localStorage.getItem('onboardingDiscovery')).toBeNull();
+  });
+
+  it('honestly confirms invitation email delivery using the server vocabulary', async () => {
+    invitationDelivery = 'email';
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Email sent');
+    expect(screen.queryByLabelText('Setup link for lee@example.test')).toBeNull();
+  });
+
+  it('clears activation secrets and tenant drafts when the active organization changes', async () => {
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByLabelText('Setup link for lee@example.test');
+    cleanup(); identity.orgId = 8;
+    render(<Onboarding {...props} />);
+    await waitFor(() => expect(screen.getByLabelText('Organization name')).toBeTruthy());
+    expect(screen.queryByLabelText('Setup link for lee@example.test')).toBeNull();
+  });
+
+  it('preserves an invited signer role and records pending consent without claiming membership', async () => {
+    invitationStatus = 202; invitationReply = { success: true, pendingInvitation: true };
+    await reviewWithInvite('reviewer');
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Awaiting consent');
+    expect(screen.getByText('1 of 1 invitations recorded.')).toBeTruthy();
+    const call = mutation.mock.calls.find(([path]) => path === '/api/tenant-users');
+    expect(JSON.parse(String(call?.[1]?.body)).role).toBe('reviewer');
+  });
+
+  it('shows a created account whose activation failed as needing attention', async () => {
+    invitationDelivery = 'failed';
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Activation needs attention');
+    expect(screen.getByText(/1 of 1 invitations recorded.*need attention/i)).toBeTruthy();
+    expect(screen.queryByLabelText('Setup link for lee@example.test')).toBeNull();
+  });
+
+  it('does not count an unconfirmed accepted-status response as a recorded invitation', async () => {
+    invitationStatus = 202; invitationReply = {};
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Outcome unconfirmed');
+    expect(screen.getByText(/0 of 1 invitations recorded.*need attention/i)).toBeTruthy();
   });
 });

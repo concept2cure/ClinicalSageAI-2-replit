@@ -20,7 +20,6 @@ import {
   type DirectiveProgram,
 } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { DiscoveryProjectPrefill } from '../onboarding/DiscoveryProjectPrefill';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -31,6 +30,7 @@ import { DiscoveryProjectPrefill } from '../onboarding/DiscoveryProjectPrefill';
 import { RegistryPicker } from './AnaVerbs';
 import { MarketSupportLine } from '../MarketSupportLine';
 import { getSubmissionTypeContext } from './RegistryBridge';
+import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
   usesDeviceClassification, type DeviceFlagId,
@@ -483,13 +483,6 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
             steps are read line by line and want a measure. One container, two
             widths, rather than one compromise that serves neither. */}
         <div className="npw-inner" data-measure={step === 0 ? 'wide' : 'form'}>
-          {step < 2 && <DiscoveryProjectPrefill onApply={(project) => {
-            setName(project.name);
-            setIndication(project.productType === 'drug' || project.productType === 'biologic' ? project.indication : '');
-            setIntendedUse(project.productType === 'device' || project.productType === 'ivd' ? project.indication : '');
-            setStatedClass(project.productType === 'drug' || project.productType === 'biologic' ? project.productType : '');
-            setTarget(project.targetDate);
-          }} />}
           {/* Step 0: Choose template */}
           {step === 0 && (
             <div>
@@ -525,6 +518,18 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               <p className="npw-seg-s" data-testid="npw-market-support">
                 <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
               </p>
+
+              <ProjectDiscoveryHandoff
+                fields={{ name, target, indication, intendedUse }}
+                isDeviceFiling={isDeviceFiling}
+                disabled={creating}
+                onApply={(fields) => {
+                  if (fields.name !== undefined) setName(current => current.trim() ? current : fields.name!);
+                  if (fields.target !== undefined) setTarget(current => current.trim() ? current : fields.target!);
+                  if (fields.indication !== undefined) setIndication(current => current.trim() ? current : fields.indication!);
+                  if (fields.intendedUse !== undefined) setIntendedUse(current => current.trim() ? current : fields.intendedUse!);
+                }}
+              />
 
               <div className="npw-fields">
                 <label className="npw-field">

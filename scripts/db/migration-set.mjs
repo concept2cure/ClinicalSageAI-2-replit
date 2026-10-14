@@ -3189,6 +3189,13 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/ANA-QUESTIONS/2026-10-12-eu-classes/.
   'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
 
+  // The fresh install's required-object check already requires this model
+  // index. Drizzle push can finish its table stage without landing all indexes;
+  // the root overlay and deploy share the additive canonical repair. No rows,
+  // columns or policies change. D2 onboarding browser validation evidence:
+  // docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/report-index-repair.md.
+  'migrations/20261014_immutable_report_tenant_index.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

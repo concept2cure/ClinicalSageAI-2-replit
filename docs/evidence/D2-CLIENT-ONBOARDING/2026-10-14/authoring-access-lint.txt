@@ -1,0 +1,4 @@
+Command: npx eslint client/src/concept2cure/v2/editor/DocumentPermissionsPanel.tsx client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx server/routes/authoring-permissions.ts server/services/authoring/authoring-permissions.ts server/routes/__tests__/authoringPermissionManagement.test.ts --max-warnings=0
+Exit status 0. No ESLint warnings or errors.
+Additional check: npx eslint client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts --max-warnings=0
+Exit status 0. No warnings or errors.

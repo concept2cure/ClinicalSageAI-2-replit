@@ -33,7 +33,9 @@ import {
 import auditService from './auditService.js';
 import { pickWritable } from '../utils/authedOrgId';
 import {
+  DISCOVERY_NOT_A_GENERAL_SETTING,
   asSettings,
+  namesOnboardingDiscovery,
   overlaySettings,
   writeTenantSettings,
   type Settings,
@@ -237,6 +239,9 @@ class AnaPlatformController {
   async updateSettings(orgId: number, updates: Partial<OrgSettings>, via: Request): Promise<AnaActionResult> {
     if (namesClaudeConnector(updates)) {
       return { success: false, action: 'update_settings', error: CONNECTOR_NOT_A_GENERAL_SETTING };
+    }
+    if (namesOnboardingDiscovery(updates)) {
+      return { success: false, action: 'update_settings', error: DISCOVERY_NOT_A_GENERAL_SETTING };
     }
     const access = await this.verifyPaidAccess(orgId);
     if (!access.authorized) {

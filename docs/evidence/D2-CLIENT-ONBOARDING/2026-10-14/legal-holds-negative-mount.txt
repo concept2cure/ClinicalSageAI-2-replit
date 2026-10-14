@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+----------x------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers the existing Vault legal-hold controls beside the retention period
+AssertionError: expected null not to be null
+ ❯ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx:341:77
+    339|     const { container } = renderSurface();
+    340|     await loaded(container);
+    341|     expect(container.querySelector('[data-testid="legal-holds-card"]')…
+       |                                                                             ^
+    342|     expect(container.querySelector('[data-testid="retention-period-car…
+    343|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)
+   Start at  03:18:39
+   Duration  1.63s (transform 641ms, setup 138ms, import 755ms, tests 134ms, environment 459ms)
+

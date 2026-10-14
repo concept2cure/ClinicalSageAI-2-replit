@@ -35,22 +35,27 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-vi.mock('@/utils/authToken', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/utils/authToken')>()), getOrgId: () => '7',
-}));
-
 import { Onboarding } from '../surfaces/Onboarding';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { completeDiscovery } from './onboardingDiscoveryFixtures';
 
 interface Sent { url: string; body: Record<string, unknown> }
 let sent: Sent[];
 let responder: (url: string) => { ok: boolean; status: number; body: unknown };
 let assigned: string[];
+let discoveryRevision: number;
 
 const fetchMock = vi.fn((url: string, init?: RequestInit) => {
   const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {};
   sent.push({ url, body });
-  const r = responder(url);
+  if (url === '/api/onboarding/discovery' && init?.method === 'PATCH') discoveryRevision += 1;
+  const r = url === '/api/onboarding/discovery' ? {
+    ok: true, status: 200, body: { data: { canEdit: true, discovery: {
+      schemaVersion: 1, revision: discoveryRevision, answers: completeDiscovery(),
+      updatedAt: '2026-10-14T00:00:00.000Z', updatedBy: 1,
+      completedAt: init?.method === 'PATCH' && body.complete ? '2026-10-14T00:00:00.000Z' : null,
+    } } },
+  } : responder(url);
   return Promise.resolve({
     ok: r.ok,
     status: r.status,
@@ -67,8 +72,9 @@ const PROPS = {
 
 beforeEach(() => {
   sent = [];
+  discoveryRevision = 1;
   assigned = [];
-  responder = () => ({ ok: true, status: 200, body: { success: true } });
+  responder = () => ({ ok: true, status: 200, body: {} });
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
   // jsdom's location.assign is unimplemented and throws; the wizard calls it
@@ -88,28 +94,23 @@ afterEach(() => {
 /** Walk the wizard to the review step with `tierName` selected. */
 async function toReview(tierName: string) {
   render(<Onboarding {...PROPS} />);
-  await waitFor(() => expect(screen.queryByText('Loading saved setup…')).toBeNull());
-  fireEvent.change(screen.getByLabelText('Organization name'), {
-    target: { value: 'Bright Biosciences' },
-  });
-  fireEvent.click(screen.getByText(/Continue/));                  // → pricing model
-  fireEvent.change(screen.getByLabelText('Company goals *'), { target: { value: 'Prepare our first regulatory submission.' } });
-  fireEvent.click(screen.getByLabelText('Prepare submissions'));
-  fireEvent.click(screen.getByText(/Continue/));                  // → project discovery
-  fireEvent.click(screen.getByText(/Continue/));                  // → pricing model
-  fireEvent.click(screen.getByText(/Continue/));                  // → choose plan
-  const tile = Array.from(document.querySelectorAll('.ob-tier')).find((b) =>
-    b.textContent?.includes(tierName),
-  );
+  fireEvent.change(screen.getByLabelText('Organization name'), { target: { value: 'Bright Biosciences' } });
+  await waitFor(() => expect((screen.getByRole('button', { name: /^Continue/ }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // client discovery
+  fireEvent.click(screen.getByRole('button', { name: /Save & continue/ }));
+  await screen.findByTestId('discovery-project');
+  fireEvent.click(screen.getByRole('button', { name: /Save & continue/ }));
+  await waitFor(() => expect(screen.queryByTestId('discovery-project')).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // plan
+  const tile = Array.from(document.querySelectorAll('.ob-tier')).find((b) => b.textContent?.includes(tierName));
   if (!tile) throw new Error(`tier tile "${tierName}" not rendered`);
   fireEvent.click(tile);
-  fireEvent.click(screen.getByText(/Continue/));                  // → invite personnel
-  fireEvent.click(screen.getByText(/Continue/));                  // → modules
-  fireEvent.click(screen.getByText(/Continue/));                  // → agency accounts
-  // The gateway account choice is offered at onboarding and can wait (D7, 2026-10-01).
-  expect(screen.getByTestId('gateway-accounts-setting')).toBeTruthy();
-  fireEvent.click(screen.getByText(/Continue/));                  // → security & setup
-  fireEvent.click(screen.getByText(/Continue/));                  // → review & activate
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // personnel
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // modules
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // security
+  fireEvent.click(screen.getByRole('button', { name: /Save & continue/ }));
+  await screen.findByTestId('gateway-accounts-setting');
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // review
 }
 
 const bodyFor = (path: string) => sent.find((s) => s.url === path)?.body;
@@ -146,7 +147,7 @@ describe('Onboarding — Request Enterprise onboarding', () => {
     responder = (url) =>
       url === '/api/auth/license-request'
         ? { ok: false, status: 429, body: {} }
-        : { ok: true, status: 200, body: { success: true } };
+        : { ok: true, status: 200, body: {} };
     await toReview('Enterprise');
     fireEvent.change(screen.getByLabelText('Contact email'), {
       target: { value: 'dana@bright.bio' },
@@ -173,7 +174,7 @@ describe('Onboarding — the free tier activates a plan', () => {
     responder = (url) =>
       url === '/api/billing/dtc-checkout'
         ? { ok: true, status: 200, body: { url: 'https://app.test/billing?checkout=success', sessionId: 'free' } }
-        : { ok: true, status: 200, body: { success: true } };
+        : { ok: true, status: 200, body: {} };
     await toReview('Researcher');
     expect(screen.getByText(/Activate workspace/)).toBeTruthy();
     fireEvent.click(screen.getByText(/Activate workspace/));
@@ -196,7 +197,7 @@ describe('Onboarding — the free tier activates a plan', () => {
     responder = (url) =>
       url === '/api/billing/dtc-checkout'
         ? { ok: false, status: 409, body: { error: 'This organization is already on the professional plan.' } }
-        : { ok: true, status: 200, body: { success: true } };
+        : { ok: true, status: 200, body: {} };
     await toReview('Researcher');
     fireEvent.click(screen.getByText(/Activate workspace/));
 

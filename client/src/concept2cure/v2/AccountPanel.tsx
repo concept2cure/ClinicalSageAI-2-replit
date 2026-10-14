@@ -2,7 +2,7 @@
  * Account — the signed-in person's own account, opened from the shell's account
  * menu (P-25, docs/LAUNCH_DEFINITION_OF_DONE.md).
  *
- * Three things, each through a route the server already has
+ * Profile and security, each through a route the server already has
  * (server/routes/auth.ts), via the one auth client (services/portal/authService):
  *
  *   Profile       GET  /session          name, e-mail, the session's organisation
@@ -21,6 +21,11 @@
  *                                        them; the recovery codes are shown once,
  *                                        from the enable answer, and kept nowhere.
  *
+ * AccountOnboardingSettings adds the caller's own invitations, verified
+ * organization switching and canonical reporting persona. Switching probes
+ * the minted session and opens a fresh shell so no prior-tenant program,
+ * conversation or entitlement state survives.
+ *
  * Until this panel the server's /mfa/setup and /mfa/enable had no client caller:
  * the authenticator ADR-0014 expects of signers could not be enrolled anywhere in
  * the product (QA 2026-10-08, j9 finding 9).
@@ -33,7 +38,7 @@ import { authService, useAuth, type AuthError, type AuthUser, type MfaSetup } fr
 import { I } from './icons';
 import { useDialog } from './useDialog';
 import { EmptyState, ErrorState } from './dataConnect';
-import { InvitationInbox } from './onboarding/InvitationInbox';
+import { AccountOnboardingSettings } from './AccountOnboardingSettings';
 
 type AccountRead =
   | { state: 'loading' }
@@ -506,7 +511,7 @@ function AuthenticatorSection(props: {
 
 /* ── The panel ────────────────────────────────────────────────────────── */
 
-function AccountBody({ account }: { account: ReturnType<typeof useAccountRead> }) {
+function AccountBody({ account, onClose }: { account: ReturnType<typeof useAccountRead>; onClose: () => void }) {
   const { read, load, reread, rereadError } = account;
   if (read.state === 'loading') return <EmptyState busy icon={I.user} title="Reading your account" />;
   if (read.state === 'error') {
@@ -516,7 +521,7 @@ function AccountBody({ account }: { account: ReturnType<typeof useAccountRead> }
     <>
       <ProfileSection user={read.user} />
       <div className="acct-sep" />
-      <InvitationInbox />
+      <AccountOnboardingSettings userId={String(read.user.id)} organizationId={String(read.user.organizationId)} onClose={onClose} />
       <div className="acct-sep" />
       <PasswordSection />
       <div className="acct-sep" />
@@ -552,8 +557,7 @@ export function AccountPanel({ onClose }: { onClose: () => void }) {
               Account
             </div>
             <div className="de-h-s">
-              Your profile, password and authenticator app. Your organisation&rsquo;s administrators manage membership
-              and role.
+              Your profile, invitations, reporting role and account security. Your organisation&rsquo;s administrators manage membership and access role.
             </div>
           </div>
           <button type="button" className="de-x" onClick={onClose} aria-label="Close">
@@ -561,7 +565,7 @@ export function AccountPanel({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <div className="de-body">
-          <AccountBody account={account} />
+          <AccountBody account={account} onClose={onClose} />
         </div>
       </div>
     </div>
