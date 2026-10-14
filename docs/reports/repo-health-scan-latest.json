@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T19:41:03.611Z",
+  "generatedAt": "2026-10-14T20:02:56.929Z",
   "git": {
-    "sha": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "sha": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -580,6 +580,15 @@
         ]
       },
       {
+        "basename": "generate",
+        "count": 3,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
+          "server/services/audit/compliance-reports/generate.ts"
+        ]
+      },
+      {
         "basename": "governance",
         "count": 3,
         "paths": [
@@ -703,6 +712,15 @@
           "client/src/concept2cure/mdx/data/postmarket.ts",
           "ui_kits/mdx/data/postmarket.js",
           "ui_kits/mdx/surfaces/Postmarket.jsx"
+        ]
+      },
+      {
+        "basename": "probe",
+        "count": 3,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx"
         ]
       },
       {
@@ -1288,14 +1306,6 @@
         ]
       },
       {
-        "basename": "generate",
-        "count": 2,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts",
-          "server/services/audit/compliance-reports/generate.ts"
-        ]
-      },
-      {
         "basename": "global.d",
         "count": 2,
         "paths": [
@@ -1637,14 +1647,6 @@
         "paths": [
           "client/src/concept2cure/mdx/data/presub.ts",
           "ui_kits/mdx_phase2/PreSub.jsx"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 2,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx"
         ]
       },
       {
@@ -2176,7 +2178,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 300630
+        "bytes": 301233
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2402,7 +2404,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6131
+        "lines": 6140
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2852,7 +2854,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 166,
+      "duplicateGroups": 168,
       "largeByBytes": 2,
       "largeByLines": 8
     },
