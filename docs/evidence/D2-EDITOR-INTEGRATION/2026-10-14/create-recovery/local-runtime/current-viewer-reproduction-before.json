@@ -1,0 +1,424 @@
+{
+  "automated": true,
+  "scope": "isolated new local PostgreSQL database only; signed-in document creator has existing OWNER/AUTHOR grants; current org membership downgraded to viewer, then restored in finally",
+  "cacheTtlMs": 60000,
+  "records": [
+    {
+      "label": "original session",
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200,
+      "response": {
+        "id": "1",
+        "email": "jonmichaelpsmith@gmail.com",
+        "firstName": "JM",
+        "lastName": "Smith",
+        "displayName": "JM Smith",
+        "roles": [
+          "admin",
+          "user"
+        ],
+        "permissions": [
+          "governed:write",
+          "report:finalize",
+          "audit:attest"
+        ],
+        "organizationId": "2",
+        "organizationName": "Concept2Cure Therapeutics",
+        "signing": {
+          "authenticatorRequired": false,
+          "authenticatorEnrolled": false
+        }
+      }
+    },
+    {
+      "label": "current role surfaced immediately",
+      "method": "GET",
+      "path": "/api/authoring/docs/f75c4fdc-5078-480c-87d8-2f1215fbeb88",
+      "status": 200,
+      "response": {
+        "success": true,
+        "document": {
+          "id": "f75c4fdc-5078-480c-87d8-2f1215fbeb88",
+          "title": "LOCAL TEST ONLY — registry:US_NDA",
+          "module": null,
+          "product_code": null,
+          "locale": "en-US",
+          "status": "draft",
+          "created_at": "2026-10-14T21:58:01.685Z",
+          "updated_at": "2026-10-14T22:00:20.491Z",
+          "created_by": "1",
+          "template_id": "015b44f2-b717-5f95-99fb-aa94073909a0",
+          "submitted_at": null,
+          "current_workflow_id": null,
+          "approved_at": null,
+          "frozen_at": null,
+          "locked_at": null,
+          "locked_by": null,
+          "tenant_id": 2,
+          "version": null,
+          "c2c_document_id": null,
+          "section_count": "80",
+          "comment_count": "0",
+          "revision_count": "82",
+          "provenance": {
+            "source": "template",
+            "governedWrite": "unverified",
+            "templateSource": {
+              "id": "015b44f2-b717-5f95-99fb-aa94073909a0",
+              "kind": "preparation",
+              "sha256": "4988dee9887404a4b8f522c2d13a688f1a4ac09f7a9cb27cb6a0f3664cf0d505",
+              "entryId": "registry:US_NDA",
+              "version": 1,
+              "aiDraftable": false,
+              "limitations": [
+                "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+                "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+                "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+                "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+                "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+                "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+                "Registry applicability metadata: small_molecule. This does not establish this sponsor's product class or filing eligibility.",
+                "Recorded module authority: ICH M4 Annex (M1–M5 granularity); FDA eCTD Module 1 Specification v2.3; 21 CFR 314.50."
+              ],
+              "authoringMode": "manual",
+              "filingContext": {
+                "agency": "FDA",
+                "region": "US",
+                "registryId": "US_NDA"
+              },
+              "originalFormat": "eCTD"
+            }
+          }
+        },
+        "access": {
+          "freeze": {
+            "allowed": false,
+            "reason": "Applying an electronic signature needs a signing role in this organization (admin, approver, reviewer). Your role: viewer."
+          },
+          "esign": {
+            "allowed": false,
+            "reason": "Applying an electronic signature needs a signing role in this organization (admin, approver, reviewer). Your role: viewer."
+          },
+          "esignReview": {
+            "allowed": false,
+            "reason": "Applying an electronic signature needs a signing role in this organization (admin, approver, reviewer). Your role: viewer."
+          },
+          "fileToVault": {
+            "allowed": false,
+            "reason": "Filing into the vault needs an editing role in this organization. Your role: viewer."
+          },
+          "assignReview": {
+            "allowed": false,
+            "reason": "Sending for review needs an editing role in this organization. Your role: viewer."
+          },
+          "placeIntoFiling": {
+            "allowed": false,
+            "reason": "Placing into a filing needs an authoring role in this organization. Your role: viewer."
+          }
+        }
+      }
+    },
+    {
+      "label": "old admin JWT, current viewer membership",
+      "method": "PATCH",
+      "path": "/api/authoring/sections/e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+      "body": {
+        "content": "<p>LOCAL TEST ONLY — stale admin JWT while current viewer.</p>",
+        "changeReason": "Reproduce current viewer write authorization finding."
+      },
+      "status": 200,
+      "response": {
+        "success": true,
+        "section": {
+          "id": "e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+          "doc_id": "f75c4fdc-5078-480c-87d8-2f1215fbeb88",
+          "code": "1.1",
+          "title": "Administrative Forms",
+          "content": "<p>LOCAL TEST ONLY — stale admin JWT while current viewer.</p>",
+          "order_index": 0,
+          "track_changes": false,
+          "tenant_id": 2,
+          "created_at": "2026-10-14T21:58:01.685Z",
+          "updated_at": "2026-10-14T22:01:34.239Z"
+        },
+        "message": "Section updated successfully",
+        "revision_created": true,
+        "filing": {
+          "committed": false,
+          "reason": "This document is not bound to a filing, so there is no governed section to update."
+        }
+      }
+    },
+    {
+      "label": "old admin JWT, current viewer creation",
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "body": {
+        "title": "LOCAL TEST ONLY — current viewer creation must refuse",
+        "module": "M1",
+        "client_program_id": "9dec16b7-b2c1-4dd5-bd75-0bf096ffd320"
+      },
+      "status": 201,
+      "response": {
+        "success": true,
+        "document": {
+          "id": "8543fd34-1e0a-45ea-9545-15194f497073",
+          "title": "LOCAL TEST ONLY — current viewer creation must refuse",
+          "module": "M1",
+          "product_code": null,
+          "locale": "en-US",
+          "status": "draft",
+          "created_by": "1",
+          "template_id": null,
+          "submitted_at": null,
+          "current_workflow_id": null,
+          "approved_at": null,
+          "frozen_at": null,
+          "locked_at": null,
+          "locked_by": null,
+          "version": null,
+          "tenant_id": 2,
+          "created_at": "2026-10-14T22:01:34.450Z",
+          "updated_at": "2026-10-14T22:01:34.450Z",
+          "client_program_id": "9dec16b7-b2c1-4dd5-bd75-0bf096ffd320",
+          "c2c_document_id": "doc_3bfc5ab9640a4ad59f8169a30cce2592",
+          "provenance": null
+        },
+        "message": "Document created successfully",
+        "governance": {
+          "bound": true,
+          "c2cDocumentId": "doc_3bfc5ab9640a4ad59f8169a30cce2592"
+        }
+      }
+    },
+    {
+      "label": "mint actual current viewer JWT",
+      "method": "POST",
+      "path": "/api/auth/dev-login",
+      "body": {
+        "email": "jonmichaelpsmith@gmail.com"
+      },
+      "status": 200,
+      "response": {
+        "success": true,
+        "accessToken": "[REDACTED]",
+        "refreshToken": "[REDACTED]",
+        "expiresIn": 86400,
+        "mfaRequired": false,
+        "user": {
+          "id": "1",
+          "email": "jonmichaelpsmith@gmail.com",
+          "firstName": "JM",
+          "lastName": "Smith",
+          "displayName": "JM Smith",
+          "roles": [
+            "viewer",
+            "user"
+          ],
+          "permissions": [],
+          "organizationId": "2",
+          "organizationName": "Concept2Cure Therapeutics",
+          "organizationUuid": "a93adf20-d089-4ad0-bec9-6d70377f139c",
+          "mfaEnabled": false,
+          "mfaMethods": [
+            {
+              "type": "email",
+              "isEnabled": true,
+              "isPrimary": true
+            }
+          ],
+          "signing": {
+            "authenticatorRequired": false,
+            "authenticatorEnrolled": false
+          },
+          "mustChangePassword": "[REDACTED]"
+        }
+      }
+    },
+    {
+      "label": "fresh viewer session",
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200,
+      "response": {
+        "id": "1",
+        "email": "jonmichaelpsmith@gmail.com",
+        "firstName": "JM",
+        "lastName": "Smith",
+        "displayName": "JM Smith",
+        "roles": [
+          "viewer",
+          "user"
+        ],
+        "permissions": [],
+        "organizationId": "2",
+        "organizationName": "Concept2Cure Therapeutics",
+        "signing": {
+          "authenticatorRequired": false,
+          "authenticatorEnrolled": false
+        }
+      }
+    },
+    {
+      "label": "fresh viewer JWT, current viewer membership",
+      "method": "PATCH",
+      "path": "/api/authoring/sections/e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+      "body": {
+        "content": "<p>LOCAL TEST ONLY — fresh viewer JWT while current viewer.</p>",
+        "changeReason": "Reproduce fresh viewer write authorization finding."
+      },
+      "status": 200,
+      "response": {
+        "success": true,
+        "section": {
+          "id": "e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+          "doc_id": "f75c4fdc-5078-480c-87d8-2f1215fbeb88",
+          "code": "1.1",
+          "title": "Administrative Forms",
+          "content": "<p>LOCAL TEST ONLY — fresh viewer JWT while current viewer.</p>",
+          "order_index": 0,
+          "track_changes": false,
+          "tenant_id": 2,
+          "created_at": "2026-10-14T21:58:01.685Z",
+          "updated_at": "2026-10-14T22:01:34.694Z"
+        },
+        "message": "Section updated successfully",
+        "revision_created": true,
+        "filing": {
+          "committed": false,
+          "reason": "This document is not bound to a filing, so there is no governed section to update."
+        }
+      }
+    },
+    {
+      "label": "fresh viewer JWT, current viewer creation",
+      "method": "POST",
+      "path": "/api/authoring/docs",
+      "body": {
+        "title": "LOCAL TEST ONLY — fresh viewer creation must refuse",
+        "module": "M1",
+        "client_program_id": "9dec16b7-b2c1-4dd5-bd75-0bf096ffd320"
+      },
+      "status": 201,
+      "response": {
+        "success": true,
+        "document": {
+          "id": "99c98ac2-a4d2-4353-8990-fdd6bbd9e4db",
+          "title": "LOCAL TEST ONLY — fresh viewer creation must refuse",
+          "module": "M1",
+          "product_code": null,
+          "locale": "en-US",
+          "status": "draft",
+          "created_by": "1",
+          "template_id": null,
+          "submitted_at": null,
+          "current_workflow_id": null,
+          "approved_at": null,
+          "frozen_at": null,
+          "locked_at": null,
+          "locked_by": null,
+          "version": null,
+          "tenant_id": 2,
+          "created_at": "2026-10-14T22:01:34.858Z",
+          "updated_at": "2026-10-14T22:01:34.858Z",
+          "client_program_id": "9dec16b7-b2c1-4dd5-bd75-0bf096ffd320",
+          "c2c_document_id": null,
+          "provenance": null
+        },
+        "message": "Document created successfully",
+        "governance": {
+          "bound": false,
+          "reason": "The project's governed filing doc_3bfc5ab9640a4ad59f8169a30cce2592 is already the filing of authoring document 8543fd34-1e0a-45ea-9545-15194f497073, so this document is created in the project as an unbound working document. A project holds many working documents and one editing copy per filing."
+        }
+      }
+    },
+    {
+      "label": "beyond 60s membership cache TTL, old JWT",
+      "method": "PATCH",
+      "path": "/api/authoring/sections/e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+      "body": {
+        "content": "<p>LOCAL TEST ONLY — beyond cache TTL, original JWT.</p>",
+        "changeReason": "Verify authorization finding beyond membership cache TTL."
+      },
+      "status": 200,
+      "response": {
+        "success": true,
+        "section": {
+          "id": "e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+          "doc_id": "f75c4fdc-5078-480c-87d8-2f1215fbeb88",
+          "code": "1.1",
+          "title": "Administrative Forms",
+          "content": "<p>LOCAL TEST ONLY — beyond cache TTL, original JWT.</p>",
+          "order_index": 0,
+          "track_changes": false,
+          "tenant_id": 2,
+          "created_at": "2026-10-14T21:58:01.685Z",
+          "updated_at": "2026-10-14T22:02:45.080Z"
+        },
+        "message": "Section updated successfully",
+        "revision_created": true,
+        "filing": {
+          "committed": false,
+          "reason": "This document is not bound to a filing, so there is no governed section to update."
+        }
+      }
+    },
+    {
+      "label": "beyond 60s membership cache TTL, fresh viewer JWT",
+      "method": "PATCH",
+      "path": "/api/authoring/sections/e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+      "body": {
+        "content": "<p>LOCAL TEST ONLY — beyond cache TTL, viewer JWT.</p>",
+        "changeReason": "Verify fresh viewer finding beyond membership cache TTL."
+      },
+      "status": 200,
+      "response": {
+        "success": true,
+        "section": {
+          "id": "e3b827b9-1426-49c3-adf2-576f7a4ed8ab",
+          "doc_id": "f75c4fdc-5078-480c-87d8-2f1215fbeb88",
+          "code": "1.1",
+          "title": "Administrative Forms",
+          "content": "<p>LOCAL TEST ONLY — beyond cache TTL, viewer JWT.</p>",
+          "order_index": 0,
+          "track_changes": false,
+          "tenant_id": 2,
+          "created_at": "2026-10-14T21:58:01.685Z",
+          "updated_at": "2026-10-14T22:02:45.159Z"
+        },
+        "message": "Section updated successfully",
+        "revision_created": true,
+        "filing": {
+          "committed": false,
+          "reason": "This document is not bound to a filing, so there is no governed section to update."
+        }
+      }
+    }
+  ],
+  "membership": {
+    "organization_id": 2,
+    "user_id": 1,
+    "role": "viewer"
+  },
+  "objectRoles": [
+    {
+      "principal_id": "1",
+      "role": "OWNER",
+      "revoked_at": null,
+      "valid_until": null
+    },
+    {
+      "principal_id": "1",
+      "role": "AUTHOR",
+      "revoked_at": null,
+      "valid_until": null
+    }
+  ],
+  "waitedMs": 70049,
+  "restoredMembership": {
+    "organization_id": 2,
+    "user_id": 1,
+    "role": "admin"
+  }
+}

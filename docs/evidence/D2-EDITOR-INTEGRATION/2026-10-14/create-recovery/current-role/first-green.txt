@@ -1,0 +1,154 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:05:35.146Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:05:35.148Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:05:35.148Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:39.548Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:39.585Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:39.610Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants 62ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants 21ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:39.629Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked
+{
+  "timestamp": "2026-10-14T22:05:39.665Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "permission-denied"
+  }
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save
+{
+  "timestamp": "2026-10-14T22:05:39.741Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants 26ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants 14ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs with an old admin JWT 9ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs/from-draft with an old admin JWT 9ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked 15ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps foreign-tenant records unavailable even to an administrator 10ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps sealed records immutable for a current administrator 14ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save 63ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > replaces stale admin claims with the uncached role for this actor and organization 2ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":99,"organizationId":2,"role":"admin"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":99,"role":"admin"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":2,"role":""} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > uses the verified membership role when no request identity is attached 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > preserves existing claims for a legacy principal with no membership role 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > viewer cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants >  VIEWER  cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > readonly cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > read_only cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > guest cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > retains current viewer reads through the existing object ACL 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > preserves the narrower ACL for writing and unknown custom organization roles 1ms
+
+ Test Files  2 passed (2)
+      Tests  23 passed (23)
+   Start at  22:05:29
+   Duration  10.87s (transform 4.94s, setup 124ms, import 881ms, tests 9.35s, environment 0ms)

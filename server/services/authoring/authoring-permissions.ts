@@ -1,5 +1,6 @@
 import type { Request } from 'express';
 import type { RequestSqlClient } from '../../db/requestDb';
+import { isReadOnlyOrganizationRole } from '../c2c/program-access';
 
 export const AUTHORING_PERMISSION_ROLES = [
   'OWNER',
@@ -49,6 +50,7 @@ export interface AuthoringPermissionDecision {
     | 'object-not-found'
     | 'principal-missing'
     | 'document-immutable'
+    | 'organization-read-only'
     | 'permission-denied';
   scope?: AuthoringObjectScope;
   matchedRoles?: AuthoringPermissionRole[];
@@ -104,7 +106,8 @@ export function authoringPrincipalFromRequest(req: Request): AuthoringPrincipal 
   const rawId = req.user?.id ?? req.user?.userId;
   if (rawId === undefined || rawId === null || rawId === '') return null;
 
-  const rawRoles = req.user?.roles ?? req.user?.role ?? [];
+  const currentRole = currentOrganizationRole(req, rawId);
+  const rawRoles = currentRole ? [currentRole] : req.user?.roles ?? req.user?.role ?? [];
   const roles = (Array.isArray(rawRoles) ? rawRoles : [rawRoles])
     .map(role => String(role).trim().toUpperCase())
     .filter(Boolean);
@@ -114,6 +117,22 @@ export function authoringPrincipalFromRequest(req: Request): AuthoringPrincipal 
     email: req.user?.email ? String(req.user.email).trim().toLowerCase() : null,
     roles,
   };
+}
+
+/** The uncached global auth reading wins over a JWT or membership-cache role.
+ * An identity from a different account/organization cannot lend its authority. */
+function currentOrganizationRole(req: Request, rawId: string | number): string | null {
+  const identity = req.identity;
+  if (identity && String(identity.legacyUserId) === String(rawId) &&
+      String(identity.organizationId) === String(req.user?.organizationId) &&
+      typeof identity.role === 'string' && identity.role.trim()) return identity.role;
+  const membershipRole = (req.user as { organizationRole?: unknown } | undefined)?.organizationRole;
+  return typeof membershipRole === 'string' && membershipRole.trim() ? membershipRole : null;
+}
+
+/** A durable document grant never elevates explicitly read-only membership. */
+export function isReadOnlyAuthoringPrincipal(principal: AuthoringPrincipal): boolean {
+  return principal.roles.some(isReadOnlyOrganizationRole);
 }
 
 export function isGlobalAuthoringAdmin(principal: AuthoringPrincipal): boolean {
@@ -203,6 +222,10 @@ export async function decideAuthoringPermission(input: {
 
   if (!documentStatusAllowsAction(scope.documentStatus, action)) {
     return { allowed: false, reason: 'document-immutable', scope };
+  }
+
+  if (action !== 'view' && isReadOnlyAuthoringPrincipal(principal)) {
+    return { allowed: false, reason: 'organization-read-only', scope };
   }
 
   if (isGlobalAuthoringAdmin(principal)) {

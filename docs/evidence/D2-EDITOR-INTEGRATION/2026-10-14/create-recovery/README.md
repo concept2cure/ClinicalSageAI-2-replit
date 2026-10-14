@@ -63,16 +63,29 @@ proof. Earlier diagnostic captures and test runs are preserved as such, not
 silently rebound to final source hashes. No provider calls or credentials are
 needed for these automated interaction checks.
 
-## Blocking current-role follow-up
+## Current-role follow-up — resolved
 
-The fresh local PostgreSQL/Express rehearsal creates and saves six regional/shared
-starts and files a draft DOCX into the Vault with a verified downloaded hash.
-It also found a current Viewer membership still able to create/edit through
-historical owner grants, with both old and fresh JWTs and after the membership
-cache interval. The current-role follow-up is required before this local lane is
-called ready. Its independent regression and real HTTP before/after evidence
-belong under `current-role/` and `local-runtime/`; the creation-interaction
-increment alone makes no claim that this authorization finding is closed.
+The [current-role fix](current-role/README.md) makes current read-only membership
+precede historical object grants and stale token roles, using the canonical role
+policy and the current identity for the same account and organization. Its
+post-integration 18-file run passes all 291 cases. Existing ACL, tenant,
+frozen-record and signing restrictions remain in place.
+
+The [fresh local Node 22/PostgreSQL rehearsal](local-runtime/README.md) applies
+the full schema and migrations, executes 115 real HTTP requests and creates
+11 starts/714 sections spanning regional/shared cases and IND M1–M5. It checks
+save/reopen, guidance, history/audit, scoped recovery and the actual non-superuser
+app_service connection with RLS enabled. Both old admin and fresh viewer tokens
+receive 403 for edits/creation after downgrade; reads remain possible and no
+extra document is created. The draft Word Vault artifact downloads with its
+exact recorded hash and draft marking; approval is not carried. All task-created
+runtime resources, test bytes and private credential state are removed.
+
+The [first publication receipt](first-increment-publication.txt) records normal
+hooks and direct push of `2df2adde`. The current-role code and native proof land
+as the following direct increment. The final build and zero-error compiler
+already include these frozen source bytes. Publication is verified from normal
+hooks and Git history, not predicted by this pre-publication record.
 
 A real human session has not been performed. The Codespaces worksheet remains
 Not run. Manual authoring and provider-dependent AnA oversight are separate lanes;
