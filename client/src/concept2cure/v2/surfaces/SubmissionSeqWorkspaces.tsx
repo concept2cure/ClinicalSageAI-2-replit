@@ -285,7 +285,7 @@ interface LeafRow {
 }
 
 interface LeafSourceResolution {
-  status: 'resolved' | 'no_pointer' | 'unplaceable_table' | 'missing' | 'content_changed';
+  status: 'resolved' | 'no_pointer' | 'unplaceable_table' | 'missing' | 'content_changed' | 'undetermined';
   keyKind: 'integer' | 'uuid' | null;
   pinnedSha256: string | null;
   storedSha256: string | null;
@@ -313,6 +313,7 @@ const SOURCE_VERDICT: Record<LeafSourceResolution['status'], { chip: string; ton
   unplaceable_table: { chip: 'store not placeable', tone: 'tone-err' },
   missing: { chip: 'not found in this organization', tone: 'tone-err' },
   content_changed: { chip: 'content changed since filing', tone: 'tone-warn' },
+  undetermined: { chip: 'Source evidence undetermined', tone: 'tone-warn' },
 };
 /** The chip for a resolved source: the store's status first, then empty
  *  content, then approval, then the pin. Approval is never inferred from a pin. */
@@ -783,7 +784,7 @@ function BuilderSources({ onNav }: { onNav?: (id: string) => void }) {
 }
 
 export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
-  seq: SeqRow; onSequenceChanged?: () => void;
+  seq: SeqRow; onSequenceChanged?: (notice: Notice) => void;
   /** Shell navigation, for the doors to where documents are placed from. */
   onNav?: (id: string) => void;
 }) {
@@ -796,9 +797,11 @@ export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const locked = seq.status === 'frozen' || seq.status === 'dispatched';
   const afterWrite = (n: Notice, effect: LeafWriteEffect) => {
-    setNotice(n);
+    // A sequence refresh unmounts this pane; keep its confirmed state-change
+    // verdict in the existing parent notice, rather than losing it with the pane.
+    if (effect.sequenceChanged && onSequenceChanged) onSequenceChanged(n);
+    else setNotice(n);
     if (effect.changed) setBump((b) => b + 1);
-    if (effect.sequenceChanged) onSequenceChanged?.();
   };
 
   return (

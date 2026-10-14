@@ -1,3 +1,26 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure — governed artifact review and submission evidence
+-- Compliance context: 21 CFR Part 11 auditability and traceability;
+--                     ALCOA+ record integrity principles
+-- Purpose: Make recorded review assignments and decisions available on the
+--          durable deployment path while preserving historical identities.
+--
+-- eCTD/CTD Context:
+--   - Module(s): cross-cutting artifact review and submission evidence
+--   - Integrity Risk Addressed: missing review prerequisites, tenant isolation,
+--     ambiguous record identities and invented historical update timestamps
+--
+-- Determinism Contract:
+--   - Preserve artifact pointers, assignment/decision identities and tenant keys.
+--   - Verify required columns and unique identities; refuse unresolved stores.
+--   - Unknown historical updated_at remains NULL; defaults affect future inserts.
+--
+-- Notes:
+--   - Creator statements are idempotent; existing records are not backfilled.
+--   - This header documents control intent, not regulatory qualification.
+-- =============================================================================
+
 -- Phase 12: Multi-User Review Operations
 -- Creates review_assignments and review_decisions tables for team-based review workflows.
 -- Applied: 2026-03-14

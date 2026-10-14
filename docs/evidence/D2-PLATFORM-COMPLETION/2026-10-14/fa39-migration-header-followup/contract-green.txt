@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts > durable sharing/review canonical prerequisites > replays exactly the two sole creators before the unchanged isolation tail 6ms
+ ✓ tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts > durable sharing/review canonical prerequisites > adds unknown historical update time without stamping existing decisions with deployment time 16ms
+ ✓ tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts > durable sharing/review canonical prerequisites > db/migrations/20260401_project_sharing_visibility.sql refuses malformed stores and checks semantic immediate unique identities 1ms
+ ✓ tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts > durable sharing/review canonical prerequisites > db/migrations/20260314_phase12_multi_user_review.sql refuses malformed stores and checks semantic immediate unique identities 1ms
+ ✓ tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts > durable sharing/review canonical prerequisites > preserves the existing explicit sharing role and stronger creator CHECK sets 0ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  20:08:40
+   Duration  1.25s (transform 394ms, setup 170ms, import 449ms, tests 29ms, environment 0ms)
+

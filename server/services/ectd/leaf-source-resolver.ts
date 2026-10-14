@@ -77,6 +77,16 @@ function looksLikePdf(buf: Buffer): boolean {
   return buf.length >= 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
 }
 
+/** Read-only proof shared by coverage and materialization; never stages bytes. */
+export function verifyRetainedLeafBytes(bytes: Buffer, storedSha256: string | null, requirePdf = false):
+  { verified: true; sha256: string } | { verified: false; code: 'SOURCE_BYTES_HASH_MISMATCH' | 'SOURCE_FORMAT_UNVERIFIED' } {
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if (!storedSha256 || sha256 !== storedSha256.trim().toLowerCase()) return { verified: false, code: 'SOURCE_BYTES_HASH_MISMATCH' };
+  if (requirePdf && !looksLikePdf(bytes)) return { verified: false, code: 'SOURCE_FORMAT_UNVERIFIED' };
+  return { verified: true, sha256 };
+}
+
+
 /** A leaf whose source document could not be materialized into the package. */
 export interface UnresolvedLeaf {
   documentTable: string | null;

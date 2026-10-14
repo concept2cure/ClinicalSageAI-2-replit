@@ -1,0 +1,47 @@
+{
+  "database": "platform_ci_vault_fixture_20261014_b7d60e29",
+  "proofScope": "Actual native PostgreSQL and actual app_service/RLS/request client, existing HTTP principal seam for Vault and signed-token auth for actor-displays. Synthetic export-record shape correspondence and real governance/leaf writers; no official device PDF/provider/filing acceptance claim.",
+  "nativePhases": [
+    {
+      "label": "first actual native",
+      "cases": 47,
+      "passed": 44,
+      "failed": 3,
+      "pending": 0,
+      "files": 5,
+      "durationSeconds": 21.79,
+      "overallExitCode": 1
+    },
+    {
+      "label": "reviewed fixture correspondence followup",
+      "cases": 47,
+      "passed": 47,
+      "failed": 0,
+      "pending": 0,
+      "files": 5,
+      "durationSeconds": 30.86,
+      "overallExitCode": 0
+    }
+  ],
+  "retainedOriginalCaseTitles": 47,
+  "originalAssertionsWeakened": false,
+  "newPublicSharingGrants": false,
+  "ownerExecutorsUsedAsHTTPClients": false,
+  "qaOrAuditOrSourceOrStorageCleanup": false,
+  "globalRoleOrPasswordMinting": false,
+  "schemaOrPolicyOrProductionWriterChange": false,
+  "providerNetworkCalls": "Remote keys/endpoints blanked; optional lanes disabled; local embedding configured without endpoint and refuses before SDK construction. Provider behavior/performance not qualified.",
+  "legacyControlScope": "New isolated database only; exact new duplicate witnesses soft-retired without hash/pointer changes; transaction rollback/finally guard and live-only index restoration verified after both failing and passing native attempts.",
+  "sourceCorrection": "Two actual requester options, programme metadata matching live official route, guarded SELECT of sole existing owned/created anchor. IND/eCTD test applicationType and all original assertions retained.",
+  "vaultRlsFacts": "Actual FORCE=true, explicit durable creator clauses; previous non-FORCE assumption was false and retained in its failed expectation phase. Canonical programme policies remained present and unchanged.",
+  "typedInputsFrozen": true,
+  "currentLint": {
+    "files": 6,
+    "errors": 0,
+    "warnings": 0,
+    "originalFiles": 5,
+    "originalErrors": 0,
+    "originalWarnings": 0,
+    "warningGrowth": 0
+  }
+}

@@ -20,7 +20,6 @@
  * vault-version-annotations-record.dbtest.ts.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import request from 'supertest';
 import { createHash } from 'node:crypto';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
@@ -40,7 +39,7 @@ const ids = { txt: '', txtV2: '', pdf: '', untexted: '', elsewhere: '' };
 const ann = { whole: '', page: '', passage: '', reply: '', toRetract: '' };
 
 const base = (t: Tenant) => `/api/c2c/project-vault/${t.programId}`;
-const as = async (who: number, role = 'admin', t: Tenant = mine) => request(await h.appFor(t, who, role));
+const as = async (who: number, role = 'admin', t: Tenant = mine) => await h.requestFor(t, who, role);
 const post = async (doc: string, body: Record<string, unknown>, who = u.author, role = 'admin') =>
   (await as(who, role)).post(`${base(mine)}/documents/${doc}/annotations`).send(body);
 const act = async (id: string, what: 'replies' | 'resolve' | 'retract', body: Record<string, unknown>, who = u.author, role = 'admin') =>
@@ -60,8 +59,8 @@ beforeAll(async () => {
   u.viewer = await h.user('dbtest-vanno-viewer@example.test', 'Vi Viewer');
   u.other = await h.user('dbtest-vanno-other@example.test', 'Otto Other');
   await h.cleanup();
-  mine = await h.tenant('mine');
-  theirs = await h.tenant('theirs');
+  mine = await h.tenant('mine', u.author);
+  theirs = await h.tenant('theirs', u.other);
   for (const id of [u.author, u.reviewer]) await h.member(mine, id, 'admin');
   await h.member(mine, u.viewer, 'viewer');
   await h.member(theirs, u.other, 'admin');

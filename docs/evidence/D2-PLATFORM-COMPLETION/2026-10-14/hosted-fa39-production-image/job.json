@@ -1,0 +1,96 @@
+{
+  "id": 116073085619,
+  "headSha": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "runId": 38625681016,
+  "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38625681016/job/116073085619",
+  "status": "completed",
+  "conclusion": "success",
+  "startedAt": "2026-10-14T19:59:49Z",
+  "completedAt": "2026-10-14T20:05:51Z",
+  "steps": [
+    {
+      "number": 1,
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 2,
+      "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 3,
+      "name": "Setup Node.js for download regression checks",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 4,
+      "name": "Verify pinned validator download failures and fallback",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 5,
+      "name": "Build the provision and production images (as deploy-aws.yml does)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 6,
+      "name": "Start an empty PostgreSQL with TLS",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 7,
+      "name": "Provision the empty database with the provision image",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 8,
+      "name": "Start the production image and require /healthz and /readyz = 200",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 9,
+      "name": "Sign a person in to the running image, second factor included",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 10,
+      "name": "Container log on failure",
+      "status": "completed",
+      "conclusion": "skipped"
+    },
+    {
+      "number": 11,
+      "name": "Tear down",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 21,
+      "name": "Post Setup Node.js for download regression checks",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 22,
+      "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 23,
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

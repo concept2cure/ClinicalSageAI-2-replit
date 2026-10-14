@@ -27,12 +27,9 @@ import { createRateLimiter } from '../middleware/rateLimiter';
 import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-map';
 import {
   createSubmission,
-  listSubmissions,
   getSubmission,
   createSequence,
-  listSequences,
   transitionSequence,
-  listLeaves,
   upsertLeaf,
   removeLeaf,
   anchorSubmissionToProgram,
@@ -64,6 +61,13 @@ import {
 import { generateSection } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
+import {
+  listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
+  readSubmissionLeavesForRequest, requireSubmissionReadStillCurrent, readDeliverableEvaluationInput, SubmissionReadError,
+} from '../services/submission-service/submission-request-read';
+import { ProgramReadAccessError } from '../services/c2c/current-program-access';
+import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
+import { readSubmissionLeafSourceEvidence, requireSubmissionLeafSourceEvidenceStillCurrent, SubmissionLeafSourceReadError } from '../services/ectd/submission-leaf-source-evidence';
 
 const logger = createScopedLogger('submissions-routes');
 const router = Router();
@@ -95,13 +99,30 @@ const CODE_STATUS: Record<string, number> = {
   ...GATEWAY_ERROR_HTTP_STATUS,
 };
 
-function fail(res: Response, err: unknown): void {
+function isSubmissionReadRefusal(err: unknown): err is SubmissionReadError | ProgramReadAccessError | SubmissionLeafSourceReadError | AuthoringReadScopeError {
+  return err instanceof SubmissionReadError || err instanceof ProgramReadAccessError || err instanceof SubmissionLeafSourceReadError || err instanceof AuthoringReadScopeError;
+}
+function handleReadRefusal(res: Response, err: unknown): boolean {
+  if (!isSubmissionReadRefusal(err)) return false;
+  if (err.status === 503) {
+    logger.error('Submission read verification unavailable', { error: err });
+    res.status(503).json({ error: { code: err.code, message: 'The submission records could not be verified. Refresh and try again.' } });
+  } else res.status(err.status).json({ error: { code: err.code, message: err.message } });
+  return true;
+}
+function handleKnownCodeFailure(res: Response, err: unknown): boolean {
   // Any service error that carries a known `code` maps to a stable HTTP status.
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
-    return;
+    return true;
   }
+  return false;
+}
+function fail(res: Response, err: unknown): void {
+  if (handleReadRefusal(res, err)) return;
+  if (handleKnownCodeFailure(res, err)) return;
+  const code = (err as { code?: string } | null)?.code;
 
   /* The support handle: `auditLog` (middleware/enterprise-security.ts) sets it
      before any route runs and echoes it as `X-Request-Id`, which is the
@@ -214,28 +235,53 @@ const upsertLeafSchema = z.object({
 });
 
 const AUTHOR = 'regulatory-author';
+const readSelectionSchema = z.object({ programId: z.string().uuid().optional(),
+  submissionId: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().positive().safe()).optional() });
+function readSelection(req: Request) {
+  const parsed = readSelectionSchema.safeParse(req.query);
+  if (!parsed.success) throw new SubmissionReadError(400, 'BAD_REQUEST', 'The selected submission scope is invalid.');
+  return { expectedProgramId: parsed.data.programId?.toLowerCase(), expectedSubmissionId: parsed.data.submissionId };
+}
+function requestedPathway(req: Request): Pathway | undefined {
+  if (req.query.pathway === undefined) return undefined;
+  if (typeof req.query.pathway !== 'string' || !(PATHWAYS as string[]).includes(req.query.pathway)) {
+    throw new SubmissionReadError(400, 'VALIDATION', 'Choose a supported framework.');
+  }
+  return req.query.pathway as Pathway;
+}
+function requestedMemberStates(req: Request): string | undefined {
+  if (req.query.memberStates !== undefined && typeof req.query.memberStates !== 'string') throw new SubmissionReadError(400, 'CTIS_MEMBER_STATES_INVALID', 'Choose valid EU member-state codes.');
+  return req.query.memberStates as string | undefined;
+}
+async function readCoverageInputs(req: Request, ctx: Ctx, sequenceId: number, regulation?: 'mdr' | 'ivdr') {
+  const q = requestPgClient(req);
+  const admitted = await readSubmissionSequenceForRequest(q, ctx, sequenceId, readSelection(req));
+  const evaluation = await readDeliverableEvaluationInput(q, admitted, { pathway: requestedPathway(req), memberStates: requestedMemberStates(req), regulation });
+  const leaves = await readSubmissionLeavesForRequest(q, admitted);
+  const sources = await readSubmissionLeafSourceEvidence(q, { ...admitted, leaves });
+  return { q, admitted, sources, ...evaluation };
+}
+async function finishCoverageRead(read: Awaited<ReturnType<typeof readCoverageInputs>>) {
+  await requireSubmissionLeafSourceEvidenceStillCurrent(read.q, read.sources.admission);
+  await requireSubmissionReadStillCurrent(read.q, read.admitted);
+}
 
 // ── Submissions ─────────────────────────────────────────────────────────────
 router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  /* ?programId=<uuid> scopes the list to one program's submissions: the filing
-     picker's list, where an unanchored submission is not offered for a document
-     of a program (QA j3 finding (b)). The count of submissions the scope leaves
-     out rides in `meta.notOffered`, so the picker can say what it did not offer.
-     Without it the whole organization is listed, as the Submission Center reads it. */
+  // Current accessible records only. Hidden project counts are not a list fact.
   const programParam = req.query.programId;
   try {
     if (programParam === undefined) {
-      res.json(await listSubmissions(ctx));
+      res.json(await listSubmissionsForRequest(requestPgClient(req), ctx));
       return;
     }
     if (typeof programParam !== 'string' || !isUuid(programParam)) {
       return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a program uuid.' } });
     }
     const programId = programParam.toLowerCase();
-    const [rows, all] = await Promise.all([listSubmissions(ctx, { programId }), listSubmissions(ctx)]);
-    ok(res, rows, { notOffered: all.length - rows.length });
+    ok(res, await listSubmissionsForRequest(requestPgClient(req), ctx, programId));
   } catch (err) {
     fail(res, err);
   }
@@ -917,7 +963,7 @@ router.get('/:id', limiter, requireRole(AUTHOR), async (req, res) => {
   const id = idParam(req.params.id);
   if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
   try {
-    res.json(await getSubmission(id, ctx));
+    res.json(await getSubmissionForRequest(requestPgClient(req), ctx, id, readSelection(req)));
   } catch (err) {
     fail(res, err);
   }
@@ -930,7 +976,7 @@ router.get('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => {
   const id = idParam(req.params.id);
   if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
   try {
-    res.json(await listSequences(id, ctx));
+    res.json(await listSequencesForRequest(requestPgClient(req), ctx, id, readSelection(req)));
   } catch (err) {
     fail(res, err);
   }
@@ -1010,24 +1056,23 @@ router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async 
 });
 
 // ── Builder leaves ──────────────────────────────────────────────────────────
-// Each leaf carries `sourceDocument`: what the leaf's document pointer resolves
-// to in this organization, from the SAME resolver the dispatch-readiness
-// assessment (and so the freeze / dispatch gate) uses. The Builder used to
-// decide "linked" on the client from `documentId != null`, which is null for
-// every vault leaf (uuid-keyed) — six leaves the platform had just filed read
-// "Source document: unlinked" (MDX demo pack, 2026-09-21, finding F5). The
-// resolution is computed here, once, so the column and the gate cannot
-// disagree.
+// Request-owned parent/source admission precedes leaf metadata. sourceDocument
+// reuses canonical pin, status, content, seal and retained-byte primitives;
+// missing evidence stays undetermined. Governed dispatch remains its separate
+// canonical assessment, and background resolver/service callers keep their ABI.
 router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
-    const leaves = await listLeaves(seqId, ctx);
-    const { resolveLeafDocuments } = await import('../services/ectd/leaf-document-resolver');
-    const sourceDocuments = await resolveLeafDocuments(leaves, ctx.organizationId);
-    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sourceDocuments[i] })));
+    const q = requestPgClient(req);
+    const admitted = await readSubmissionSequenceForRequest(q, ctx, seqId, readSelection(req));
+    const leaves = await readSubmissionLeavesForRequest(q, admitted);
+    const sources = await readSubmissionLeafSourceEvidence(q, { ...admitted, leaves });
+    await requireSubmissionLeafSourceEvidenceStillCurrent(q, sources.admission);
+    await requireSubmissionReadStillCurrent(q, admitted);
+    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sources.sourceDocuments[i], sourceRef: sources.leaves[i]?.sourceRef })));
   } catch (err) {
     fail(res, err);
   }
@@ -1326,20 +1371,11 @@ router.get('/sequences/:seqId/pathway-readiness', limiter, requireRole(AUTHOR), 
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
-  if (!(PATHWAYS as string[]).includes(pathway)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: `pathway must be one of: ${PATHWAYS.join(', ')}.` } });
-  }
-  const msRaw = Array.isArray(req.query.memberStates) ? req.query.memberStates[0] : req.query.memberStates;
-  const memberStates = typeof msRaw === 'string' && msRaw ? msRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
   try {
-    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
-    const result = assessPathwayReadiness({
-      pathway: pathway as Pathway,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
-      memberStates,
-    });
-    res.json(result);
+    const read = await readCoverageInputs(req, ctx, seqId);
+    const result = assessPathwayReadiness({ ...read.engine, leaves: read.sources.leaves, sourceAware: true });
+    await finishCoverageRead(read);
+    res.json({ ...result, scope: read.scope, sourceIssues: read.sources.sourceIssues });
   } catch (err) {
     fail(res, err);
   }
@@ -1354,21 +1390,13 @@ router.get('/sequences/:seqId/pathway-manifest', limiter, requireRole(AUTHOR), a
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const pathway = String(Array.isArray(req.query.pathway) ? req.query.pathway[0] : req.query.pathway ?? '');
-  if (!(PATHWAYS as string[]).includes(pathway)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: `pathway must be one of: ${PATHWAYS.join(', ')}.` } });
-  }
-  const msRaw = Array.isArray(req.query.memberStates) ? req.query.memberStates[0] : req.query.memberStates;
-  const memberStates = typeof msRaw === 'string' && msRaw ? msRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
   try {
-    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const read = await readCoverageInputs(req, ctx, seqId);
     const { buildPathwayManifest } = await import('../services/pathway-engines/pathway-manifest');
-    const result = assessPathwayReadiness({
-      pathway: pathway as Pathway,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
-      memberStates,
-    });
-    res.json(buildPathwayManifest(pathway as Pathway, result.detail));
+    const result = assessPathwayReadiness({ ...read.engine, leaves: read.sources.leaves, sourceAware: true });
+    const manifest = buildPathwayManifest(read.engine.pathway, result.detail);
+    await finishCoverageRead(read);
+    res.json({ ...manifest, scope: read.scope, sourceIssues: read.sources.sourceIssues });
   } catch (err) {
     fail(res, err);
   }
@@ -1384,19 +1412,17 @@ router.get('/sequences/:seqId/technical-file', limiter, requireRole(AUTHOR), asy
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const regulation = String(Array.isArray(req.query.regulation) ? req.query.regulation[0] : req.query.regulation ?? '');
-  if (regulation !== 'mdr' && regulation !== 'ivdr') {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'regulation must be one of: mdr, ivdr.' } });
-  }
   try {
-    const leaves = await listLeaves(seqId, ctx); // tenant-scoped
+    const regulation = req.query.regulation;
+    if (regulation !== undefined && regulation !== 'mdr' && regulation !== 'ivdr') throw new SubmissionReadError(400, 'VALIDATION', 'Choose mdr or ivdr.');
+    const read = await readCoverageInputs(req, ctx, seqId, regulation);
+    if (!read.scope.regulation) throw new SubmissionReadError(422, 'TECHNICAL_FILE_COVERAGE_UNAVAILABLE', 'Technical-file coverage is only available for recorded MDR or IVDR filings.');
     const { assembleTechDoc } = await import('../services/pathway-engines');
     const { buildTechnicalFileManifest } = await import('../services/pathway-engines/technical-file-manifest');
-    const result = assembleTechDoc({
-      regulation,
-      leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
-    });
-    res.json(buildTechnicalFileManifest(result));
+    const result = assembleTechDoc({ regulation: read.scope.regulation, leaves: read.sources.leaves, sourceAware: true });
+    const manifest = buildTechnicalFileManifest(result);
+    await finishCoverageRead(read);
+    res.json({ ...manifest, scope: read.scope, sourceIssues: read.sources.sourceIssues });
   } catch (err) {
     fail(res, err);
   }

@@ -1,0 +1,1 @@
+Distinct second canonical deploy stages: [{'stage': ['scripts/db/deploy-migrate.mjs'], 'pid': 208013, 'exit': 0}, {'stage': ['/tmp/authoring-review-binding-strict-fresh-second-deploy/validate-second-deploy.mjs'], 'pid': 208022, 'exit': 0}] ; critical pins unchanged: True ; protected log: /tmp/authoring-review-binding-strict-fresh-second-deploy/second-deploy.log

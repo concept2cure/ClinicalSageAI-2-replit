@@ -20,16 +20,20 @@ import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Pool } from 'pg';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer, withVaultLegacyLineageWrite, assertVaultLineageGuard } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-vr08 ';
-const CODE = 'DBTEST-VR08';
+const RUN = randomUUID().slice(0, 12);
+const PROBE = `dbtest-vr08-${RUN} `;
+const CODE = `DBTEST-VR08-${RUN}`;
 const MIGRATION = path.resolve(__dirname, '../../migrations/20260930_vault_documents_version_lineage.sql');
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 let owner: Pool;
 let userId: number;
+let viewerId: number;
+const organizations = new Map<string, { id: number; uuid: string }>();
 let mine: Tenant;
 let theirs: Tenant;
 let otherProgramId: string;
@@ -42,12 +46,13 @@ async function appFor(t: Tenant, role = 'admin'): Promise<express.Express> {
   const createVaultIngestRoutes = (await import('../../server/routes/vault-ingest')).default;
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
   const a = express();
+  const actorId = role === 'viewer' ? viewerId : userId;
   a.use((req, _res, next) => {
     const r = req as unknown as Record<string, unknown>;
-    r.userId = userId;
+    r.userId = actorId;
     r.tenantId = t.orgId;
     r.userRole = role;
-    r.user = { id: userId, organizationId: t.orgId, organizationUuid: t.orgUuid, role };
+    r.user = { id: actorId, organizationId: t.orgId, organizationUuid: t.orgUuid, role };
     next();
   });
   a.use(establishRequestTenantScope);
@@ -85,59 +90,47 @@ async function stored(t: Tenant): Promise<Set<string>> {
 }
 
 async function tenant(slug: string, programCode: string): Promise<Tenant> {
-  const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vr08-${slug}`],
-  );
+  let organization = organizations.get(slug);
+  if (!organization) {
+    const org = await owner.query(
+      `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+      [`${PROBE}${slug}`, `dbtest-vr08-${RUN}-${slug}`]);
+    organization = { id: Number(org.rows[0].id), uuid: String(org.rows[0].uuid) };
+    organizations.set(slug, organization);
+  }
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Versin 5mg') RETURNING id`,
-    [`${PROBE}${slug} program ${programCode}`, programCode, org.rows[0].id],
+    [`${PROBE}${slug} program ${programCode}`, `${programCode}-${RUN}`, organization.id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  const current = { orgId: organization.id, orgUuid: organization.uuid, programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, current, { userId, namespace: `${PROBE}${slug}-${programCode}` });
+  return current;
 }
 
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action LIKE 'vault.document.%'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  // Successors first: a live successor pins its predecessor's family.
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-}
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-vr08@example.test', `${PROBE}actor`, 'not-a-real-hash'],
+    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+    [`dbtest-vr08-${RUN}@example.test`, `${PROBE}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine', 'DBTEST-VR08-A');
   theirs = await tenant('theirs', 'DBTEST-VR08-B');
   otherProgramId = (await tenant('mine', 'DBTEST-VR08-C')).programId;
+  const viewer = await owner.query(`INSERT INTO users(email,name,password_hash,status)
+    VALUES($1,'Vault checkin viewer','not-a-real-hash','active') RETURNING id`, [`dbtest-vr08-${RUN}-viewer@example.test`]);
+  viewerId = Number(viewer.rows[0].id);
+  await seedVaultFixtureViewer(owner, mine, { userId: viewerId, invitedBy: userId });
+  await assertVaultFixtureRuntime(mine);
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
+  // Retain new namespaces, source bytes and append-only history, including failures.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 describe('checking in the next version of a Vault document (VR-08)', () => {
@@ -271,52 +264,67 @@ describe('the database refuses lineage outside the family (VR-08)', () => {
       [mine.programId, mine.orgId, `${CODE}-LEGACY`, sha(pdf('legacy-1'))],
     );
     const legacyId = base.rows[0].id;
-    // Two successors of one version, as a legacy write could have left them:
-    // written past the guard and the index, which this test re-applies.
-    const client = await owner.connect();
+    // Retain duplicate legacy witnesses on the dedicated QA database. Their
+    // eventual soft retirement restores the live-only index without erasing them.
+    const successors: string[] = [];
+    const sql = fs.readFileSync(MIGRATION, 'utf8');
+    const failures: unknown[] = [];
     try {
-      await client.query('BEGIN');
-      await client.query('DROP INDEX IF EXISTS vault.vault_documents_one_successor');
-      await client.query('ALTER TABLE vault.documents DISABLE TRIGGER vault_documents_lineage_guard');
-      for (const v of ['2.0', '2.1']) {
-        await client.query(
+      await withVaultLegacyLineageWrite(owner, true, async client => {
+        for (const v of ['2.0', '2.1']) {
+          const inserted = await client.query(
+            `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, document_type, version,
+               content_hash, s3_bucket, s3_key, file_name, supersedes_id)
+             VALUES ($1, $2, $3, 'Legacy', 'OTHER', $4, $5, 'local', 'k', 'l.pdf', $6) RETURNING id`,
+            [mine.programId, mine.orgId, `${CODE}-LEGACY`, v, sha(pdf(`legacy-${v}`)), legacyId],
+          );
+          successors.push(String(inserted.rows[0].id));
+        }
+      });
+      const witnesses = (await owner.query(`SELECT id, content_hash, supersedes_id FROM vault.documents
+        WHERE id=ANY($1::uuid[]) ORDER BY id`, [successors])).rows;
+      const notices: string[] = [];
+      const replay = await owner.connect();
+      replay.on('notice', n => notices.push(String(n.message)));
+      try {
+        await replay.query(sql);
+        await replay.query(sql);
+      } finally { replay.release(); }
+      expect(notices.some(n => /vault_documents_one_successor/.test(n))).toBe(true);
+      const idx = await owner.query(`SELECT to_regclass('vault.vault_documents_one_successor') AS i`);
+      expect(idx.rows[0].i).toBeNull();
+      await expect(
+        owner.query(
           `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, document_type, version,
              content_hash, s3_bucket, s3_key, file_name, supersedes_id)
-           VALUES ($1, $2, $3, 'Legacy', 'OTHER', $4, $5, 'local', 'k', 'l.pdf', $6)`,
-          [mine.programId, mine.orgId, `${CODE}-LEGACY`, v, sha(pdf(`legacy-${v}`)), legacyId],
-        );
+           VALUES ($1, $2, $3, 'Legacy', 'OTHER', '2.2', $4, 'local', 'k', 'l.pdf', $5)`,
+          [mine.programId, mine.orgId, `${CODE}-LEGACY`, sha(pdf('legacy-2.2')), legacyId],
+        ),
+      ).rejects.toThrow(/VAULT_LINEAGE_INVALID/);
+
+      // Once these two duplicate pointers leave the live set, replay creates
+      // the index. Exact hash and pointer witnesses remain in the QA database.
+      await owner.query(`UPDATE vault.documents SET deleted_at=COALESCE(deleted_at,now())
+        WHERE organization_id=$1 AND program_id=$2 AND id=ANY($3::uuid[])`, [mine.orgId, mine.programId, successors]);
+      await owner.query(sql);
+      expect((await owner.query(`SELECT to_regclass('vault.vault_documents_one_successor') AS i`)).rows[0].i).not.toBeNull();
+      expect((await owner.query(`SELECT id, content_hash, supersedes_id FROM vault.documents
+        WHERE id=ANY($1::uuid[]) ORDER BY id`, [successors])).rows).toEqual(witnesses);
+    } catch (error) {
+      failures.push(error);
+    } finally {
+      try {
+        await owner.query('ALTER TABLE vault.documents ENABLE TRIGGER vault_documents_lineage_guard');
+        await owner.query(`UPDATE vault.documents SET deleted_at=COALESCE(deleted_at,now())
+          WHERE organization_id=$1 AND program_id=$2 AND id=ANY($3::uuid[])`, [mine.orgId, mine.programId, successors]);
+        await owner.query(sql);
+        await assertVaultLineageGuard(owner);
+        expect((await owner.query(`SELECT to_regclass('vault.vault_documents_one_successor') AS i`)).rows[0].i).not.toBeNull();
+      } catch (restoreError) {
+        failures.push(restoreError);
       }
-      await client.query('ALTER TABLE vault.documents ENABLE TRIGGER vault_documents_lineage_guard');
-      await client.query('COMMIT');
-    } finally {
-      client.release();
     }
-
-    const notices: string[] = [];
-    const replay = await owner.connect();
-    replay.on('notice', (n) => notices.push(String(n.message)));
-    try {
-      const sql = fs.readFileSync(MIGRATION, 'utf8');
-      await replay.query(sql);
-      await replay.query(sql);
-    } finally {
-      replay.release();
-    }
-    expect(notices.some((n) => /vault_documents_one_successor/.test(n))).toBe(true);
-    const idx = await owner.query(`SELECT to_regclass('vault.vault_documents_one_successor') AS i`);
-    expect(idx.rows[0].i).toBeNull();
-    await expect(
-      owner.query(
-        `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, document_type, version,
-           content_hash, s3_bucket, s3_key, file_name, supersedes_id)
-         VALUES ($1, $2, $3, 'Legacy', 'OTHER', '2.2', $4, 'local', 'k', 'l.pdf', $5)`,
-        [mine.programId, mine.orgId, `${CODE}-LEGACY`, sha(pdf('legacy-2.2')), legacyId],
-      ),
-    ).rejects.toThrow(/VAULT_LINEAGE_INVALID/);
-
-    // Once the duplicates are gone, the next replay creates the index.
-    await owner.query('DELETE FROM vault.documents WHERE document_code = $1 AND supersedes_id IS NOT NULL', [`${CODE}-LEGACY`]);
-    await owner.query(fs.readFileSync(MIGRATION, 'utf8'));
-    expect((await owner.query(`SELECT to_regclass('vault.vault_documents_one_successor') AS i`)).rows[0].i).not.toBeNull();
+    if (failures.length > 1) throw new AggregateError(failures, 'Legacy assertion or index/guard restoration failed.', { cause: failures[0] });
+    if (failures.length) throw failures[0];
   });
 });

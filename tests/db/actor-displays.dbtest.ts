@@ -32,19 +32,52 @@ import c2cDocumentsRoutes from '../../server/routes/c2c/documents';
 import { assembleOrgDocJourney } from '../../server/services/authoring/doc-journey-view-assembler';
 import { authenticateToken } from '../../server/middleware/auth';
 import { getActivity, getProgramById } from '../../server/services/regulatory-programs.service';
-import {
-  TAG,
-  ORG_A,
-  owner,
-  userA,
-  ids,
-  workspaceA,
-  accessToken,
-  auth,
-  provisionMember,
-  provisionTwoTenantFixture,
-  teardownTwoTenantFixture,
-} from './two-tenant-fixture';
+import { Pool } from 'pg';
+import { randomUUID } from 'node:crypto';
+import { databaseUrl } from '../setup.db';
+import { getPool } from '../../server/db/runtime';
+import { accessToken, auth } from './two-tenant-fixture';
+import { assertVaultFixtureDatabase } from './vault-current-access-fixture';
+
+const TAG = `actor-displays-${randomUUID().slice(0,8)}`;
+let owner: Pool;
+let ORG_A: number;
+let userA: number;
+let workspaceA: number;
+
+/** Own a fresh namespace and retain its rows/audit history after the proof. */
+async function provisionActorDisplayFixture(): Promise<void> {
+  if (!process.env.APP_DATABASE_URL) throw new Error('Restricted APP_DATABASE_URL is required.');
+  owner = new Pool({ connectionString: databaseUrl, max: 2 });
+  await assertVaultFixtureDatabase(owner);
+  const org = await owner.query(`INSERT INTO organizations(name,slug,status)
+    VALUES($1,$1,'active') RETURNING id`, [TAG]);
+  ORG_A = Number(org.rows[0].id);
+  const runtimeIdentity = await runWithTenantScope(
+    {tenantId:String(ORG_A),role:'member',source:'test',caller:'actor-displays-role-posture'},
+    () => getPool().query(`SELECT current_user AS role,current_setting('is_superuser')::boolean AS superuser,
+      r.rolbypassrls,current_setting('app.rls_enforce',true) AS enforcement
+      FROM pg_roles r WHERE r.rolname=current_user`));
+  expect(runtimeIdentity.rows).toEqual([{role:'app_service',superuser:false,rolbypassrls:false,enforcement:'on'}]);
+  userA = await provisionMember(ORG_A, 'member', 'A');
+  const workspace = await owner.query(`INSERT INTO client_workspaces(organization_id,name,slug,status,created_by_id)
+    VALUES($1,$2,$2,'active',$3) RETURNING id`, [ORG_A,`${TAG}-workspace`,userA]);
+  workspaceA = Number(workspace.rows[0].id);
+  const parent = await owner.query(`INSERT INTO projects(organization_id,client_workspace_id,name,type,description,created_by_id)
+    VALUES($1,$2,$3,'regulatory','Invented actor-name proof records',$4) RETURNING id`,
+    [ORG_A,workspaceA,`${TAG}-project`,userA]);
+  project = Number(parent.rows[0].id);
+}
+
+async function provisionMember(organizationId: number, role: string, label: string): Promise<number> {
+  const user = await owner.query(`INSERT INTO users(email,name,password_hash,default_organization_id,status)
+    VALUES($1,$2,'not-a-real-password',$3,'active') RETURNING id`,
+    [`${TAG}-${label}@example.invalid`,`WO03 ${label}`,organizationId]);
+  const userId = Number(user.rows[0].id);
+  await owner.query('INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,$3)',
+    [organizationId,userId,role]);
+  return userId;
+}
 
 const CODE = 'm2.5-actor-displays';
 let app: express.Express;
@@ -56,7 +89,7 @@ let program = ''; // led by the leaver
 let adminA = 0;
 let sharedProject = 0; // the leaver is still on its ownership team
 let revisedSection = ''; // revised by the leaver, and by a non-numeric author
-const dossierDoc = `${CODE}-dossier`; // a dossier section the leaver revised
+const dossierDoc = `${CODE}-dossier-${TAG}`; // a dossier section the leaver revised
 
 async function leave(user: number) {
   await owner.query('DELETE FROM organization_users WHERE organization_id = $1 AND user_id = $2', [
@@ -116,8 +149,7 @@ async function seedRecordsAcrossSurfaces() {
 }
 
 beforeAll(async () => {
-  await provisionTwoTenantFixture();
-  project = Number(ids.A.projects);
+  await provisionActorDisplayFixture();
   adminA = await provisionMember(ORG_A, 'admin', 'displays-admin');
   leaver = await provisionMember(ORG_A, 'member', 'displays-leaver');
   silentLeaver = await provisionMember(ORG_A, 'member', 'displays-silent');
@@ -157,9 +189,18 @@ beforeAll(async () => {
     `INSERT INTO regulatory_programs
        (organization_id, name, code, program_type, product_type, primary_agency, product_name, lead_user_id)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', $2, $4) RETURNING id::text AS id`,
-    [ORG_A, `${CODE}-program`, `${CODE}-program`, leaver]
+    [ORG_A, `${TAG}-program`, `${CODE}-program-${TAG.slice(-8)}`, leaver]
   );
   program = p.rows[0].id;
+  // The current reader owns this existing project; the departed lead remains
+  // historical attribution rather than an access grant to an unanchored row.
+  const anchored = await owner.query(
+    `UPDATE projects SET regulatory_program_id = $1
+     WHERE id = $2 AND organization_id = $3 AND client_workspace_id = $4
+       AND created_by_id = $5 AND regulatory_program_id IS NULL RETURNING id`,
+    [program, project, ORG_A, workspaceA, userA]
+  );
+  expect(anchored.rows).toEqual([{ id: project }]);
   const edit = await runWithTenantScope(
     { tenantId: String(ORG_A), role: 'member', source: 'request', caller: 'actor-displays.dbtest' },
     () =>
@@ -197,17 +238,9 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  if (owner && project) {
-    for (const t of ['section_comments', 'section_status_log', 'project_sections']) {
-      await owner.query(`DELETE FROM ${t} WHERE project_id = $1 AND section_code LIKE $2`, [
-        project,
-        `${CODE}%`,
-      ]);
-    }
-  }
-  if (owner && sharedProject) await owner.query('DELETE FROM projects WHERE id = $1', [sharedProject]);
-  if (owner) await owner.query('DELETE FROM c2c_documents WHERE id = $1', [dossierDoc]);
-  await teardownTwoTenantFixture();
+  // Keep the new namespace, source records and chained audit/history rows.
+  await getPool().end().catch(() => {});
+  await owner?.end().catch(() => {});
 });
 
 const asA = () => auth(accessToken(userA, ORG_A, 'member'));

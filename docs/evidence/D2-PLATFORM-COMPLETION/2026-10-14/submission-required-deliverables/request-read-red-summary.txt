@@ -1,0 +1,30 @@
+Sanitized test-name and result metadata only; no source bodies, credentials or database URLs.
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > lists only accessible anchored filings, without private-row counts 59ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > scoped list excludes inaccessible projects without querying an organization notOffered count 10ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /1 before leaf metadata 9ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /1/sequences before leaf metadata 9ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /sequences/11/leaves before leaf metadata 1198ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /sequences/11/pathway-manifest?pathway=estar_510k before leaf metadata 24ms
+ ✓ server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > returns genuine public/owner/member controls 16ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > supplies exact server-derived available framework metadata 9ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > retains manager metadata-only unanchored anchor remedy, but refuses sequence/source reads 15ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses fresh role demotion despite old request manager claims 6ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses disabled actors and does not turn missing request context into a pooled read 6ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses a live sequence whose actual parent was deleted 6ms
+ × server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses foreign parent/sequence identities and selected programme conflicts 18ms
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > lists only accessible anchored filings, without private-row counts
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > scoped list excludes inaccessible projects without querying an organization notOffered count
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /1 before leaf metadata
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /1/sequences before leaf metadata
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /sequences/11/leaves before leaf metadata
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses same-org unassigned private read /sequences/11/pathway-manifest?pathway=estar_510k before leaf metadata
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > supplies exact server-derived available framework metadata
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > retains manager metadata-only unanchored anchor remedy, but refuses sequence/source reads
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses fresh role demotion despite old request manager claims
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses disabled actors and does not turn missing request context into a pooled read
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses a live sequence whose actual parent was deleted
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > current request-owned Submission Center reads > refuses foreign parent/sequence identities and selected programme conflicts
+ Test Files  1 failed (1)
+      Tests  12 failed | 1 passed (13)
+   Start at  20:15:11
+   Duration  10.50s (transform 4.24s, setup 84ms, import 936ms, tests 9.14s, environment 0ms)

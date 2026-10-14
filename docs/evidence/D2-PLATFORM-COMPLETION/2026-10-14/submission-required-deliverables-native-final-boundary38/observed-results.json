@@ -1,0 +1,151 @@
+{
+  "phase": "Final corrected request/source boundaries after regional-template merge; actual native38",
+  "executionHead": "31ec977a619ebb380f8e06737b8692ab852e7d15",
+  "casesPassed": 38,
+  "failed": 0,
+  "skipped": 0,
+  "files": 1,
+  "durationSeconds": 28.75,
+  "testDurationSeconds": 16.94,
+  "processExitCode": 0,
+  "processExitCodeObserved": true,
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "config": "vitest.db.config.ts",
+  "heapMiB": 4096,
+  "namespace": "sdd_mv8mqo4z_aa073eae",
+  "organizationId": 21,
+  "preflight": {
+    "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+    "role": "app_service",
+    "pid": 22807,
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on",
+    "tenant": "1",
+    "user_role": "member",
+    "bypass": "",
+    "admin": ""
+  },
+  "rlsForceRelations": [
+    {
+      "relname": "c2c_document_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "c2c_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "ectd_sequences",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "organization_users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_members",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_visibility_settings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "projects",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "regulatory_programs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_leaves",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_regions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submissions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "httpResponses": 63,
+  "requestPostures": 61,
+  "forwardedHttpReaderSql": 1830,
+  "observedPidTenantViolations": 0,
+  "statusDistribution": {
+    "200": 33,
+    "401": 1,
+    "403": 6,
+    "404": 6,
+    "409": 9,
+    "422": 1,
+    "500": 1,
+    "503": 6
+  },
+  "preInstrumentationRefusals": [
+    {
+      "status": 403,
+      "code": "AUTH_009"
+    },
+    {
+      "status": 401,
+      "code": "ACCOUNT_INACTIVE"
+    }
+  ],
+  "nativeBinding": {
+    "firstPid": 22807,
+    "otherPid": 22813,
+    "attemptedReads": 0,
+    "actualSameActorDifferentExecutorsRefused": true
+  },
+  "anchorTransfer": {
+    "programId": "2a48209e-6b53-4f3c-9a63-c2beb47d4b00",
+    "oldProjectId": 49,
+    "currentProjectId": 50,
+    "oldProjectRetained": true,
+    "sourceRowUnchanged": true,
+    "retainedVersionRows": 0,
+    "refusedCode": "SUBMISSION_SOURCE_READ_CHANGED"
+  },
+  "nullVaultDenial": {
+    "documentId": "640dd758-c2a2-42bd-96b2-672f62453e72",
+    "organizationId": null,
+    "genesis": true,
+    "recordUnchanged": true,
+    "metadataSqlObserved": false,
+    "providerPositiveClaim": false,
+    "refusedCode": "VAULT_TENANT_RECONCILIATION_REQUIRED"
+  },
+  "sourcePins": 43,
+  "allFrozenSourcePinsUnchanged": true,
+  "original36BodyAndAssertionPreservation": true,
+  "scopedTestLint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "providerPositiveClaim": false,
+  "productionAuditKeyQualified": false,
+  "observationBytes": 677679,
+  "limits": "Invented QA retained-source current structural/content and native request policy coverage; no all-pathway, agency compliance, dispatch, official filing, signature, binary/provider-positive or production boot claim."
+}

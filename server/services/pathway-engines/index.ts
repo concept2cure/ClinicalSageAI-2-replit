@@ -10,6 +10,9 @@
  * @module server/services/pathway-engines
  */
 
+import type { PathwayEvidenceLeaf } from './source-aware-evidence';
+import { SUBMISSION_DELIVERABLE_PATHWAYS, type Pathway } from '../../../shared/types/submission-api';
+export type { Pathway } from '../../../shared/types/submission-api';
 import { mapToCtis, type CtisInputLeaf } from './ctis/ctis-mapper';
 import { assembleTechDoc, type TechDocInputLeaf } from './mdr-ivdr/tech-doc-assembler';
 import { mapToEstar, type EstarInputLeaf, type DeviceFlags } from './estar/estar-mapper';
@@ -24,33 +27,10 @@ export * from './pmda/pmda-shonin';
 export * from './pma/pma-mapper';
 export * from './prestar/prestar-mapper';
 
-export type Pathway =
-  | 'ctis'
-  | 'mdr'
-  | 'ivdr'
-  | 'estar_510k'
-  | 'estar_de_novo'
-  | 'pmda_shonin'
-  | 'pma'
-  | 'prestar_q_sub'
-  | 'prestar_ide'
-  | 'prestar_513g';
-
-export const PATHWAYS: Pathway[] = [
-  'ctis',
-  'mdr',
-  'ivdr',
-  'estar_510k',
-  'estar_de_novo',
-  'pmda_shonin',
-  'pma',
-  'prestar_q_sub',
-  'prestar_ide',
-  'prestar_513g',
-];
+export const PATHWAYS: Pathway[] = [...SUBMISSION_DELIVERABLE_PATHWAYS];
 
 /** A canonical leaf accepted by any pathway engine. */
-export interface PathwayLeaf {
+export interface PathwayLeaf extends PathwayEvidenceLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
@@ -66,6 +46,9 @@ export interface PathwayReadiness {
 }
 
 export interface AssessPathwayInput {
+  sourceAware?: boolean;
+  /** Recorded product family only; never inferred from placement titles. */
+  deviceVariant?: 'device' | 'ivd';
   pathway: Pathway;
   leaves: PathwayLeaf[];
   /** CTIS only: concerned EU member states. */
@@ -95,12 +78,17 @@ export interface AssessPathwayInput {
   clinicalDataRequired?: boolean;
 }
 
+function requiredGaps(summary:{missingRequired:string[];undetermined?:string[]}) {
+  return [...summary.missingRequired,...(summary.undetermined??[])];
+}
+
 /** Run the right pathway engine and return a normalized readiness verdict. */
 export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadiness {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   switch (input.pathway) {
     case 'ctis': {
       const d = mapToCtis({
+        sourceAware: input.sourceAware,
         leaves: leaves as CtisInputLeaf[],
         memberStates: input.memberStates ?? [],
         notApplicable: input.ctisNotApplicable,
@@ -118,12 +106,14 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
     }
     case 'mdr':
     case 'ivdr': {
-      const r = assembleTechDoc({ leaves: leaves as TechDocInputLeaf[], regulation: input.pathway });
-      return { pathway: input.pathway, ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = assembleTechDoc({ leaves: leaves as TechDocInputLeaf[], regulation: input.pathway, sourceAware: input.sourceAware });
+      return { pathway: input.pathway, ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'estar_510k':
     case 'estar_de_novo': {
       const r = mapToEstar({
+        sourceAware: input.sourceAware,
+        variant: input.deviceVariant,
         leaves: leaves as EstarInputLeaf[],
         type: input.pathway === 'estar_de_novo' ? 'de_novo' : '510k',
         flags: input.deviceFlags,
@@ -138,7 +128,7 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
       };
     }
     case 'pmda_shonin': {
-      const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[], clinicalDataRequired: input.clinicalDataRequired });
+      const r = assessPmdaShonin({ leaves: leaves as PmdaInputLeaf[], clinicalDataRequired: input.clinicalDataRequired, sourceAware: input.sourceAware });
       // Undetermined slots are gaps, as in the eSTAR and CTIS branches.
       return {
         pathway: 'pmda_shonin',
@@ -148,20 +138,20 @@ export function assessPathwayReadiness(input: AssessPathwayInput): PathwayReadin
       };
     }
     case 'pma': {
-      const r = mapToPma({ leaves: leaves as PmaInputLeaf[], submissionType: input.pmaSubmissionType });
-      return { pathway: 'pma', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPma({ leaves: leaves as PmaInputLeaf[], submissionType: input.pmaSubmissionType, sourceAware: input.sourceAware });
+      return { pathway: 'pma', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'prestar_q_sub': {
-      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'q_sub', qSubType: input.qSubType });
-      return { pathway: 'prestar_q_sub', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'q_sub', qSubType: input.qSubType, sourceAware: input.sourceAware });
+      return { pathway: 'prestar_q_sub', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'prestar_ide': {
-      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'ide' });
-      return { pathway: 'prestar_ide', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: 'ide', sourceAware: input.sourceAware });
+      return { pathway: 'prestar_ide', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     case 'prestar_513g': {
-      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: '513g' });
-      return { pathway: 'prestar_513g', ready: r.summary.ready, missingRequired: r.summary.missingRequired, detail: r };
+      const r = mapToPreStar({ leaves: leaves as PreStarInputLeaf[], submissionType: '513g', sourceAware: input.sourceAware });
+      return { pathway: 'prestar_513g', ready: r.summary.ready, missingRequired: requiredGaps(r.summary), detail: r };
     }
     default: {
       const _exhaustive: never = input.pathway;

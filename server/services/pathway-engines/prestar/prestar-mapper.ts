@@ -1,3 +1,4 @@
+import { matchedSourceEvidence, type PathwayEvidenceLeaf, type PathwayEvidenceSlot } from '../source-aware-evidence';
 /**
  * PreSTAR readiness mapper — FDA Early Submission Requests (the "third eSTAR").
  *
@@ -98,7 +99,7 @@ export function getQSubTypeInfo(type: QSubType): QSubTypeInfo | undefined {
   return Q_SUB_TYPES.find((t) => t.value === type);
 }
 
-export interface PreStarInputLeaf {
+export interface PreStarInputLeaf extends PathwayEvidenceLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
@@ -120,7 +121,7 @@ export interface PreStarSlot {
   required: boolean;
 }
 
-export interface PreStarSlotStatus extends PreStarSlot {
+export interface PreStarSlotStatus extends PreStarSlot, PathwayEvidenceSlot  {
   present: boolean;
   sources: string[];
 }
@@ -129,7 +130,7 @@ export interface PreStarResult {
   submissionType: PreStarSubmissionType;
   qSubType?: QSubType;
   sections: PreStarSlotStatus[];
-  summary: { missingRequired: string[]; ready: boolean; completeness: number };
+  summary: { missingRequired: string[]; ready: boolean; completeness: number; undetermined?: string[] };
 }
 
 type Matcher = (l: PreStarInputLeaf) => boolean;
@@ -237,18 +238,21 @@ function registryFor(type: PreStarSubmissionType, qSubType?: QSubType): SlotDef[
   }
 }
 
-function evalSlot(slot: SlotDef, leaves: PreStarInputLeaf[]): PreStarSlotStatus {
+function evalSlot(slot: SlotDef, leaves: PreStarInputLeaf[], sourceAware?: boolean): PreStarSlotStatus {
   // A matched-but-non-substantive leaf (a draft/placeholder stub whose title
   // merely matches) never marks a required section present — only a matched
   // leaf that is ALSO substantive counts.
   const matched = leaves.filter((l) => slot.match(l));
-  const present = matched.some((l) => l.substantive);
+  const proof = matchedSourceEvidence(matched, sourceAware, matched.some((l) => l.substantive));
+  const { present } = proof;
   const sources = matched.filter((l) => l.substantive).map((l) => l.sectionCode || l.title);
   const { match, ...rest } = slot;
-  return { ...rest, present, sources };
+  return { ...rest, ...proof, present, sources };
 }
 
 export interface MapToPreStarInput {
+  /** Request-owned coverage only; omitted preserves legacy structural behavior. */
+  sourceAware?: boolean;
   leaves: PreStarInputLeaf[];
   submissionType: PreStarSubmissionType;
   /** Required when submissionType is 'q_sub' — refused when absent, never defaulted. */
@@ -260,16 +264,17 @@ export function mapToPreStar(input: MapToPreStarInput): PreStarResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   const qSubType = input.submissionType === 'q_sub' ? input.qSubType : undefined;
   const registry = registryFor(input.submissionType, qSubType);
-  const sections = registry.map((s) => evalSlot(s, leaves));
+  const sections = registry.map((s) => evalSlot(s, leaves, input.sourceAware));
   const requiredSections = sections.filter((s) => s.required);
-  const missingRequired = requiredSections.filter((s) => !s.present).map((s) => s.id);
-  const presentRequired = requiredSections.length - missingRequired.length;
+  const missingRequired = requiredSections.filter((s) => !s.present && !s.contentUndetermined).map((s) => s.id);
+  const undetermined = requiredSections.filter(s => s.contentUndetermined).map(s => s.id);
+  const presentRequired = requiredSections.filter(s => s.present).length;
   const completeness = requiredSections.length === 0 ? 0 : Math.round((presentRequired / requiredSections.length) * 100);
   return {
     submissionType: input.submissionType,
     qSubType,
     sections,
-    summary: { missingRequired, ready: missingRequired.length === 0, completeness },
+    summary: { missingRequired, ready: missingRequired.length === 0 && undetermined.length === 0, completeness, ...(input.sourceAware ? { undetermined } : {}) },
   };
 }
 

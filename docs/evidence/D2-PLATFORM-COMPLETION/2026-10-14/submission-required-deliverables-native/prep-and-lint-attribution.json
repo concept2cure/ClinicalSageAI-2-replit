@@ -1,0 +1,77 @@
+{
+  "initialLint": {
+    "files": 2,
+    "errors": 0,
+    "warnings": 3
+  },
+  "finalForcedScopedLint": {
+    "files": 2,
+    "errors": 0,
+    "warnings": 0
+  },
+  "lintCorrections": "Extract canonical source-seeding helper; split four logical describe groups; object table arguments. All23 declarations/36 cases/110 expect calls preserved.",
+  "targetHardening": "Exact d25 database + explicit d25 opt-in OR canonical CI=true/NODE_ENV=test concept2cure-ri_dbtest only, before fixture writes; owner/runtime target matched.",
+  "launcherHardening": "Verify actual owned process UIDs, cwd==repo and PORT5000 before cloning environment; no credential fallback.",
+  "isolationGuard": "PASS:172 real-database test files unmocked, every mocked config excludes them.",
+  "frozenCatalogueHelper": "Imported unchanged; source pin equals earlier sealed phase.",
+  "designPhase": "Reviewed design was filed before test application and before any SQL; its unexecuted preparation statements describe that preparation time. This evidence records the subsequently authorized actual execution.",
+  "oldPhases": "No catalogue, protocol, CI/header or hosted-census proof rewritten.",
+  "privateArtifacts": {
+    "/tmp/submission-required-deliverables-native-first.txt": {
+      "sha256": "cfcccfbbcd234455f167a86fe0fef3391b0035a3857b203c9c1aec9b8d4546ec",
+      "bytes": 12664
+    },
+    "/tmp/submission-required-deliverables-native-observations.json": {
+      "sha256": "b0a05779a31cf6ef99dde01fa5efcad334aa3485d2f3860e648709a7544d27a3",
+      "bytes": 510540
+    },
+    "/tmp/submission-required-deliverables-native-prep/native-first-frozen-source-pins.json": {
+      "sha256": "2afde06c220ccc227de248b9a6a6f95e4e1315d8619a96545a00d11ee2011fff",
+      "bytes": 5279
+    },
+    "/tmp/submission-required-deliverables-native-prep/draft-source-pins-initial.json": {
+      "sha256": "ed40cbbb99b2d3055c1f78ccd2d47562070a079faf5b545f698b99d0848fea3e",
+      "bytes": 2626
+    },
+    "/tmp/submission-required-deliverables-native-prep/before-target-hardening/draft-source-pins.json": {
+      "sha256": "13383c1180a2c1dd0c28ae0aacf851a620ea37646db4c9490f8699d5cb807cde",
+      "bytes": 2730
+    },
+    "/tmp/submission-required-deliverables-native-prep/before-target-hardening/submission-required-deliverables-fixture.ts": {
+      "sha256": "d0ef9a6258b8690ff33cd472bed099bb98526d55d4533320bb44618f03c71824",
+      "bytes": 18099
+    },
+    "/tmp/submission-required-deliverables-native-prep/before-target-hardening/submission-required-deliverables.dbtest.ts": {
+      "sha256": "74d0cd14f9c49d6d4687d7573c9ecd05e9da09fbb074e3686c9331fa9276a6ba",
+      "bytes": 21533
+    },
+    "/tmp/submission-required-deliverables-native-prep/before-target-hardening/run-native.py": {
+      "sha256": "c0f58baecd5f195a62317bdc8df07866007c2a768067c5aec007f559e97ea92d",
+      "bytes": 4074
+    },
+    "/tmp/submission-required-deliverables-native-prep/before-target-hardening/design.md": {
+      "sha256": "23280f211df0b3723f6ab9d4aebafacf1df1af5ab885f509cf9affb11a9dcfca",
+      "bytes": 8200
+    },
+    "/tmp/submission-required-deliverables-native-prep/target-hardening-pins.json": {
+      "sha256": "7d06be3f9bdeb425effb62389387628f05b594bf10c2ae2148bcbdcfa59892e1",
+      "bytes": 651
+    },
+    "/tmp/submission-required-deliverables-native-prep/applied-lint-green-pins.json": {
+      "sha256": "094279e2213f02f13949ce0feebe4751937ea1ebef6af6ea4967c86bc3a66b94",
+      "bytes": 496
+    },
+    "/tmp/submission-required-deliverables-native-prep/run-native.py": {
+      "sha256": "c85657e9aa273f70e8e930fa5d951bf48d244acbf2ca50546d68e6dbfce20a92",
+      "bytes": 4595
+    },
+    "/tmp/submission-required-deliverables-native-scoped-lint-first.json": {
+      "sha256": "1dc612f18f7914592beb3851bd5ca0cf752b278f16a90d40fc40630e06346da6",
+      "bytes": 41608
+    },
+    "/tmp/submission-required-deliverables-native-scoped-lint-final.json": {
+      "sha256": "35d236b87522909c10a7dc1e9c45897cd10556ea2b95ffff5d0d02157e8987d0",
+      "bytes": 528
+    }
+  }
+}

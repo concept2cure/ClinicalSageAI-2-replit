@@ -1,0 +1,6 @@
+{
+  "bytes": 382060,
+  "sha256": "e74ee552320f790cdc5aa640732c36ae255dbcb79f9e19190fa70b515cc8020b",
+  "format": "base64 of deterministic gzip; losslessly decodes to the actual connector log",
+  "rawSecretScanFindings": 0
+}

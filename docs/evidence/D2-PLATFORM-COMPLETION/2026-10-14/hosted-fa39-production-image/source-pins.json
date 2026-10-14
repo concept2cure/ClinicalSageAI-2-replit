@@ -1,0 +1,44 @@
+[
+  {
+    "path": "Dockerfile.optimized",
+    "commit": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "bytes": 12444,
+    "sha256": "373f1c78b5d7172e9623452deaacc4c5e3646f335c7f191972a3f9f2918b8e67"
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "commit": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "bytes": 142643,
+    "sha256": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+  },
+  {
+    "path": "scripts/ops/fetch-verapdf.sh",
+    "commit": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "bytes": 1989,
+    "sha256": "f6e577b7035222fe2e1d9fa6f6112b263339e4317c4edf90f7ffbbeb7c91fb1e"
+  },
+  {
+    "path": "scripts/ops/check-pdfa-toolchain.sh",
+    "commit": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "bytes": 9563,
+    "sha256": "cdc0f11376e520da3d607d45277bb937170217acf49f8924263f5d98972fcac2"
+  },
+  {
+    "path": "scripts/ci/__tests__/verapdf-download.test.mjs",
+    "commit": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "bytes": 7443,
+    "sha256": "5fa92c7538360a9b6b43d0c731c2a5992f98a875d9282e222dcd8a44f3d34bca"
+  },
+  {
+    "path": "scripts/ci/image-boot-signin.mjs",
+    "commit": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "bytes": 7337,
+    "sha256": "19672838c91040ad152c7d3968a3aa0dec8e3ac48d7f340e047d9535fd411c66"
+  },
+  {
+    "path": "server/services/ectd/pdfa-pipeline.ts",
+    "commit": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+    "bytes": 13789,
+    "sha256": "9728b9acb5ed3ce7f3c998fc74402cb58b37e8b947d3412afefb88ee9f6113b2"
+  }
+]
