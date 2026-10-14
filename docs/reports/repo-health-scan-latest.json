@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T07:33:33.181Z",
+  "generatedAt": "2026-10-14T07:47:37.587Z",
   "git": {
-    "sha": "2c299974d41ffa9144cb5c2ceeb774e7b408ae7c",
+    "sha": "a80d2fa65784714a1aa97b367b8042000c830ed6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 229,
+    "duplicateBasenames": 230,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -811,6 +811,15 @@
           "client/src/contexts/TenantContext.tsx",
           "server/middleware/tenantContext.ts",
           "server/utils/tenantContext.ts"
+        ]
+      },
+      {
+        "basename": "training",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Training.tsx",
+          "server/services/qms/training.ts",
+          "shared/qms/training.ts"
         ]
       },
       {
@@ -2147,7 +2156,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1135411
+        "bytes": 1134810
       },
       {
         "file": "shared/schema.ts",
@@ -2377,7 +2386,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21848
+        "lines": 21834
       },
       {
         "file": "shared/schema.ts",
@@ -2805,7 +2814,7 @@
       },
       {
         "file": "server/routes/mdx-qms.ts",
-        "lines": 1612
+        "lines": 1619
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
@@ -2837,7 +2846,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 430,
+      "duplicateGroups": 431,
       "largeByBytes": 41,
       "largeByLines": 87
     },
@@ -2849,13 +2858,13 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 58,
+      "duplicateGroups": 59,
       "largeByBytes": 11,
       "largeByLines": 17
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 80,
+      "duplicateGroups": 81,
       "largeByBytes": 3,
       "largeByLines": 2
     },
