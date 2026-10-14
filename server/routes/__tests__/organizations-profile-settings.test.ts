@@ -497,31 +497,32 @@ describe('organization writes carry the audit-row outcome', () => {
  * staff (platform_role_grants) were treated as members. Standing is now
  * holdsPlatformRole(req, ['platform_admin', 'super_admin']).
  */
-describe('D6: platform staff is a platform grant, never the membership role', () => {
-  const body = { name: 'Bright Bio', clientType: 'biotech', reason: 'Support correction' };
-  const ORGS: Row[] = [
-    { id: 1, name: 'Staff Home' },
-    { id: 7, name: 'Bright Bio' },
-    { id: 9, name: 'Other Pharma' },
-  ];
-  /** Every organization, and a caller who is a member of org 1 only. */
-  function directory() {
-    selectImpl = ({ fields, table, filtered }) => {
-      if (table === 'organizations') return filtered ? [ORGS[0]] : ORGS;
-      if (table === 'organization_users') return fields && 'count' in fields ? [{ count: 2 }] : [{ organizationId: 1 }];
-      return [];
-    };
-  }
-  function profileRows() {
-    nextSelectRows = [{ name: 'Old', clientType: 'pharma', industryMode: null }];
-    nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: 'biotech', industryMode: null, updatedAt: new Date() }];
-  }
+const PLATFORM_PROFILE_CHANGE = { name: 'Bright Bio', clientType: 'biotech', reason: 'Support correction' };
+const PLATFORM_DIRECTORY_ORGS: Row[] = [
+  { id: 1, name: 'Staff Home' },
+  { id: 7, name: 'Bright Bio' },
+  { id: 9, name: 'Other Pharma' },
+];
+/** Every organization, and a caller who is a member of org 1 only. */
+function platformDirectoryRows() {
+  selectImpl = ({ fields, table, filtered }) => {
+    if (table === 'organizations') return filtered ? [PLATFORM_DIRECTORY_ORGS[0]] : PLATFORM_DIRECTORY_ORGS;
+    if (table === 'organization_users') return fields && 'count' in fields ? [{ count: 2 }] : [{ organizationId: 1 }];
+    return [];
+  };
+}
+function platformProfileRows() {
+  nextSelectRows = [{ name: 'Old', clientType: 'pharma', industryMode: null }];
+  nextUpdateRows = [{ id: 7, name: 'Bright Bio', clientType: 'biotech', industryMode: null, updatedAt: new Date() }];
+}
 
+
+describe('D6: platform staff is a platform grant, never the membership role', () => {
   describe.each(['platform_admin', 'super_admin'])('a membership role of %s with no grant', role => {
     const USER = JSON.stringify({ id: 21, role, organizationId: 1 });
 
     it('GET /api/organizations lists only its own memberships, not every organization', async () => {
-      directory();
+      platformDirectoryRows();
       const res = await request(makeApp()).get('/api/organizations').set('x-test-user', USER);
       expect(res.status).toBe(200);
       expect(res.body.organizations.map((o: { id: string }) => o.id)).toEqual(['1']);
@@ -537,11 +538,11 @@ describe('D6: platform staff is a platform grant, never the membership role', ()
     });
 
     it("cannot patch another organization's profile: 403, nothing written, no system scope", async () => {
-      profileRows();
+      platformProfileRows();
       const res = await request(makeApp())
         .patch('/api/organizations/7/profile')
         .set('x-test-user', USER)
-        .send(body);
+        .send(PLATFORM_PROFILE_CHANGE);
       expect(res.status).toBe(403);
       expect(lastUpdate.values).toBeUndefined();
       expect(logActionMock).not.toHaveBeenCalled();
@@ -567,14 +568,14 @@ describe('D6: platform staff is a platform grant, never the membership role', ()
     });
 
     it('GET /api/organizations lists every organization', async () => {
-      directory();
+      platformDirectoryRows();
       const res = await request(makeApp()).get('/api/organizations').set('x-test-user', USER);
       expect(res.status).toBe(200);
       expect(res.body.organizations.map((o: { id: string }) => o.id)).toEqual(['1', '7', '9']);
     });
 
     it('membershipOnly=true lists actual memberships even for platform staff, for the account switcher', async () => {
-      directory();
+      platformDirectoryRows();
       const res = await request(makeApp()).get('/api/organizations?membershipOnly=true').set('x-test-user', USER);
       expect(res.status).toBe(200);
       expect(res.body.organizations.map((o: { id: string }) => o.id)).toEqual(['1']);
@@ -582,7 +583,7 @@ describe('D6: platform staff is a platform grant, never the membership role', ()
     });
 
     it('refuses a malformed membershipOnly filter before reading the organization directory', async () => {
-      directory();
+      platformDirectoryRows();
       const res = await request(makeApp()).get('/api/organizations?membershipOnly=everything').set('x-test-user', USER);
       expect(res.status).toBe(400);
       expect(res.body.organizations).toBeUndefined();
@@ -597,11 +598,11 @@ describe('D6: platform staff is a platform grant, never the membership role', ()
     });
 
     it("patches another organization's profile, in the system scope, audited against that organization", async () => {
-      profileRows();
+      platformProfileRows();
       const res = await request(makeApp())
         .patch('/api/organizations/7/profile')
         .set('x-test-user', USER)
-        .send(body);
+        .send(PLATFORM_PROFILE_CHANGE);
       expect(res.status).toBe(200);
       expect(systemScopeMock).toHaveBeenCalledTimes(1);
       expect(logActionMock).toHaveBeenCalledTimes(1);

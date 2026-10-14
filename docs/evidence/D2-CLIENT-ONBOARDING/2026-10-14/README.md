@@ -64,6 +64,24 @@ Neither links nor discovery narratives are automatically published to AnA.
   components at desktop/390px widths and settled light/dark themes, with
   synthetic replies. The authoring browser evidence follows the same boundary.
 
+Final local checks passed: 354 tests in 36 consolidated suites; 43 additional
+post-merge editor/onboarding checks and the canonical Access reachability test;
+the 38 organization-directory checks after a test-fixture-only refactor; full
+TypeScript checking; and the client/server build. These are separate runs with
+overlapping cases, not a summed unique-test count. The warning ratchet reports
+seven fewer warnings. Design, CSS, authenticated-fetch and tracked-import gates
+passed. The required test-presence script completed in its standard warning
+mode: its basename heuristic does not recognize all of the behavior suites
+listed in the workstream evidence.
+
+Latest upstream saved-document review and working-copy handoff changes were
+merged without discarding either implementation. The post-merge checks cover
+the shared editor integration. Final command logs are `typecheck-final.txt`,
+`build-final.txt`, `post-merge-regressions.txt`,
+`post-merge-access-reachability.txt`, `organization-directory-final.txt`,
+`lint-ratchet-final.txt`, `client-gates-final.txt`, and
+`test-presence-check.txt`.
+
 ## Limits
 
 No new dependency, database migration, model call or production capability flag
