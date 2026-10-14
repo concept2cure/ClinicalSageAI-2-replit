@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T02:56:38.202Z",
+  "generatedAt": "2026-10-14T03:41:53.638Z",
   "git": {
-    "sha": "2ae0b1cb5aeabbd69ea9ae1ebc4de3e4d6b218ef",
+    "sha": "53693722f971a8fa694b85f3f955d401ddea8fd3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2151,7 +2151,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 298249
+        "bytes": 299345
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 172796
+        "bytes": 172904
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2377,7 +2377,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6090
+        "lines": 6117
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2401,7 +2401,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3822
+        "lines": 3824
       },
       {
         "file": "server/routes/ana-ri/stream.ts",

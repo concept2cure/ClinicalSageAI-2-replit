@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:sql-interpolation
+> node scripts/ci/check-sql-interpolation.mjs
+
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1010 baselined interpolation(s) in 216 file(s); the baseline may only shrink.

@@ -335,6 +335,13 @@ describe('Admin → Setup governed save', () => {
 });
 
 describe('Admin → Setup claims no control it does not have', () => {
+  it('offers the existing Vault legal-hold controls beside the retention period', async () => {
+    const { container } = renderSurface();
+    await loaded(container);
+    expect(container.querySelector('[data-testid="legal-holds-card"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="retention-period-card"]')).not.toBeNull();
+  });
+
   it('has no switch for anything enforced elsewhere or per user', async () => {
     const { container } = renderSurface();
     await loaded(container);

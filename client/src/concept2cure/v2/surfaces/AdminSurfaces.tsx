@@ -59,6 +59,7 @@ import {
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
 import { RetentionPeriodCard } from './RetentionPeriodCard';
+import { LegalHoldsCard } from './LegalHoldsCard';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
 import { PdfARequirementSetting } from './PdfARequirementSetting';
 import '../styles/project-home-v2.css';
@@ -923,6 +924,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             own governed save, because the period has its own route and its own
             chained audit row; see RetentionPeriodCard.tsx. */}
         <RetentionPeriodCard describeFailure={saveFailure} />
+        <LegalHoldsCard describeFailure={saveFailure} />
       </div>
     </div>
   );

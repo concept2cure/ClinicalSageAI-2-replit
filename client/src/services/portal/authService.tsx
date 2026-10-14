@@ -592,6 +592,8 @@ export class AuthService {
   private sessionPolicy: SessionPolicy = DEFAULT_SESSION_POLICY;
   private refreshPromise: Promise<boolean> | null = null;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Ignore refresh requests that complete after a different session was adopted or ended. */
+  private authRevision = 0;
   private events: AuthEventEmitter = new AuthEventEmitter();
   public api: ApiClient;
 
@@ -790,6 +792,7 @@ export class AuthService {
   }
 
   private async _doRefreshToken(): Promise<boolean> {
+    const revision = this.authRevision;
     try {
       const result = await this.api.post<{
         accessToken: string;
@@ -800,6 +803,8 @@ export class AuthService {
         { refreshToken: this.tokens?.refreshToken },
         { skipAuth: true, retryOnUnauthorized: false }
       );
+
+      if (revision !== this.authRevision) return false;
 
       if (!result.success || !result.data) {
         // P1-1: the refresh names why a session is over (idle, lifetime); the
@@ -822,6 +827,7 @@ export class AuthService {
 
       return true;
     } catch {
+      if (revision !== this.authRevision) return false;
       this.endSession(null);
       return false;
     }
@@ -879,13 +885,18 @@ export class AuthService {
    * expired hand-off signs nobody in. It carries no refresh token: the session
    * lives as long as its access token and its idle window.
    */
-  async adoptSession(accessToken: string, persistent: boolean = false): Promise<AuthUser | null> {
+  async adoptSession(accessToken: string, persistent: boolean = false, expected?: { userId: string; organizationId: string }): Promise<AuthUser | null> {
     const probe = await this.api.get<{ authenticated?: boolean; user?: AuthUser; session?: unknown }>(`${this.baseUrl}/session`, {
       skipAuth: true,
       retryOnUnauthorized: false,
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!probe.success || !probe.data?.authenticated || !probe.data.user) return null;
+    if (expected && (String(probe.data.user.id) !== expected.userId || String(probe.data.user.organizationId) !== expected.organizationId)) return null;
+    // A workspace switch rotates the old access token. Its refresh token and
+    // credentials in the opposite persistence tier must not resurrect that
+    // workspace on reload; keep nothing from the predecessor after the probe.
+    SecureStorage.clear();
     const policy = this.rememberSessionPolicy(probe.data.session);
     const expiresAt = policy.expiresAt ? new Date(policy.expiresAt) : new Date(Date.now() + policy.lifetimeHours * 60 * 60 * 1000);
     this.setAuth({ accessToken, refreshToken: '', expiresAt, tokenType: 'Bearer' }, probe.data.user, persistent);
@@ -1029,6 +1040,7 @@ export class AuthService {
     refreshToken?: string,
     expiresInSeconds: number = 3600
   ): void {
+    ++this.authRevision;
     this.tokens = {
       accessToken,
       refreshToken: refreshToken || accessToken,
@@ -1051,6 +1063,7 @@ export class AuthService {
   // ─────────────────────────────────────────────────────────────────────────
 
   private setAuth(tokens: AuthTokens, user: AuthUser, persistent: boolean = false): void {
+    ++this.authRevision;
     this.tokens = tokens;
     this.user = user;
     this.storeTokens(persistent);
@@ -1069,10 +1082,14 @@ export class AuthService {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
       localStorage.setItem('activeOrgSlug', slug);
+    } else {
+      localStorage.removeItem('currentOrganizationName');
+      localStorage.removeItem('activeOrgSlug');
     }
   }
 
   private clearAuth(): void {
+    ++this.authRevision;
     this.tokens = null;
     this.user = null;
     this.sessionPolicy = DEFAULT_SESSION_POLICY;

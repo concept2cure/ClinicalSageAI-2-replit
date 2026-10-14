@@ -16,7 +16,10 @@ import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 // The one settings writer and its record, shared with the AnA platform
 // controller (P1-49, DP-58): services/tenant/tenant-settings-writer.ts.
 import {
+  DISCOVERY_NOT_A_GENERAL_SETTING,
+  DiscoverySettingRefusedError,
   asSettings,
+  namesOnboardingDiscovery,
   overlaySettings,
   writeTenantSettings,
   type Settings,
@@ -261,6 +264,9 @@ router.patch(
       if (namesClaudeConnector(req.body)) {
         return res.status(403).json({ error: CONNECTOR_NOT_A_GENERAL_SETTING });
       }
+      if (namesOnboardingDiscovery(req.body)) {
+        return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
+      }
 
       // Check permissions: this tenant's administrator, or platform staff.
       if (!(await mayWriteTenant(req, tenantId))) {
@@ -296,6 +302,7 @@ router.patch(
       // Return the updated settings
       return res.json(stored);
     } catch (error) {
+      if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(`Error updating settings for tenant ${req.params.tenantId}`, error);
       return res.status(500).json({ error: 'Failed to update tenant settings' });
     }
@@ -342,6 +349,7 @@ router.post(
       // Return the default settings
       return res.json(stored);
     } catch (error) {
+      if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(`Error resetting settings for tenant ${req.params.tenantId}`, error);
       return res.status(500).json({ error: 'Failed to reset tenant settings' });
     }
@@ -425,6 +433,7 @@ router.patch(
       // Return just the updated section
       return res.json(stored[section]);
     } catch (error) {
+      if (error instanceof DiscoverySettingRefusedError) return res.status(403).json({ error: DISCOVERY_NOT_A_GENERAL_SETTING });
       logger.error(
         `Error updating ${req.params.section} settings for tenant ${req.params.tenantId}`,
         error

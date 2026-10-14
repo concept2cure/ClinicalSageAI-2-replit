@@ -6,14 +6,18 @@ import {
   LIC_ARCHETYPES,
   LIC_DTC,
   LIC_PRICING,
-  LIC_ROLES,
-  LIC_TIER_LEVEL,
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import { probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
 import { useLiveData } from '../dataConnect';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
+import { useOnboardingDiscovery } from '../useOnboardingDiscovery';
+import { DISCOVERY_FIELD_LABELS } from '@shared/types/onboarding-discovery';
+import { DiscoveryQuestions, DISCOVERY_CONTEXT_FIELDS, DISCOVERY_PROJECT_FIELDS } from './DiscoveryQuestions';
+import { OnboardingSecurity } from './OnboardingSecurity';
+import { DiscoveryNextSteps } from './DiscoveryNextSteps';
+import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -90,12 +94,16 @@ export type OrgMemberRole = 'admin' | 'manager' | 'member' | 'viewer';
  * roles fail closed to least-privilege 'member'. */
 export function inviteRoleToOrgRole(role: string): OrgMemberRole {
   switch (role) {
+    case 'admin':
     case 'owner':
     case 'business_admin':
     case 'super_admin':
       return 'admin';
     case 'platform_admin':
+    case 'manager':
       return 'manager';
+    case 'viewer':
+      return 'viewer';
     case 'support':
     default:
       return 'member';
@@ -225,6 +233,8 @@ export function enterpriseRequestBody(input: {
 
 /** Honest per-step record of what activate() actually did. */
 export interface ActivationOutcome {
+  discoverySaved: boolean;
+  invitations: OnboardingInvitationOutcome[];
   /** Whether the typed organization name reached the governed org record.
    *  It used to be collected, required, and sent nowhere. */
   nameSaved: boolean;
@@ -236,7 +246,7 @@ export interface ActivationOutcome {
    *  there is nothing to pay, so there is no checkout to redirect to. It is a
    *  distinct value from 'redirecting' on purpose — collapsing the two would
    *  make the summary claim a payment step that never happened. */
-  checkout: 'redirecting' | 'provisioned' | 'unavailable' | 'failed';
+  checkout: 'ready' | 'provisioned' | 'unavailable' | 'failed';
   checkoutNote: string | null;
   checkoutUrl: string | null;
   /** The enterprise onboarding request: 'sent' = a licence_requests row exists
@@ -267,8 +277,24 @@ export interface ActivationOutcome {
    activation endpoints and reports per-step results honestly — see the
    comment at that function for exactly what is and is not wired. */
 
-export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
+export function Onboarding(props: SurfaceViewProps) {
+  // Re-mount on tenant change so names, personnel and private setup links never carry across tenants.
+  return <OnboardingWizard key={String(getOrgId())} {...props} />;
+}
+
+const STEPS = [
+  'Organization', 'Client discovery', 'Project discovery', 'Pricing model',
+  'Choose plan', 'Invite personnel', 'Modules', 'Security & setup',
+  'Agency accounts', 'Review & activate',
+];
+
+function OnboardingWizard({ onNav }: SurfaceViewProps) {
+  const discovery = useOnboardingDiscovery();
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [step, setStep] = useState(0);
+  const stepTitle = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { stepTitle.current?.focus(); }, [step]);
   const [org, setOrg] = useState({ name: '', archetype: 'virtual_biotech' });
   /* This wizard sets up the organisation the person is signed into — its
      writes go to that organisation's own record (PATCH /api/organizations/:id
@@ -298,8 +324,10 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
   const [tier, setTier] = useState('standard');
   const [cycle, setCycle] = useState('annual');
   const [seats, setSeats] = useState(5);
-  const [invites, setInvites] = useState([{ email: '', role: 'owner' }]);
+  const [invites, setInvites] = useState([{ email: '', role: 'member' }]);
   const [outcome, setOutcome] = useState<ActivationOutcome | null>(null);
+  const outcomeTitle = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (outcome) outcomeTitle.current?.focus(); }, [outcome]);
   const [activating, setActivating] = useState(false);
   /* Who our team replies to about an enterprise onboarding request. Prefilled
      from the signed-in user's own session payload; editable, because the person
@@ -327,8 +355,10 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       : pricingMap[family] || pricingMap.pharma || [];
   const selTier: any = tiers.find((t: any) => t.tier === tier) || tiers[0] || {};
   const bundle = licBundleOf(seats);
-  const roles: Array<{ id: string; label: string }> = LIC_ROLES;
-  const tierLevel: Record<string, number> = LIC_TIER_LEVEL;
+  const roles = [
+    { id: 'member', label: 'Member' }, { id: 'viewer', label: 'Viewer' },
+    { id: 'manager', label: 'Manager' }, { id: 'admin', label: 'Organization administrator' },
+  ];
 
   /* `onNav` comes from the shell (V2App passes it to every surface). A local
      one used to SHADOW it here, and its entire body was
@@ -336,22 +366,12 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
      read. So "Create your first project" and "Open admin console" were buttons
      that did nothing at all when clicked. */
 
-  const STEPS = [
-    'Organization',
-    'Pricing model',
-    'Choose plan',
-    'Invite personnel',
-    'Modules',
-    'Agency accounts',
-    'Review & activate',
-  ];
-
   const setInvite = (i: number, k: string, v: string) =>
     setInvites((a) =>
       a.map((x, j) => (j === i ? { ...x, [k]: v } : x)),
     );
   const addInvite = () =>
-    setInvites((a) => [...a, { email: '', role: 'support' }]);
+    setInvites((a) => [...a, { email: '', role: 'member' }]);
   const rmInvite = (i: number) =>
     setInvites((a) => a.filter((_, j) => j !== i));
 
@@ -411,6 +431,15 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
      captured via the governed industry profile in step 1 above. */
   const activate = async () => {
     setActivating(true);
+    const activationOrgId = getOrgId();
+    const current = () => mounted.current && String(getOrgId()) === String(activationOrgId);
+    // A refused discovery save stops activation before any membership/billing writes.
+    const discoverySaved = await discovery.save(true);
+    if (!discoverySaved) {
+      if (current()) setActivating(false);
+      return;
+    }
+    if (!current()) return;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...getAuthHeaders(),
@@ -429,7 +458,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
        what it is. */
     let nameSaved = false;
     const typedName = org.name.trim();
-    const orgIdForName = getOrgId();
+    const orgIdForName = activationOrgId;
     if (typedName && orgIdForName) {
       try {
         const res = await fetch(`/api/organizations/${encodeURIComponent(String(orgIdForName))}/profile`, {
@@ -450,6 +479,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       }
     }
 
+    if (!current()) return;
     // 1. Governed org industry profile (audited upsert).
     let profileSaved = false;
     try {
@@ -472,7 +502,9 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
     const pending = invites.filter((x) => x.email.trim());
     let invitesSent = 0;
     const invitesFailed: string[] = [];
+    const invitations: OnboardingInvitationOutcome[] = [];
     for (const inv of pending) {
+      if (!current()) return;
       const email = inv.email.trim();
       try {
         const res = await fetch('/api/tenant-users', {
@@ -483,11 +515,14 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
             email,
             name: inviteNameFromEmail(email),
             role: inviteRoleToOrgRole(inv.role),
-            organizationId: getOrgId(),
+            organizationId: activationOrgId,
           }),
         });
         // 201 = member created; 202 = pending cross-org invitation created.
-        if (res.ok) invitesSent += 1;
+        if (res.ok) {
+          invitesSent += 1;
+          invitations.push(invitationOutcome(email, res.status, await res.json().catch(() => null)));
+        }
         else invitesFailed.push(email);
       } catch {
         invitesFailed.push(email);
@@ -511,6 +546,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
        It is fired only for the enterprise tier, and only with an address: with
        no contact the request is NOT sent and the summary says so, because a
        request nobody can reply to is not a request. */
+    if (!current()) return;
     let enterpriseRequest: ActivationOutcome['enterpriseRequest'] = 'not-requested';
     let enterpriseNote: string | null = null;
     if (tier === 'enterprise') {
@@ -562,7 +598,8 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       }
     }
 
-    // 3. Billing checkout — last, because success leaves the app for Stripe.
+    if (!current()) return;
+    // 3. Prepare checkout last; the person hands over private invitation links before leaving.
     const checkoutReq = checkoutRequestFor(model, tier, cycle, seats);
     let checkout: ActivationOutcome['checkout'];
     let checkoutNote: string | null = null;
@@ -590,7 +627,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           checkout = 'provisioned';
           checkoutNote = null;
         } else if (typeof url === 'string' && url) {
-          checkout = 'redirecting';
+          checkout = 'ready';
           checkoutUrl = url;
         } else {
           checkout = 'failed';
@@ -604,7 +641,10 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       }
     }
 
+    if (!current()) return;
     setOutcome({
+      discoverySaved,
+      invitations,
       nameSaved,
       profileSaved,
       invitesAttempted: pending.length,
@@ -617,10 +657,25 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       enterpriseNote,
     });
     setActivating(false);
-    if (checkoutUrl) window.location.assign(checkoutUrl);
   };
 
-  const canNext = step === 0 ? org.name.trim().length > 1 : true;
+  const missingHere = discovery.assessment.missingFields.filter((field) =>
+    step === 1 ? DISCOVERY_CONTEXT_FIELDS.includes(field)
+      : step === 2 ? DISCOVERY_PROJECT_FIELDS.includes(field)
+        : step === 7 ? field === 'securityNeeds' : false,
+  );
+  const invitationEmails = invites.filter((invite) => invite.email.trim()).map((invite) => invite.email.trim().toLowerCase());
+  const invitesValid = invitationEmails.every(isUsableEmail) && new Set(invitationEmails).size === invitationEmails.length;
+  const discoveryAvailable = !discovery.loading && !discovery.error && discovery.canEdit && !discovery.busy;
+  const canNext = !discovery.loading && !discovery.error && !discovery.busy && (
+    !discovery.canEdit || (step === 0 ? org.name.trim().length > 1
+      : step === 5 ? invitesValid : missingHere.length === 0)
+  );
+  const continueWizard = async () => {
+    if (!canNext) return;
+    if (discovery.canEdit && [1, 2, 7].includes(step) && !(await discovery.save(false))) return;
+    setStep((current) => current + 1);
+  };
 
   /* WHAT ANA SEES HERE. Identity stays off the wire: invite addresses, the
      contact's name/email, the failed-invite strings (which may embed addresses)
@@ -642,6 +697,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
     let summary: string;
     if (outcome) {
       facts.activationOutcome = {
+        discoverySaved: outcome.discoverySaved,
         nameSaved: outcome.nameSaved,
         profileSaved: outcome.profileSaved,
         invitesAttempted: outcome.invitesAttempted,
@@ -651,6 +707,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         enterpriseRequest: outcome.enterpriseRequest,
       };
       const parts = [
+        outcome.discoverySaved ? 'discovery questionnaire saved' : 'discovery questionnaire not saved',
         outcome.nameSaved ? 'organization name saved' : 'organization name not saved',
         outcome.profileSaved ? 'industry profile saved' : 'industry profile not saved',
         outcome.invitesAttempted === 0
@@ -659,8 +716,8 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
             (outcome.invitesFailed.length ? ` (${outcome.invitesFailed.length} not sent)` : ''),
         outcome.checkout === 'provisioned'
           ? 'plan provisioned (nothing to pay)'
-          : outcome.checkout === 'redirecting'
-            ? 'redirecting to secure checkout'
+          : outcome.checkout === 'ready'
+            ? 'secure checkout is ready; no paid plan provisioned yet'
             : `checkout ${outcome.checkout}` +
               (outcome.checkoutNote ? ` — ${outcome.checkoutNote}` : ''),
       ];
@@ -680,7 +737,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
     } else {
       summary =
         `Workspace setup wizard, step ${step + 1} of ${STEPS.length} (${STEPS[step]}). ` +
-        'Nothing has been created yet — this screen collects configuration and creates nothing until Activate.';
+        'Discovery drafts can be saved during setup. Organization changes, invitations and billing run only on activation.';
     }
     return {
       summary,
@@ -701,9 +758,8 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           <div className="sp-eyebrow">Onboarding {I.dot} {currentOrgName ?? 'your organization'}</div>
           <h1 className="sp-title">Set up your workspace</h1>
           <p className="sp-state">
-            Seven steps for the organization you are signed into: its profile,
-            pricing model, plan, personnel, module provisioning, agency gateway
-            accounts, then activate.
+            Discover your company's needs and first project, then configure the
+            organization, plan, personnel, security and agency accounts.
             Changes here are saved to this organization's own record.
           </p>
         </div>
@@ -727,15 +783,36 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="pj-card">
         <div className="pj-card-b">
+          {!outcome && <h2 className="pj-seclbl" ref={stepTitle} tabIndex={-1}>{STEPS[step]}</h2>}
+          {!outcome && <div className="ob-discovery-toolbar">
+            <span className="scaf-note">
+              {discovery.loading ? 'Reading saved discovery…'
+                : discovery.record ? `Discovery revision ${discovery.record.revision}${discovery.dirty ? ' · unsaved changes' : ' · saved'}`
+                  : 'Discovery has not been saved yet.'}
+            </span>
+            <button type="button" className="sp-ask" disabled={!discoveryAvailable || activating} onClick={() => void discovery.save(false)}>
+              {discovery.busy ? 'Saving discovery…' : 'Save discovery draft'}
+            </button>
+          </div>}
+          {discovery.error && <div className="ob-discovery-note ob-discovery-error" role="alert">
+            {discovery.error} <button type="button" className="sp-ask" disabled={discovery.loading} onClick={discovery.reloadSaved}>Reload saved discovery</button>
+            {discovery.dirty && <p className="scaf-note">Reloading replaces your unsaved discovery answers with the saved version.</p>}
+          </div>}
+          {!discovery.loading && !discovery.error && !discovery.canEdit && <p className="scaf-note" role="status">You can review the saved discovery and setup guidance. Only the organization's owner or administrator can edit discovery and activate workspace setup. Your Account settings remain available from the account menu.</p>}
+          {discovery.note && <p className="ob-discovery-note" role="status">{discovery.note}</p>}
           {outcome ? (
             <div className="ob-done">
               <div className="ob-done-ic">{I.checkCircle || I.check}</div>
-              <h2>
-                {outcome.checkout === 'redirecting'
-                  ? 'Taking you to secure checkout…'
+              <h2 ref={outcomeTitle} tabIndex={-1}>
+                {outcome.checkout === 'ready'
+                  ? 'Checkout ready — review your activation summary'
                   : (org.name || 'Your workspace') + ' — activation summary'}
               </h2>
               <div className="ob-review" style={{ textAlign: 'left' }}>
+                <div className="ob-rev-row">
+                  <span className="k">Client discovery</span>
+                  <span className="v">{outcome.discoverySaved ? 'Completed and saved to your organization.' : 'Not saved.'}</span>
+                </div>
                 {/* One row, once. This was rendered twice with two different
                     wordings for the same fact — a summary that says the same
                     thing twice invites the reader to look for the difference. */}
@@ -785,14 +862,14 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                         ' plan is active on this organization and the ' +
                         tier +
                         '-tier modules are enabled. Nothing to pay.'
-                      : outcome.checkout === 'redirecting'
-                      ? 'Redirecting to secure checkout for the ' +
+                      : outcome.checkout === 'ready'
+                      ? 'Secure checkout is ready for the ' +
                         selTier.name +
                         ' plan' +
                         (model === 'dtc' && selTier.trialDays > 0
                           ? ' (' + selTier.trialDays + '-day trial)'
                           : '') +
-                        '. Modules for the ' +
+                        '. No paid plan is active from this checkout yet. Modules for the ' +
                         tier +
                         ' tier are provisioned automatically once payment completes.'
                       : outcome.checkoutNote ||
@@ -804,13 +881,16 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     (which reports the audited PATCH that does persist it).
                     Two rows about one fact, disagreeing, is worse than either. */}
               </div>
+              <OnboardingInvitations invitations={outcome.invitations} />
+              <DiscoveryNextSteps assessment={discovery.assessment} onNav={onNav} />
               <div
                 className="cm-pushbar"
                 style={{ justifyContent: 'center', marginTop: 16 }}
               >
+                {outcome.checkout === 'ready' && outcome.checkoutUrl && <button type="button" className="sp-primary" onClick={() => window.location.assign(outcome.checkoutUrl!)}>Continue to secure checkout</button>}
                 <button
-                  className="sp-primary"
-                  onClick={() => onNav('projects')}
+                  className={outcome.checkout === 'ready' ? 'sp-ask' : 'sp-primary'}
+                  onClick={() => { window.__C2C_NEW_PROJECT = true; onNav('projects'); }}
                 >
                   {I.folder} Create your first project
                 </button>
@@ -832,6 +912,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                   <input
                     className="ob-in"
                     aria-label="Organization name" placeholder="e.g. Bright Biosciences"
+                    disabled={!discoveryAvailable}
                     value={org.name}
                     onChange={(e) =>
                       { edited.current.name = true; setOrg({ ...org, name: e.target.value }); }
@@ -854,6 +935,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     {archetypes.map((a) => (
                       <button
                         key={a.id}
+                        disabled={!discoveryAvailable}
                         className={
                           'ob-arch-b' +
                           (org.archetype === a.id ? ' on' : '')
@@ -872,7 +954,10 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               )}
 
-              {step === 1 && (
+              {step === 1 && <DiscoveryQuestions discovery={discovery} section="context" />}
+              {step === 2 && <DiscoveryQuestions discovery={discovery} section="project" />}
+              {step === 7 && <OnboardingSecurity discovery={discovery} onNav={onNav} />}
+              {step === 3 && (
                 <div className="ob-models">
                   <button
                     className={'ob-model' + (model === 'dtc' ? ' on' : '')}
@@ -909,7 +994,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               )}
 
-              {step === 2 && (
+              {step === 4 && (
                 <div>
                   <div className="lic-cycle" style={{ marginBottom: 14 }}>
                     <button
@@ -1022,27 +1107,17 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               )}
 
-              {step === 3 && (
+              {step === 5 && (
                 <div>
                   <div className="pj-seclbl" style={{ marginTop: 0 }}>
                     Invite personnel{' '}
-                    <span
-                      style={{
-                        color: 'var(--text-400)',
-                        fontWeight: 400,
-                        textTransform: 'none',
-                        letterSpacing: 0,
-                      }}
-                    >
-                      - role grants on this platform are governed &amp; audited
-                      (21 CFR Part 11)
-                    </span>
                   </div>
                   {invites.map((inv, i) => (
                     <div key={i} className="ob-invite">
                       <input
                         id={`ob-invite-email-${i}`}
                         aria-label={`Email for invitee ${i + 1}`}
+                        type="email"
                         className="ob-in"
                         style={{ flex: 1, margin: 0 }}
                         placeholder="name@org.com"
@@ -1084,24 +1159,26 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     {I.plus} Add another
                   </button>
                   <div className="scaf-note" style={{ marginTop: 12 }}>
-                    Business-tier roles (owner, business_admin, super_admin)
-                    confer finance access and can only be granted by a business
-                    administrator.
+                    Invitations grant organization membership with the role you choose.
+                    Platform and finance access require separate governed grants.
+                    New members receive a password setup email, or a private setup link
+                    if this server cannot send email. Existing users accept a membership invitation in Account.
                   </div>
+                  {!invitesValid && <p className="scaf-note" role="alert">Enter valid, distinct email addresses before continuing.</p>}
                 </div>
               )}
 
-              {step === 4 && (
+              {step === 6 && (
                 <div>
                   <div className="pj-seclbl" style={{ marginTop: 0 }}>
-                    Modules provisioned for the{' '}
+                    Plan features for the{' '}
                     <b>&nbsp;{tier}&nbsp;</b> tier
                   </div>
                   <div className="scaf-note" style={{ marginBottom: 10 }}>
                     Once the plan is active, {org.name || 'your organization'} is
-                    auto-provisioned every module its tier qualifies for
-                    (provisionModulesForTier - tier level{' '}
-                    {tierLevel[tier] ?? '—'}).
+                    receives the features its tier qualifies for. Your apps remain
+                    subject to the supported launch scope and organization entitlements.
+                    This is a plan preview; activation and payment results are reported separately.
                   </div>
                   <div className="ob-mods">
                     {provisionedFeatures().map((f, i) => (
@@ -1113,7 +1190,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               )}
 
-              {step === 5 && (
+              {step === 8 && (
                 <GatewayAccountsSetting
                   note={
                     <div className="scaf-note">
@@ -1125,8 +1202,18 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                 />
               )}
 
-              {step === 6 && (
+              {step === 9 && (
                 <div className="ob-review">
+                  <DiscoveryNextSteps assessment={discovery.assessment} onNav={onNav} />
+                  <div className="ob-rev-row">
+                    <span className="k">Discovery questions</span>
+                    <span className="v">{discovery.assessment.completionPercent}% answered{discovery.record?.completedAt && !discovery.dirty ? ' · saved as complete' : ' · completed on activation'}</span>
+                  </div>
+                  <div className="ob-discovery-summary">
+                    {(['companyGoal', 'projectName', 'projectGoal', 'successCriteria'] as const).map((field) => <div className="ob-rev-row" key={field}>
+                      <span className="k">{DISCOVERY_FIELD_LABELS[field]}</span><span className="v">{discovery.answers[field] || 'Not answered'}</span>
+                    </div>)}
+                  </div>
                   {(
                     [
                       ['Organization', org.name || '—'],
@@ -1212,7 +1299,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     <button
                       className="sp-primary"
                       disabled={
-                        activating || (tier === 'enterprise' && !isUsableEmail(contact.email))
+                        activating || !discoveryAvailable || !discovery.assessment.readyToComplete || !invitesValid || (tier === 'enterprise' && !isUsableEmail(contact.email))
                       }
                       onClick={() => {
                         void activate();
@@ -1232,10 +1319,12 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
               )}
 
               {!outcome && (
+                <>
+                {missingHere.length > 0 && [1, 2, 7].includes(step) && <p className="scaf-note" role="status">Required: {missingHere.map((field) => DISCOVERY_FIELD_LABELS[field]).join(', ')}.</p>}
                 <div className="ob-nav">
                   <button
                     className="sp-ask"
-                    disabled={step === 0}
+                    disabled={step === 0 || discovery.busy || activating}
                     onClick={() => setStep((s) => Math.max(0, s - 1))}
                   >
                     {I.left} Back
@@ -1247,14 +1336,15 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                     <button
                       className="sp-primary"
                       disabled={!canNext}
-                      onClick={() => setStep((s) => s + 1)}
+                      onClick={() => void continueWizard()}
                     >
-                      Continue {I.arrowRight || '›'}
+                      {discovery.canEdit && [1, 2, 7].includes(step) ? 'Save & continue' : 'Continue'} {I.arrowRight || '›'}
                     </button>
                   ) : (
                     <span />
                   )}
                 </div>
+                </>
               )}
             </>
           )}

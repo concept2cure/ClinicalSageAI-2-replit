@@ -10,6 +10,9 @@ import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
 import { AdminMemberActions, ROLE_OPTIONS, setupLinkHandover, type InvitationReply } from './AdminMemberActions';
+import { AdminApiKeyCreate } from './AdminApiKeyCreate';
+import { AdminApiKeyUsage } from './AdminApiKeyUsage';
+import { AdminPlatformGrants } from './AdminPlatformGrants';
 import '../styles/admin-access.css';
 
 /**
@@ -131,6 +134,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      stored them. */
   const [toast, fireToast] = useToast();
   const [inviting, setInviting] = useState(false);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [keyUsage, setKeyUsage] = useState<{ keyId: number; name: string } | null>(null);
 
   /** The key a Revoke click is confirming. Null when no confirmation is open. */
   const [revoking, setRevoking] = useState<{ id: string; keyId?: number; name: string } | null>(null);
@@ -345,15 +350,16 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         aMemberIsSelected: member != null,
       },
       availableActions: [
-        'Inviting a member, granting program access, editing role scopes, revoking an API key and changing org settings each capture a reason and emit a Part 11 audit entry — administrator acts, proposed only in conversation',
+        'Create an API key from the API keys tab: choose read-only scopes, optional expiration, request limit and a reason. The full secret is shown once to the administrator and is never shared in conversation',
+        'Inspect API-key usage, or manage platform personnel from Roles + scopes when the server verifies platform standing. These changes require the person’s explicit form action',
+        'Invite members, change membership roles, revoke API keys, or propose program access and organization settings changes',
         'Switch between the Members, Roles + scopes, SSO + provisioning, API keys and Settings tabs, or filter members by state (all / active / invited / disabled)',
       ],
     };
   }, [loading, error, forbidden, unavailable, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
-  /* View state only. Every mutation this screen offers — invite, grant,
-     scope edit, key revoke, setting change — is a governed administrator act
-     that routes through the rail's §11.50 sign-off, and none is reachable
-     from here. Switching under an open invite/revoke form would discard it. */
+  /* View state only. Administrative mutations require the person's explicit
+     action; AnA cannot create a credential. Switching under an open invite,
+     revoke or key-creation drawer would discard it or its one-time secret. */
   useSurfaceActionHandlers('admin-console', {
     'admin-console.open-tab': (params) => {
       const target = String(params.tab ?? '');
@@ -556,6 +562,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
             </section>
           )}
 
+          {tab === 'roles' && <AdminPlatformGrants />}
+
           {tab === 'sso' && !sso && (
             <div className="adm-facet-error">
               <EmptyState
@@ -595,7 +603,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
           {tab === 'apikeys' && (
             <section className="section">
-              <div className="section-head"><h2>API keys</h2><span className="section-sub">{facetDown('apiKeys') ? 'scopes are immutable per key' : `${apiKeys.length} key${apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key`}</span></div>
+              <div className="section-head"><h2>API keys</h2><span className="section-sub">{facetDown('apiKeys') ? 'scopes are immutable per key' : `${apiKeys.length} key${apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key`}</span><button className="btn primary small adm-key-create" onClick={() => setCreatingKey(true)} disabled={!ready}>{I.plus} Create API key</button></div>
               {facetDown('apiKeys') ? (
                 <div className="adm-facet-error">
                   <EmptyState
@@ -643,7 +651,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                         <div className="adm-muted">{k.created}</div>
                         <div className={overdue ? 'adm-overdue' : ''}>{k.rotateIn || '—'}</div>
                         <div className="adm-muted">{formatWhen(k.lastUsed)}</div>
-                        <div>
+                        <div className="adm-key-actions">
+                          {k.keyId && <button className="btn ghost small" onClick={() => setKeyUsage({ keyId: k.keyId!, name: k.name })} aria-label={`Usage for ${k.name}`}>{I.eye} Usage</button>}
                           <button
                             className="btn ghost small"
                             onClick={() => setRevoking(k)}
@@ -747,6 +756,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
           onSubmit={() => void revokeKey()}
         />
       )}
+      {creatingKey && <AdminApiKeyCreate onClose={() => setCreatingKey(false)} onCreated={reload} />}
+      {keyUsage && <AdminApiKeyUsage {...keyUsage} onClose={() => setKeyUsage(null)} />}
       <C2CToast msg={toast} />
     </div>
   );

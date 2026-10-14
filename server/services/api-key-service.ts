@@ -9,6 +9,7 @@
  */
 
 import { createHash, randomBytes } from 'crypto';
+import type { PoolClient } from 'pg';
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -65,14 +66,10 @@ export interface ApiKeyUsageStats {
  * returned exactly once — it cannot be retrieved later.
  */
 export async function generateApiKey(
-  organizationId: number,
-  name: string,
-  scopes: string[],
-  createdBy: number,
-  expiresAt?: Date,
-  rateLimit: number = 60,
-  metadata?: Record<string, unknown>
+  input: { organizationId: number; name: string; scopes: string[]; createdBy: number; expiresAt?: Date; rateLimit?: number; metadata?: Record<string, unknown> },
+  client: Pick<PoolClient, 'query'> = pool,
 ): Promise<{ rawKey: string; keyId: number; keyPrefix: string }> {
+  const { organizationId, name, scopes, createdBy, expiresAt, rateLimit = 60, metadata } = input;
   // Generate 32 random bytes → base64url for a high-entropy key
   const randomPart = randomBytes(32).toString('base64url');
   const rawKey = `csai_${randomPart}`;
@@ -81,7 +78,7 @@ export async function generateApiKey(
   const keyHash = createHash('sha256').update(rawKey).digest('hex');
   const keyPrefix = rawKey.substring(0, 12); // "csai_" + first 7 chars of random
 
-  const result = await pool.query(
+  const result = await client.query(
     `INSERT INTO api_keys (
       organization_id, name, key_hash, key_prefix, scopes, status,
       expires_at, rate_limit, metadata, created_by, created_at
@@ -238,9 +235,10 @@ export async function validateApiKey(rawKey: string): Promise<ApiKeyValidationRe
  */
 export async function revokeApiKey(
   keyId: number,
-  organizationId: number
+  organizationId: number,
+  client: Pick<PoolClient, 'query'> = pool,
 ): Promise<boolean> {
-  const result = await pool.query(
+  const result = await client.query(
     `UPDATE api_keys
      SET status = 'revoked', revoked_at = NOW()
      WHERE id = $1 AND organization_id = $2 AND status = 'active'

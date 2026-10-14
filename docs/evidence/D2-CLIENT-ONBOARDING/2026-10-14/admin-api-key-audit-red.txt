@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+--------x-
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > fails closed and returns no credential when the chained audit write fails
+AssertionError: expected 201 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 201
+
+ ❯ server/routes/__tests__/api-key-create.test.ts:71:24
+     69|     h.auditFails = true;
+     70|     const res = await request(app).post('/api/api-keys').send({ name: …
+     71|     expect(res.status).toBe(500);
+       |                        ^
+     72|     expect(res.body.apiKey).toBeUndefined();
+     73|     expect(h.log).toEqual(['BEGIN', 'CREATE KEY', 'AUDIT KEY', 'ROLLBA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  03:00:29
+   Duration  1.03s (transform 131ms, setup 87ms, import 617ms, tests 34ms, environment 0ms)
+
