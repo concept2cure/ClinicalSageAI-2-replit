@@ -169,7 +169,7 @@ describe('project decisions and canonical conversation handoffs share the same g
     act(() => { publishShellProject({ id: OTHER, title: 'Other program' }); });
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
     review();
-    fireEvent.click(screen.getByRole('button', { name: 'AnA', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'AnA' }));
     expect(handoff()).toBeUndefined();
     expect(onNav).not.toHaveBeenCalled();
     expect(document.querySelector('.tiptap')?.textContent).toContain('Unsaved private note.');
