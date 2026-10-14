@@ -1,0 +1,33 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > rolls back when the actual grant store becomes unavailable during preparation
+[governed-signature] resource signing permission unverified: Current governance grants could not be verified.
+
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a current reviewer’s resource deny after an earlier allowed admin role 32ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > admits the current reviewer instead of denying a stale caller viewer role 13ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > rolls back when the actual grant store becomes unavailable during preparation 16ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > refuses a non-signing membership before comparing credentials or opening a transaction 5ms
+ ✓ server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts > flagged sign permission follows the current reserved transaction > does not change the dark flag’s off behavior or query grant overrides 8ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > denies when no grant matches 2ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > allows when an allow grant matches 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > explicit deny wins over allow 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > a null grant dimension is a wildcard matching any query value 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > evaluate — pure, deny-by-default, explicit-deny-wins > role mismatch denies 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > applies the canonical defaults per role 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > can — default policy (DB empty) > a per-org DB deny override wins over the default allow 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > whoCan — the projection of RBAC > returns the org users whose role grants the action 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > uses only the supplied executor and applies its explicit deny 4ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (42P01) instead of using a default allow 2ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses an unavailable grant store (57P01) instead of using a default allow 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"unknown"} 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":"sign","effect":"allow","resource_type":3} 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"admin","action":null,"effect":"allow"} 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > refuses malformed grant data without inventing an allow: {"role":"foreign-role","action":"sign","effect":"deny"} 0ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > retains valid custom action and dimension strings with null wildcards 1ms
+ ✓ server/services/governance/__tests__/permissions.test.ts > strict grant resolution on an owned transaction > preserves ordinary callers’ defaults-only fallback for an unmigrated store 0ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  06:52:16
+   Duration  12.45s (transform 1.75s, setup 274ms, import 3.57s, tests 7.31s, environment 0ms)

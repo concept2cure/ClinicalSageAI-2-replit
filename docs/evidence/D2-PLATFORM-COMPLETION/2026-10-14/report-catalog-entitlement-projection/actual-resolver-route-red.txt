@@ -1,0 +1,144 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-14T07:37:52.205Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-14T07:37:53.131Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T07:37:53.132Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-14T07:37:53.132Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread null tier 27ms
+   → expected { Object (segments, tier, ...) } to match object { tier: 'standard', …(1) }
+(1 matching property omitted from actual)
+ × server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread platinum tier 13ms
+   → expected { Object (segments, tier, ...) } to match object { tier: 'standard', …(1) }
+(1 matching property omitted from actual)
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded free tier and its base entitlement
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded standard tier and its base entitlement
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded professional tier and its base entitlement
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded enterprise tier and its base entitlement
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > does not show a multi-project delivery after access to one carried project is lost
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > keeps a delivery visible only when all carried scopes still exist and are permitted
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > omits a delivery whose saved target run no longer exists
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":)
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":{"deliveryId":"22222222-2222-4222-8222-222222222222","organizationId":99,"projectId":11,"bundleId":"11111111-1111-4111-8111-111111111111","channel":"external_pdf_export","recipients":["partner"],"subject":"Restricted review pack","message":"Private project12 finding","status":"exported","createdAt":"2026-10-13T12:00:00Z"}})
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > omits every group whose complete member set is inaccessible, while showing an authorized group
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses changing an inaccessible group before any membership can be replaced
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses adding an inaccessible project to a new or accessible existing group
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > checks historical snapshot project sets rather than changed live group membership
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses invalid saved snapshot membership instead of implying an empty register
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses taking a snapshot of an inaccessible live group
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > derives snapshot membership from the owned group despite a forged public-only binding in the request
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses one currently private scope before its retained body is read, without identifying it
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses observed project withdrawal after rendering despite the earlier allowed set
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses observed scope withdrawal after rendering even when its project remains accessible
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses an actor whose current active membership is absent before any body read
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses an observed active membership withdrawal after rendering
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > uses current canonical actor roles and the same owned client for every scope/allowlist read
+ ↓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > retains policy lookup failure as an error, without interpreting it as an empty packet
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > offers actual organization registers to institutional clients without programs
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > leads with no program — not project 1 — and lists the programs to open
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > keeps the organization service identity without importing sibling product catalogs
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers no device-only report for a biologic program
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers it for a device program
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > withdraws Run when the deployed registry disables a report
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > uses the deployed scope and region declarations rather than the seed
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > keeps discovery when the registry is empty while offering no unregistered run
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > answers a failed registry read as unavailable, never an empty successful catalog
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > marks the digest and the registers runnable, and the rest not
+ × server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread null tier without throwing 126ms
+   → expected { …(18) } to match object { entitled: false, runnable: true }
+(19 matching properties omitted from actual)
+ × server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread platinum tier without throwing 51ms
+   → expected { …(18) } to match object { entitled: false, runnable: true }
+(19 matching properties omitted from actual)
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded free plan
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded standard plan
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded professional plan
+ ↓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded enterprise plan
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread null tier without throwing
+ FAIL  server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread platinum tier without throwing
+AssertionError: expected { …(18) } to match object { entitled: false, runnable: true }
+(19 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "entitled": false,
++   "entitled": true,
+    "runnable": true,
+  }
+
+ ❯ server/routes/__tests__/insights-canvas-catalog.test.ts:203:8
+    201|     expect(res.body.data).toMatchObject({ tier: 'standard', tierResolv…
+    202|     expect(res.body.data.reportTypes.find((t: { typeId: string }) => t…
+    203|       .toMatchObject({ entitled: false, runnable: true });
+       |        ^
+    204|     expect(res.body.data.reportTypes.every((t: { entitled: boolean }) …
+    205|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread null tier
+ FAIL  server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread platinum tier
+AssertionError: expected { Object (segments, tier, ...) } to match object { tier: 'standard', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "tier": "standard",
+-   "tierResolved": false,
++   "tierResolved": true,
+  }
+
+ ❯ server/routes/__tests__/report-os-saved-read-access.test.ts:75:30
+     73|     const result = await taxonomyWithRecordedTier(tier);
+     74|     expect(result.status).toBe(200);
+     75|     expect(result.body.meta).toMatchObject({ tier: 'standard', tierRes…
+       |                              ^
+     76|     expect(result.body.data).toHaveLength(1);
+     77|     expect(result.body.data[0]).toMatchObject({ typeId: 'readiness.exe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 37 skipped (41)
+   Start at  07:37:46
+   Duration  9.84s (transform 4.89s, setup 224ms, import 8.52s, tests 227ms, environment 0ms)
+

@@ -1,6 +1,6 @@
 /** Current parent admission shared by the existing Projects and Vault routers. */
 import type { Request, Response, Router } from 'express';
-import { pool } from '../../db';
+import { requestPgClient, requestConnectable } from '../../db/requestDb';
 import { governedActorId, GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { resolveOrgId } from '../../types/auth-request';
 import { canCreateProgram, canMutateProgram } from '../../services/c2c/program-access';
@@ -30,7 +30,7 @@ export async function requireProjectRouteAccess(req: Request, res: Response, opt
   const organizationId = resolveOrgId(req);
   const userId = governedActorId(req);
   if (!organizationId || !userId) throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'A current organization actor is required.');
-  const q = options.executor ?? pool;
+  const q = options.executor ?? requestPgClient(req);
   const access = await requireCurrentProgramAccess(q, { organizationId, userId,
     programId: options.programId ?? String(req.params.id ?? ''),
     forShare: options.forShare, includeDeleted: options.includeDeleted });
@@ -76,7 +76,7 @@ async function requireVaultDocumentTenant(req: Request, documentId: string): Pro
   const organizationId = resolveOrgId(req);
   // Identity-only quarantine check after the current program admission. A
   // NULL is refused below; it never authorizes metadata, prose or bytes.
-  const identity = await pool.query(`SELECT organization_id FROM vault.documents WHERE id=$1 AND program_id=$2
+  const identity = await requestPgClient(req).query(`SELECT organization_id FROM vault.documents WHERE id=$1 AND program_id=$2
     AND (organization_id=$3 OR organization_id IS NULL)`,
     [documentId, String(req.params.id), organizationId]);
   const row = identity.rows[0];
@@ -88,7 +88,9 @@ async function requireVaultDocumentTenant(req: Request, documentId: string): Pro
 }
 
 export async function withProjectWriteReservation<T>(req: Request, res: Response, operation: (q: ProgramAccessExecutor) => Promise<T>): Promise<T> {
-  const client = await pool.connect();
+  // The caller owns BEGIN/COMMIT/ROLLBACK; request cleanup owns the pinned
+  // connection. The canonical adapter's release is intentionally a no-op.
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
     await requireProjectRouteAccess(req, res, { kind: 'projects', executor: client, forShare: true });

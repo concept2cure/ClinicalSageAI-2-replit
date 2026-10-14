@@ -93,6 +93,7 @@ const ORG = 1;
 const OTHER_ORG = 2;
 const USER = 1;
 const OTHER_USER = 2;
+const VIEWER = 3;
 
 let jdb: JourneyDb;
 let app: express.Express;
@@ -118,6 +119,8 @@ const R = new JourneyRecorder(
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260506_kit_section_draft_provenance.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
+    'db/migrations/20260401_project_sharing_visibility.sql',
+    'db/migrations/20260314_phase12_multi_user_review.sql',
     'migrations/20260817_reconcile_declared_updated_at_columns.sql',
     'db/migrations/20260803_document_span_lineage.sql',
     'migrations/20260907_span_lineage_accepted_machine_draft.sql',
@@ -187,6 +190,9 @@ beforeAll(async () => {
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260506_kit_section_draft_provenance.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',
+      // Current parent admission reads the canonical sharing and review stores.
+      'db/migrations/20260401_project_sharing_visibility.sql',
+      'db/migrations/20260314_phase12_multi_user_review.sql',
       // The declared-but-never-created updated_at columns, reconciled for real
       // rather than granted as test-only sql.
       'migrations/20260817_reconcile_declared_updated_at_columns.sql',
@@ -219,8 +225,15 @@ beforeAll(async () => {
   await jdb.pool.query(
     `INSERT INTO users (id, email, name, password_hash) VALUES
        ($1,'clinical@journey.example','Casey Clinical','x'),
-       ($2,'outsider@other.example','Iris Intruder','x')`,
-    [USER, OTHER_USER],
+       ($2,'outsider@other.example','Iris Intruder','x'),
+       ($3,'viewer@journey.example','Val Viewer','x')`,
+    [USER, OTHER_USER, VIEWER],
+  );
+  // Verified request principals must also be current members in the real store.
+  await jdb.pool.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES
+       ($1,$2,'admin'), ($3,$4,'admin'), ($1,$5,'viewer')`,
+    [ORG, USER, OTHER_ORG, OTHER_USER, VIEWER],
   );
   await jdb.pool.query(
     `INSERT INTO client_workspaces (id, organization_id, name, slug) VALUES
@@ -747,7 +760,7 @@ describe('golden journey — CER (EU MDR) clinical evaluation', () => {
     });
 
     await R.expectBlocked('a-viewer-cannot-produce-a-governed-cer-export', async () => {
-      const res = await asPrincipal(ORG, USER, 'viewer')(
+      const res = await asPrincipal(ORG, VIEWER, 'viewer')(
         request(app).post('/api/cerv2/export/docx'),
       ).send({
         docType: 'cerv2_cer',

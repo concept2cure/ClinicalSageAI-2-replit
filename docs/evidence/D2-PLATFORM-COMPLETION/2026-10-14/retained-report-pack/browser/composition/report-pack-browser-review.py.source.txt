@@ -1,0 +1,56 @@
+"""Actual reporting UI and audited downloads on isolated native QA composition."""
+import argparse,datetime,hashlib,json,pathlib
+from urllib.parse import urlparse
+from playwright.sync_api import sync_playwright
+parser=argparse.ArgumentParser();parser.add_argument('variant',choices=['light','dark','mobile']);args=parser.parse_args()
+fixture=json.loads(pathlib.Path('/tmp/report-pack-browser-fixtures.json').read_text())
+session=json.loads(pathlib.Path('/tmp/report-pack-browser-session.json').read_text())
+assert str(session['user']['id'])==str(fixture['actorId'])
+expiry=(datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(seconds=session['expiresIn'])).isoformat()
+auth={'trialsage_access_token':session['accessToken'],'trialsage_refresh_token':session.get('refreshToken',''),'trialsage_token_expiry':expiry,'trialsage_user':json.dumps(session['user'])}
+width=390 if args.variant=='mobile' else 1440
+out=pathlib.Path('/tmp/report-pack-browser-'+args.variant);out.mkdir(exist_ok=True)
+result={'variant':args.variant,'qualification':fixture['qualification'],'bundleId':fixture['bundleId'],'runOrder':fixture['runOrder'],'pageErrors':[],'consoleErrors':[],'apiFailures':[],'blockedWrites':[],'downloads':[],'bodyWidth':None,'viewportWidth':width}
+with sync_playwright() as p:
+ browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
+ context=browser.new_context(viewport={'width':width,'height':1000},device_scale_factor=1,accept_downloads=True)
+ prefs={'dark':args.variant=='dark','railCollapsed':True,'anaMode':'standard','anaRunPolicy':'manual','segment':'biopharma','welcomeDismissed':True,'liveDrive':False,'liveDriveDefault':2}
+ context.add_init_script('((v,p)=>{for(const[k,x]of Object.entries(v)){localStorage.setItem(k,x);sessionStorage.setItem(k,x)}localStorage.setItem("c2c-v2-prefs",JSON.stringify(p))})('+json.dumps(auth)+','+json.dumps(prefs)+')')
+ page=context.new_page();page.on('pageerror',lambda e:result['pageErrors'].append(str(e)))
+ page.on('console',lambda m:result['consoleErrors'].append(m.text) if m.type=='error' else None)
+ def gate(route):
+  r=route.request
+  if r.method not in ('GET','HEAD','OPTIONS'):
+   result['blockedWrites'].append({'method':r.method,'path':urlparse(r.url).path});route.abort()
+  elif any(part in urlparse(r.url).path for part in ('/stream','/turns','/chat/send')):
+   result['blockedWrites'].append({'method':r.method,'path':urlparse(r.url).path});route.abort()
+  else:route.continue_()
+ context.route('**/api/**',gate)
+ page.on('response',lambda r:result['apiFailures'].append({'path':urlparse(r.url).path,'status':r.status}) if '/api/' in r.url and r.status>=400 else None)
+ try:
+  page.goto(fixture['baseUrl']+'/concept2cure/insights',wait_until='domcontentloaded',timeout=60000)
+  page.get_by_role('tab',name='Bundles',exact=True).wait_for(timeout=45000)
+  page.get_by_role('tab',name='Bundles',exact=True).click()
+  card=page.locator('.rl-card').filter(has_text=fixture['bundleName']);card.wait_for(timeout=45000)
+  page.wait_for_timeout(400)
+  result['bodyWidth']=page.evaluate('document.body.scrollWidth');result['cardWidth']=card.bounding_box()['width'];result['cardText']=card.inner_text()
+  result['actions']={name:card.get_by_role('button',name=name,exact=True).is_enabled() for name in ['Export manifest PDF','Export reports PDF']}
+  page.screenshot(path=str(out/'bundles.png'),full_page=True);card.screenshot(path=str(out/'positive-pack-card.png'))
+  assert result['bodyWidth']<=width,(result['bodyWidth'],width)
+  for mode,label in [('reports','Export reports PDF'),('manifest','Export manifest PDF')]:
+   with page.expect_download(timeout=60000) as pending:
+    card.get_by_role('button',name=label,exact=True).click()
+   download=pending.value;assert download.failure() is None
+   path=out/(mode+'.pdf');download.save_as(path);body=path.read_bytes();assert body.startswith(b'%PDF')
+   result['downloads'].append({'mode':mode,'suggestedFilename':download.suggested_filename,'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()})
+   page.get_by_text('Saved '+download.suggested_filename+'.',exact=True).wait_for(timeout=10000)
+   assert card.get_by_role('button',name=label,exact=True).is_enabled()
+  page.screenshot(path=str(out/'download-complete.png'),full_page=True)
+  assert not result['pageErrors'],result['pageErrors']
+  result['passed']=True
+ except Exception as e:
+  result['passed']=False;result['failure']=str(e);page.screenshot(path=str(out/'failure.png'),full_page=True)
+ finally:
+  (out/'summary.json').write_text(json.dumps(result,indent=2)+'\n');context.close();browser.close()
+print(json.dumps({k:result[k] for k in ['variant','passed','bodyWidth','viewportWidth','pageErrors','apiFailures','blockedWrites','downloads']},indent=2))
+raise SystemExit(0 if result['passed'] else 1)

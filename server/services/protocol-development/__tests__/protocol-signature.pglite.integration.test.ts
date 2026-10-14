@@ -48,8 +48,13 @@ vi.mock('../../../routes/c2c/actions', () => ({
 // The real lookup goes through drizzle, which this suite does not wire; this
 // reads the same row from the PGlite organization_users table.
 vi.mock('../../part11/resolve-signer-role', () => ({
-  resolveSignerOrgRole: async (userId: number, orgId: number) =>
-    (await holder.query('SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2', [userId, orgId])).rows[0]?.role ?? null,
+  resolveSignerOrgRole: async (userId: number, orgId: number, executor?: import('../../part11/resolve-signer-role').SignerRoleExec) => {
+    if (executor) {
+      const actual = await vi.importActual<typeof import('../../part11/resolve-signer-role')>('../../part11/resolve-signer-role');
+      return actual.resolveSignerOrgRole(userId, orgId, executor);
+    }
+    return (await holder.query('SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2', [userId, orgId])).rows[0]?.role ?? null;
+  },
 }));
 vi.mock('../../part11/signature-persistence', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../part11/signature-persistence')>()),
@@ -122,10 +127,10 @@ async function assignment(docId: number, reviewerUserId: number | null, orgId = 
 beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(`
-    CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+    CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, status TEXT NOT NULL DEFAULT 'active');
     -- shared/schema.ts users: an account-bound assignment is listed under the
     -- account's own name (resolveSignerIdentity reads name, email, title; SEC-C-7).
-    CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT, name TEXT, title TEXT);
+    CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT, name TEXT, title TEXT, status TEXT NOT NULL DEFAULT 'active');
     CREATE TABLE research_personnel (id SERIAL PRIMARY KEY);
     -- shared/schema.ts organizationUsers: the membership and org role a reviewer assignment is checked against.
     CREATE TABLE organization_users (

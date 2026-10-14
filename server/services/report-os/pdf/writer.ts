@@ -158,6 +158,11 @@ export class Writer {
     this.pages.push(this.pages.length);
     this.y = MARGIN;
   }
+  /** Begin a caller-owned section on a new page; returns its one-based page. */
+  startPage(): number {
+    this.newPage();
+    return this.pages.length;
+  }
   reserve(height: number): number {
     if (this.y + height > BOTTOM) this.newPage();
     const top = this.y;
@@ -203,16 +208,20 @@ export class Writer {
     }
     this.y += style.gap ?? 0;
   }
-  stampPages(footer: (page: number, total: number) => string, watermark?: string) {
+  stampPages(footer: (page: number, total: number) => string | string[], watermark?: string | ((page: number, total: number) => string | undefined)) {
     const total = this.pages.length;
     for (const page of this.pages) {
       this.pdf.switchToPage(page);
-      const text = footer(page + 1, total);
-      const size = Math.min(8, 8 * WIDTH / Math.max(WIDTH, this.width(text, { size: 8 })));
-      this.drawText(text, MARGIN, PAGE[1] - MARGIN + 2, { size, color: GREY });
-      if (watermark) {
+      const value = footer(page + 1, total);
+      const lines = Array.isArray(value) ? value : [value];
+      lines.forEach((text, index) => {
+        const size = Math.min(8, 8 * WIDTH / Math.max(WIDTH, this.width(text, { size: 8 })));
+        this.drawText(text, MARGIN, PAGE[1] - MARGIN + 2 - (lines.length - index - 1) * 11, { size, color: GREY });
+      });
+      const mark = typeof watermark === 'function' ? watermark(page + 1, total) : watermark;
+      if (mark) {
         this.pdf.save().opacity(0.18).translate(112, 440).rotate(-40);
-        this.drawText(watermark, 0, 0, { size: 40, color: '#777777', bold: true });
+        this.drawText(mark, 0, 0, { size: 40, color: '#777777', bold: true });
         this.pdf.restore();
       }
     }

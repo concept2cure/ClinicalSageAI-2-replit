@@ -184,6 +184,14 @@ export function numericIds(ids: Array<number | string>): number[] {
   return out;
 }
 
+/** Current requester identity; historical citation attribution cannot supply it. */
+function citationRequester(raw: string | number): number {
+  const userId = typeof raw === 'number' ? raw : /^[1-9]\d*$/.test(raw) ? Number(raw) : NaN;
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    throw new SourceUsageError('A current positive integer requester identity is required.');
+  }
+  return userId;
+}
 
 /**
  * Record that a section was drafted from a source.
@@ -219,6 +227,9 @@ export async function citeSource(
   const [sourceId] = numericIds([p.sourceId]);
   if (!sourceId) throw new SourceUsageError('sourceId must be a positive integer');
   if (!p.sectionId) throw new SourceUsageError('sectionId is required');
+  const userId = citationRequester(p.createdBy);
+  // Admit only source identity/recorded parents before reading its checksum.
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
 
   /* Both ends, each with its project (PF-11): citation-ends.ts. Checked
      before the existing citation is read, so a legacy cross-project citation
@@ -233,6 +244,7 @@ export async function citeSource(
     );
   }
   if (ends.source.programId) await lockDocumentDispositionProgram(executor, orgId, ends.source.programId);
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
   // Retained extractions remain citable. Withdrawal and supersession forbid
   // new grounding; historical readers retain the original recorded citation.
   const visibility = visibleOrgClause(orgId, 2);
@@ -576,7 +588,7 @@ export async function listChangedSourceUsages(
  */
 type RefreshRefusalReason = 'not_found' | 'not_a_source_citation' | 'unresolved_source' | 'source_withdrawn' | 'cross_project' | 'frozen';
 
-async function prepareRefreshTarget(orgId: number, target: { sectionId: string; citationId: string }, executor: Queryable): Promise<
+async function prepareRefreshTarget(orgId: number, target: { sectionId: string; citationId: string; userId: number }, executor: Queryable): Promise<
   { ok: true; row: CitationImage & { frozen_at: string | null }; sourceId: number } | { ok: false; reason: RefreshRefusalReason }
 > {
   if (![target.sectionId, target.citationId].every(Boolean)) return { ok: false, reason: 'not_found' };
@@ -596,11 +608,14 @@ async function prepareRefreshTarget(orgId: number, target: { sectionId: string; 
 
   const [sourceId] = numericIds([row.reference_id ?? '']);
   if (!sourceId) return { ok: false, reason: 'unresolved_source' };
+  const userId = citationRequester(target.userId);
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
   const ends = await readCitationEnds(executor, orgId, target.sectionId, sourceId);
   if (!ends.section) return { ok: false, reason: 'not_found' };
   if (!ends.source) return { ok: false, reason: 'unresolved_source' };
   if (citesAcrossProjects(ends)) return { ok: false, reason: 'cross_project' };
   if (ends.source.programId) await lockDocumentDispositionProgram(executor, orgId, ends.source.programId);
+  await getCurrentReadableSourceScope(executor, { organizationId: orgId, userId, sourceIds: [sourceId] });
   const locked = await executor.query<CitationImage & { frozen_at: string | null }>(
     `SELECT ${CITATION_IMAGE_COLUMNS}, frozen_at FROM authoring_citations
       WHERE id=$1 AND section_id=$2 AND tenant_id=$3 LIMIT 1 FOR UPDATE`,
@@ -615,7 +630,7 @@ async function prepareRefreshTarget(orgId: number, target: { sectionId: string; 
 
 export async function refreshSourceCitation(
   orgId: number,
-  target: { sectionId: string; citationId: string },
+  target: { sectionId: string; citationId: string; userId: number },
   executor: Queryable = onPool(),
 ): Promise<
   | {

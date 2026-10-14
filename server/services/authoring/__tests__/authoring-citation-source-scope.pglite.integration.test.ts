@@ -76,7 +76,7 @@ describe('new canonical grounding and refresh use current same-project data', ()
     const f = await harness.seed(); const s = await section(f);
     const cited = await citeSource(f.org, { sectionId: s.sectionId, sourceId: f.capture, createdBy: '42' }, executor());
     await harness.pg.query('UPDATE cre_evidence_sources SET is_current=false WHERE id=$1', [f.capture]);
-    expect(await refreshSourceCitation(f.org, { sectionId: s.sectionId, citationId: cited.citationId }, executor()))
+    expect(await refreshSourceCitation(f.org, { sectionId: s.sectionId, citationId: cited.citationId, userId: 42 }, executor()))
       .toEqual({ ok: false, reason: 'source_withdrawn' });
     expect((await harness.pg.query('SELECT payload_sha256 FROM authoring_citations WHERE id=$1', [cited.citationId])).rows)
       .toEqual([{ payload_sha256: 'a'.repeat(64) }]);
@@ -87,7 +87,7 @@ describe('new canonical grounding and refresh use current same-project data', ()
     const citationId = randomUUID();
     await harness.pg.query(`INSERT INTO authoring_citations (id,section_id,tenant_id,source,reference_id,payload_sha256)
       VALUES ($1,$2,$3,'cre_evidence_source',$4,$5)`, [citationId, s.sectionId, f.org, String(sourceId), 'a'.repeat(64)]);
-    expect(await refreshSourceCitation(f.org, { sectionId: s.sectionId, citationId }, executor())).toEqual({ ok: false, reason: 'cross_project' });
+    expect(await refreshSourceCitation(f.org, { sectionId: s.sectionId, citationId, userId: 42 }, executor())).toEqual({ ok: false, reason: 'cross_project' });
     expect((await harness.pg.query('SELECT payload_sha256 FROM authoring_citations WHERE id=$1', [citationId])).rows)
       .toEqual([{ payload_sha256: 'a'.repeat(64) }]);
   });

@@ -15,8 +15,17 @@ vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
   getAccessibleReportProjectIds: access.projects, canAccessReportScope: access.scope,
 }));
 
+vi.mock('../../services/report-os/entitlement-map', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/entitlement-map')>()), requireReportEntitlement: h.gate,
+}));
+vi.mock('../../services/auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/auditService')>()), writeChainedAuditRow: h.audit,
+}));
+
 import reportOsRouter from '../report-os';
-import { resetReportOsHarness } from './_report-os-route-harness';
+import { resetReportOsHarness, driverRow } from './_report-os-route-harness';
+import { reportRuns, reportTypeRegistry } from '@shared/schema/report-os';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 const app = express();
 app.use(express.json());
@@ -38,6 +47,42 @@ beforeEach(() => {
   resetReportOsHarness(h);
   access.projects.mockReset().mockResolvedValue([11]);
   access.scope.mockReset().mockResolvedValue(true);
+});
+
+async function taxonomyWithRecordedTier(tier: string | null) {
+  const originalQuery = h.pool.query;
+  const query = vi.fn<RequestSqlClient['query']>(async sql => ({
+    rows: sql.includes('FROM organizations') ? [{ tier }] : [],
+  }));
+  // The existing harness's default query returns only empty rows. Install a
+  // typed SQL response on that same pool for the real capability resolver.
+  Object.assign(h.pool, { query });
+  h.queued.select.push([{ typeId: 'readiness.executive_digest', family: 'readiness',
+    allowedScopes: ['project'], allowedClientSegments: [], allowedPersonas: [], enabled: true }]);
+  try {
+    const res = await request(app).get('/api/report-os/taxonomy');
+    expect(query).toHaveBeenCalledWith('SELECT tier FROM organizations WHERE id = $1', [7]);
+    return res;
+  } finally {
+    Object.assign(h.pool, { query: originalQuery });
+  }
+}
+
+describe('taxonomy preserves internally unresolved capability reads', () => {
+  it.each([null, 'platinum'])('does not claim Standard or grant a base report for unread %s tier', async tier => {
+    const result = await taxonomyWithRecordedTier(tier);
+    expect(result.status).toBe(200);
+    expect(result.body.meta).toMatchObject({ tier: 'standard', tierResolved: false });
+    expect(result.body.data).toHaveLength(1);
+    expect(result.body.data[0]).toMatchObject({ typeId: 'readiness.executive_digest', entitled: false });
+  });
+
+  it.each(['free', 'standard', 'professional', 'enterprise'])('retains a positively recorded %s tier and its base entitlement', async tier => {
+    const result = await taxonomyWithRecordedTier(tier);
+    expect(result.status).toBe(200);
+    expect(result.body.meta).toMatchObject({ tier, tierResolved: true });
+    expect(result.body.data[0]).toMatchObject({ typeId: 'readiness.executive_digest', entitled: tier !== 'free' });
+  });
 });
 
 describe('retained delivery scopes', () => {
@@ -128,5 +173,113 @@ describe('program group privacy', () => {
       expect(persisted).toMatchObject({organizationId:7,programGroupId:1,projectIds:[11,12]});
       expect(result.body.data.projectIds).toEqual([11,12]);
     } finally { insert.mockRestore(); }
+  });
+});
+
+/** These cases prove that the live packet route obeys fresh policy results on
+ * its owned executor. They do not turn mocked sharing into native RLS proof. */
+describe('complete retained report packet access', () => {
+  const at = new Date('2026-10-13T12:00:00Z');
+  const type = { id: 1, typeId: 'readiness.executive_digest', label: 'Digest', family: 'readiness', truthfulnessRules: {}, createdAt: at, updatedAt: at };
+  const initial = bundle([11, 12]);
+  const retained = { ...initial, items: initial.items.map(item => ({ ...item, runUuid: `00000000-0000-4000-8000-${String(item.runId).padStart(12, '0')}` })) };
+  const runs = retained.items.map(item => ({ id: item.runId, runUuid: item.runUuid, organizationId: 7,
+    scopeType: item.scopeType, scopeId: item.scopeId, reportTypeId: item.reportTypeId, status: 'partial', confidence: null,
+    requestedBy: 5, blockers: [], createdAt: at, updatedAt: at, dependencySummary: { providers: [], summary: {} } }));
+  let actorReads = 0;
+  let denyActorAfter = Number.POSITIVE_INFINITY;
+  const getPacket = () => request(app).get(`/api/report-os/bundles/${BUNDLE_ID}/export.pdf?content=reports`);
+  beforeEach(() => {
+    actorReads = 0; denyActorAfter = Number.POSITIVE_INFINITY;
+    access.projects.mockResolvedValue([11, 12]);
+    h.gate.mockResolvedValue({ entitled: true, tier: 'enterprise', tierResolved: true });
+    h.queued.select.push([memory('bundleRecord', retained)]); // Current pre-packet route still loads through this facade in red.
+    h.respond.fn = (sql, arrayMode) => {
+      const values = h.params.at(-1) ?? [];
+      if (/select .* from "project_memory_entries"/.test(sql)) return [[`bundle:${BUNDLE_ID}`, JSON.stringify({ bundleRecord: retained }), at.toISOString()]];
+      if (/select "type_id", "family" from "report_type_registry"/.test(sql)) return [[type.typeId, type.family]];
+      if (/select .* from "report_type_registry"/.test(sql)) return [driverRow(reportTypeRegistry, type)];
+      if (/SELECT ou.role/.test(sql)) return ++actorReads > denyActorAfter ? [] : [{ role: 'manager' }];
+      if (/SELECT id, run_uuid, organization_id/.test(sql)) return runs.map(run => ({ id: run.id, run_uuid: run.runUuid, organization_id: run.organizationId, report_type_id: run.reportTypeId, scope_type: run.scopeType, scope_id: run.scopeId, access_project_ids: null }));
+      if (/SELECT id FROM report_runs/.test(sql)) return runs.map(run => ({ id: run.id }));
+      if (arrayMode && /select .* from "report_runs"/.test(sql)) return runs.map(run => driverRow(reportRuns, run));
+      if (/SELECT status FROM report_runs/.test(sql)) return runs.filter(run => run.id === values[0]).map(run => ({ status: run.status }));
+      if (/SELECT id, status FROM report_runs/.test(sql)) return runs.map(run => ({ id: run.id, status: run.status }));
+      return [];
+    };
+  });
+
+  it('refuses one currently private scope before its retained body is read, without identifying it', async () => {
+    access.scope.mockImplementation(async (_org, _actor, scope) => scope.scopeId !== '12');
+    const result = await getPacket();
+    expect(result.status).toBe(404);
+    expect(result.body).toMatchObject({ error: { code: 'REPORT_BUNDLE_NOT_FOUND', message: 'Bundle not found.' } });
+    expect(JSON.stringify(result.body)).not.toContain('12');
+    expect(h.statements.some(sql => /from "report_runs"|SELECT status FROM report_runs/.test(sql))).toBe(false);
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(result.headers['content-disposition']).toBeUndefined();
+    expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
+  });
+
+  it('refuses observed project withdrawal after rendering despite the earlier allowed set', async () => {
+    access.projects.mockResolvedValueOnce([11, 12]).mockResolvedValueOnce([11, 12]).mockResolvedValue([11]);
+    const result = await getPacket();
+    expect(result.status).toBe(404);
+    expect(result.body).toMatchObject({ error: { code: 'REPORT_BUNDLE_NOT_FOUND' } });
+    expect(access.projects).toHaveBeenCalledTimes(3);
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(result.headers['content-disposition']).toBeUndefined();
+  });
+
+  it('refuses observed scope withdrawal after rendering even when its project remains accessible', async () => {
+    access.scope.mockImplementation(async (_org, _actor, scope) => access.projects.mock.calls.length < 3 || scope.scopeId !== '12');
+    const result = await getPacket();
+    expect(result.status).toBe(404);
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(result.headers['content-disposition']).toBeUndefined();
+  });
+
+  it('refuses an actor whose current active membership is absent before any body read', async () => {
+    denyActorAfter = 0;
+    const result = await getPacket();
+    expect(result.status).toBe(403);
+    expect(result.body).toMatchObject({ error: { code: 'PROJECT_ACTOR_ACCESS_DENIED' } });
+    expect(access.projects).not.toHaveBeenCalled();
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(result.headers['content-disposition']).toBeUndefined();
+  });
+
+  it('refuses an observed active membership withdrawal after rendering', async () => {
+    denyActorAfter = 2;
+    const result = await getPacket();
+    expect(result.status).toBe(403);
+    expect(result.body).toMatchObject({ error: { code: 'PROJECT_ACTOR_ACCESS_DENIED' } });
+    expect(actorReads).toBe(3);
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(result.headers['content-disposition']).toBeUndefined();
+  });
+
+  it('uses current canonical actor roles and the same owned client for every scope/allowlist read', async () => {
+    const result = await getPacket();
+    expect(result.status).toBe(200);
+    expect(actorReads).toBe(3);
+    const executor = access.projects.mock.calls[0][2];
+    expect(executor).toEqual(expect.objectContaining({ query: expect.any(Function), release: expect.any(Function) }));
+    for (const [org, actor, client] of access.projects.mock.calls) {
+      expect(org).toBe(7); expect(actor).toEqual({ userId: 5, role: 'manager' }); expect(client).toBe(executor);
+    }
+    for (const [org, actor, , client, allowed] of access.scope.mock.calls) {
+      expect(org).toBe(7); expect(actor).toEqual({ userId: 5, role: 'manager' }); expect(client).toBe(executor); expect(allowed).toEqual([11, 12]);
+    }
+    expect(h.statements.filter(sql => sql === '<released>')).toHaveLength(2); // Admission/render client plus durable export audit client.
+  });
+
+  it('retains policy lookup failure as an error, without interpreting it as an empty packet', async () => {
+    access.projects.mockRejectedValue(new Error('sharing verification unavailable'));
+    const result = await getPacket();
+    expect(result.status).toBeGreaterThanOrEqual(500);
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(result.headers['content-disposition']).toBeUndefined();
+    expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
   });
 });

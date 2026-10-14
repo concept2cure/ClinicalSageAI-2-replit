@@ -1,0 +1,18 @@
+{
+  "sourceRecords": [
+    {
+      "path": "server/services/governance/permissions.ts",
+      "bytes": 8752,
+      "digestAlgorithm": "sha256",
+      "digest": "aa6ff57e9eb723868fab28a594d7871cdbfe1ba384c69c36407ac50734b5551f",
+      "rawPath": "/tmp/signature-resource-before-permissions.ts"
+    },
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 13377,
+      "digestAlgorithm": "sha256",
+      "digest": "ef0315187d151c56d6c86af2fd1e77af08d972ab6203dabb7c6f34c7df34610e",
+      "rawPath": "/tmp/signature-resource-before-governed-signature-ceremony.ts"
+    }
+  ]
+}

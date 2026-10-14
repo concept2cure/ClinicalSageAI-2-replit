@@ -51,6 +51,7 @@ import {
 import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from './signature-persistence';
 import { checkSigningAuthority, type SigningAuthorityRefusal } from './signing-authority-gate';
+import { resolveSignerOrgRole } from './resolve-signer-role';
 import { AUTHENTICATOR_REQUIRED_MESSAGE } from './reverify-signer';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { clientIpOf, type HasClientIp } from '../../utils/client-ip';
@@ -82,7 +83,7 @@ export interface GovernedSignatureInput {
   allowedMeanings: readonly CeremonySignMeaning[];
   reauth: unknown;
   ipAddress: string | null;
-  /** The signer's org role, for the permission gate. */
+  /** Caller role snapshot retained for compatibility; permission uses the persisted role. */
   role: string;
   /**
    * Server-owned reservation of the authoritative target before authorship is
@@ -176,7 +177,32 @@ async function reserveTargetAndCheckMeaning(
   meaning: CeremonySignMeaning,
 ): Promise<void> {
   await input.prepare?.(client, meaning);
+  // Preserve the earlier precredential check, and reread/hold the current
+  // active signing authority after any domain reservation wait on this client.
+  refuseWithoutAuthority(await checkSigningAuthority(input.userId, input.orgId, client));
+  await checkCurrentResourceSigningPermission(client, input);
   await checkMeaningAgainstAuthorship(client, input, meaning);
+}
+
+/** Grants are read on the actual signing client after the parent wait. This
+ * does not serialize independent grant writers through COMMIT. */
+async function checkCurrentResourceSigningPermission(client: PoolClient, input: GovernedSignatureInput): Promise<void> {
+  if (process.env.GOVERNANCE_RBAC_ENFORCE !== 'true') return;
+  try {
+    // The canonical authority check already holds this role and active actor
+    // on this transaction. Reuse its resolver without duplicating its policy.
+    const role = await resolveSignerOrgRole(input.userId, input.orgId, client);
+    if (!role) throw new Error('Current signer role could not be verified.');
+    const resourceType = input.target.split(':')[0];
+    if (!(await can(input.orgId, role, { action: 'sign', resourceType }, { executor: client, strict: true }))) {
+      throw new GovernedSignatureRefusal(403, 'NOT_AUTHORIZED', `Your role does not hold sign permission for ${resourceType}. Nothing was signed.`);
+    }
+  } catch (err) {
+    if (err instanceof GovernedSignatureRefusal) throw err;
+    console.error('[governed-signature] resource signing permission unverified:', err instanceof Error ? err.message : err);
+    throw new GovernedSignatureRefusal(503, 'SIGNING_PERMISSION_UNVERIFIED',
+      'Your signing permission could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.');
+  }
 }
 
 export async function signGovernedAct(input: GovernedSignatureInput): Promise<Record<string, unknown>> {
@@ -201,15 +227,6 @@ export async function signGovernedAct(input: GovernedSignatureInput): Promise<Re
   // that cannot run signs nothing. This module's own wrapper of it
   // (assertSigningAuthority) was removed on 2026-10-08 (P-27).
   refuseWithoutAuthority(await checkSigningAuthority(userId, orgId));
-
-  // The canonical sign path's permission gate, dark-launched the same way
-  // (routes/c2c/actions.ts makeHandler): off until validated on real role data.
-  if (process.env.GOVERNANCE_RBAC_ENFORCE === 'true') {
-    const resourceType = target.split(':')[0];
-    if (!(await can(orgId, input.role, { action: 'sign', resourceType }))) {
-      throw new GovernedSignatureRefusal(403, 'NOT_AUTHORIZED', `Your role does not hold sign permission for ${resourceType}. Nothing was signed.`);
-    }
-  }
 
   const reauth = asReauth(input.reauth);
   const verified = await verifyReauth(userId, reauth);

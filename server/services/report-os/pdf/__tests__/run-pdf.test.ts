@@ -104,6 +104,13 @@ describe('buildRunPdf', () => {
     expect(t).not.toMatch(/NOT FINAL/);
   });
 
+  it('states missing signature name, meaning and execution time without substituting the chain finalization time', async () => {
+    const missing = { ...SEAL, signature: null };
+    const t = await textOf((await buildRunPdf(base({ run: { ...base().run, status: 'final' }, seal: missing }))).bytes);
+    expect(t).toContain('Final. Signed by not recorded as not recorded, not recorded (UTC).');
+    expect(t).not.toContain(`Signed by not recorded as not recorded, ${SEAL.finalizedAt}`);
+  });
+
   it('says so when the seal does not verify, with the failing check', async () => {
     const mismatch: RunSealView = { ...SEAL, verification: { verdict: 'mismatch', checks: [{ check: 'stored-document', ok: false, detail: 'The stored document no longer hashes to the recorded seal.' }] } };
     const t = await textOf((await buildRunPdf(base({ run: { ...base().run, status: 'final' }, seal: mismatch }))).bytes);

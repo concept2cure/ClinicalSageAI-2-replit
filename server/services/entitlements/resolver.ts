@@ -25,6 +25,7 @@
  */
 
 import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { entitlementMatrix, isEntitled, isTier } from './mdx-entitlements.js';
 import type { Tier } from './types';
@@ -60,6 +61,9 @@ export interface ResolvedToggle {
 export interface ResolvedCapabilities {
   organizationId: number;
   tier: Tier;
+  /** True only when exactly one organization row records a recognized tier.
+   *  Otherwise `tier` is a compatibility fallback, not a verified plan. */
+  tierResolved: boolean;
   features: ResolvedFeature[];
   modules: ResolvedModule[];
   toggles: ResolvedToggle[];
@@ -100,15 +104,23 @@ export function composeFeatures(
 }
 
 /** Resolve the org's effective capabilities across all three layers. */
-export async function resolveCapabilities(organizationId: number): Promise<ResolvedCapabilities> {
+export async function resolveCapabilities(
+  organizationId: number,
+  executor?: RequestSqlClient,
+): Promise<ResolvedCapabilities> {
+  const q: RequestSqlClient = executor ?? pool;
   // Layer 0: plan tier.
   let tier: Tier = 'standard';
+  let tierResolved = false;
   try {
-    const res = await pool.query<{ tier: string | null }>(
+    const res = await q.query(
       `SELECT tier FROM organizations WHERE id = $1`,
       [organizationId],
     );
-    if (res.rows.length && isTier(res.rows[0].tier)) tier = res.rows[0].tier as Tier;
+    if (Array.isArray(res.rows) && res.rows.length === 1 && isTier(res.rows[0]?.tier)) {
+      tier = res.rows[0].tier;
+      tierResolved = true;
+    }
   } catch (err) {
     logger.error('tier lookup failed; defaulting to standard', {
       organizationId,
@@ -117,10 +129,10 @@ export async function resolveCapabilities(organizationId: number): Promise<Resol
   }
 
   // Layer 1: feature toggles (global or org-granted).
-  let toggles: ResolvedToggle[] = [];
+  const toggles: ResolvedToggle[] = [];
   const granted = new Set<string>();
   try {
-    const res = await pool.query(
+    const res = await q.query(
       `SELECT feature_key, enabled, enabled_for_organization_ids FROM feature_toggles`,
     );
     // Tenant-scope the output: only flags that apply to THIS org are
@@ -128,7 +140,8 @@ export async function resolveCapabilities(organizationId: number): Promise<Resol
     // flags and other tenants' rollout state to any authenticated user.
     for (const r of res.rows) {
       const applies = toggleAppliesToOrg(
-        { enabled: r.enabled === true, enabledForOrganizationIds: r.enabled_for_organization_ids },
+        { enabled: r.enabled === true, enabledForOrganizationIds: Array.isArray(r.enabled_for_organization_ids)
+          ? r.enabled_for_organization_ids : null },
         organizationId,
       );
       if (!applies) continue;
@@ -145,7 +158,7 @@ export async function resolveCapabilities(organizationId: number): Promise<Resol
   // Layer 2: module subscriptions (the live client gating path).
   let modules: ResolvedModule[] = [];
   try {
-    const res = await pool.query(
+    const res = await q.query(
       `SELECT ms.module_id, ms.enabled, am.name, am.category
          FROM module_subscriptions ms
          LEFT JOIN available_modules am ON am.module_id = ms.module_id
@@ -169,6 +182,7 @@ export async function resolveCapabilities(organizationId: number): Promise<Resol
   return {
     organizationId,
     tier,
+    tierResolved,
     features: composeFeatures(tier, granted),
     modules,
     toggles,

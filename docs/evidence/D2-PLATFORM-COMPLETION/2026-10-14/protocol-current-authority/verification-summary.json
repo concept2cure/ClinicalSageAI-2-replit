@@ -1,0 +1,104 @@
+{
+  "qualifiedAtUtc": "2026-10-14T06:39:11.186903+00:00",
+  "branch": "concept2cure-v2",
+  "publishedBase": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "runs": [
+    {
+      "result": "genuine-red",
+      "database": "platform_test",
+      "filesFailed": 1,
+      "testsFailed": 1,
+      "testsSkipped": 0,
+      "durationSeconds": 5.74,
+      "log": "native-role-red.txt"
+    },
+    {
+      "result": "green",
+      "database": "platform_test",
+      "filesPassed": 2,
+      "testsPassed": 4,
+      "testsSkipped": 0,
+      "durationSeconds": 11.64,
+      "log": "native-role-and-positive-green.txt"
+    },
+    {
+      "result": "green",
+      "filesPassed": 8,
+      "testsPassed": 184,
+      "testsSkipped": 0,
+      "durationSeconds": 23.33,
+      "log": "focused-neighbours-green.txt",
+      "perFile": [
+        {
+          "path": "server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts",
+          "passed": 37
+        },
+        {
+          "path": "server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts",
+          "passed": 12
+        },
+        {
+          "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+          "passed": 28
+        },
+        {
+          "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+          "passed": 25
+        },
+        {
+          "path": "server/routes/__tests__/domain-sign-ceremony.routes.test.ts",
+          "passed": 64
+        },
+        {
+          "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+          "passed": 5
+        },
+        {
+          "path": "server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts",
+          "passed": 7
+        },
+        {
+          "path": "server/services/part11/__tests__/signing-authority.test.ts",
+          "passed": 6
+        }
+      ]
+    },
+    {
+      "result": "green",
+      "database": "platform_ci_native_recheck_20261013",
+      "filesPassed": 4,
+      "testsPassed": 89,
+      "testsSkipped": 0,
+      "durationSeconds": 66.66,
+      "log": "native-neighbours-89-green.txt",
+      "perFile": [
+        {
+          "path": "tests/db/protocol-finalization-concurrency.dbtest.ts",
+          "passed": 25
+        },
+        {
+          "path": "tests/db/project-vault-parent-access.dbtest.ts",
+          "passed": 43
+        },
+        {
+          "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+          "passed": 18
+        },
+        {
+          "path": "tests/db/report-tenant-index.dbtest.ts",
+          "passed": 3
+        }
+      ]
+    }
+  ],
+  "authorityContract": "Preserve canonical precredential check; after domain preparation, reread active membership/user/org and reserve ou/u/o FOR SHARE on actual ceremony transaction, then apply the same existing signing-role allowlist. Typed403/503 remain.",
+  "historyQualification": "Both exact retained signing histories are byte-identical within their full governed-artifact/source/version/signature/lineage/action/audit hashes. These hashes do not assert preservation of unrelated account/membership rows or a whole database.",
+  "limitations": [
+    "No production audit-HMAC integrity qualification; native logs show development fallback.",
+    "Actual signatures use password and second_factor_verified=false; no second factor is invented.",
+    "No historical independence assurance was written or inferred from later live authorship.",
+    "This phase changes authority only; legacy read/export qualification remains a separate pending increment.",
+    "No compiler, provider, index, commit or publication run performed by this agent.",
+    "Feature-gated GOVERNANCE_RBAC_ENFORCE resource permission/grant resolution remains pre-parent and outside this canonical role/status reservation proof; no full RBAC grant stability is established."
+  ]
+}

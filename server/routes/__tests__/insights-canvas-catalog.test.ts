@@ -82,7 +82,7 @@ const SUMMARY = {
 
 beforeEach(() => {
   h.registry.mockReset().mockResolvedValue(deployedTypes());
-  h.gate.mockReset().mockResolvedValue({ entitled: true, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'enterprise' });
+  h.gate.mockReset().mockResolvedValue({ entitled: true, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'enterprise', tierResolved: true });
   h.orgSegments.mockReset().mockResolvedValue(['pharma', 'biotech', 'device', 'ivd']);
   h.projectSegments.mockReset().mockImplementation(async (_org: number, projectId: number) => (projectId === 11 ? ['biotech'] : projectId === 14 ? ['device'] : null));
   h.summary.mockReset().mockResolvedValue(SUMMARY);
@@ -178,5 +178,38 @@ describe('each type says whether an engine computes it over a program', () => {
       runnable: true, computedScopes: ['project'], computedScope: 'project', runScopeType: 'project', runScopeId: '11', region: 'USA_FDA',
     });
     expect(reports.find(t => t.typeId === 'provenance.evidence_trace_report')).toMatchObject({ computedScopes: ['document'], computedScope: 'document', availabilityState: 'scope-required' });
+  });
+});
+
+/** Real resolver/gate control flow over controlled SQL, rather than an outer
+ * gate exception; sharing/registry edges remain this suite's existing doubles. */
+async function useRecordedTier(tier: string | null) {
+  const actual = await vi.importActual<typeof import('../../services/report-os/entitlement-map')>('../../services/report-os/entitlement-map');
+  const executor = { query: vi.fn(async (sql: string) => ({
+    rows: sql.includes('FROM organizations') ? [{ tier }] : [],
+  })) };
+  h.gate.mockImplementation(() => actual.requireReportEntitlement(7, 'portfolio.board_pack', 'portfolio', executor));
+  return executor;
+}
+
+describe('canvas catalog preserves the actual recorded-plan verdict', () => {
+  it.each([null, 'platinum'])('locks every report when the real resolver returns an unread %s tier without throwing', async tier => {
+    const executor = await useRecordedTier(tier);
+    const res = await overview(`?programId=${HLV}`);
+    expect(res.status).toBe(200);
+    expect(executor.query).toHaveBeenCalledWith('SELECT tier FROM organizations WHERE id = $1', [7]);
+    expect(res.body.data).toMatchObject({ tier: 'standard', tierResolved: false });
+    expect(res.body.data.reportTypes.find((t: { typeId: string }) => t.typeId === 'readiness.executive_digest'))
+      .toMatchObject({ entitled: false, runnable: true });
+    expect(res.body.data.reportTypes.every((t: { entitled: boolean }) => t.entitled === false)).toBe(true);
+  });
+
+  it.each(['free', 'standard', 'professional', 'enterprise'])('retains a positively recorded %s plan', async tier => {
+    await useRecordedTier(tier);
+    const res = await overview(`?programId=${HLV}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ tier, tierResolved: true });
+    expect(res.body.data.reportTypes.find((t: { typeId: string }) => t.typeId === 'readiness.executive_digest'))
+      .toMatchObject({ entitled: tier !== 'free', runnable: true });
   });
 });

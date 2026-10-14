@@ -474,3 +474,35 @@ describe('the protocol signing ceremony checks signing authority before the pass
     expect(h.log).toEqual([]);
   });
 });
+
+describe('current transaction authority after protocol reservation', () => {
+  it('rechecks the actual transaction role after reservation before SoD or domain writes', async () => {
+    h.afterReservation = () => { h.memberRole = 'member'; };
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(r.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2);
+    expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, client);
+    expect(resolveSignerOrgRole.mock.invocationCallOrder[1]).toBeGreaterThan(lockProtocolForSignatureTx.mock.invocationCallOrder[0]);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
+    expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('returns typed unavailable authority when the reserved transaction role cannot be verified', async () => {
+    h.afterReservation = () => { h.memberRoleFail = new Error('membership verification interrupted'); };
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(503);
+    expect(r.body.error.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(JSON.stringify(r.body)).not.toContain('membership verification interrupted');
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
+    expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+  });
+
+});

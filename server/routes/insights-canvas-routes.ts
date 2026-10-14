@@ -429,10 +429,10 @@ function catalogAvailabilityState(type: CatalogDefinition, runnable: boolean, co
   return computedScopes.length ? 'scope-required' : 'not-computed';
 }
 
-function catalogFor(types: CatalogDefinition[], segments: ReportSegment[], persona: string | null, tier: Tier, context: { organizationId: number; lead: CanvasLeadProgram | null }): CanvasReportType[] {
+function catalogFor(types: CatalogDefinition[], segments: ReportSegment[], persona: string | null, tier: Tier, context: { organizationId: number; lead: CanvasLeadProgram | null; tierResolved: boolean }): CanvasReportType[] {
   const { organizationId, lead } = context;
   return filterTypesForSegment(types, segments, persona).map((t) => {
-    const decision = decideReportEntitlement(t.typeId, t.family, tier);
+    const decision = decideReportEntitlement(t.typeId, t.family, tier, context.tierResolved);
     const project = reportAvailability(t.typeId, 'project', t.allowedScopes);
     const account = reportAvailability(t.typeId, 'account', t.allowedScopes);
     const runScopeType = lead && project.runnable ? 'project' : account.runnable ? 'account' : null;
@@ -560,7 +560,7 @@ export default function createInsightsCanvasRoutes(): Router {
       const { leadProgram, openProgram } = await pickLead(req, organizationId, programId, summary, accessibleProjectIds);
 
       const catalogSegments = await leadSegments(organizationId, leadProgram, segments);
-      const reportTypes = catalogFor(types, catalogSegments, persona, tier, { organizationId, lead: leadProgram });
+      const reportTypes = catalogFor(types, catalogSegments, persona, tier, { organizationId, lead: leadProgram, tierResolved: gate.tierResolved === true });
       const programs = programChoices(summary);
 
       // Cross-program board rollup — the ENTERPRISE portfolio_rollup capability.
@@ -571,7 +571,7 @@ export default function createInsightsCanvasRoutes(): Router {
       const data: CanvasOverview = {
         organizationId,
         tier,
-        tierResolved: gate.tierResolved,
+        tierResolved: gate.tierResolved === true,
         segments: catalogSegments,
         reportTypes,
         leadProgram,

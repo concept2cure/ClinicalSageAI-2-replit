@@ -1,9 +1,14 @@
 # Complete retained report-pack PDF
 
 W1 / D2, `concept2cure-v2`, 2026-10-14. The control tower approved this bounded
-contract. This document is a design and ownership plan; implementation and its
-evidence are pending. Existing report manifests, saved runs and individual PDF
-exports remain canonical.
+contract. The retained packet, admission checks and existing-style UI actions
+are implemented. Focused PDF, route, UI, native PostgreSQL and actual browser
+evidence is filed under
+[`retained-report-pack`](../evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/)
+and [`retained-report-pack-pdf`](../evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack-pdf/).
+Whole-tree integration and publication are recorded separately; this document
+does not establish production or regulatory qualification. Existing report
+manifests, saved runs and individual PDF exports remain canonical.
 
 ## Client outcome and current gap
 

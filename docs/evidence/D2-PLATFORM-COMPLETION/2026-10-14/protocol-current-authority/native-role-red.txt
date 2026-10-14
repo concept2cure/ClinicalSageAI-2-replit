@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts
+{
+  "timestamp": "2026-10-14T06:17:31.752Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:17:31.754Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts
+{
+  "timestamp": "2026-10-14T06:17:31.754Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T06:17:31.864Z', poolSize: 1 }
+
+stdout | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts
+[database] Database connection successful
+
+stderr | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts > native current signing role after parent reservation > refuses a signer demoted after preflight while waiting for the actual protocol parent
+[database] Database connection successful { timestamp: '2026-10-14T06:17:35.501Z', poolSize: 2 }
+
+stdout | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts > native current signing role after parent reservation > refuses a signer demoted after preflight while waiting for the actual protocol parent
+[protocol-authority-after-parent:roleDemotedAfterPreflight] {"documentId":93,"sectionId":194,"holderPid":9520,"signerWait":{"pid":9516,"query":"SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE","wait_event":"transactionid","blocking_pids":[9520]},"roleBefore":{"organization_id":1179328,"user_id":1208363,"role":"admin","user_status":"active"},"roleAfter":{"organization_id":1179328,"user_id":1208363,"role":"member","user_status":"active"},"freshAuthority":{"status":403,"code":"ESIGNATURE_NO_AUTHORITY","message":"Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed."},"signerStatus":201,"signerErrorCode":null,"document":{"status":"finalized","version":"1.0","finalized_by":1208363,"finalized_at":"2026-10-14T06:17:35.413Z"},"signatureCount":1,"versionCount":1,"signatureId":27,"digestMatchesCurrent":true,"signActionCount":1,"signAuditCount":1,"beforeDocumentStateDigest":"9c509fff4983699c1d53228e7a21198bf69fac7be1cc894eaf7b8d5481fc4624","afterDocumentStateDigest":"05dcfc3d85cec6eb2e8a041faf7c3ce337dad065ec2bae81e450abb478c38e9a","authorsAfter":{"modelled":true,"authors":[1453486],"sources":["protocol content","protocol creator","protocol edit ledger"]}}
+
+stdout | ../../tmp/protocol-authority-after-parent.executed.dbtest.ts
+[protocol-authority-after-parent:summary] {"tag":"protocol-authority-native-145563-mv7pwxua-ba02125f","cases":{"roleDemotedAfterPreflight":{"documentId":93,"sectionId":194,"holderPid":9520,"signerWait":{"pid":9516,"query":"SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE","wait_event":"transactionid","blocking_pids":[9520]},"roleBefore":{"organization_id":1179328,"user_id":1208363,"role":"admin","user_status":"active"},"roleAfter":{"organization_id":1179328,"user_id":1208363,"role":"member","user_status":"active"},"freshAuthority":{"status":403,"code":"ESIGNATURE_NO_AUTHORITY","message":"Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed."},"signerStatus":201,"signerErrorCode":null,"document":{"status":"finalized","version":"1.0","finalized_by":1208363,"finalized_at":"2026-10-14T06:17:35.413Z"},"signatureCount":1,"versionCount":1,"signatureId":27,"digestMatchesCurrent":true,"signActionCount":1,"signAuditCount":1,"beforeDocumentStateDigest":"9c509fff4983699c1d53228e7a21198bf69fac7be1cc894eaf7b8d5481fc4624","afterDocumentStateDigest":"05dcfc3d85cec6eb2e8a041faf7c3ce337dad065ec2bae81e450abb478c38e9a","authorsAfter":{"modelled":true,"authors":[1453486],"sources":["protocol content","protocol creator","protocol edit ledger"]}}},"signatureRequestsStarted":1,"scope":"Actual native protocol APIs; synthetic QA only","database":"platform_test","runtime":{"database":"platform_test","role":"app_service","rolsuper":false,"rolbypassrls":false,"enforcement":"on"},"stores":[{"relname":"audit_logs","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"c2c_ana_actions","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"document_span_lineage","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"electronic_signatures","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_documents","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_sections","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_versions","relrowsecurity":true,"relforcerowsecurity":true}],"organizationId":1179328,"actorIds":{"author":1453486,"independent":1208363},"signingPolicyRoles":["admin","approver","reviewer"],"signerAttempts":{"author":0,"independent":1}}
+
+ × ../../tmp/protocol-authority-after-parent.executed.dbtest.ts > native current signing role after parent reservation > refuses a signer demoted after preflight while waiting for the actual protocol parent 649ms
+   → A signer demoted before parent reservation must be refused by current canonical signing policy.: expected 201 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/protocol-authority-after-parent.executed.dbtest.ts > native current signing role after parent reservation > refuses a signer demoted after preflight while waiting for the actual protocol parent
+AssertionError: A signer demoted before parent reservation must be refused by current canonical signing policy.: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ refusesDemotedSignerAfterParentWait ../../tmp/protocol-authority-after-parent.executed.dbtest.ts:253:126
+    251|     // This is intentionally red on the pre-repair code, not an expect…
+    252|     // test that could hide the gap. Preserve its genuine failure and …
+    253|     expect(signed.status, 'A signer demoted before parent reservation …
+       |                                                                                                                              ^
+    254|     expect(signed.body?.error?.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    255|     expect(afterDigest).toBe(beforeDigest);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  06:17:29
+   Duration  5.74s (transform 2.27s, setup 73ms, import 2.77s, tests 2.57s, environment 0ms)

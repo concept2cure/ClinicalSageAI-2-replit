@@ -1,0 +1,6 @@
+[ci:eslint-warning-ratchet] 6090 warning(s) across 1763 file(s), 21 rule(s) (baseline 6120).
+
+  30 fewer warning(s) than baseline — ratchet down so the gain is locked in.
+  Regenerate the baseline in this same change:
+    node scripts/ci/check-eslint-warning-ratchet.mjs --write-baseline
+[ci:eslint-warning-ratchet] OK — warning count did not grow.

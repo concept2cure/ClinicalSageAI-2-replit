@@ -454,20 +454,18 @@ export const BUNDLE_NEEDS_PROJECT_NOTE =
   'A bundle is filed against the projects its reports belong to. Reports that belong to no project ' +
   'cannot be bundled.';
 
-/**
- * What a bundle's PDF actually is.
- *
- * It is a MANIFEST, not the reports: `pdf/bundle-pdf.ts` prints one line per
- * report — id, label, scope, status now, status at bundling, confidence — and
- * states in the document itself that "Each report's own PDF carries its
- * signature and seal". Offering it as "the reports as one PDF" would hand an
- * inspector an index where they expected the evidence, so the UI names it a
- * manifest and says where the sealed documents are.
- */
+/** The two retained exports accepted by the bundle PDF route. */
+export type BundlePdfContent = 'manifest' | 'reports';
+
+/** The default export remains an index; it does not include report bodies. */
 export const BUNDLE_PDF_IS_A_MANIFEST =
-  "A bundle's PDF is a manifest: one line per report with its status at export beside the status it was " +
-  "bundled at, and how many are final. It does not contain the reports themselves — each report's own " +
-  'PDF carries its document, signature and seal, and is exported from Run history.';
+  'A manifest PDF lists each report with its status at export beside its status at bundling, and how many ' +
+  'are final. It does not contain the reports themselves. Individual report PDFs can also be exported from Run history.';
+
+/** Exporting retained bodies is a copy operation, not a finalization act. */
+export const BUNDLE_REPORTS_PDF_NOTE =
+  'A reports PDF contains the retained report bodies and their recorded status, signature and seal facts. ' +
+  'Exporting a pack does not finalize its reports.';
 
 /* ══════════════════════════════════════════════════════════════════
    Writes

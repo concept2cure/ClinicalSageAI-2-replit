@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T07:33:53.900Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > creates the back-reference index the Data Room reads by 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > is idempotent — applying it twice is a no-op 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > captures the source's checksum at the moment it is cited 77ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing the same source twice returns the existing citation rather than duplicating 89ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing it again does not re-baseline the checksum recorded at cite time (SEC-A-8) 80ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite onto another tenant's section 24ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite another tenant's source 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > keeps the cited checksum and reports the citation as changed once the source moves 42ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses a citation of another project's source, and writes nothing (PF-11) 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > a document with no project, or a source with none, is not judged 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > rejects a non-numeric source id instead of letting Postgres cast it 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > reports the affected section and document, scoped to the project 86ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > an organization-wide source cited by the project's document is the project's change too (PF-11) 78ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > a citation whose checksum still matches is not reported as changed 82ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > does not leak another tenant's changed citations 87ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts the sections and documents a source is used in 115ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts only the sections whose citation is against superseded content 118ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > leaves an uncited source out of the map, so "not cited yet" is visible 54ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > does not count another tenant's citations of the same source id 45ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > drops non-numeric ids rather than casting them 25ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reads the checksum from the source instead of manufacturing one 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reports unchanged content as unchanged 63ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses a citation that references no canonical source 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses to touch a frozen citation 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve a citation through a section it does not belong to (SEC-A-1) 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve another tenant's citation 32ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > lists a deleted source as unresolved instead of dropping the row 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > reports a citation with no recorded checksum as unverified, never current 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > survives free-text reference_ids left by the data-token flow 33ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > removes an unfrozen citation and leaves frozen ones alone 68ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > cannot remove another tenant's citation 35ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > groups recorded citations per section with document context 241ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > surfaces a changed source as changed, per section 256ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > omits sections with no recorded citations — that is the surface contract 184ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > does not serve another tenant's citations 77ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > lists an unresolvable source rather than dropping the citation 216ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > allows the current original uploader to cite their actual unbound capture 29ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refuses a peer uploader before reading a source checksum or writing a citation 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refreshes using the actual requester, never the stored original uploader 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refuses a revoked current requester before refresh, preserving recorded history 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > treats unavailable source verification as 503 before checksum or mutation 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > allows an actual NULL-organization global_public source for a current actor 26ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > does not turn a NULL-organization private source into a global grant 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > cite rechecks actual membership after disposition reservation before write locks or another checksum read 21ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refresh rechecks actual membership after disposition reservation before write locks or another checksum read 47ms
+
+ Test Files  1 passed (1)
+      Tests  45 passed (45)
+   Start at  07:33:52
+   Duration  7.24s (transform 956ms, setup 91ms, import 1.56s, tests 5.32s, environment 0ms)

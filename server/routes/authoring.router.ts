@@ -3120,12 +3120,20 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
       message: 'Citation added successfully',
     });
   } catch (error) {
+    if (replyCitationAccessRefusal(res, error)) return;
     const { SourceUsageError } = await import('../services/clinical-regulatory-evidence/source-usage.service.js');
     if (error instanceof SourceUsageError) return res.status(400).json({ success: false, error: error.message });
     console.error('Error adding citation:', error);
     return serverError(res, logger, 'saving cite', error);
   }
 });
+
+/** One HTTP boundary for current source/project admission on citation reads and writes. */
+function replyCitationAccessRefusal(res: Response, error: unknown): boolean {
+  if (!(error instanceof SourceReadAccessError || error instanceof ProgramReadAccessError)) return false;
+  res.status(error.status).json({ success: false, error: error.code, message: error.message });
+  return true;
+}
 
 // ── Canonical source citations ─────────────────────────────────────────────
 // The Data Room holds canonical source identities; these endpoints are how a
@@ -3155,10 +3163,7 @@ router.get('/sections/:sectionId/sources', async (req: Request, res: Response) =
     res.json({ success: true, sectionId: String(req.params.sectionId), sources: usages });
   } catch (error) {
     await client?.query('ROLLBACK').catch(() => undefined);
-    if (error instanceof SourceReadAccessError || error instanceof ProgramReadAccessError) {
-      res.status(error.status).json({ success: false, error: error.code, message: error.message });
-      return;
-    }
+    if (replyCitationAccessRefusal(res, error)) return;
     console.error('GET /sections/:sectionId/sources', error);
     res.status(500).json({ success: false, error: 'Failed to load section sources' });
   } finally {
@@ -3218,6 +3223,7 @@ router.post('/sections/:sectionId/cite-source', async (req: Request, res: Respon
       throw e;
     }
   } catch (error) {
+    if (replyCitationAccessRefusal(res, error)) return;
     console.error('POST /sections/:sectionId/cite-source', error);
     res.status(500).json({ success: false, error: 'Failed to record the source citation' });
   }
@@ -5762,7 +5768,7 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
     const outcome = await inTransaction(async (client) => {
-      const refreshed = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite_id) }, client);
+      const refreshed = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite_id), userId: Number(getActorId(req)) }, client);
       if (refreshed.ok && refreshed.change) {
         await auditCitationWrite(req, client, {
           sectionId,
@@ -5791,6 +5797,7 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
       sha256: outcome.currentChecksum,
     });
   } catch (error) {
+    if (replyCitationAccessRefusal(res, error)) return;
     console.error('Error refreshing token:', error);
     return serverError(res, logger, 'saving refresh token', error);
   }
@@ -6095,7 +6102,7 @@ router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
       const skipped: Array<{ cite_id: string; reason: string }> = [];
       for (const cite of cites.rows as Array<{ cite_id: string; section_id: string }>) {
         const sectionId = String(cite.section_id);
-        const outcome = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite.cite_id) }, client);
+        const outcome = await refreshSourceCitation(tenantId, { sectionId, citationId: String(cite.cite_id), userId: Number(getActorId(req)) }, client);
         if (!outcome.ok) {
           // Reported, not silently counted as refreshed. A citation with no source
           // behind it is exactly what the caller needs to see.
@@ -6123,6 +6130,7 @@ router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
     }
     res.json({ ok: true, refreshed: result.refreshed, changed: result.changed, skipped: result.skipped });
   } catch (error) {
+    if (replyCitationAccessRefusal(res, error)) return;
     console.error('POST /docs/:id/refresh-all', error);
     res.status(500).json({ error: 'Refresh-all failed' });
   }

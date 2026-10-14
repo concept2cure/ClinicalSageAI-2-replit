@@ -29,7 +29,7 @@ function app(userId = 20, role = 'member') {
   const application = express();
   application.use(express.json());
   application.use((req, _res, next) => {
-    Object.assign(req, { organizationId: 7, userRole: role, user: { id: userId, organizationId: 7, role } });
+    Object.assign(req, { organizationId: 7, userRole: role, user: { id: userId, organizationId: 7, role }, dbClient: { query } });
     next();
   });
   application.use('/api/c2c/projects', dispositionRoutes(), projectsRouter);

@@ -3,12 +3,12 @@
  *   - usage-recorder  — entry normalization + USD→cents
  *   - usage-windows   — session window math + percent-used + budget grid
  *   - credit-ledger   — auto-reload predicate/validation + entry-sign rules
- *   - entitlements/resolver — toggle applicability + tier⊕toggle composition
+ *   - entitlements/resolver — composition + recorded tier / owned-client reads
  *
- * Targets the PURE cores; the DB wrappers are thin pass-throughs (same
- * testing posture as weekly-usage-limits.test.ts).
+ * Uses pure cores plus the actual capability resolver/report gate with
+ * controlled SQL responses; this is not native PostgreSQL/RLS evidence.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { normalizeUsageEntry, usdToCents } from '../usage-recorder';
 import {
@@ -23,8 +23,11 @@ import {
   normalizeEntryAmount,
   DEFAULT_AUTORELOAD,
 } from '../credit-ledger';
-import { toggleAppliesToOrg, composeFeatures } from '../entitlements/resolver';
+import { toggleAppliesToOrg, composeFeatures, resolveCapabilities } from '../entitlements/resolver';
 import { entitlementMatrix } from '../entitlements/mdx-entitlements';
+import { requireReportEntitlement } from '../report-os/entitlement-map';
+import { getPool } from '../../db/runtime';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // usage-recorder
@@ -274,5 +277,118 @@ describe('composeFeatures', () => {
   it('does not let a toggle disable a tier entitlement (grant-only)', () => {
     const features = composeFeatures('enterprise', new Set());
     for (const f of features) expect(f.enabled).toBe(true);
+  });
+});
+
+function capabilityClient(tierRows: Array<Record<string, unknown>>, failTier = false) {
+  return {
+    query: vi.fn(async (sql: string, _params?: unknown[]) => {
+      if (sql.includes('FROM organizations')) {
+        if (failTier) throw new Error('recorded tier query failed');
+        return { rows: tierRows };
+      }
+      if (sql.includes('FROM feature_toggles')) return { rows: [
+        { feature_key: 'prediction_forecast_report', enabled: false, enabled_for_organization_ids: [7] },
+        { feature_key: 'portfolio_rollup', enabled: false, enabled_for_organization_ids: [88] },
+      ] };
+      if (sql.includes('FROM module_subscriptions')) return { rows: [
+        { module_id: 'reporting', enabled: true, name: 'Reporting', category: 'analytics' },
+      ] };
+      throw new Error(`Unexpected capability query: ${sql}`);
+    }),
+  } satisfies RequestSqlClient;
+}
+
+describe('actual capability resolver reporting refusal', () => {
+  it('refuses a base report when the real resolver catches a pool query fault', async () => {
+    const query = vi.spyOn(getPool(), 'query').mockRejectedValue(new Error('tier store unavailable'));
+    try {
+      const decision = await requireReportEntitlement(7, 'readiness.executive_digest', 'readiness');
+      expect(query).toHaveBeenCalledWith('SELECT tier FROM organizations WHERE id = $1', [7]);
+      expect(decision.entitled, 'an internally swallowed tier fault unlocked a base report').toBe(false);
+      expect(decision).toMatchObject({ tier: 'standard', tierResolved: false });
+      expect(await resolveCapabilities(7)).toMatchObject({ tier: 'standard', tierResolved: false });
+    } finally {
+      query.mockRestore();
+    }
+  });
+
+  it('uses the owned SQL client for tier, toggle and subscription reads without pooled reads', async () => {
+    const pooled = vi.spyOn(getPool(), 'query');
+    try {
+      const client = capabilityClient([{ tier: 'free' }]);
+      const caps = await resolveCapabilities(7, client);
+      expect(client.query).toHaveBeenCalledTimes(3);
+      expect(client.query.mock.calls[0]).toEqual(['SELECT tier FROM organizations WHERE id = $1', [7]]);
+      expect(client.query.mock.calls[1][0]).toContain('FROM feature_toggles');
+      expect(client.query.mock.calls[2][0]).toContain('WHERE ms.organization_id = $1');
+      expect(client.query.mock.calls[2][1]).toEqual([7]);
+      expect(pooled).not.toHaveBeenCalled();
+      expect(caps).toMatchObject({ tier: 'free', tierResolved: true,
+        modules: [{ moduleId: 'reporting', enabled: true, name: 'Reporting', category: 'analytics' }],
+        toggles: [{ featureKey: 'prediction_forecast_report', appliesToOrg: true }],
+      });
+      expect(caps.features.find(f => f.feature === 'prediction_forecast_report'))
+        .toMatchObject({ enabled: true, source: 'toggle' });
+      expect(caps.features.find(f => f.feature === 'portfolio_rollup')?.enabled).toBe(false);
+    } finally {
+      pooled.mockRestore();
+    }
+  });
+});
+
+describe('recorded tier resolution', () => {
+  it.each(['free', 'standard', 'professional', 'enterprise'] as const)(
+    'resolves exactly one recorded %s tier and preserves its reporting entitlement', async tier => {
+      const client = capabilityClient([{ tier }]);
+      expect(await resolveCapabilities(7, client)).toMatchObject({ tier, tierResolved: true });
+      const base = await requireReportEntitlement(7, 'readiness.executive_digest', 'readiness', client);
+      const forecast = await requireReportEntitlement(7, 'prediction.regulatory_forecast', 'prediction', client);
+      const portfolio = await requireReportEntitlement(7, 'portfolio.board_pack', 'portfolio', client);
+      for (const decision of [base, forecast, portfolio]) expect(decision).toMatchObject({ tier, tierResolved: true });
+      expect(base.entitled).toBe(tier !== 'free');
+      expect(forecast.entitled).toBe(tier === 'professional' || tier === 'enterprise');
+      expect(portfolio.entitled).toBe(tier === 'enterprise');
+    },
+  );
+
+  it.each([
+    { label: 'missing organization', rows: [] },
+    { label: 'null tier', rows: [{ tier: null }] },
+    { label: 'missing tier field', rows: [{}] },
+    { label: 'unknown tier', rows: [{ tier: 'platinum' }] },
+    { label: 'unrecorded capitalization', rows: [{ tier: 'Enterprise' }] },
+    { label: 'malformed tier', rows: [{ tier: { value: 'enterprise' } }] },
+    { label: 'multiple tier rows', rows: [{ tier: 'enterprise' }, { tier: 'enterprise' }] },
+  ])('refuses all reporting families for $label without inventing a plan', async ({ rows }) => {
+    const client = capabilityClient(rows);
+    expect(await resolveCapabilities(7, client)).toMatchObject({ tier: 'standard', tierResolved: false });
+    for (const typeId of ['readiness.executive_digest', 'prediction.regulatory_forecast', 'portfolio.board_pack']) {
+      expect(await requireReportEntitlement(7, typeId, undefined, client))
+        .toMatchObject({ tier: 'standard', tierResolved: false, entitled: false });
+    }
+  });
+
+  it('refuses a base report on an owned-client tier fault despite a pilot feature grant', async () => {
+    const client = capabilityClient([], true);
+    const caps = await resolveCapabilities(7, client);
+    expect(caps).toMatchObject({ tier: 'standard', tierResolved: false });
+    expect(caps.features.find(f => f.feature === 'prediction_forecast_report'))
+      .toMatchObject({ enabled: true, source: 'toggle' });
+    expect(await requireReportEntitlement(7, 'readiness.executive_digest', 'readiness', client))
+      .toMatchObject({ tierResolved: false, entitled: false });
+  });
+
+  it('preserves a verified tier when only the independent flag and module layers fail', async () => {
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes('FROM organizations')) return { rows: [{ tier: 'standard' }] };
+        throw new Error('optional capability layer unavailable');
+      }),
+    } satisfies RequestSqlClient;
+    expect(await resolveCapabilities(7, client))
+      .toMatchObject({ tier: 'standard', tierResolved: true, toggles: [], modules: [] });
+    expect(await requireReportEntitlement(7, 'readiness.executive_digest', 'readiness', client))
+      .toMatchObject({ tier: 'standard', tierResolved: true, entitled: true });
   });
 });
