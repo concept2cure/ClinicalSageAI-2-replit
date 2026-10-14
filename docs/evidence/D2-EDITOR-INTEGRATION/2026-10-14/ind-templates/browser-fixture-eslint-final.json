@@ -1,0 +1,24 @@
+{
+  "status": "pass",
+  "tool": "ESLint CLI",
+  "maxWarnings": 0,
+  "exitCode": 0,
+  "errors": 0,
+  "warnings": 0,
+  "files": [
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs"
+  ],
+  "fixtureSha256": {
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs": "dc1d6836f208d9715a1852865efd6eb8960b187c44b7bdd168c3b61ed756ade8",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts": "f2f6b41260be7b1e5fcf5a15312aeda0677514fc6bf8cd84702e45311bc25444",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx": "9f3afc8eb93ce375308364c734739995e62ae4023c8570d7d05682b97dd2534b",
+    "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs": "061d3503c4fc556937f94aa35165be965cf2d174084b8b1b380ac7106044037f"
+  },
+  "suppressionsAdded": false,
+  "baselineChanged": false,
+  "ignoredRunnerEquivalent": true,
+  "ignoredGeneratorEquivalent": true
+}

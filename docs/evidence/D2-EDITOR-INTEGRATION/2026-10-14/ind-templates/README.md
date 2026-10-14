@@ -32,7 +32,9 @@ work; their editor starts are preparation worksheets. No study result,
 compliance claim or approval is supplied as boilerplate. Existing governed CMC
 composition boundaries are unchanged.
 
-The existing AnA IND requirement reader exposes the same template UUIDs, and
+Each library AnA action names the exact template UUID and requests every page
+of its source requirements. The existing AnA IND requirement reader exposes
+section/deliverable template UUIDs, and
 `get_document_template` reads their complete paged outlines, instructions,
 source requirements and pitfalls within its existing 5,000-character result
 budget. Existing saved-document review/remedy tools continue to work on these
@@ -75,7 +77,9 @@ picker values, incomplete 2.4 expert headings, and AnA's inability to read a
 builtin UUID. The accessibility before capture records the small AnA target.
 These are behavior failures rather than missing imports or synthetic gates.
 
-The combined regression run passed **755 tests in 60 files**. It includes the
+The original regression run passed 755 tests in 60 files. After synchronizing
+with the shared document-access controls and completing the exact-UUID AnA
+handoff, the final combined run passed **815 tests in 64 files**. It includes the
 real HTTP/JWT/PGlite all-template probe: every one of 200 starts created and
 reopened, **2,725 empty sections**, exact provenance and guidance, authorization
 refusals, inactive global-template refusal and transaction rollback. The batch
@@ -86,6 +90,14 @@ See [Modules 2–3 and HTTP evidence](M2_M3_TEMPLATE_EVIDENCE.md),
 regression, release and browser artifacts. The final saved-template writer
 helper extraction is covered by a further targeted HTTP/creation regression;
 the CSS target correction is covered by the final browser accessibility matrix.
+The four desktop/touch light/dark contexts exercise all five module
+representatives: 20 exact native creates, separate saved guidance, duplicate-free
+reopening, actual unsaved-section guards and 20 exact-UUID AnA handoffs. All
+five module-outline references and the incoming Access action are retained.
+There are no axe A/AA violations, browser errors or horizontal overflow in the
+recorded matrix. The editable viewport is 1104 × 320px desktop and
+298 × 242px touch. Before cases, final screenshots, fixture contracts and
+reproduction commands are retained.
 
 This is repository/local evidence. PGlite does not establish production RLS
 or PostgreSQL concurrency; intercepted browser API responses qualify native

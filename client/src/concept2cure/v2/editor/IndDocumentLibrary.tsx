@@ -159,6 +159,7 @@ function ScopedIndDocumentLibrary({ programId, onAsk, onOpenDocument, onFindSour
   const changeFilter = (run: () => void) => { run(); setShown(PAGE_SIZE); };
   const ask = (item: Item) => onAsk?.(
     `Work on the IND ${kind === 'sections' ? 'section' : kind === 'modules' ? 'module outline' : 'deliverable'} “${item.title}”${item.code ? ` (${item.code})` : ''} in this project. `
+    + (item.template ? `Read get_document_template with template_id "${item.template.id}" and follow every page of its outline, source requirements and original-record limits. ` : '')
     + 'First list the authoring outline and current project evidence, follow every relevant page and read the complete supporting sources. Reuse an existing working document if present. '
     + (item.draftable ? 'Prepare a source-grounded working draft in the existing authoring editor using draft_authoring_document, preserving source references and naming evidence gaps. ' : 'Prepare a completion checklist; do not invent an official form or dataset. ')
     + 'Do not mark the document, pyramid task or submission approved or complete. State what was read and what could not be checked.',

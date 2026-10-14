@@ -80,6 +80,20 @@ describe('IND template loading uses the existing scoped document path', () => {
     expect(posts()).toHaveLength(1);
   });
 
+  it('gives AnA the exact loadable template identity and asks for every source-requirement page', async () => {
+    const onAsk = vi.fn();
+    render(<IndDocumentLibrary programId={PROGRAM} onAsk={onAsk} />);
+    await showType();
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare with AnA' }));
+    expect(onAsk).toHaveBeenCalledTimes(1);
+    const message = onAsk.mock.calls[0][0] as string;
+    expect(message).toContain(TEMPLATE);
+    expect(message).toContain('get_document_template');
+    expect(message).toMatch(/every page/);
+    expect(message).toMatch(/do not invent an official form or dataset/);
+    expect(posts()).toHaveLength(0);
+  });
+
   it('keeps a renamed working document reachable by its saved template ID', async () => {
     const onOpenDocument = vi.fn();
     reads([{ id: DOCUMENT, title: 'Study Tox-07 working draft', status: 'DRAFT', template_id: TEMPLATE, client_program_id: PROGRAM }]);

@@ -1,8 +1,14 @@
 {
   "fixture": "Current full 200-template provider/catalog; synthetic isolated API; actual library → canvas → workbench → TipTap",
   "browser": "Chromium /usr/bin/chromium",
-  "createdAt": "2026-10-14T04:39:48.065Z",
+  "createdAt": "2026-10-14T04:55:48.283Z",
   "apiContractSha256": "ee58e2b7a35a7f075111acd4cd6f09878dd31e22957ecf7593c14a1bb048009f",
+  "testedHead": "f566951ef78d459355f66eedc14db33b567c473b",
+  "testedSourceSha256": {
+    "client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx": "1d5f1bae0f8521032af536b74588241cc266f5e97a7e23ef31dde516ed902260",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "5dac26bbe5c2a53029b315f6603ab8c0bcfdfcf65462f45b4a941e82753bce96",
+    "client/src/concept2cure/v2/styles/rich-section-editor.css": "5653d4aa6e86f91a60b66c3faf4d6474129b5aad5e8f8f04f65c5c2cd0367c71"
+  },
   "templateCount": 200,
   "canonicalSections": 102,
   "canonicalDeliverables": 93,

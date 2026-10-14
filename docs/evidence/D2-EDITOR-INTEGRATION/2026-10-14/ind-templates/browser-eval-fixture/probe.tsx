@@ -17,6 +17,7 @@ const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const theme = new URLSearchParams(location.search).get('theme') === 'dark' ? 'dark' : 'light';
 publishShellProject({id:PROGRAM,title:'Synthetic IND browser evaluation',productType:'drug'});
 (window as any).evalEvents = [];
+(window as any).evalAskEvents = [];
 (window as any).evalHeld = false;
 const queryClient = new QueryClient({defaultOptions:{queries:{retry:false}}});
 function Probe() {
@@ -43,7 +44,7 @@ function Probe() {
   return <div data-theme={theme} className={`c2c-v2 ${theme==='dark'?'dark':''}`} style={{height:'100vh',overflow:'hidden'}}>
     <main aria-label="IND template browser evaluation" style={{height:'100%',minHeight:0,display:'flex',flexDirection:'column'}}>
       <div hidden={!showLibrary} style={{height:'100%',minHeight:0,display:showLibrary?'flex':'none',flexDirection:'column'}}>
-        <IndDocumentLibrary programId={PROGRAM} onOpenDocument={open} onFindSources={()=>{}} onAsk={()=>{}} />
+        <IndDocumentLibrary programId={PROGRAM} onOpenDocument={open} onFindSources={()=>{}} onAsk={text=>(window as any).evalAskEvents.push(text)} />
       </div>
       <div ref={setPaneEl} className="ct-canvas-pane" hidden={showLibrary} />
       {docId && <div>

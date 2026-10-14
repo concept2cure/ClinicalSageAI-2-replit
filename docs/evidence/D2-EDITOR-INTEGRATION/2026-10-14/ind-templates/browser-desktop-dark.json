@@ -23,6 +23,7 @@
         ]
       },
       "sectionCount": 11,
+      "anaHandoff": "Work on the IND section “Form FDA 1571” (m1.1.1) in this project. Read get_document_template with template_id \"f05db0b5-caa8-5df2-8b44-33b8d905013a\" and follow every page of its outline, source requirements and original-record limits. First list the authoring outline and current project evidence, follow every relevant page and read the complete supporting sources. Reuse an existing working document if present. Prepare a completion checklist; do not invent an official form or dataset. Do not mark the document, pyramid task or submission approved or complete. State what was read and what could not be checked.",
       "post": {
         "input": {
           "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
@@ -33,7 +34,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+            "id": "15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
             "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
             "module": "M1",
             "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
@@ -62,19 +63,20 @@
         }
       },
       "heldCallbackNoDuplicate": true,
+      "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
-        "sectionId": "57f08623-7f6d-492b-a919-2706ede4913c",
+        "docId": "15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
+        "sectionId": "5a6d888f-a52a-4c2e-90c9-b252793919bd",
         "sectionCode": "1.1.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "ec960e61-10c7-43b6-857f-fc37831c6057",
+        "id": "fc14c597-ae5e-4f75-8119-da6f90f36266",
         "code": "1.1.1:work:1",
         "title": "Name, address, and telephone of sponsor",
         "bridge": {
-          "docId": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
-          "sectionId": "ec960e61-10c7-43b6-857f-fc37831c6057",
+          "docId": "15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
+          "sectionId": "fc14c597-ae5e-4f75-8119-da6f90f36266",
           "sectionCode": "1.1.1:work:1",
           "editable": true
         }
@@ -122,9 +124,9 @@
       "guidanceMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 715.671875,
+          "y": 717.671875,
           "width": 1104,
-          "height": 267.328125
+          "height": 265.328125
         },
         "viewport": {
           "width": 1440,
@@ -146,7 +148,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 715.671875,
+          "y": 717.671875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -156,18 +158,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 946
+          "clientHeight": 722,
+          "scrollHeight": 940
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 330.171875,
           "clientWidth": 1106,
@@ -180,7 +182,7 @@
       "emptyEditorMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320
         },
@@ -204,7 +206,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -214,18 +216,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 731
+          "clientHeight": 722,
+          "scrollHeight": 725
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 114.796875,
           "clientWidth": 1106,
@@ -296,6 +298,7 @@
         ]
       },
       "sectionCount": 7,
+      "anaHandoff": "Work on the IND section “Clinical Overview” (m2.5) in this project. Read get_document_template with template_id \"3c878dc2-58b9-5f04-9546-6f2ed966b223\" and follow every page of its outline, source requirements and original-record limits. First list the authoring outline and current project evidence, follow every relevant page and read the complete supporting sources. Reuse an existing working document if present. Prepare a source-grounded working draft in the existing authoring editor using draft_authoring_document, preserving source references and naming evidence gaps. Do not mark the document, pyramid task or submission approved or complete. State what was read and what could not be checked.",
       "post": {
         "input": {
           "title": "2.5 · Clinical Overview",
@@ -306,7 +309,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+            "id": "d1a56f07-bb5b-4c2d-ae19-014f9198d689",
             "title": "2.5 · Clinical Overview",
             "module": "M2",
             "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
@@ -333,19 +336,20 @@
           }
         }
       },
+      "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
-        "sectionId": "3b0a1529-135a-4b4a-8a50-affb95ff5866",
+        "docId": "d1a56f07-bb5b-4c2d-ae19-014f9198d689",
+        "sectionId": "b988b1c5-0cfb-424e-83a0-1f9f3184c0fb",
         "sectionCode": "2.5",
         "editable": true
       },
       "selectedSection": {
-        "id": "df0ecfe4-793a-4fcc-9834-07e153cb5196",
+        "id": "07bde3b6-abf0-400a-b02e-eb623b9188b9",
         "code": "2.5.1",
         "title": "Product Development Rationale",
         "bridge": {
-          "docId": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
-          "sectionId": "df0ecfe4-793a-4fcc-9834-07e153cb5196",
+          "docId": "d1a56f07-bb5b-4c2d-ae19-014f9198d689",
+          "sectionId": "07bde3b6-abf0-400a-b02e-eb623b9188b9",
           "sectionCode": "2.5.1",
           "editable": true
         }
@@ -386,7 +390,7 @@
       "guidanceMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 1066.546875,
+          "y": 1068.546875,
           "width": 1104,
           "height": 0
         },
@@ -410,7 +414,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 1066.546875,
+          "y": 1068.546875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -420,18 +424,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 1297
+          "clientHeight": 722,
+          "scrollHeight": 1291
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 681.046875,
           "clientWidth": 1106,
@@ -444,7 +448,7 @@
       "emptyEditorMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320
         },
@@ -468,7 +472,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -478,18 +482,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 731
+          "clientHeight": 722,
+          "scrollHeight": 725
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 114.796875,
           "clientWidth": 1106,
@@ -559,6 +563,7 @@
         ]
       },
       "sectionCount": 4,
+      "anaHandoff": "Work on the IND section “General Information” (m3.2.S.1) in this project. Read get_document_template with template_id \"4d6f5950-2c0f-5a53-92c0-5accaa0124e3\" and follow every page of its outline, source requirements and original-record limits. First list the authoring outline and current project evidence, follow every relevant page and read the complete supporting sources. Reuse an existing working document if present. Prepare a source-grounded working draft in the existing authoring editor using draft_authoring_document, preserving source references and naming evidence gaps. Do not mark the document, pyramid task or submission approved or complete. State what was read and what could not be checked.",
       "post": {
         "input": {
           "title": "3.2.S.1 · General Information",
@@ -569,7 +574,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+            "id": "542405e4-28be-47a1-a0d1-89ff0160c77b",
             "title": "3.2.S.1 · General Information",
             "module": "M3",
             "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
@@ -596,19 +601,20 @@
           }
         }
       },
+      "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
-        "sectionId": "5106a4ef-676b-4f50-8cd2-15681f64aa3c",
+        "docId": "542405e4-28be-47a1-a0d1-89ff0160c77b",
+        "sectionId": "917c1528-af09-48f4-87c0-1e3184e9d7f8",
         "sectionCode": "3.2.S.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "697bfd8c-0db7-4e8d-90ab-464e22928ef3",
+        "id": "59a6a198-caa8-491d-8a07-6a366d4a01f9",
         "code": "3.2.S.1.1",
         "title": "Nomenclature",
         "bridge": {
-          "docId": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
-          "sectionId": "697bfd8c-0db7-4e8d-90ab-464e22928ef3",
+          "docId": "542405e4-28be-47a1-a0d1-89ff0160c77b",
+          "sectionId": "59a6a198-caa8-491d-8a07-6a366d4a01f9",
           "sectionCode": "3.2.S.1.1",
           "editable": true
         }
@@ -661,9 +667,9 @@
       "guidanceMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 955.421875,
+          "y": 957.421875,
           "width": 1104,
-          "height": 27.578125
+          "height": 25.578125
         },
         "viewport": {
           "width": 1440,
@@ -685,7 +691,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 955.421875,
+          "y": 957.421875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -695,18 +701,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 1186
+          "clientHeight": 722,
+          "scrollHeight": 1180
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 569.921875,
           "clientWidth": 1106,
@@ -719,7 +725,7 @@
       "emptyEditorMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320
         },
@@ -743,7 +749,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -753,18 +759,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 731
+          "clientHeight": 722,
+          "scrollHeight": 725
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 114.796875,
           "clientWidth": 1106,
@@ -835,6 +841,7 @@
         ]
       },
       "sectionCount": 8,
+      "anaHandoff": "Work on the IND section “Single-Dose Toxicity” (m4.2.3.1) in this project. Read get_document_template with template_id \"f4738336-5553-52cc-9b36-ec0f5ac02933\" and follow every page of its outline, source requirements and original-record limits. First list the authoring outline and current project evidence, follow every relevant page and read the complete supporting sources. Reuse an existing working document if present. Prepare a completion checklist; do not invent an official form or dataset. Do not mark the document, pyramid task or submission approved or complete. State what was read and what could not be checked.",
       "post": {
         "input": {
           "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
@@ -845,7 +852,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+            "id": "69fe35ed-02b1-4aab-9628-3def16ff844b",
             "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
             "module": "M4",
             "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
@@ -873,19 +880,20 @@
           }
         }
       },
+      "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
-        "sectionId": "6108d60a-ecc6-4f84-b67e-b2d771fb5755",
+        "docId": "69fe35ed-02b1-4aab-9628-3def16ff844b",
+        "sectionId": "b4ce7ea5-29ef-4ae7-b50b-b03d19044f71",
         "sectionCode": "4.2.3.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "fbad699c-fa09-4d34-8aa8-55a9854d257d",
+        "id": "81b89383-8ea7-45d9-a8b7-4d9d861109a2",
         "code": "m4.2.3.1:work:1",
         "title": "Title Page",
         "bridge": {
-          "docId": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
-          "sectionId": "fbad699c-fa09-4d34-8aa8-55a9854d257d",
+          "docId": "69fe35ed-02b1-4aab-9628-3def16ff844b",
+          "sectionId": "81b89383-8ea7-45d9-a8b7-4d9d861109a2",
           "sectionCode": "m4.2.3.1:work:1",
           "editable": true
         }
@@ -934,9 +942,9 @@
       "guidanceMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 825.921875,
+          "y": 827.921875,
           "width": 1104,
-          "height": 157.078125
+          "height": 155.078125
         },
         "viewport": {
           "width": 1440,
@@ -958,7 +966,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 825.921875,
+          "y": 827.921875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -968,18 +976,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 1056
+          "clientHeight": 722,
+          "scrollHeight": 1050
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 440.421875,
           "clientWidth": 1106,
@@ -992,7 +1000,7 @@
       "emptyEditorMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320
         },
@@ -1016,7 +1024,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -1026,18 +1034,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 731
+          "clientHeight": 722,
+          "scrollHeight": 725
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 114.796875,
           "clientWidth": 1106,
@@ -1107,6 +1115,7 @@
         ]
       },
       "sectionCount": 120,
+      "anaHandoff": "Work on the IND section “Clinical Study Reports of Controlled Studies” (m5.3.5.1) in this project. Read get_document_template with template_id \"f7e72f59-71ed-5cf6-96bf-d8edea20cb84\" and follow every page of its outline, source requirements and original-record limits. First list the authoring outline and current project evidence, follow every relevant page and read the complete supporting sources. Reuse an existing working document if present. Prepare a source-grounded working draft in the existing authoring editor using draft_authoring_document, preserving source references and naming evidence gaps. Do not mark the document, pyramid task or submission approved or complete. State what was read and what could not be checked.",
       "post": {
         "input": {
           "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
@@ -1117,7 +1126,7 @@
         "receipt": {
           "success": true,
           "document": {
-            "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+            "id": "d422024a-db24-4334-becf-740efc850422",
             "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
             "module": "M5",
             "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",
@@ -1144,19 +1153,20 @@
           }
         }
       },
+      "mergedAccessActionPresent": true,
       "initialBridge": {
-        "docId": "d96ba701-2eda-4c28-b501-88200a95e8ce",
-        "sectionId": "d54338af-40e7-48ef-ac97-6768b6c7c4d5",
+        "docId": "d422024a-db24-4334-becf-740efc850422",
+        "sectionId": "400741de-dca8-4c89-910a-9164511c0781",
         "sectionCode": "5.3.5.1",
         "editable": true
       },
       "selectedSection": {
-        "id": "d3eeca54-5262-4778-8626-0f6d8f1f4b14",
+        "id": "835c3bbe-b284-4041-8d9f-61bbb3dd4ddb",
         "code": "m5.3.5.1:work:1",
         "title": "1 Title Page",
         "bridge": {
-          "docId": "d96ba701-2eda-4c28-b501-88200a95e8ce",
-          "sectionId": "d3eeca54-5262-4778-8626-0f6d8f1f4b14",
+          "docId": "d422024a-db24-4334-becf-740efc850422",
+          "sectionId": "835c3bbe-b284-4041-8d9f-61bbb3dd4ddb",
           "sectionCode": "m5.3.5.1:work:1",
           "editable": true
         }
@@ -1219,7 +1229,7 @@
       "guidanceMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 1065.921875,
+          "y": 1067.921875,
           "width": 1104,
           "height": 0
         },
@@ -1243,7 +1253,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 1065.921875,
+          "y": 1067.921875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -1253,18 +1263,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 1296
+          "clientHeight": 722,
+          "scrollHeight": 1290
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 680.421875,
           "clientWidth": 1106,
@@ -1277,7 +1287,7 @@
       "emptyEditorMetrics": {
         "visibleEditableViewport": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320
         },
@@ -1301,7 +1311,7 @@
         },
         "editor": {
           "x": 278,
-          "y": 500.296875,
+          "y": 502.296875,
           "width": 1104,
           "height": 320,
           "clientWidth": 1104,
@@ -1311,18 +1321,18 @@
         },
         "documentScroll": {
           "x": 233,
-          "y": 259.5,
+          "y": 261.5,
           "width": 1194,
-          "height": 723.5,
+          "height": 721.5,
           "clientWidth": 1194,
           "scrollWidth": 1194,
-          "clientHeight": 724,
-          "scrollHeight": 731
+          "clientHeight": 722,
+          "scrollHeight": 725
         },
         "editorScroll": null,
         "sectionHeading": {
           "x": 277,
-          "y": 295.5,
+          "y": 297.5,
           "width": 1106,
           "height": 114.796875,
           "clientWidth": 1106,
@@ -1398,7 +1408,7 @@
           "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
         ]
       },
-      "text": "M1 · M1 · Module 1: Regional Administrative Information — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n21 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "text": "M1 · Module 1: Regional Administrative Information — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n21 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
       "createEnabled": true
     },
     {
@@ -1418,7 +1428,7 @@
           "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
         ]
       },
-      "text": "M2 · M2 · Module 2: CTD Summaries — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n58 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "text": "M2 · Module 2: CTD Summaries — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n58 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
       "createEnabled": true
     },
     {
@@ -1438,7 +1448,7 @@
           "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
         ]
       },
-      "text": "M3 · M3 · Module 3: Quality — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n56 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "text": "M3 · Module 3: Quality — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n56 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
       "createEnabled": true
     },
     {
@@ -1458,7 +1468,7 @@
           "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
         ]
       },
-      "text": "M4 · M4 · Module 4: Nonclinical Study Reports — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n140 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "text": "M4 · Module 4: Nonclinical Study Reports — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n140 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
       "createEnabled": true
     },
     {
@@ -1478,7 +1488,7 @@
           "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
         ]
       },
-      "text": "M5 · M5 · Module 5: Clinical Study Reports — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n295 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
+      "text": "M5 · Module 5: Clinical Study Reports — preparation worksheet\n\nUse the original form or data file. Review extracted text against the original.\n\n295 sections · Preparation worksheet · Original format: MIXED.\n\nWorking scaffold, not an approval, verified evidence or a filing-readiness decision.\n\nConfirm applicability to the product and IND stage; reference requirements can also cover later development.\n\nAdditional working headings organize preparation; confirm actual filing placement through the governed workflow.\n\nUse and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it.\n\nCreate from template\nFind source\nPrepare with AnA",
       "createEnabled": true
     }
   ],
@@ -1514,12 +1524,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "path": "/api/authoring/docs/15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c/sections",
+      "path": "/api/authoring/docs/15d702cd-a29a-4f4e-ae30-8b1902d40cdb/sections",
       "query": ""
     },
     {
@@ -1544,62 +1554,62 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c/citations",
+      "path": "/api/authoring/docs/15d702cd-a29a-4f4e-ae30-8b1902d40cdb/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "path": "/api/authoring/docs/15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/75bc1565-2a18-46be-9393-fad42aa6ce7c/sections",
+      "path": "/api/authoring/docs/15d702cd-a29a-4f4e-ae30-8b1902d40cdb/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/57f08623-7f6d-492b-a919-2706ede4913c",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=57f08623-7f6d-492b-a919-2706ede4913c"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/57f08623-7f6d-492b-a919-2706ede4913c/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/ec960e61-10c7-43b6-857f-fc37831c6057",
+      "path": "/api/authoring/guidance/5a6d888f-a52a-4c2e-90c9-b252793919bd",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=ec960e61-10c7-43b6-857f-fc37831c6057"
+      "query": "?documentTable=authoring_sections&documentId=5a6d888f-a52a-4c2e-90c9-b252793919bd"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/ec960e61-10c7-43b6-857f-fc37831c6057/sources",
+      "path": "/api/authoring/sections/5a6d888f-a52a-4c2e-90c9-b252793919bd/sources",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/db97912a-9721-45a8-94fa-f600f56a9f0a",
+      "path": "/api/authoring/guidance/fc14c597-ae5e-4f75-8119-da6f90f36266",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=db97912a-9721-45a8-94fa-f600f56a9f0a"
+      "query": "?documentTable=authoring_sections&documentId=fc14c597-ae5e-4f75-8119-da6f90f36266"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/db97912a-9721-45a8-94fa-f600f56a9f0a/sources",
+      "path": "/api/authoring/sections/fc14c597-ae5e-4f75-8119-da6f90f36266/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/5335417c-2cdb-41b5-9a62-80c239973f9c",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=5335417c-2cdb-41b5-9a62-80c239973f9c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/5335417c-2cdb-41b5-9a62-80c239973f9c/sources",
       "query": ""
     },
     {
@@ -1614,12 +1624,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "path": "/api/authoring/docs/d1a56f07-bb5b-4c2d-ae19-014f9198d689",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9/sections",
+      "path": "/api/authoring/docs/d1a56f07-bb5b-4c2d-ae19-014f9198d689/sections",
       "query": ""
     },
     {
@@ -1644,47 +1654,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9/citations",
+      "path": "/api/authoring/docs/d1a56f07-bb5b-4c2d-ae19-014f9198d689/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "path": "/api/authoring/docs/d1a56f07-bb5b-4c2d-ae19-014f9198d689",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/87f5267b-fae7-49f0-bc5e-dd0a790b1fc9/sections",
+      "path": "/api/authoring/docs/d1a56f07-bb5b-4c2d-ae19-014f9198d689/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/3b0a1529-135a-4b4a-8a50-affb95ff5866",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=3b0a1529-135a-4b4a-8a50-affb95ff5866"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/3b0a1529-135a-4b4a-8a50-affb95ff5866/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/df0ecfe4-793a-4fcc-9834-07e153cb5196",
+      "path": "/api/authoring/guidance/b988b1c5-0cfb-424e-83a0-1f9f3184c0fb",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=df0ecfe4-793a-4fcc-9834-07e153cb5196"
+      "query": "?documentTable=authoring_sections&documentId=b988b1c5-0cfb-424e-83a0-1f9f3184c0fb"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/df0ecfe4-793a-4fcc-9834-07e153cb5196/sources",
+      "path": "/api/authoring/sections/b988b1c5-0cfb-424e-83a0-1f9f3184c0fb/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/07bde3b6-abf0-400a-b02e-eb623b9188b9",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=07bde3b6-abf0-400a-b02e-eb623b9188b9"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/07bde3b6-abf0-400a-b02e-eb623b9188b9/sources",
       "query": ""
     },
     {
@@ -1699,12 +1709,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "path": "/api/authoring/docs/542405e4-28be-47a1-a0d1-89ff0160c77b",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa/sections",
+      "path": "/api/authoring/docs/542405e4-28be-47a1-a0d1-89ff0160c77b/sections",
       "query": ""
     },
     {
@@ -1729,47 +1739,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa/citations",
+      "path": "/api/authoring/docs/542405e4-28be-47a1-a0d1-89ff0160c77b/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "path": "/api/authoring/docs/542405e4-28be-47a1-a0d1-89ff0160c77b",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/781f3cfc-28f1-4f00-816b-03980a6b05aa/sections",
+      "path": "/api/authoring/docs/542405e4-28be-47a1-a0d1-89ff0160c77b/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/5106a4ef-676b-4f50-8cd2-15681f64aa3c",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=5106a4ef-676b-4f50-8cd2-15681f64aa3c"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/5106a4ef-676b-4f50-8cd2-15681f64aa3c/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/697bfd8c-0db7-4e8d-90ab-464e22928ef3",
+      "path": "/api/authoring/guidance/917c1528-af09-48f4-87c0-1e3184e9d7f8",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=697bfd8c-0db7-4e8d-90ab-464e22928ef3"
+      "query": "?documentTable=authoring_sections&documentId=917c1528-af09-48f4-87c0-1e3184e9d7f8"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/697bfd8c-0db7-4e8d-90ab-464e22928ef3/sources",
+      "path": "/api/authoring/sections/917c1528-af09-48f4-87c0-1e3184e9d7f8/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/59a6a198-caa8-491d-8a07-6a366d4a01f9",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=59a6a198-caa8-491d-8a07-6a366d4a01f9"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/59a6a198-caa8-491d-8a07-6a366d4a01f9/sources",
       "query": ""
     },
     {
@@ -1784,12 +1794,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "path": "/api/authoring/docs/69fe35ed-02b1-4aab-9628-3def16ff844b",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380/sections",
+      "path": "/api/authoring/docs/69fe35ed-02b1-4aab-9628-3def16ff844b/sections",
       "query": ""
     },
     {
@@ -1814,47 +1824,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380/citations",
+      "path": "/api/authoring/docs/69fe35ed-02b1-4aab-9628-3def16ff844b/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "path": "/api/authoring/docs/69fe35ed-02b1-4aab-9628-3def16ff844b",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/eaad1c09-fc6f-4a15-bf9c-c61b03680380/sections",
+      "path": "/api/authoring/docs/69fe35ed-02b1-4aab-9628-3def16ff844b/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/6108d60a-ecc6-4f84-b67e-b2d771fb5755",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=6108d60a-ecc6-4f84-b67e-b2d771fb5755"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/6108d60a-ecc6-4f84-b67e-b2d771fb5755/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/fbad699c-fa09-4d34-8aa8-55a9854d257d",
+      "path": "/api/authoring/guidance/b4ce7ea5-29ef-4ae7-b50b-b03d19044f71",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=fbad699c-fa09-4d34-8aa8-55a9854d257d"
+      "query": "?documentTable=authoring_sections&documentId=b4ce7ea5-29ef-4ae7-b50b-b03d19044f71"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/fbad699c-fa09-4d34-8aa8-55a9854d257d/sources",
+      "path": "/api/authoring/sections/b4ce7ea5-29ef-4ae7-b50b-b03d19044f71/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/81b89383-8ea7-45d9-a8b7-4d9d861109a2",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=81b89383-8ea7-45d9-a8b7-4d9d861109a2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/81b89383-8ea7-45d9-a8b7-4d9d861109a2/sources",
       "query": ""
     },
     {
@@ -1869,12 +1879,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "path": "/api/authoring/docs/d422024a-db24-4334-becf-740efc850422",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce/sections",
+      "path": "/api/authoring/docs/d422024a-db24-4334-becf-740efc850422/sections",
       "query": ""
     },
     {
@@ -1899,47 +1909,47 @@
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce/citations",
+      "path": "/api/authoring/docs/d422024a-db24-4334-becf-740efc850422/citations",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "path": "/api/authoring/docs/d422024a-db24-4334-becf-740efc850422",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/docs/d96ba701-2eda-4c28-b501-88200a95e8ce/sections",
+      "path": "/api/authoring/docs/d422024a-db24-4334-becf-740efc850422/sections",
       "query": ""
     },
     {
       "method": "GET",
-      "path": "/api/authoring/guidance/d54338af-40e7-48ef-ac97-6768b6c7c4d5",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=d54338af-40e7-48ef-ac97-6768b6c7c4d5"
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/sections/d54338af-40e7-48ef-ac97-6768b6c7c4d5/sources",
-      "query": ""
-    },
-    {
-      "method": "GET",
-      "path": "/api/authoring/guidance/d3eeca54-5262-4778-8626-0f6d8f1f4b14",
+      "path": "/api/authoring/guidance/400741de-dca8-4c89-910a-9164511c0781",
       "query": ""
     },
     {
       "method": "GET",
       "path": "/api/data-origins/document",
-      "query": "?documentTable=authoring_sections&documentId=d3eeca54-5262-4778-8626-0f6d8f1f4b14"
+      "query": "?documentTable=authoring_sections&documentId=400741de-dca8-4c89-910a-9164511c0781"
     },
     {
       "method": "GET",
-      "path": "/api/authoring/sections/d3eeca54-5262-4778-8626-0f6d8f1f4b14/sources",
+      "path": "/api/authoring/sections/400741de-dca8-4c89-910a-9164511c0781/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/guidance/835c3bbe-b284-4041-8d9f-61bbb3dd4ddb",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=835c3bbe-b284-4041-8d9f-61bbb3dd4ddb"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/835c3bbe-b284-4041-8d9f-61bbb3dd4ddb/sources",
       "query": ""
     }
   ],
@@ -1974,57 +1984,57 @@
   "openEvents": [
     {
       "kind": "open",
-      "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "id": "15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
       "held": true
     },
     {
       "kind": "open",
-      "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "id": "15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
       "held": false
     },
     {
       "kind": "open",
-      "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+      "id": "15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
       "held": false
     },
     {
       "kind": "open",
-      "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "id": "d1a56f07-bb5b-4c2d-ae19-014f9198d689",
       "held": false
     },
     {
       "kind": "open",
-      "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+      "id": "d1a56f07-bb5b-4c2d-ae19-014f9198d689",
       "held": false
     },
     {
       "kind": "open",
-      "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "id": "542405e4-28be-47a1-a0d1-89ff0160c77b",
       "held": false
     },
     {
       "kind": "open",
-      "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+      "id": "542405e4-28be-47a1-a0d1-89ff0160c77b",
       "held": false
     },
     {
       "kind": "open",
-      "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "id": "69fe35ed-02b1-4aab-9628-3def16ff844b",
       "held": false
     },
     {
       "kind": "open",
-      "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+      "id": "69fe35ed-02b1-4aab-9628-3def16ff844b",
       "held": false
     },
     {
       "kind": "open",
-      "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "id": "d422024a-db24-4334-becf-740efc850422",
       "held": false
     },
     {
       "kind": "open",
-      "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+      "id": "d422024a-db24-4334-becf-740efc850422",
       "held": false
     }
   ],
@@ -2039,7 +2049,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "75bc1565-2a18-46be-9393-fad42aa6ce7c",
+          "id": "15d702cd-a29a-4f4e-ae30-8b1902d40cdb",
           "title": "1.1.1 · Form FDA 1571 — preparation worksheet",
           "module": "M1",
           "template_id": "f05db0b5-caa8-5df2-8b44-33b8d905013a",
@@ -2077,7 +2087,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "87f5267b-fae7-49f0-bc5e-dd0a790b1fc9",
+          "id": "d1a56f07-bb5b-4c2d-ae19-014f9198d689",
           "title": "2.5 · Clinical Overview",
           "module": "M2",
           "template_id": "3c878dc2-58b9-5f04-9546-6f2ed966b223",
@@ -2114,7 +2124,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "781f3cfc-28f1-4f00-816b-03980a6b05aa",
+          "id": "542405e4-28be-47a1-a0d1-89ff0160c77b",
           "title": "3.2.S.1 · General Information",
           "module": "M3",
           "template_id": "4d6f5950-2c0f-5a53-92c0-5accaa0124e3",
@@ -2151,7 +2161,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "eaad1c09-fc6f-4a15-bf9c-c61b03680380",
+          "id": "69fe35ed-02b1-4aab-9628-3def16ff844b",
           "title": "4.2.3.1 · Single-Dose Toxicity — preparation worksheet",
           "module": "M4",
           "template_id": "f4738336-5553-52cc-9b36-ec0f5ac02933",
@@ -2189,7 +2199,7 @@
       "receipt": {
         "success": true,
         "document": {
-          "id": "d96ba701-2eda-4c28-b501-88200a95e8ce",
+          "id": "d422024a-db24-4334-becf-740efc850422",
           "title": "5.3.5.1 · Clinical Study Reports of Controlled Studies",
           "module": "M5",
           "template_id": "f7e72f59-71ed-5cf6-96bf-d8edea20cb84",

@@ -74,6 +74,35 @@ snapshot SHA-256 is recorded in browser-summary.json and matches api-contract.js
 JSON and the failing target screenshot remain in browser-before-accessibility/.
 The original known Vite PID 56382 was stopped. At the lead's follow-up request,
 the same isolated server was restarted as PID 60646 on port 5175 and remains
-available for combined verification after canonical synchronization. No commits,
+available for combined verification after canonical synchronization. The combined
+rerun completed successfully and PID 60646 was stopped afterward. No commits,
 pushes, production edits, test edits, real provider/API calls, or database writes
 were performed by this evaluation session.
+
+Combined canonical rerun completed 2026-10-14 04:48 UTC at
+f566951ef78d459355f66eedc14db33b567c473b. All four contexts remain green, with
+20 exact module-label single-prefix checks and 20 checks that the incoming Access
+action is present alongside saved template guidance in the one native editor.
+The current provider snapshot hash is unchanged and matches browser-summary.json.
+The complete pre-sync passing JSON remains under browser-before-canonical-sync/.
+The isolated fixture has been stopped and port 5175 no longer listens.
+
+Final current-state qualification completed 2026-10-14 04:51 UTC. It includes the
+lead's final library AnA handoff correction. All 20 selected library callbacks
+carry the exact template UUID, get_document_template, and an instruction to follow
+every page of source requirements. These are recorded callbacks; no model is called.
+Tested source-file hashes accompany the merged HEAD in browser-summary.json. The
+attribution fixture envelope matches the real {summary} contract, and all 20 empty
+editor views assert that no attribution warning is present. All prior browser
+checks remain green. The final known Vite PID 62695 was stopped after capture;
+port 5175 no longer listens. This final current-state report supersedes the earlier
+combined report and archived pre-sync fixture reports.
+
+Executable reproduction cleanup completed 2026-10-14 04:55 UTC. The API and
+matrix logic is extracted into named helpers, browser globals are window-qualified,
+and allowed console.info logging is used. All four executable snapshots passed
+ESLint CLI with --max-warnings 0, without suppressions or baseline changes. The
+ignored actual browser runner and generator are byte-identical to their saved
+snapshots. The complete four-context browser matrix passed again after this
+refactor, with the same frozen production hashes and all earlier assertions.
+Final known fixture PID 64028 was stopped after capture; port 5175 is closed.

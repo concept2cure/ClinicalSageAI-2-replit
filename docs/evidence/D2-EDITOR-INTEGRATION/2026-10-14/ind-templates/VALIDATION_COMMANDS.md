@@ -27,6 +27,7 @@ NODE_OPTIONS=--max-old-space-size=4096 npx vitest run \
   client/src/concept2cure/v2/editor/__tests__/conversationAuthoringOrigin.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/crossReferences.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx \
+  client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts \
   client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx \
@@ -50,9 +51,11 @@ NODE_OPTIONS=--max-old-space-size=4096 npx vitest run \
   client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx \
+  client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx \
   client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts \
   client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx \
+  server/routes/__tests__/authoringPermissionManagement.test.ts \
   server/routes/__tests__/authoringTemplateStartFrom.test.ts \
   server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts \
   server/services/ana/__tests__/document-template-description.test.ts \
@@ -62,6 +65,7 @@ NODE_OPTIONS=--max-old-space-size=4096 npx vitest run \
   server/services/ana/__tests__/regulatory-knowledge-tools.test.ts \
   server/services/ana/__tests__/saved-document-critique.pglite.test.ts \
   server/services/ana/__tests__/saved-document-critique.test.ts \
+  server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts \
   server/services/authoring/__tests__/ind-document-catalog.test.ts \
   server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts \
   server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts \
@@ -74,8 +78,9 @@ NODE_OPTIONS=--max-old-space-size=4096 npx vitest run \
 
 ```
 NODE_OPTIONS=--max-old-space-size=24576 npx tsc --noEmit
+node scripts/ci/typecheck-no-regression.mjs --incremental
 npm run build
-node scripts/ci/check-eslint-warning-ratchet.mjs --since dd3637f4 --gate
+node scripts/ci/check-eslint-warning-ratchet.mjs --since origin/concept2cure-v2 --gate
 ```
 
 Run the warning delta **after** TypeScript completes: its temporary old-file
