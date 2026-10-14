@@ -19,12 +19,14 @@ let revision: number;
 let canEdit: boolean;
 let completeRefused: boolean;
 let invitationDelivery: string;
+let invitationStatus: number;
+let invitationReply: unknown;
 const mutation = vi.fn();
 const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body });
 
 beforeEach(() => {
   answers = completeDiscovery(); revision = 1; canEdit = true;
-  completeRefused = false; invitationDelivery = 'link'; identity.orgId = 7;
+  completeRefused = false; invitationDelivery = 'link'; invitationStatus = 201; invitationReply = undefined; identity.orgId = 7;
   request.mockReset(); publish.mockClear(); mutation.mockReset();
   request.mockImplementation(async (method: string, path: string, body?: { answers: OnboardingDiscoveryAnswers; complete: boolean }) => {
     if (path === '/api/onboarding/discovery') {
@@ -43,7 +45,7 @@ beforeEach(() => {
     return ok({ accounts: [] });
   });
   mutation.mockImplementation(async (path: string) => {
-    if (path === '/api/tenant-users') return ok({ invitation: { delivery: invitationDelivery, setupUrl: 'https://example.test/setup?token=private-link' } }, 201);
+    if (path === '/api/tenant-users') return ok(invitationReply ?? { createdNewUser: true, invitation: { delivery: invitationDelivery, emailSent: invitationDelivery === 'email', setupUrl: 'https://example.test/concept2cure/password-reset?token=private-link' } }, invitationStatus);
     if (path.includes('checkout')) return ok({ url: 'https://checkout.stripe.com/test' });
     return ok({});
   });
@@ -59,10 +61,11 @@ async function next() {
   fireEvent.click(button);
   await waitFor(() => expect(document.querySelector('.pj-card-b > h2')?.textContent).not.toBe(oldHeading));
 }
-async function reviewWithInvite() {
+async function reviewWithInvite(role = 'member') {
   render(<Onboarding {...props} />);
   await next(); await next(); await next(); await next(); await next();
   fireEvent.change(screen.getByLabelText('Email for invitee 1'), { target: { value: 'lee@example.test' } });
+  fireEvent.change(screen.getByLabelText('Role for invitee 1'), { target: { value: role } });
   await next(); await next(); await next(); await next();
 }
 
@@ -103,6 +106,8 @@ describe('intelligent discovery wizard', () => {
     render(<Onboarding {...props} />);
     await next(); await next(); await next(); await next(); await next();
     expect((screen.getByLabelText('Role for invitee 1') as HTMLSelectElement).value).toBe('member');
+    expect(screen.getByRole('option', { name: 'Approver' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Reviewer' })).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Email for invitee 1'), { target: { value: 'bad-address' } });
     expect((screen.getByRole('button', { name: /^Continue/ }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole('alert').textContent).toMatch(/valid, distinct/);
@@ -121,7 +126,7 @@ describe('intelligent discovery wizard', () => {
     await screen.findByRole('button', { name: 'Continue to secure checkout' });
     expect(document.activeElement?.textContent).toMatch(/Checkout ready/);
     expect(screen.getByLabelText('Setup link for lee@example.test')).toBeTruthy();
-    expect(screen.getByText(/No email was sent/)).toBeTruthy();
+    expect(screen.getByText(/No invitation email was sent/)).toBeTruthy();
     const context = JSON.stringify(publish.mock.calls);
     expect(context).not.toContain('private-link'); expect(context).not.toContain('lee@example.test');
     expect(context).not.toContain(answers.indication); expect(context).not.toContain(answers.companyGoal);
@@ -132,7 +137,7 @@ describe('intelligent discovery wizard', () => {
     invitationDelivery = 'email';
     await reviewWithInvite();
     fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
-    await screen.findByText('Invitation email sent.');
+    await screen.findByText('Email sent');
     expect(screen.queryByLabelText('Setup link for lee@example.test')).toBeNull();
   });
 
@@ -144,5 +149,32 @@ describe('intelligent discovery wizard', () => {
     render(<Onboarding {...props} />);
     await waitFor(() => expect(screen.getByLabelText('Organization name')).toBeTruthy());
     expect(screen.queryByLabelText('Setup link for lee@example.test')).toBeNull();
+  });
+
+  it('preserves an invited signer role and records pending consent without claiming membership', async () => {
+    invitationStatus = 202; invitationReply = { success: true, pendingInvitation: true };
+    await reviewWithInvite('reviewer');
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Awaiting consent');
+    expect(screen.getByText('1 of 1 invitations recorded.')).toBeTruthy();
+    const call = mutation.mock.calls.find(([path]) => path === '/api/tenant-users');
+    expect(JSON.parse(String(call?.[1]?.body)).role).toBe('reviewer');
+  });
+
+  it('shows a created account whose activation failed as needing attention', async () => {
+    invitationDelivery = 'failed';
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Activation needs attention');
+    expect(screen.getByText(/1 of 1 invitations recorded.*need attention/i)).toBeTruthy();
+    expect(screen.queryByLabelText('Setup link for lee@example.test')).toBeNull();
+  });
+
+  it('does not count an unconfirmed accepted-status response as a recorded invitation', async () => {
+    invitationStatus = 202; invitationReply = {};
+    await reviewWithInvite();
+    fireEvent.click(screen.getByRole('button', { name: /Start .* trial|Activate workspace/ }));
+    await screen.findByText('Outcome unconfirmed');
+    expect(screen.getByText(/0 of 1 invitations recorded.*need attention/i)).toBeTruthy();
   });
 });

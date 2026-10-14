@@ -119,3 +119,18 @@ browser evidence. The session has no production runtime or deployment
 credentials. It does not establish production availability, successful live
 SMTP/SSO/payment delivery, or complete the production launch rows that require
 those proofs.
+
+## Consolidation with concurrent setup safeguards
+
+The final canonical-branch integration retains this revisioned discovery and
+account/admin implementation while adding named invitation consent, effective
+session policy and transaction-bound SCIM IP-rule audit controls. Parallel
+discovery and API-key UI implementations were migrated and removed. Final
+merged verification and replacement paths are recorded in
+[the W1/D2 consolidation evidence](../../W1/2026-10-14-discovery-onboarding/README.md).
+
+[Final canonical-branch verification](final-consolidation.md) records the
+follow-up integration of tenant-pinned API-key audit outcomes, preserved-role
+invitation acceptance and stale-organization session-policy guards, together
+with the 77-suite regression list and final build. All 827 tests in that final
+consolidated run passed; the complete reconciled client/server build passed.

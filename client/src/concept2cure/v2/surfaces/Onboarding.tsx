@@ -18,6 +18,7 @@ import { DiscoveryQuestions, DISCOVERY_CONTEXT_FIELDS, DISCOVERY_PROJECT_FIELDS 
 import { OnboardingSecurity } from './OnboardingSecurity';
 import { DiscoveryNextSteps } from './DiscoveryNextSteps';
 import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
+import { ASSIGNABLE_ORG_ROLES, type AssignableOrgRole } from '@shared/constants/org-roles';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -83,7 +84,7 @@ export function primaryIndustryToArchetype(primary: string | null | undefined): 
 
 /** Org-scoped membership roles accepted by POST /api/tenant-users
  * (createUserSchema in server/routes/tenant-users.ts). */
-export type OrgMemberRole = 'admin' | 'manager' | 'member' | 'viewer';
+export type OrgMemberRole = AssignableOrgRole;
 
 /** Wizard personnel role (PLATFORM-role vocabulary, LIC_ROLES/GRANTABLE_ROLES)
  * → the org-scoped role vocabulary the invite endpoint accepts. Platform-tier
@@ -93,6 +94,7 @@ export type OrgMemberRole = 'admin' | 'manager' | 'member' | 'viewer';
  * caller to be a platform/business admin), never from this wizard. Unknown
  * roles fail closed to least-privilege 'member'. */
 export function inviteRoleToOrgRole(role: string): OrgMemberRole {
+  if (ASSIGNABLE_ORG_ROLES.includes(role as AssignableOrgRole)) return role as AssignableOrgRole;
   switch (role) {
     case 'admin':
     case 'owner':
@@ -355,10 +357,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
       : pricingMap[family] || pricingMap.pharma || [];
   const selTier: any = tiers.find((t: any) => t.tier === tier) || tiers[0] || {};
   const bundle = licBundleOf(seats);
-  const roles = [
-    { id: 'member', label: 'Member' }, { id: 'viewer', label: 'Viewer' },
-    { id: 'manager', label: 'Manager' }, { id: 'admin', label: 'Organization administrator' },
-  ];
+  const roles = ASSIGNABLE_ORG_ROLES.map(id => ({ id, label: id === 'admin' ? 'Organization administrator' : id.charAt(0).toUpperCase() + id.slice(1) }));
 
   /* `onNav` comes from the shell (V2App passes it to every surface). A local
      one used to SHADOW it here, and its entire body was
@@ -518,13 +517,13 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
             organizationId: activationOrgId,
           }),
         });
-        // 201 = member created; 202 = pending cross-org invitation created.
-        if (res.ok) {
-          invitesSent += 1;
-          invitations.push(invitationOutcome(email, res.status, await res.json().catch(() => null)));
-        }
-        else invitesFailed.push(email);
+        probeAuditRowOutcome('POST', '/api/tenant-users', res);
+        const reply = invitationOutcome(email, res.status, await res.json().catch(() => null));
+        invitations.push(reply);
+        if (reply.recorded) invitesSent += 1;
+        if (!reply.recorded || reply.state === 'activation-failed' || reply.state === 'delivery-unconfirmed') invitesFailed.push(email);
       } catch {
+        invitations.push(invitationOutcome(email, 0, null));
         invitesFailed.push(email);
       }
     }
@@ -712,8 +711,8 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
         outcome.profileSaved ? 'industry profile saved' : 'industry profile not saved',
         outcome.invitesAttempted === 0
           ? 'no invitations requested'
-          : `${outcome.invitesSent} of ${outcome.invitesAttempted} invitation(s) created` +
-            (outcome.invitesFailed.length ? ` (${outcome.invitesFailed.length} not sent)` : ''),
+          : `${outcome.invitesSent} of ${outcome.invitesAttempted} invitation(s) recorded` +
+            (outcome.invitesFailed.length ? ` (${outcome.invitesFailed.length} need attention)` : ''),
         outcome.checkout === 'provisioned'
           ? 'plan provisioned (nothing to pay)'
           : outcome.checkout === 'ready'
@@ -737,7 +736,7 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
     } else {
       summary =
         `Workspace setup wizard, step ${step + 1} of ${STEPS.length} (${STEPS[step]}). ` +
-        'Discovery drafts can be saved during setup. Organization changes, invitations and billing run only on activation.';
+        'Discovery drafts and session policy can be saved explicitly during setup. Activation handles the organization profile, invitations and billing steps.';
     }
     return {
       summary,
@@ -840,9 +839,9 @@ function OnboardingWizard({ onNav }: SurfaceViewProps) {
                       : outcome.invitesSent +
                         ' of ' +
                         outcome.invitesAttempted +
-                        ' invitations created' +
+                        ' invitations recorded' +
                         (outcome.invitesFailed.length
-                          ? ' — not sent: ' + outcome.invitesFailed.join(', ')
+                          ? ' — need attention: ' + outcome.invitesFailed.join(', ')
                           : '') +
                         '.'}
                   </span>

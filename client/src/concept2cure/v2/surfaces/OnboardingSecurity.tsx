@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { AccountPanel } from '../AccountPanel';
 import { useLiveData } from '../dataConnect';
 import { DiscoveryQuestions } from './DiscoveryQuestions';
 import type { useOnboardingDiscovery } from '../useOnboardingDiscovery';
+import { useAuthUser } from '@/services/portal/authService';
+import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
 
 interface AccountSession {
   authenticated?: boolean;
@@ -39,6 +41,9 @@ export function OnboardingSecurity({ discovery, onNav }: {
   onNav: (id: string) => void;
 }) {
   const [accountOpen, setAccountOpen] = useState(false);
+  const accountButton = useRef<HTMLButtonElement>(null);
+  const user = useAuthUser();
+  const admin = user?.roles?.some(role => ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(role).toLowerCase())) ?? false;
   const [refresh, setRefresh] = useState(0);
   const session = useLiveData<AccountSession>(
     '/api/v1/auth/session', [refresh],
@@ -50,10 +55,11 @@ export function OnboardingSecurity({ discovery, onNav }: {
         <div className="pj-seclbl">Account and administrator setup</div>
         <AccountSecurityStatus session={session} />
         <div className="ob-discovery-actions">
-          <button type="button" className="sp-ask" onClick={() => setAccountOpen(true)}>Open Account and security</button>
+          <button ref={accountButton} type="button" className="sp-ask" onClick={() => setAccountOpen(true)}>Open Account and security</button>
           <button type="button" className="sp-ask" onClick={() => setRefresh((v) => v + 1)} disabled={session.loading}>Recheck account</button>
         </div>
         <p className="scaf-note">Account includes password and authenticator setup, membership invitations, and your personal reporting role.</p>
+        {admin && <SessionPolicySetting />}
         <div className="ob-discovery-actions">
           <button type="button" className="sp-ask" onClick={() => onNav('setup')}>Organization setup</button>
           <button type="button" className="sp-ask" onClick={() => onNav('admin-console')}>Roles and access</button>
@@ -61,7 +67,7 @@ export function OnboardingSecurity({ discovery, onNav }: {
         </div>
         <p className="scaf-note">Save your discovery draft before leaving the wizard. Organization and identity configuration require the appropriate administrator role. Retention, residency and SSO requirements need administrator review.</p>
       </div>
-      {accountOpen && <AccountPanel onClose={() => { setAccountOpen(false); setRefresh((v) => v + 1); }} />}
+      {accountOpen && <AccountPanel onClose={() => { setAccountOpen(false); setRefresh((v) => v + 1); accountButton.current?.focus(); }} />}
     </div>
   );
 }
