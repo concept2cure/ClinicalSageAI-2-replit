@@ -72,3 +72,19 @@ satisfy a role-specific training matrix by itself.
 Artifact-only, skeleton-only and unverifiable legacy releases stay unavailable
 for acknowledgement and explain the reason. This work deliberately does not
 read mutable artifact bytes or revive the parallel approval-orchestrator store.
+
+## Hosted security follow-up
+
+The first published Semgrep run identified two nonliteral regex constructors in
+the canonical-DDL test helpers. Both now use fixed patterns; the extracted CREATE
+blocks remain byte-identical. The exact pinned scanner changes from two findings
+to zero and all 69 canonical SQL tests pass. No Semgrep suppression was added.
+See the backend qualification for its unchanged parser-warning boundary.
+
+The hosted full-history secret scan also identified two already-published
+`apiContractSha256` evidence fields from editor work. Both were independently
+recomputed from the original committed API-contract bytes. Only their exact
+commit/file/rule/line fingerprints are excepted; the proof is retained in
+[security-verification.json](security-verification.json). The resulting local
+full-history scan passes across 10,227 commits. Production source is unchanged
+by this qualification follow-up.

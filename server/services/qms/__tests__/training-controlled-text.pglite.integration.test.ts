@@ -62,7 +62,10 @@ let document: QmsDocumentRow;
 
 function canonicalTable(name: 'qms_documents' | 'qms_training_records') {
   const migration = readFileSync(new URL('../../../../migrations/20260511_qms_and_labeling.sql', import.meta.url), 'utf8');
-  const match = migration.match(new RegExp(`CREATE TABLE IF NOT EXISTS ${name} \\([\\s\\S]*?\\n\\);`));
+  const tablePattern = name === 'qms_documents'
+    ? /CREATE TABLE IF NOT EXISTS qms_documents \([\s\S]*?\n\);/
+    : /CREATE TABLE IF NOT EXISTS qms_training_records \([\s\S]*?\n\);/;
+  const match = migration.match(tablePattern);
   if (!match) throw new Error(`Canonical ${name} DDL not found`);
   return match[0];
 }

@@ -79,7 +79,10 @@ let foreignDocument: QmsDocumentRow;
 /** Extract the actual CREATE blocks, including their original constraints. */
 function canonicalQmsTable(name: 'qms_documents' | 'qms_training_records'): string {
   const migration = readFileSync(new URL('../../../../migrations/20260511_qms_and_labeling.sql', import.meta.url), 'utf8');
-  const create = migration.match(new RegExp(`CREATE TABLE IF NOT EXISTS ${name} \\([\\s\\S]*?\\n\\);`));
+  const tablePattern = name === 'qms_documents'
+    ? /CREATE TABLE IF NOT EXISTS qms_documents \([\s\S]*?\n\);/
+    : /CREATE TABLE IF NOT EXISTS qms_training_records \([\s\S]*?\n\);/;
+  const create = migration.match(tablePattern);
   if (!create) throw new Error(`Canonical ${name} CREATE block was not found`);
   return create[0];
 }

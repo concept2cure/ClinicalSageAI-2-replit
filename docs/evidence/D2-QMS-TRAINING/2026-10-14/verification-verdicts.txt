@@ -52,3 +52,11 @@ Final combined source-frozen replay: 516/516 in29suites,89.07s; exact log qms-la
 Official merged whole-repository typecheck: errors found0,tsc exit0; qms-latest-typecheck.log.
 Final production build: client built21.56s/server build complete; qms-latest-build.log.
 Latest actual-browser replay: both light1440 and dark390 editor/reader/receipt flows pass; synthetic accounts/API only.
+
+Hosted-security qualification follow-up:
+Semgrep1.177.0 exact pinned workflow image,p/default+p/ci,QMS target: 2 findings/exit1 -> 0 findings/exit0.
+Canonical migration-block extraction: all4 old/new byte comparisons equal; 69/69 canonical SQL tests pass (24.73s).
+Two test-file strict lint:0warnings;4 unchanged nonblocking Semgrep PartialParsing warnings disclosed in backend evidence.
+Full-history Gitleaks:10227commits/~632.23MB scanned,no leaks,after two exact apiContractSha256 fingerprint exceptions.
+Both exceptions match original committed API-contract bytes; no path/rule-wide exception or Semgrep suppression.
+Hosted Tier5 authenticated browser/DB smoke on a80d2fa65:success(run38530612866).
