@@ -71,7 +71,8 @@ import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
-import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
+import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
+import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { TemplateGuidance } from './TemplateGuidance';
@@ -1004,6 +1005,10 @@ export interface EditorBridge {
     record?: AnaTurnRecordStatus,
     unfinished?: boolean,
   ) => Promise<EditorBridgeProposeResult>;
+  /** Observe only the current editor's actual application state; unavailable across scopes. */
+  getProposalState?: (receipt: EditorProposalReceipt) => ProposalState;
+  subscribeProposalChanges?: (listener: () => void) => () => void;
+  canPropose?: () => boolean;
 }
 
 /** An anchored proposal as the conversation hands it to the open section. */
@@ -1039,7 +1044,7 @@ export interface EditorBridgeProposal extends ReplacementProposal {
  *     record.
  */
 export type EditorBridgeProposeResult =
-  | { ok: true }
+  | { ok: true; receipt?: EditorProposalReceipt }
   | { ok: false; reason: 'model-not-approved'; message: string }
   | { ok: false; reason: ProposeRefusal | 'stale' | 'wrong-section' | 'no-base' };
 
@@ -1765,8 +1770,12 @@ export function DocumentWorkbench({
         if (!live) return { ok: false, reason: 'stale' };
         const result = editorRef.current?.proposeReplacement(proposal, author) ?? { ok: false as const, reason: 'not-editable' as const };
         if (result.ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
-        return result;
+        return scopedProposalResult(result, activeDocId, loaded.id);
       },
+      getProposalState: receipt => live && receipt.docId === activeDocId && receipt.sectionId === loaded.id
+        ? editorRef.current?.getProposalState(receipt) ?? 'unavailable' : 'unavailable',
+      subscribeProposalChanges: listener => live ? editorRef.current?.subscribeProposalChanges(listener) ?? (() => {}) : () => {},
+      canPropose: () => live && editorRef.current?.canProposeReplacement() === true,
     };
     onEditorBridge?.(bridge);
     return () => {

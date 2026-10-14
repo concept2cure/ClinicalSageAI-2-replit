@@ -79,6 +79,7 @@ import {
 import {
   TrackChanges,
   collectSuggestions,
+  acceptedProposalApplications,
   settleAcceptedContributions,
   proposeReplacement,
   type SuggestionAuthor,
@@ -88,6 +89,8 @@ import {
   type ReplacementProposal,
   type ProposeResult,
 } from './suggestions';
+import { ProposalLifecycle, type ProposalReceipt, type ProposalState } from './proposalLifecycle';
+export type { ProposalReceipt, ProposalState } from './proposalLifecycle';
 import {
   CommentAnchor,
   collectCommentAnchors,
@@ -146,7 +149,12 @@ export interface RichSectionEditorHandle {
    * insertSuggestion returns false — source mode, a frozen or read-only
    * section — and otherwise says why it could not place the proposal.
    */
-  proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor) => ProposeResult;
+  proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor) => ProposeResult & { editorInstanceId?: string };
+  /** True only after hydration and resolution of any local device-draft choice. */
+  canProposeReplacement: () => boolean;
+  /** Observe this application in the live canonical editor, never a remembered UI flag. */
+  getProposalState: (receipt: ProposalReceipt) => ProposalState;
+  subscribeProposalChanges: (listener: () => void) => () => void;
   /** Current serialized content (unsaved included). */
   getContent: () => string;
   /**
@@ -628,6 +636,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [collabSynced, setCollabSynced] = useState(false);
     const syncedOnceRef = useRef(false);
     const [restoreOffer, setRestoreOffer] = useState<string | null>(null);
+    const [proposalLifecycle] = useState(() => new ProposalLifecycle());
+    const proposalCacheCheckedRef = useRef(!storageKey);
     /* ── Find & replace bar state ──
        The query text lives here; the matches and the focused index live in
        the editor's plugin state (the one source of truth for what is
@@ -1087,6 +1097,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // from props — passing it here would duplicate on every join.
         ...(collabRuntime ? {} : { content: boot.html ?? '' }),
         onUpdate: ({ editor: ed, transaction }) => {
+          proposalLifecycle.recordAccepted(acceptedProposalApplications(transaction));
           const serialized = serialize(ed);
           // StarterKit's trailing-node plugin can append the empty cursor
           // paragraph to a table on a metadata-only mount transaction. That
@@ -1120,6 +1131,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             pendingAutosaveRef.current = serialized;
             autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
           }
+          proposalLifecycle.notify();
         },
         onCreate: ({ editor: ed }) => {
           setWords(wordsOf(ed.getText()));
@@ -1129,6 +1141,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           liveDocRef.current = ed.state.doc;
           setCaptionOrder(captionOrderKey(ed.state.doc));
           setEditorReady(true);
+          proposalLifecycle.notify();
         },
       },
       [],
@@ -1250,6 +1263,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       } catch {
         /* unreadable storage — nothing to offer */
       }
+      // The crash cache is best effort. An unreadable cache offers no draft
+      // choice and must not permanently hide a known live application's state.
+      proposalCacheCheckedRef.current = true;
+      proposalLifecycle.notify();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storageKey, editorReady]);
 
@@ -1567,6 +1584,29 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       return store;
     }, [editor]);
 
+    const canProposeReplacement = useCallback(() => proposalLifecycle.isActive() && !!editor && !editor.isDestroyed && editor.isEditable && boot.mode === 'rich'
+      && editorReady && canvasSettled && proposalCacheCheckedRef.current && saveState !== 'saving' && restoreOffer === null,
+    [editor, boot.mode, editorReady, canvasSettled, saveState, restoreOffer, proposalLifecycle]);
+
+    const getProposalState = useCallback((receipt: ProposalReceipt): ProposalState => {
+      const pending = new Set(editor && !editor.isDestroyed
+        ? collectSuggestions(editor.state.doc).flatMap(range => range.applicationId ? [range.applicationId] : []) : []);
+      return proposalLifecycle.state(receipt, {
+        ready: canProposeReplacement(),
+        restorePending: restoreOffer !== null,
+        clean: !!editor && !editor.isDestroyed && serialize(editor) === lastSavedRef.current,
+        pending,
+      });
+    }, [editor, restoreOffer, serialize, proposalLifecycle, canProposeReplacement]);
+
+    useEffect(() => {
+      proposalLifecycle.notify();
+    }, [proposalLifecycle, editorReady, canvasSettled, restoreOffer, saveState, readOnly]);
+    useEffect(() => {
+      proposalLifecycle.activate();
+      return () => { proposalLifecycle.close(); };
+    }, [proposalLifecycle]);
+
     /* ── Imperative handle ── */
     const citationPending = useRef(false);
     const citationAlive = useRef(true);
@@ -1635,15 +1675,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           if (!editor.isEditable) return false;
           return editor.chain().focus().insertSuggestedContent(text, author).run();
         },
-        /* The same three refusals as insertSuggestion, for the same reasons:
-           in source mode the textarea is the document and the editor a shell
-           that is never saved, and a frozen section would be refused at save. */
-        proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor): ProposeResult => {
-          if (!editor || editor.isDestroyed) return { ok: false, reason: 'not-editable' };
-          if (boot.mode !== 'rich') return { ok: false, reason: 'not-editable' };
-          if (!editor.isEditable) return { ok: false, reason: 'not-editable' };
-          return proposeReplacement(editor, { ...proposal, author });
+        /* A proposal needs the actual hydrated editable body and a resolved
+           device-draft choice, including its first application. */
+        proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor): ProposeResult & { editorInstanceId?: string } => {
+          if (!editor || !canProposeReplacement()) return { ok: false, reason: 'not-editable' };
+          const result = proposeReplacement(editor, { ...proposal, author });
+          return result.ok ? { ...result, editorInstanceId: proposalLifecycle.editorInstanceId } : result;
         },
+        canProposeReplacement,
+        getProposalState,
+        subscribeProposalChanges: listener => proposalLifecycle.subscribe(listener),
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
         peekAcceptedAuthors: () => acceptedStore()?.acceptedAuthors ?? [],
@@ -1676,7 +1717,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           return editor.chain().focus().insertContent({ type: 'text', text: clean }).run();
         },
       }),
-      [doSave, editor, boot.mode, sourceText, serialize, openFind, registerCitation, acceptedStore],
+      [doSave, editor, boot.mode, sourceText, serialize, openFind, registerCitation, acceptedStore, getProposalState, proposalLifecycle, canProposeReplacement],
     );
 
     /* Mirror the plugin's matches into the counter — on every transaction

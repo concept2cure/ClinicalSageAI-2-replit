@@ -126,6 +126,7 @@ async function openBridge(): Promise<() => EditorBridge> {
   await vi.waitFor(
     () => {
       if (!latest || !document.querySelector('.dcv-workbench .tiptap')) throw new Error('no editor bridge yet');
+      if (!latest.canPropose?.()) throw new Error('editor not ready yet');
     },
     { timeout: 4000 },
   );
@@ -138,11 +139,13 @@ const noRedline = () => {
 };
 
 beforeEach(() => {
+  localStorage.clear();
   mockApi();
   clearEditorTarget();
 });
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   clearEditorTarget();
 });
 
@@ -202,7 +205,7 @@ describe('EditorBridge.propose — the governed-write rule, as insert applies it
   it('takes a redline the rule admits, and a person\u2019s own is not its business (negative controls)', async () => {
     const bridge = await openBridge();
     await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, recorded([QUALIFIED])))
-      .resolves.toEqual({ ok: true });
+      .resolves.toEqual(expect.objectContaining({ ok: true }));
     expect(document.querySelector('.dcv-workbench del[data-author-id="ana"]')?.textContent).toBe('18 months');
   });
 
@@ -212,14 +215,14 @@ describe('EditorBridge.propose — the governed-write rule, as insert applies it
        break the door for the people it is meant to protect. */
     const bridge = await openBridge();
     await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, { id: 'user-7', name: 'Jordan Medical Writer' }))
-      .resolves.toEqual({ ok: true });
+      .resolves.toEqual(expect.objectContaining({ ok: true }));
     expect(document.querySelector('.dcv-workbench del[data-author-id="user-7"]')?.textContent).toBe('18 months');
   });
 
   it('a successfully applied fix admits its turn for paste attribution, as insert does', async () => {
     const bridge = await openBridge();
     await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, recorded([QUALIFIED])))
-      .resolves.toEqual({ ok: true });
+      .resolves.toEqual(expect.objectContaining({ ok: true }));
     const ins = document.querySelector('.dcv-workbench ins[data-author-id="ana"]');
     expect(ins?.getAttribute('data-source-record')).toBe(TURN);
     const editor = (document.querySelector('.tiptap') as unknown as { editor: Editor }).editor;

@@ -6,7 +6,10 @@ import type { Editor } from '@tiptap/core';
 import type { EditorBridge } from '../DocumentWorkbench';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }),
+  authService: { getUser: () => ({ id: 41 }) },
+}));
 vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
@@ -69,6 +72,7 @@ async function mount(remedySection = SECOND) {
   render(<Mounted remedySection={remedySection} />);
   await waitFor(() => expect(bridge?.sectionId).toBe(FIRST));
   await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('18 months'));
+  if (bridge?.editable) await waitFor(() => expect(bridge?.canPropose?.()).toBe(true));
 }
 const documentView = () => fireEvent.click(screen.getByRole('button', { name: 'Document' }));
 const sectionView = () => screen.getByRole('button', { name: 'Section' });
@@ -86,6 +90,7 @@ describe('document-review remedies open the actual section editor', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Open section 3.2.P.8.2 Evidence reconciliation' }));
     await waitFor(() => expect(bridge?.sectionId).toBe(SECOND));
     expect(sectionView().getAttribute('aria-pressed')).toBe('true');
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Apply as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Apply as tracked suggestion' }));
     await screen.findByRole('button', { name: 'Added as tracked suggestion' });
     expect(document.querySelector('.tiptap ins[data-author-id="ana"]')?.textContent).toBe('24 months');
@@ -117,6 +122,52 @@ describe('document-review remedies open the actual section editor', () => {
 });
 
 describe('view changes preserve the existing unsaved-work decision', () => {
+  it('requires explicit device-draft discard before reapplying a retained remedy', async () => {
+    await mount(FIRST);
+    const apply = await screen.findByRole('button', { name: 'Apply as tracked suggestion' });
+    await waitFor(() => expect((apply as HTMLButtonElement).disabled, document.querySelector('.authoring-remedy-note')?.textContent ?? 'No status').toBe(false));
+    fireEvent.click(apply);
+    await screen.findByRole('button', { name: 'Added as tracked suggestion' });
+    const firstApplication = document.querySelector('.tiptap ins')?.getAttribute('data-application-id');
+    expect(firstApplication).toBeTruthy();
+    expect(localStorage.getItem(`dc::41::${FIRST}`)).toContain(firstApplication);
+    documentView();
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Document' }).getAttribute('aria-pressed')).toBe('true'));
+    expect(localStorage.getItem(`dc::41::${FIRST}`), 'cache survived leaving the real editor').toContain(firstApplication);
+    fireEvent.click(sectionView());
+    await waitFor(() => expect(sectionView().getAttribute('aria-pressed')).toBe('true'));
+    expect(localStorage.getItem(`dc::41::${FIRST}`), 'cache survived returning to the real editor').toContain(firstApplication);
+    await screen.findByRole('button', { name: 'Discard it' });
+    expect((screen.getByRole('button', { name: 'Added as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Apply as tracked suggestion' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Discard it' }));
+    const retry = await screen.findByRole('button', { name: 'Apply as tracked suggestion' });
+    await waitFor(() => expect((retry as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(retry);
+    await waitFor(() => expect(document.querySelector('.tiptap ins')?.textContent).toBe('24 months'));
+    expect(document.querySelector('.tiptap ins')?.getAttribute('data-application-id')).not.toBe(firstApplication);
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it('restores a retained pending application without enabling another attempt', async () => {
+    await mount(FIRST);
+    const apply = await screen.findByRole('button', { name: 'Apply as tracked suggestion' });
+    await waitFor(() => expect((apply as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(apply);
+    await screen.findByRole('button', { name: 'Added as tracked suggestion' });
+    const application = document.querySelector('.tiptap ins')?.getAttribute('data-application-id');
+    documentView();
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Document' }).getAttribute('aria-pressed')).toBe('true'));
+    fireEvent.click(sectionView());
+    fireEvent.click(await screen.findByRole('button', { name: 'Restore the device draft' }));
+    await waitFor(() => expect(document.querySelector('.tiptap ins')?.getAttribute('data-application-id')).toBe(application));
+    expect((screen.getByRole('button', { name: 'Added as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Apply as tracked suggestion' })).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
   it('holds Document view and Cancel keeps the same dirty editor and prior view', async () => {
     await mount();
     const original = dirtySection();
