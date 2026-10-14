@@ -79,7 +79,7 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_artifacts (id uuid PRIMARY KEY, project_id integer, organization_id integer, metadata jsonb);
     CREATE TABLE cre_evidence_sources (id integer PRIMARY KEY, organization_id integer, visibility_class text,
       client_program_id uuid, client_workspace_id integer, deleted_at timestamp, provenance jsonb,
-      source_type text, metadata jsonb NOT NULL DEFAULT '{}');
+      source_type text, created_by integer, metadata jsonb NOT NULL DEFAULT '{}');
     CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer, user_id integer);
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}',7,NULL);
     INSERT INTO projects (id,organization_id,regulatory_program_id,client_workspace_id,owner_id,created_by_id,settings)

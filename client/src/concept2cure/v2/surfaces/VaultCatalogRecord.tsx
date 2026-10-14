@@ -14,10 +14,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { VAULT_DOC_KINDS, vaultDocKindLabel } from '@shared/constants/domain/vault-taxonomy';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import type { LegacyCatalogVerificationScope } from '@shared/ana/catalog-facts';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 
 interface CatalogRecordView {
   contentHash: string;
+  /** Exact extraction shown, when available; returned to the server with a decision. */
+  extractedTextSha256?: string | null;
+  checkScope?: LegacyCatalogVerificationScope;
+  /** Current source use is separate from the retained human decision. */
+  currentUse?: { eligible: boolean; reasonCode: string | null; originalFileAvailable: boolean };
   /** Sent back with a decision: the server refuses one made on a record that changed since it was shown. */
   revision: string | null;
   /** Whether this person's role may confirm or correct; the server checks again. */
@@ -68,7 +74,9 @@ async function call<T>(method: 'GET' | 'POST', path: string, body: unknown, fail
     throw new Error(`${failed} ${redactInternals(detail ?? (e instanceof Error ? e.message : ''), 'The connection dropped.')}`, { cause: e });
   }
   const json = (await res.json().catch(() => null)) as ({ data?: T } & Record<string, unknown>) | null;
-  if (!res.ok) throw new Error(`${failed} ${redactInternals(serverMessage(json), `The Vault refused it (HTTP ${res.status}).`)}`);
+  if (!res.ok || json?.success === false) {
+    throw new Error(`${failed} ${redactInternals(serverMessage(json), `The Vault refused it (HTTP ${res.status}).`)}`);
+  }
   return (json?.data ?? (json as unknown as T));
 }
 
@@ -114,11 +122,19 @@ function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
     setNote(null);
     const outcome = action === 'confirm' ? 'confirmed' : 'corrected';
     try {
-      await call('POST', url(projectId, documentId, `/${action}`),
-        { contentHash: record.contentHash, revision: record.revision, ...body },
+      const receipt = await call<{ state?: string }>('POST', url(projectId, documentId, `/${action}`),
+        {
+          contentHash: record.contentHash, revision: record.revision,
+          ...(record.extractedTextSha256 ? { expectedExtractedTextSha256: record.extractedTextSha256 } : {}),
+          ...body,
+        },
         `The record was not ${outcome}.`,
         `The connection dropped, so it is not known whether the record was ${outcome}. ` +
           "Reload the Vault and check this document's history before trying again.");
+      if (receipt?.state !== outcome) {
+        throw new Error(`The server did not return a matching decision receipt, so it is not known whether the record was ${outcome}. ` +
+          "Reload the Vault and check this document's history before trying again.");
+      }
       setNote({ tone: 'ok', text: done });
       await load();
       onSaved();
@@ -131,6 +147,40 @@ function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
     }
   };
   return { record, readError, busy, note, decide, load };
+}
+
+/** Describe the legacy check's coverage without inventing an earlier result. */
+function CheckScopeNotice() {
+  return (
+    <div className="vd-d-idx" data-testid="vault-catalog-check-scope">
+      Legacy key data checks cover value presence in extracted text. Label and context verification is not recorded.
+      {' '}Scientific qualification is unassessed. Confirmation covers this catalog record as shown.
+    </div>
+  );
+}
+
+function sourceUnavailable(r: CatalogRecordView): boolean {
+  return !!r.currentUse && (!r.currentUse.eligible || !r.currentUse.originalFileAvailable);
+}
+
+/** Only server-derived eligibility reasons are translated into product language. */
+function CurrentUseNotice({ r }: { r: CatalogRecordView }) {
+  if (!sourceUnavailable(r)) return null;
+  const reasons: Record<string, string> = {
+    SOURCE_DATA_WITHDRAWN: 'This source has been withdrawn from data use.',
+    SOURCE_SUPERSEDED: 'This document version has been superseded.',
+    SOURCE_ORIGINAL_UNAVAILABLE: 'The original file is unavailable.',
+    SOURCE_VERSION_CHANGED: 'The source version has changed. Reload the Vault before deciding on its catalog record.',
+    EXTRACTION_UNAVAILABLE: 'Readable extracted text is unavailable for this source.',
+    SOURCE_IDENTITY_UNVERIFIED: 'The source identity could not be verified for current use.',
+  };
+  const reason = reasons[r.currentUse?.reasonCode ?? ''] ?? (!r.currentUse?.originalFileAvailable
+    ? 'The original file is unavailable.' : 'This source is unavailable for current data use.');
+  return (
+    <div className="vd-d-idx" data-testid="vault-catalog-current-use">
+      {reason}{r.state ? ' Its catalog history is retained.' : ''}
+    </div>
+  );
 }
 
 function RecordView({ r }: { r: CatalogRecordView }) {
@@ -149,9 +199,8 @@ function RecordView({ r }: { r: CatalogRecordView }) {
         <span className="k">Summary</span>
         <span className="v">{r.summary || '—'}</span>
       </div>
-      {lines.length > 0 && (
-        <div className="vd-d-idx">Key data is checked against the document&apos;s text when AnA records it, and is not edited here.</div>
-      )}
+      <CheckScopeNotice />
+      {lines.length > 0 && <div className="vd-d-idx">Key data is not edited here.</div>}
       {lines.map(([k, v]) => (
         <div className="vd-d-filing-row" key={k}>
           <span className="k">{k}</span>
@@ -187,6 +236,7 @@ function CorrectForm({ r, busy, onSave, onCancel }: {
   const canSave = !busy && correctionReady(draft, r);
   return (
     <div className="vd-d-filing" data-testid="vault-catalog-correct-form">
+      <CheckScopeNotice />
       <label className="vd-d-filing-row">
         <span className="k">Kind</span>
         <select className="vd-d-move-sel" value={draft.documentKind} disabled={busy}
@@ -235,6 +285,7 @@ function correctionBody(d: Draft, r: CatalogRecordView): Record<string, string> 
 
 /** What the panel says when there is no description to decide on. */
 function emptyText(r: CatalogRecordView): string {
+  if (sourceUnavailable(r)) return 'No description is recorded for this version.';
   if (r.extractionStatus === 'extraction_failed') {
     return 'No description is recorded: the text of this version could not be read. Upload a readable copy to have it described.';
   }
@@ -253,8 +304,13 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
     );
   }
   if (!r) return <div className="vd-d-idx" role="status">Reading the catalog record…</div>;
-  if (!r.state) return <div className="vd-d-idx" data-testid="vault-catalog-empty">{emptyText(r)}</div>;
-  if (correcting) {
+  if (!r.state) return (
+    <>
+      <CurrentUseNotice r={r} />
+      <div className="vd-d-idx" data-testid="vault-catalog-empty">{emptyText(r)}</div>
+    </>
+  );
+  if (correcting && r.canWrite && !sourceUnavailable(r)) {
     return (
       <CorrectForm r={r} busy={cat.busy} onCancel={() => setCorrecting(false)}
         onSave={(d) => void cat.decide('correct', correctionBody(d, r),
@@ -266,8 +322,9 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
       <div className="vd-d-idx" data-testid="vault-catalog-provenance">
         {provenanceLines(r).map((line) => <div key={line}>{line}</div>)}
       </div>
+      <CurrentUseNotice r={r} />
       <RecordView r={r} />
-      {r.canWrite ? (
+      {r.canWrite && !sourceUnavailable(r) ? (
         <>
           {r.state === 'suggested' && (
             <div className="vd-d-idx">Confirming records your name and the time in this document&apos;s history. AnA will not replace a confirmed record.</div>
@@ -286,7 +343,9 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
         </>
       ) : (
         <div className="vd-d-idx" data-testid="vault-catalog-readonly">
-          Your role can read this record but not confirm or correct it. A member or administrator can.
+          {sourceUnavailable(r)
+            ? 'Confirmation and correction are unavailable for this source.'
+            : 'Your role can read this record but not confirm or correct it. A member or administrator can.'}
         </div>
       )}
     </div>

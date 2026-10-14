@@ -8,15 +8,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const batchDraftMock = vi.fn();
 const sourceMocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn() }));
-vi.mock('../catalog-scope', () => ({ catalogScope: sourceMocks.scope }));
-vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForOrg: sourceMocks.load }));
+vi.mock('../catalog-scope', async () => ({ catalogScope: sourceMocks.scope, sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
+vi.mock('../../vault/document-catalog.service', () => ({ revalidateActorSourceScope: async () => {}, loadDocumentForActor: sourceMocks.load }));
+// Successful current-program admission is a premise of this provider-free
+// handler suite. The source facade and draft-service handoffs remain observed.
+vi.mock('../../c2c/current-program-access', async original => (
+  (await import('./support/source-read-tool-fixture.js')).syntheticProgramAccessMock(await original<Record<string, unknown>>())
+));
 vi.mock('../AnaDocumentDraftingService', () => ({
   getAnaDraftingService: () => ({ batchDraft: batchDraftMock }),
 }));
 
 import { getToolHandler } from '../AnaToolExecutor';
 
-const ctx = { organizationId: 7, userId: 3, projectId: 11 } as any;
+const executor = { query: async () => ({ rows: [] }) };
+const ctx = { organizationId: 7, userId: 3, projectId: 11, sqlClient: executor } as any;
 
 beforeEach(() => {
   batchDraftMock.mockReset();
@@ -99,7 +105,10 @@ describe('batch draft recovery receipts', () => {
   it('uses actual processed source records and returns version-bound receipts without copying raw text', async () => {
     const id = '10000000-0000-4000-8000-000000000001';
     const program = '20000000-0000-4000-8000-000000000001';
-    sourceMocks.scope.mockResolvedValue({ programId: program });
+    sourceMocks.scope.mockResolvedValue({ programId: program, executor,
+      admittedScope: { organizationId: 7, userId: 3, role: 'member', projectId: 11, programId: program, accessibleProgramIds: [program], actorFiltered: true },
+      accessibleScope: { scope: 'verified-accessible-programs', actor: { userId: 3, role: 'member' }, programIds: [program], reconciliationRequired: false },
+    });
     sourceMocks.load.mockResolvedValue({ id, programId: program, contentHash: 'a'.repeat(64),
       documentTitle: 'Study CSR', extractedText: 'Actual processed study results',
       catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });

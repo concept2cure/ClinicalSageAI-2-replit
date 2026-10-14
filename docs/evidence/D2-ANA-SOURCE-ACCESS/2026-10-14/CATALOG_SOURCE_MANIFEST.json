@@ -1,0 +1,90 @@
+{
+  "runtime": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+  "testClaim": "157 tests across 11 suites; controlled sequential query/policy fixtures, not real PostgreSQL proof",
+  "tests": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/vault/__tests__/document-catalog-actor-access.test.ts",
+    "server/services/vault/__tests__/catalog-actor-read-facades.test.ts",
+    "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+    "server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts",
+    "server/services/vault/__tests__/document-catalog-discovery-scope.test.ts",
+    "server/services/vault/__tests__/document-catalog.service.test.ts",
+    "server/services/vault/__tests__/document-catalog-source-snapshot.test.ts",
+    "server/services/vault/__tests__/document-catalog-preview.service.test.ts",
+    "server/services/vault/__tests__/catalog-write-result.test.ts",
+    "server/services/vault/__tests__/catalog-governance-integrity.test.ts",
+    "server/services/vault/__tests__/document-catalog-key-data.test.ts",
+    "--config",
+    "vitest.config.ts"
+  ],
+  "typecheck": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/owned-target-typecheck.cjs",
+    "server/services/vault/document-catalog.service.ts",
+    "server/services/vault/document-catalog-actor-access.ts",
+    "server/services/vault/document-catalog-actor-reads.ts",
+    "server/services/vault/document-catalog-actor-captures.ts",
+    "server/services/vault/__tests__/document-catalog-actor-access.test.ts",
+    "server/services/vault/__tests__/catalog-actor-read-facades.test.ts",
+    "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+    "server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts"
+  ],
+  "lint": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/vault/document-catalog.service.ts",
+    "server/services/vault/document-catalog-actor-access.ts",
+    "server/services/vault/document-catalog-actor-reads.ts",
+    "server/services/vault/document-catalog-actor-captures.ts",
+    "server/services/vault/__tests__/document-catalog-actor-access.test.ts",
+    "server/services/vault/__tests__/catalog-actor-read-facades.test.ts",
+    "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+    "server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts",
+    "--format",
+    "json"
+  ],
+  "ownedFiles": [
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "bytes": 34926,
+      "sha256": "8c71bc19f0bbab52b7825924b717ebd2827a9c5e39ba28373040092998684612"
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-access.ts",
+      "bytes": 4066,
+      "sha256": "0577641cdbaca1c2f4d4e9290cf9a617b603278d829f902337377f1d5fe3ba4d"
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-reads.ts",
+      "bytes": 8008,
+      "sha256": "07a35704d39eedec19c856b51c3893181bbccef74a449596f4f5fc0d7e45082e"
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-captures.ts",
+      "bytes": 10104,
+      "sha256": "cf8fb4643ec4d3eec6ac7fcfc175a7c8122e58daeaddba1e6ae297321687cb48"
+    },
+    {
+      "path": "server/services/vault/__tests__/document-catalog-actor-access.test.ts",
+      "bytes": 2196,
+      "sha256": "e7240468385a3daf47d3aa41f900389cbf6d2423499fa790e834c4afcd8f1565"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-actor-read-facades.test.ts",
+      "bytes": 6083,
+      "sha256": "dfa6d44a6f398edf25dcfba6e172c4e086a415044c45071b47dc1d5d8660eaa7"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts",
+      "bytes": 7893,
+      "sha256": "643781fc796c39ee88f12cb06935514fffb1c977225936f01a219c5e768e02ce"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts",
+      "bytes": 5423,
+      "sha256": "151719ef26c27e1bccae942de35695066a0e4d689db2b7e58ad855a40d90bd01"
+    }
+  ]
+}

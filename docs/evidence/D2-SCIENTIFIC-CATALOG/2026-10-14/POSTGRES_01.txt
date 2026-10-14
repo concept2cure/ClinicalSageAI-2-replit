@@ -1,0 +1,1 @@
+{"fixture":"failed","name":"c2c-catalog-race-9d0556ea-42c","cleanup":"exact owned container removed","cleanupVerified":true,"failure":"permission denied to alter role"}

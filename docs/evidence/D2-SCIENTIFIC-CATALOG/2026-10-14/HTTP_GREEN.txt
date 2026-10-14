@@ -1,0 +1,63 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:19:46.937Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:19:48.122Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:19:48.123Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:19:48.123Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible
+{
+  "timestamp": "2026-10-14T06:19:48.217Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault catalog record read failed",
+  "context": {
+    "err": "read unavailable"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries the session actor into canonical reads 21ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into confirm 11ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into correct 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (42) without downgrading to legacy review 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (null) without downgrading to legacy review 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding ({}) without downgrading to legacy review 3ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (false) without downgrading to legacy review 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > preserves a canonical source-change refusal 3ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible 4ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  06:19:45
+   Duration  2.84s (transform 1.15s, setup 66ms, import 2.51s, tests 63ms, environment 0ms)
+

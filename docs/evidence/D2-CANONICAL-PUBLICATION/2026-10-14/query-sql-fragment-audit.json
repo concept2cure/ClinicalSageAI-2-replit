@@ -1,0 +1,155 @@
+{
+  "files": [
+    {
+      "path": "server/services/vault/document-catalog-actor-captures.ts",
+      "sha256": "cf8fb4643ec4d3eec6ac7fcfc175a7c8122e58daeaddba1e6ae297321687cb48",
+      "directQueryTemplates": [
+        {
+          "queryLine": 116,
+          "expressions": [
+            {
+              "line": 116,
+              "expression": "identities"
+            },
+            {
+              "line": 116,
+              "expression": "captureJoinsSql()"
+            },
+            {
+              "line": 116,
+              "expression": "captureScopeSql()"
+            }
+          ]
+        },
+        {
+          "queryLine": 121,
+          "expressions": [
+            {
+              "line": 121,
+              "expression": "identities"
+            },
+            {
+              "line": 123,
+              "expression": "capturedDispositionChoiceSql('s')"
+            },
+            {
+              "line": 124,
+              "expression": "capturedBinaryAvailableSql('s')"
+            },
+            {
+              "line": 126,
+              "expression": "captureJoinsSql()"
+            },
+            {
+              "line": 126,
+              "expression": "captureScopeSql()"
+            }
+          ]
+        }
+      ],
+      "sqlRawCalls": 0,
+      "exactGateCount": 8
+    },
+    {
+      "path": "server/services/vault/retrieval-source-access.ts",
+      "sha256": "4e1a195d19ca0c9847d3916f23f3d53463d88494401b4e654fac436ee15aa3d4",
+      "directQueryTemplates": [
+        {
+          "queryLine": 53,
+          "expressions": [
+            {
+              "line": 59,
+              "expression": "vaultDataEligibleSql('d')"
+            },
+            {
+              "line": 59,
+              "expression": "supersededSql('d')"
+            }
+          ]
+        }
+      ],
+      "sqlRawCalls": 0,
+      "exactGateCount": 2
+    }
+  ],
+  "dependencies": [
+    {
+      "path": "server/services/document-data-disposition/eligibility.ts",
+      "sha256": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f"
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "sha256": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733"
+    },
+    {
+      "path": "server/services/vault/vault-version-family.ts",
+      "sha256": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526"
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-access.ts",
+      "sha256": "0577641cdbaca1c2f4d4e9290cf9a617b603278d829f902337377f1d5fe3ba4d"
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-reads.ts",
+      "sha256": "07a35704d39eedec19c856b51c3893181bbccef74a449596f4f5fc0d7e45082e"
+    },
+    {
+      "path": "server/services/ana/source-read-scope.ts",
+      "sha256": "fedbd183d2d947630420899ee7a4a9d5e2e4654eed64065efbc991c335d7c3d2"
+    },
+    {
+      "path": "server/services/ana/project-scope-admission.ts",
+      "sha256": "059fa1b134452dec603c1a862df0ceb9200a87789cb961f5fabd0f605f970454"
+    },
+    {
+      "path": "server/services/ana/source-context-admission.ts",
+      "sha256": "9c0428730f9a57c05d6c2e2511e9fbb4b85a4893a081befebd6b09ca99e6680f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "sha256": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/c2c/program-project-anchor.ts",
+      "sha256": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496"
+    },
+    {
+      "path": "server/services/report-os/project-access.ts",
+      "sha256": "43ed392aacb3493732a02bf6881e1728504bfc7a26e7bd647333644bf929ea58"
+    },
+    {
+      "path": "server/services/project-sharing-access.ts",
+      "sha256": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815"
+    },
+    {
+      "path": "server/services/tenant/governed-tenant-context.ts",
+      "sha256": "dff426545317dbc4ce6e93b090179b65b0446e0e826fa5c519e631c2549b819d"
+    },
+    {
+      "path": "server/db/tenantStore.ts",
+      "sha256": "ad70933e54f2df42a031446473d3be1b8296ebbea748924f5f97b59b83cbfc45"
+    },
+    {
+      "path": "server/db/sessionScope.ts",
+      "sha256": "53a488a133fbf2b6489c09634a39520dd2d91174267798ea5d4818871e4231e9"
+    },
+    {
+      "path": "server/db/rlsEnforcement.ts",
+      "sha256": "745728509e6a08042983ef914e2549355abd089aebf94f78ededa4474bf63e09"
+    },
+    {
+      "path": "scripts/ci/check-sql-interpolation.mjs",
+      "sha256": "9e6271d2f24dbdc1f75d1e518f52375a5f679b8f3e91aab9236bbfa09ab30e85"
+    },
+    {
+      "path": "scripts/ci/lib/strip-comments.mjs",
+      "sha256": "2887abc86d3f874c6c38c524e07e158a701a6945ef970bd1fea828275617aec1"
+    }
+  ],
+  "classification": "Reviewed fixed column/alias/join/guard fragments; runtime identities and limits are bind parameters. See QUERY_SQL_FRAGMENT_AUDIT.md for call-chain reasoning and limits.",
+  "policyActionPerformed": "none; no application/gate/baseline modification"
+}

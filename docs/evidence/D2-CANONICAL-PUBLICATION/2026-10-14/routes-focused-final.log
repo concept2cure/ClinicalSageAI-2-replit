@@ -1,0 +1,426 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-14T21:19:20.906Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-14T21:19:21.942Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:21.943Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-14T21:19:21.943Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > runs both reads — the count and the rows 48ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > every vault read names the caller organization in its own SQL 19ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > binds the caller organization, not a value from the request 19ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > counts over exactly the set it returns rows from 17ms
+ ✓ server/routes/c2c/__tests__/project-vault-search-tenant-scope.test.ts > vault search carries the org predicate in-statement > verifies access but does not search the corpus for an empty query 8ms
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:19:24.679Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:19:24.746Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:24.747Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T21:19:24.747Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > denies the unassigned active member while admitting owner/public/explicit member/pending reviewer 44ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > canonical sharing controls prove this fixture is genuinely private > serves the public program through the actual detail and search endpoints 35ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private project metadata for an unassigned same-organization member 12ms
+stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project
+{
+  "timestamp": "2026-10-14T21:19:28.471Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses private Vault content search before any count, snippet, or document identity 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > applies sharing before the portfolio page so private newest rows cannot consume public slots 16ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > bounds library search count and page by accessible programs before ranking/pagination 17ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > refuses project detail after organization membership is revoked even with a stale request role 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit program-to-project reconciliation for a missing anchor 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > current parent privacy through actual HTTP and SQL > requires explicit reconciliation for two live anchors rather than reading the lowest project 13ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project  before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /workstreams before child content queries 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /drafts before child content queries 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /team before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /evidence before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /activity before child content queries 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /records before child content queries 12ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /conversation-files before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /vault-structure before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /sources before child content queries 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /source-changes before child content queries 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private project /document-dispositions/preview?targetType=vault_document&targetId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa before child content queries 8ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /versions before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /compare before child content or bytes 11ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /history before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /download before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /catalog before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /relationships before child content or bytes 9ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /annotations before child content or bytes 10ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > protects private Vault document /text before child content or bytes 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps an unrelated missing private anchor out of the evaluated public page 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > requires reconciliation for a deleted anchor while retaining an archived readable anchor 15ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive user despite a stale request role 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > refuses an inactive organization despite a stale request role 7ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > reports failed verification as unavailable instead of an empty portfolio 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts > every existing read family and current actor boundary > keeps public viewer reads while denying a now-viewer lead mutation 27ms
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T21:19:29.500Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T21:19:30.136Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:30.137Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T21:19:30.137Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries the session actor into canonical reads 34ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses a revoked organization actor before the catalog handoff 8ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses an unassigned private-project reader before the catalog handoff 8ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > quarantines an unrecorded document tenant before the catalog handoff 14ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into confirm 18ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into correct 9ms
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible
+{
+  "timestamp": "2026-10-14T21:19:32.132Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault catalog record read failed",
+  "context": {
+    "err": "read unavailable"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (42) without downgrading to legacy review 9ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (null) without downgrading to legacy review 8ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding ({}) without downgrading to legacy review 9ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (false) without downgrading to legacy review 7ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > preserves a canonical source-change refusal 7ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible 7ms
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-14T21:19:37.034Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-14T21:19:37.486Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:37.486Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-14T21:19:37.486Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:56:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:56:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":"11111111-2222-4333-8444-555555555555"} despite stale token admin role 36ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":42} despite stale token admin role 8ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 6ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 6ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses unreadable membership before retrieval 5ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn 16ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads 4ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > rejects another member’s unbound file_id before thread or model work 9ms
+stdout | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T21:19:43.207Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:43.208Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T21:19:43.208Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":"11111111-2222-4333-8444-555555555555"} before SSE 36ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":42} before SSE 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"context":{"projectId":"11111111-2222-4333-8444-555555555555"}} before SSE 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_context":{"projectId":"11111111-2222-4333-8444-555555555555"}} before SSE 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses before the intelligence-answer direct-handler path 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > allows an active private member, then refuses a new turn after revocation 17ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > fails closed when current membership cannot be read 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > preserves an organization conversation without a selected project 5ms
+stderr | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > admits a direct handler with current private source membership, then refuses it after revocation
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a selected private source even when the open project is public and accessible 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a direct upload whose recorded source belongs to another private project 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > admits a direct handler with current private source membership, then refuses it after revocation 21ms
+stderr | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+{
+  "timestamp": "2026-10-14T21:19:47.230Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+{
+  "timestamp": "2026-10-14T21:19:47.287Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:47.288Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-sources-processing.test.ts
+{
+  "timestamp": "2026-10-14T21:19:47.288Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports persisted availability and a safe processing summary without private identity/error fields 38ms
+ ✓ server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > reports recovered text under the same identity and drops obsolete failure presentation 8ms
+ ✓ server/routes/c2c/__tests__/projects-sources-processing.test.ts > source processing projection on the existing project read > passes the server executor and session actor for the optional unscoped library 7ms
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T21:19:51.558Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:51.559Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T21:19:51.559Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 45ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt 18ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it 20ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > withdraws changed exact source text before the follow-up gateway and writes no span 7ms
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal)
+{
+  "timestamp": "2026-10-14T21:19:52.682Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission)
+{
+  "timestamp": "2026-10-14T21:19:52.687Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Synthetic receipt INSERT permission denied"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > does not send a new follow-up request or write a span when cancellation occurs at handoff 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal) 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission) 5ms
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-14T21:19:53.956Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T21:19:53.957Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-14T21:19:53.958Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-14T21:19:54.084Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 9ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt 5ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole 2ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through 4ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it 7ms
+
+ Test Files  8 passed (8)
+      Tests  87 passed (87)
+   Start at  21:19:19
+   Duration  36.64s (transform 8.24s, setup 139ms, import 23.80s, tests 11.77s, environment 1ms)
+

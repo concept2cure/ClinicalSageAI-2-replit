@@ -578,12 +578,12 @@ export const RULE_CORPUS: ValidationRule[] = [
   },
   {
     id: 'EXTERNAL_VALIDATION_CLEAN',
-    title: 'The agency-grade validator’s report for this package carries no errors',
+    title: 'External validation result and dispatch policy are assessed',
     category: 'integrity',
     regions: ['ich'],
     severity: 'high',
     rationale:
-      'Only the agency’s own validator (or a licensed equivalent) proves a package will pass intake. When its report is on file, an error in it blocks dispatch; when it is required and absent, that blocks too.',
+      'Required production external validation blocks on an unavailable, invalid or errored matched external report. Advisory outcomes remain visible without claiming an external pass. Tool/profile/package qualification and actual agency acceptance require separate evidence.',
     source: FDA_CRIT,
     enforcement: 'external',
   },

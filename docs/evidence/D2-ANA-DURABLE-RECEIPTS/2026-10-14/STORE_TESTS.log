@@ -1,0 +1,96 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/source-admission-receipt-history.test.ts
+{
+  "timestamp": "2026-10-14T20:46:15.508Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:46:15.509Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/source-admission-receipt-history.test.ts
+{
+  "timestamp": "2026-10-14T20:46:15.509Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/source-admission-receipt-history.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > uses canonical admission and actor/program filters before window counts and LIMIT 7ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > exact document/receipt selections remain filters rather than authorizing scope 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > historical metadata survives removed source and preserves the original admitted role 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned actor metadata refuses without exposing a page 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned tenant metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned private_program metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned wrong_document metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unexpected returned wrong_receipt metadata refuses without exposing a page 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger fingerprint is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger shape is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger invalid_time is unavailable instead of an empty history 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger normalized_time is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger unknown_count is unavailable instead of an empty history 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger unsafe_count is unavailable instead of an empty history 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > malformed ledger mismatched_count is unavailable instead of an empty history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"documentId":""} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"receiptId":"model-invented"} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"documentId":null} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":201} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":1.5} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"limit":null} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > invalid selection cannot broaden before admission: {"actorId":8} 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > scope revocation after query prevents returning the loaded private context 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > true authenticated empty actor scope is zero without widening the query 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > unknown SQL/policy state is unavailable and does not expose driver detail 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-history.test.ts > actor-only historical source admission ledger > input/filter mutation before asynchronous scope resolution cannot change selected history 6ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > records only one real exact INSERT RETURNING row, with no source or payload body 12ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > an identical stable-ID retry acknowledges existing history without an UPDATE 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: zero 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: missing_rows 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: ambiguous 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: unknown_count 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > cannot acknowledge uncertain INSERT outcome: returned_without_insert 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable actor cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable program cannot be accepted 4ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable document cannot be accepted 2ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable original cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable extraction cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable payload cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable ranges cannot be accepted 6ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable role cannot be accepted 10ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable thread cannot be accepted 3ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > a reused ID with altered immutable tool cannot be accepted 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > wrong INSERT RETURNING identity is unconfirmed even if its independent fingerprint is valid 7ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: fingerprint 3ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: range_shape 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: unknown_range_field 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: missing_context 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed stored ledger metadata is never confirmed: bad_checkpoint 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > foreign/inaccessible same-ID conflict has the same safe refusal and no exposed row 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: body 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: accepted_at 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: sparse_ranges 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: bad_actor 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: overlap 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > malformed incoming descriptor refuses before SQL: unknown_id 0ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > input mutation during async fingerprinting cannot rewrite the inserted immutable identity 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > returned row mutation during fingerprint verification cannot alter projected history 1ms
+ ✓ server/services/ana/__tests__/source-admission-receipt-store.test.ts > immutable exact-source admission metadata append > SQL errors cannot disclose sensitive driver detail or fabricate empty success 0ms
+
+ Test Files  2 passed (2)
+      Tests  60 passed (60)
+   Start at  20:46:13
+   Duration  2.12s (transform 884ms, setup 91ms, import 1.59s, tests 96ms, environment 0ms)
+

@@ -67,6 +67,9 @@ import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
   type ExternalValidationReport,
+  type ExternalValidationGateResult,
+  type ExternalValidator,
+  type ExternalValidatorKind,
 } from './external-validator';
 
 export interface AssessDispatchReadinessParams {
@@ -182,11 +185,14 @@ export interface DispatchGateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
-  /** Set when the gate adds no blocker only because its check did not run and
+  /** Set when the gate adds no blocker although no external assessment qualified and
    *  is not required on this installation — the external validator with
    *  ECTD_REQUIRE_EVALIDATOR off. Cleared is still true (it does not block);
    *  this says the check was not made, so no surface reads it as passed. */
   notAssessed?: string;
+  /** Actual external assessment, separately from the gate's enforcement policy. */
+  assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
+  assessmentNote?: string;
 }
 
 /** composeDispatchGates' merge order — the gate views follow it, so the list
@@ -202,6 +208,7 @@ const GATE_ORDER: DispatchGateKey[] = ['structural', 'external', 'shadowPresence
 export function dispatchGateViews(
   gates: Record<DispatchGateKey, DispatchGateResult>,
   notAssessed: Partial<Record<DispatchGateKey, string>> = {},
+  externalAssessment?: Pick<DispatchGateView, 'assessmentStatus' | 'assessmentNote'>,
 ): DispatchGateView[] {
   return GATE_ORDER.map((key) => ({
     key,
@@ -209,18 +216,84 @@ export function dispatchGateViews(
     cleared: gates[key].cleared,
     blockers: [...gates[key].blockers],
     ...(gates[key].cleared && notAssessed[key] ? { notAssessed: notAssessed[key] } : {}),
+    ...(key === 'external' && externalAssessment ? externalAssessment : {}),
   }));
 }
 
-/** Why the external gate cleared without a report, when it did. The dispatch
+/** Why the external gate cleared without a qualifying assessment. The dispatch
  *  screen printed "The agency-grade validator's report for this package
  *  carries no errors — Satisfied." over a sequence no validator had run on
  *  (populated-org sweep, 2026-09-28): advisory is not passed. */
-export function externalNotAssessed(ext: { ran: boolean; configured: boolean }): string | undefined {
-  if (ext.ran) return undefined;
+export function externalNotAssessed(ext: {
+  ran: boolean;
+  configured: boolean;
+  qualifyingRun?: boolean;
+  validatorKind?: ExternalValidatorKind;
+  assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
+}): string | undefined {
+  if (ext.assessmentStatus === 'failed' || ext.assessmentStatus === 'invalid') return undefined;
+  if (ext.qualifyingRun ?? ext.ran) return undefined;
+  if (ext.validatorKind === 'internal_subset') {
+    return 'The selected adapter is the internal FDA criteria subset; it does not establish an external-engine assessment. External validation is advisory here, so this gate does not block dispatch.';
+  }
   return ext.configured
     ? 'The agency-grade validator is configured but did not run for this package, so no report exists. It is not required on this installation, so it does not block dispatch — but the package has not been checked against it.'
     : 'No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.';
+}
+
+/** Bind the DB assessor's supplied report to server-selected configuration.
+ * This inspects a report; it does not run or qualify a vendor engine. */
+export async function assessExternalValidationReport(
+  validator: ExternalValidator,
+  report: ExternalValidationReport | null,
+  requireEvalidator: boolean,
+  environment: 'staging' | 'production',
+): Promise<ExternalValidationGateResult & { assessmentNote: string }> {
+  const result = evaluateExternalValidationGate({
+    report,
+    selectedValidator: { name: validator.name, kind: validator.kind },
+    configured: await validator.isConfigured(),
+    requireEvalidator,
+    environment,
+  });
+  return { ...result, assessmentNote: externalAssessmentNote(result, report) };
+}
+
+function externalAssessmentNote(result: ExternalValidationGateResult, report: ExternalValidationReport | null): string {
+  const policy = result.enforced
+    ? 'External validation is required for production dispatch.'
+    : 'External validation is advisory here, so this gate does not block dispatch.';
+  const selected = result.selectedValidatorName ?? 'none';
+  switch (result.assessmentStatus) {
+    case 'passed':
+      return `The selected external validator "${selected}" returned a coherent, matching report with no error-severity findings. ${policy} Engine/profile qualification and binding to exact package bytes are separate controls.`;
+    case 'failed':
+      return `The selected external validator "${selected}" reported ${result.externalErrorCount} error-severity finding(s). ${policy}`;
+    case 'invalid':
+      return `The supplied external validation report is malformed or does not match the selected engine (selected="${selected}", reported="${result.reportedValidatorName ?? 'none'}"). Its counts do not establish a clean external assessment. ${policy}`;
+    case 'not_assessed': {
+      const scope = result.validatorKind === 'internal_subset'
+        ? `The selected adapter is the internal FDA criteria subset. The supplied report declares ${result.ran ? 'execution' : 'no execution'} from "${result.reportedValidatorName ?? 'none'}"; it does not establish an external-engine assessment.`
+        : result.configured ? 'The configured external validator did not supply a qualifying execution.' : 'No configured external-engine assessment is established.';
+      const diagnostics = unrunExternalDiagnostics(report);
+      return `${scope} ${policy}${diagnostics ? ` Execution diagnostic: ${diagnostics}` : ''}`;
+    }
+  }
+}
+
+function unrunExternalDiagnostics(report: ExternalValidationReport | null): string {
+  if (report?.ran !== false || !Array.isArray(report.findings)) return '';
+  return report.findings.filter((f) => f && typeof f === 'object' && typeof f.message === 'string').map((f) => f.message).join(' ');
+}
+
+function externalValidationView(result: ExternalValidationGateResult & { assessmentNote: string }): DispatchReadinessAssessment['externalValidation'] {
+  return {
+    configured: result.configured, ran: result.ran, errorCount: result.externalErrorCount,
+    errorCountKnown: result.errorCountKnown, cleared: result.cleared, blockers: result.blockers,
+    validatorKind: result.validatorKind, selectedValidatorName: result.selectedValidatorName,
+    reportedValidatorName: result.reportedValidatorName, qualifyingRun: result.qualifyingRun,
+    assessmentStatus: result.assessmentStatus, assessmentNote: result.assessmentNote, enforced: result.enforced,
+  };
 }
 
 /** Each finding with the corpus rule it is an instance of (null when the corpus names none). */
@@ -281,15 +354,24 @@ export interface DispatchReadinessAssessment {
   shadowReviewMissing: boolean;
   /** External agency-grade (eValidator) gate contribution (P0-4). */
   externalValidation: {
-    /** A licensed engine is configured. */
+    /** A selected external-engine path is configured; licence/qualification are separate. */
     configured: boolean;
-    /** An external validation actually ran (report supplied). */
+    /** The supplied report declares execution, including internal subsets. */
     ran: boolean;
-    /** Error-severity findings from the external (agency-grade) validator. */
+    /** Reported error tally, including subset diagnostics; consult errorCountKnown/status. */
     errorCount: number;
+    /** Whether errorCount is a coherent executed tally rather than a numeric placeholder. */
+    errorCountKnown?: boolean;
     /** This gate adds no blocker. */
     cleared: boolean;
     blockers: string[];
+    validatorKind?: ExternalValidatorKind;
+    selectedValidatorName?: string | null;
+    reportedValidatorName?: string | null;
+    qualifyingRun?: boolean;
+    assessmentStatus?: ExternalValidationGateResult['assessmentStatus'];
+    assessmentNote?: string;
+    enforced?: boolean;
   };
   /** Release-signature state (21 CFR Part 11 §11.70, §6c). */
   releaseSignature: {
@@ -764,13 +846,12 @@ export async function assessSequenceDispatchReadiness(
   //    caller that already ran it passes the report in; otherwise the fail-closed
   //    "could not run" rule blocks a required production dispatch.
   const externalValidator = await resolveExternalValidator();
-  const externalConfigured = externalValidator.name !== 'noop';
-  const externalGate = evaluateExternalValidationGate({
-    report: params.externalValidationReport ?? null,
-    configured: externalConfigured,
-    requireEvalidator: evalidatorRequiredFromEnv(),
-    environment: resolveDispatchEnvironment(process.env.NODE_ENV),
-  });
+  const externalGate = await assessExternalValidationReport(
+    externalValidator,
+    params.externalValidationReport ?? null,
+    evalidatorRequiredFromEnv(),
+    resolveDispatchEnvironment(process.env.NODE_ENV),
+  );
 
   // 6. Hard gate over the server-computed inputs, composed with the external
   //    gate. P-22 (2026-10-08): a leaf whose document is not yet approved is a
@@ -857,7 +938,8 @@ export async function assessSequenceDispatchReadiness(
       shadowPresence: shadowPresenceGate,
       releaseSignature: releaseSignatureGate,
     },
-    { external: externalNotAssessed({ ran: externalGate.ran, configured: externalConfigured }) },
+    { external: externalNotAssessed(externalGate) },
+    { assessmentStatus: externalGate.assessmentStatus, assessmentNote: externalGate.assessmentNote },
   );
   readiness.findings = withRules(readiness.findings);
 
@@ -869,13 +951,7 @@ export async function assessSequenceDispatchReadiness(
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
     shadowReviewRunCount,
-    externalValidation: {
-      configured: externalConfigured,
-      ran: externalGate.ran,
-      errorCount: externalGate.externalErrorCount,
-      cleared: externalGate.cleared,
-      blockers: externalGate.blockers,
-    },
+    externalValidation: externalValidationView(externalGate),
     /** True when no completed Shadow Review has run for this sequence. This now
      *  also blocks the gate (§6b), so it is informational: it reports WHY the
      *  gate is blocked when that is the only blocker. */

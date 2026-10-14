@@ -1,0 +1,370 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > reads unchanged bytes, including an empty file 5ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > reads unchanged bytes, including an empty file 1ms
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses changed bytes even when their size is unchanged 9ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses bytes whose size no longer matches the record 2ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses a changed recorded size even when the content digest matches 2ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses a different recorded digest even when the size matches 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses missing digest rather than claiming integrity 2ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses malformed digest rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses missing size rather than claiming integrity 2ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses string size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses negative size rather than claiming integrity 2ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses fractional size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses unsafe integer size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > preserves the existing malformed-JSON outcome without returning bytes 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > keeps foreign version IDs indistinguishable from genuinely absent ones 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > reads unchanged bytes, including an empty file 1ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > reads unchanged bytes, including an empty file 0ms
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses changed bytes even when their size is unchanged 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses bytes whose size no longer matches the record 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses a changed recorded size even when the content digest matches 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses a different recorded digest even when the size matches 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses missing digest rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses malformed digest rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses missing size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses string size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses negative size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses fractional size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses unsafe integer size rather than claiming integrity 1ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > preserves the existing malformed-JSON outcome without returning bytes 0ms
+ ✓ server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > keeps foreign version IDs indistinguishable from genuinely absent ones 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses changed bytes even when their size is unchanged
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses changed bytes even when their size is unchanged
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bytes": {
++     "data": [
++       67,
++       79,
++       82,
++       82,
++       85,
++       80,
++       84,
++       33,
++     ],
++     "type": "Buffer",
++   },
++   "filename": "record.txt",
++   "mime": "text/plain",
++   "sha256": "962f85a27854336f3286ad54b49321f62525043b5f3508b2ecc887fdd6e7550e",
++   "sizeBytes": 8,
+  }
+
+ ❯ server/services/storage/__tests__/storage-read-integrity.test.ts:95:62
+     93|       const f = await stored(provider);
+     94|       f.replaceBytes(Buffer.from('CORRUPT!'));
+     95|       await expect(provider.get(f.result.vaultVersionId, ORG)).rejects…
+       |                                                              ^
+     96|         name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED…
+     97|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses bytes whose size no longer matches the record
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses bytes whose size no longer matches the record
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bytes": {
++     "data": [
++       79,
++       82,
++       73,
++       71,
++       73,
++       78,
++       65,
++       76,
++       32,
++       119,
++       105,
++       116,
++       104,
++       32,
++       116,
++       114,
++       97,
++       105,
++       108,
++       105,
++       110,
++       103,
++       32,
++       99,
++       111,
++       114,
++       114,
++       117,
++       112,
++       116,
++       105,
++       111,
++       110,
++     ],
++     "type": "Buffer",
++   },
++   "filename": "record.txt",
++   "mime": "text/plain",
++   "sha256": "962f85a27854336f3286ad54b49321f62525043b5f3508b2ecc887fdd6e7550e",
++   "sizeBytes": 33,
+  }
+
+ ❯ server/services/storage/__tests__/storage-read-integrity.test.ts:103:62
+    101|       const f = await stored(provider);
+    102|       f.replaceBytes(Buffer.from('ORIGINAL with trailing corruption'));
+    103|       await expect(provider.get(f.result.vaultVersionId, ORG)).rejects…
+       |                                                              ^
+    104|         name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED…
+    105|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses a changed recorded size even when the content digest matches
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses a changed recorded size even when the content digest matches
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bytes": {
++     "data": [
++       79,
++       82,
++       73,
++       71,
++       73,
++       78,
++       65,
++       76,
++     ],
++     "type": "Buffer",
++   },
++   "filename": "record.txt",
++   "mime": "text/plain",
++   "sha256": "962f85a27854336f3286ad54b49321f62525043b5f3508b2ecc887fdd6e7550e",
++   "sizeBytes": 8,
+  }
+
+ ❯ server/services/storage/__tests__/storage-read-integrity.test.ts:111:62
+    109|       const f = await stored(provider);
+    110|       f.replaceMetadata({ ...f.metadata, sizeBytes: 9 });
+    111|       await expect(provider.get(f.result.vaultVersionId, ORG)).rejects…
+       |                                                              ^
+    112|         name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED…
+    113|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses a different recorded digest even when the size matches
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses a different recorded digest even when the size matches
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bytes": {
++     "data": [
++       79,
++       82,
++       73,
++       71,
++       73,
++       78,
++       65,
++       76,
++     ],
++     "type": "Buffer",
++   },
++   "filename": "record.txt",
++   "mime": "text/plain",
++   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
++   "sizeBytes": 8,
+  }
+
+ ❯ server/services/storage/__tests__/storage-read-integrity.test.ts:119:62
+    117|       const f = await stored(provider);
+    118|       f.replaceMetadata({ ...f.metadata, sha256: '0'.repeat(64) });
+    119|       await expect(provider.get(f.result.vaultVersionId, ORG)).rejects…
+       |                                                              ^
+    120|         name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED…
+    121|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses missing digest rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses missing digest rather than claiming integrity
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bytes": {
++     "data": [
++       79,
++       82,
++       73,
++       71,
++       73,
++       78,
++       65,
++       76,
++     ],
++     "type": "Buffer",
++   },
++   "filename": "record.txt",
++   "mime": "text/plain",
++   "sha256": undefined,
++   "sizeBytes": 8,
+  }
+
+ ❯ server/services/storage/__tests__/storage-read-integrity.test.ts:135:62
+    133|       const f = await stored(provider);
+    134|       f.replaceMetadata({ ...f.metadata, [key as string]: value });
+    135|       await expect(provider.get(f.result.vaultVersionId, ORG)).rejects…
+       |                                                              ^
+    136|         name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED…
+    137|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses malformed digest rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses malformed digest rather than claiming integrity
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bytes": {
++     "data": [
++       79,
++       82,
++       73,
++       71,
++       73,
++       78,
++       65,
++       76,
++     ],
++     "type": "Buffer",
++   },
++   "filename": "record.txt",
++   "mime": "text/plain",
++   "sha256": "sha256:wrong",
++   "sizeBytes": 8,
+  }
+
+ ❯ server/services/storage/__tests__/storage-read-integrity.test.ts:135:62
+    133|       const f = await stored(provider);
+    134|       f.replaceMetadata({ ...f.metadata, [key as string]: value });
+    135|       await expect(provider.get(f.result.vaultVersionId, ORG)).rejects…
+       |                                                              ^
+    136|         name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED…
+    137|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses missing size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses string size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses negative size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses fractional size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > local storage read integrity > refuses unsafe integer size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses missing size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses string size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses negative size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses fractional size rather than claiming integrity
+ FAIL  server/services/storage/__tests__/storage-read-integrity.test.ts > s3 storage read integrity > refuses unsafe integer size rather than claiming integrity
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "bytes": {
++     "data": [
++       79,
++       82,
++       73,
++       71,
++       73,
++       78,
++       65,
++       76,
++     ],
++     "type": "Buffer",
++   },
++   "filename": "record.txt",
++   "mime": "text/plain",
++   "sha256": "962f85a27854336f3286ad54b49321f62525043b5f3508b2ecc887fdd6e7550e",
++   "sizeBytes": 8,
+  }
+
+ ❯ server/services/storage/__tests__/storage-read-integrity.test.ts:135:62
+    133|       const f = await stored(provider);
+    134|       f.replaceMetadata({ ...f.metadata, [key as string]: value });
+    135|       await expect(provider.get(f.result.vaultVersionId, ORG)).rejects…
+       |                                                              ^
+    136|         name: 'StorageIntegrityError', code: 'STORAGE_INTEGRITY_FAILED…
+    137|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  22 failed | 8 passed (30)
+   Start at  02:59:27
+   Duration  508ms (transform 105ms, setup 70ms, import 140ms, tests 48ms, environment 0ms)
+

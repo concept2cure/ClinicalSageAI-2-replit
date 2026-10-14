@@ -134,6 +134,8 @@ export interface ProgramScopeOptions {
    * surface does (a deleted project 404s on its own page).
    */
   includeDeleted?: boolean;
+  /** Retain the matching row inside the supplied caller-owned transaction. */
+  forShare?: boolean;
 }
 
 /**
@@ -184,10 +186,24 @@ export async function programInOrganization(
   let rows: unknown[];
   try {
     const q = typeof db === 'function' ? db() : db;
-    ({ rows } = await q.query(
-      `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${live} LIMIT 1`,
-      [programId, org],
-    ));
+    if (options.forShare === true) {
+      if (options.includeDeleted) {
+        ({ rows } = await q.query(
+          'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1 FOR SHARE',
+          [programId, org],
+        ));
+      } else {
+        ({ rows } = await q.query(
+          'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR SHARE',
+          [programId, org],
+        ));
+      }
+    } else {
+      ({ rows } = await q.query(
+        `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${live} LIMIT 1`,
+        [programId, org],
+      ));
+    }
   } catch (err) {
     throw new VerificationUnavailableError('program ownership check', describeFailure(err));
   }

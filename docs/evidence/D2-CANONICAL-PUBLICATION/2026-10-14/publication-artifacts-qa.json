@@ -1,0 +1,77 @@
+{
+  "manifestFiles": 136,
+  "manifestTotalBytes": 12716098,
+  "allOriginalAndRepositoryBytesMatch": true,
+  "mismatches": [],
+  "unrepresentedAuthoredFiles": [],
+  "excludedExternalFiles": [
+    "/workspace/scratch/dependency-install.log",
+    "/workspace/scratch/management-sources/1YeVcxjbrhiZsrKqY24vmAxlENnNoXIIS.txt",
+    "/workspace/scratch/management-sources/1qGF_tDyho1qBQjkg3SY3rc0nqhGpn2GH.txt",
+    "/workspace/scratch/management-sources/1f37l91wohoTlBEv5POqBg22hfCB2XMK5.txt",
+    "/workspace/scratch/management-sources/1wE1qKH9TCiI9fxStOJxCzMEsEz0qqtX-.txt",
+    "/workspace/scratch/management-sources/1L1S65sv08CxpAZMph_lgv3gbQiWtej_7.txt",
+    "/workspace/scratch/management-sources/1QcNYsQ-awp3MjktMLj2Tz077zZ8LR1uu.txt",
+    "/workspace/scratch/management-sources/1X-7ujQa3VD9rtx5rD5HDCYkyJWOisNM_.txt",
+    "/workspace/scratch/management-sources/1mn5q66GASbEKIOftOjnTY0IYF84LDceY.txt",
+    "/workspace/scratch/management-sources/1PymEUrdl29Sys00jsJp66LfnagBMz8Zz.txt",
+    "/workspace/scratch/management-sources/1zxlgzrJ6Sxx4P9iF5vxM1t8T2if4Ekzz.txt",
+    "/workspace/scratch/management-sources/1UT6ezJwjmMhkgZPBLa1tXgogJlNY9Fee.txt",
+    "/workspace/scratch/node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json"
+  ],
+  "archivedJsTsSourceFiles": 16,
+  "rebuiltExports": [
+    {
+      "source": "docs/reports/DATA_ROOM_AI_MOAT_STUDY_2026-10-14.md",
+      "markdownMatches": true,
+      "pdfPages": 12,
+      "headings": 26,
+      "missingPdfHeadings": [],
+      "missingDocxHeadings": [],
+      "files": {
+        "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-data-room-study-2026-10-14.md": {
+          "bytes": 52362,
+          "sha256": "d536f83701af69b3b7e19d8676cd4c931d3a355468f3898c2a8024215872a49f"
+        },
+        "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-data-room-study-2026-10-14.pdf": {
+          "bytes": 131537,
+          "sha256": "d9e82ee4494364dd53bf2e54ff0c4406f461c3c51db1295455a54ecb1c37fc2e"
+        },
+        "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-data-room-study-2026-10-14.docx": {
+          "bytes": 58182,
+          "sha256": "1f1de3afadf244e600676e9127e3483570d7543c3b4500e7f9ebee6168fddc65"
+        }
+      }
+    },
+    {
+      "source": "docs/plans/DATA_ROOM_ENHANCEMENT_DELIVERY_PLAN_2026-10-14.md",
+      "markdownMatches": true,
+      "pdfPages": 8,
+      "headings": 14,
+      "missingPdfHeadings": [],
+      "missingDocxHeadings": [],
+      "files": {
+        "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-enhancement-delivery-plan-2026-10-14.md": {
+          "bytes": 31652,
+          "sha256": "575118601692adc24cbe12dc0491f7467f5931114bdd9f49d4b931e985d2e626"
+        },
+        "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-enhancement-delivery-plan-2026-10-14.pdf": {
+          "bytes": 94122,
+          "sha256": "b8600cb9a0d2ef021726e44f5721a3b6d3ee4a5e8c46c0e6225c622f5ce58ad9"
+        },
+        "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-enhancement-delivery-plan-2026-10-14.docx": {
+          "bytes": 50303,
+          "sha256": "22ede9f551da562eeb503a7e54dcf472c7873fd8fb99037a6f29766231dab0f5"
+        }
+      }
+    }
+  ],
+  "scope": "Historical exports preserve recorded document content; rendering/byte/heading checks do not qualify new application code, provider delivery or agency acceptance.",
+  "visualInspection": {
+    "pages": [
+      "Concept2Cure-data-room-study-2026-10-14-publication-page-5.png",
+      "Concept2Cure-enhancement-delivery-plan-2026-10-14-publication-page-5.png"
+    ],
+    "finding": "Selected study prose and plan table pages were viewed; text was legible, within page margins and without visible clipping. Other pages were checked only by extracted heading presence."
+  }
+}

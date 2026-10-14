@@ -36,7 +36,10 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_review_assignments (reviewer_id integer, organization_id integer, artifact_id uuid, status text);
     CREATE TABLE concept2cure_artifacts (id uuid PRIMARY KEY, project_id integer, organization_id integer, metadata jsonb);
     CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer, user_id integer);
-    CREATE TABLE cre_evidence_sources (organization_id integer, provenance jsonb, client_program_id uuid, client_workspace_id integer);
+    CREATE TABLE cre_evidence_sources (organization_id integer, provenance jsonb, metadata jsonb NOT NULL DEFAULT '{}',
+      client_program_id uuid, client_workspace_id integer, source_type text, created_by int);
+    CREATE TABLE authoring_audit_trail (id uuid, doc_id uuid, section_id uuid, tenant_id integer,
+      actor_id text, after_content text, created_at timestamptz);
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}',7,NULL);
     INSERT INTO projects VALUES (42,7,'${PROGRAM}',NULL,5,5,'{}');
     INSERT INTO users VALUES (3,'active'),(5,'active');

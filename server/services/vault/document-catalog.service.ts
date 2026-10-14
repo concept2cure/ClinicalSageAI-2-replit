@@ -14,24 +14,27 @@
  *
  * The rules themselves (spans, coverage, the gate, extraction outcomes) are
  * pure functions in document-catalog-core.ts, re-exported below; this file is
- * the thin DB layer. Tenancy on vault.documents follows the established
- * idiom: an EXISTS join to regulatory_programs.organization_id, because the
- * table itself carries no org column (see vault-ingest.ts).
+ * the thin DB layer. Source reads require the document's recorded organization
+ * and its live regulatory program to agree with the requested organization.
  */
 
+import { createHash } from 'node:crypto';
 import { pool } from '../../db.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
-import { vaultWriteRefusal } from './vault-write-authority.js';
-import { requireCurrentProgramAccess } from '../c2c/current-program-access.js';
 import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
+import { loadDocumentForOrg as loadCurrentActorDocument, loadDocumentForAdmittedScope, loadCatalogProposalSource, type CatalogDocumentRow } from './document-catalog-document.js';
+import { LEGACY_CATALOG_VERIFICATION_SCOPE, type LegacyCatalogVerificationScope } from '../../../shared/ana/catalog-facts.js';
+import { runSourceFactPreview, type SourceFactPreviewArgs, type SourceFactPreviewResult } from './document-catalog-preview.js';
+import type { CompleteCatalogArgs, CompleteCatalogResult, VaultDocDigest } from './document-catalog-operation-types.js';
 import { vaultDataEligibleSql, vaultDispositionChoiceSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
-import { catalogableDocument } from './document-catalog-eligibility.js';
-import { loadDocumentForOrg } from './document-catalog-document.js';
-export { loadDocumentForOrg, type CatalogDocumentRow } from './document-catalog-document.js';
+import { assertCatalogListingScope } from './document-catalog-source-scope.js';
+import { supersededSql } from './vault-version-family.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
-import { catalogStateOf, writeCatalogSuggestion, type CatalogProposer } from './document-catalog-governance.service.js';
+import { catalogStateOf, writeCatalogSuggestion } from './document-catalog-governance.service.js';
 import { filingVocabularyRefusal } from './vault-filing.service.js';
+import { runLoadDocumentForActor, runListProjectDocumentsForActor, type ActorCatalogDocumentRow, type ActorProjectDocumentPage } from './document-catalog-actor-reads.js';
+import type { AnaSourceReadScopeInput } from '../ana/source-read-scope.js';
 import {
   computeCoverage,
   assertCatalogWriteAllowed,
@@ -60,6 +63,12 @@ export async function isDocumentCatalogEnabled(organizationId?: number | null): 
 
 // One import path for callers: the pure core rides along with the DB layer.
 export * from './document-catalog-core.js';
+export type { CatalogDocumentRow } from './document-catalog-document.js';
+export { withAnaSourceReadScope, revalidateActorSourceScope } from './document-catalog-actor-access.js';
+export type { AnaSourceReadScopeInput, AdmittedAnaSourceReadScope } from './document-catalog-actor-access.js';
+export type { AnaCatalogSourceAccess, ActorCatalogDocumentRow, ActorProjectDocumentPage } from './document-catalog-actor-reads.js';
+export { listChatUploadsForActor, listChatUploadsInReadScope } from './document-catalog-actor-captures.js';
+export type { ActorChatUploadPage } from './document-catalog-actor-captures.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB wrappers
@@ -152,7 +161,35 @@ export async function recordExtractionOutcome(
   );
 }
 
-/** Record the exact span of extracted text served by a read. */
+/** Interactive request-client reads require current-parent admission; actor
+ * facades use the explicitly admitted raw primitive on their owned executor. */
+export function loadDocumentForOrg(documentId: string, organizationId: number,
+  opts: { executor: RequestSqlClient; userId: number | undefined; includeText?: boolean; programId?: string; currentOnly?: boolean }): Promise<CatalogDocumentRow | null>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
+export function loadDocumentForOrg(documentId: string, organizationId: number,
+  opts?: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] }): Promise<CatalogDocumentRow | null>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
+export async function loadDocumentForOrg(documentId: string, organizationId: number,
+  opts: { userId?: number; includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] } = {},
+): Promise<CatalogDocumentRow | null> {
+  if (Object.prototype.hasOwnProperty.call(opts, 'userId')) {
+    return loadCurrentActorDocument(documentId, organizationId, { ...opts, executor: opts.executor as RequestSqlClient, userId: opts.userId });
+  }
+  return loadDocumentForAdmittedScope(documentId, organizationId, opts);
+}
+
+/** Interactive AnA reads must use current actor/project admission. The raw
+ * loader above remains for callers that already perform their own admission. */
+export function loadDocumentForActor(
+  input: AnaSourceReadScopeInput & { documentId: string },
+  opts: { includeText?: boolean; currentOnly?: boolean } = {},
+): Promise<ActorCatalogDocumentRow | null> {
+  return runLoadDocumentForActor(input, opts, { load: loadDocumentForOrg });
+}
+
+/** Trusted internal legacy span insert. Interactive AnA reads use the guarded
+ * host-budget admission writer; these rows contain no extraction digest or
+ * provider delivery acknowledgement. */
 export async function recordReadReceipt(args: {
   executor?: RequestSqlClient;
   documentId: string;
@@ -176,12 +213,13 @@ export async function recordReadReceipt(args: {
   );
 }
 
-/** Coverage of the CURRENT bytes (receipts against other hashes prove nothing). */
+/** Aggregate legacy host-span history bound to the selected original byte
+ * hash. It is not current-actor, extraction-specific or provider-served proof. */
 export async function getReadCoverage(
   documentId: string,
   contentHash: string,
   charCount: number,
-  executor: RequestSqlClient = pool,
+  executor: Queryable = pool,
 ): Promise<SpanCoverageReport> {
   const res = await executor.query(
     `SELECT char_start, char_end FROM vault.document_read_receipts
@@ -192,63 +230,19 @@ export async function getReadCoverage(
   return computeCoverage(spans, charCount);
 }
 
-export interface CompleteCatalogResult {
-  ok: boolean;
-  refusal?: string;
-  coverage?: SpanCoverageReport;
-  /** Present only on a key_data refusal: every value the text does not state, by path. */
-  unverifiedKeyData?: import('./document-catalog-core.js').UnverifiedKeyDataLeaf[];
-  embeddingStatus?: 'embedded' | 'failed';
+export type { CompleteCatalogArgs, CompleteCatalogResult, VaultDocDigest } from './document-catalog-operation-types.js';
+
+export type { SourceFactPreviewArgs, SourceFactPreviewResult } from './document-catalog-preview.js';
+export { isSourceFactPreviewEnabled } from './document-catalog-preview.js';
+
+/** One canonical facade; the read-only helper uses these same query primitives. */
+export function previewSourceFacts(args: SourceFactPreviewArgs): Promise<SourceFactPreviewResult> {
+  return runSourceFactPreview(args, { connect: () => pool.connect(), isCatalogEnabled: isDocumentCatalogEnabled, loadDocument: loadDocumentForOrg, getCoverage: getReadCoverage });
 }
 
-/**
- * Write the comprehension tier — refused below full read coverage, and
- * refused when any key_data value does not occur in the text that was read.
- * The embedding is best-effort and its outcome is recorded (embedding_status),
- * never assumed: a catalog entry whose embedding failed is still a valid
- * record that says its semantic index is missing.
- */
-export async function completeCatalog(args: {
-  documentId: string;
-  organizationId: number;
-  documentKind: string;
-  purpose: string;
-  summary: string;
-  keyData?: Record<string, unknown> | null;
-  userId: number | undefined;
-  executor: RequestSqlClient;
-  programId?: string;
-  /** Who wrote the description: the agent, its model and turn (S4). */
-  proposer?: CatalogProposer | null;
-}): Promise<CompleteCatalogResult> {
-  // The kind is the Vault's evidence-kind vocabulary, as placement's is (S4).
-  const vocabulary = filingVocabularyRefusal({ evidenceKind: args.documentKind });
-  if (vocabulary) return { ok: false, refusal: vocabulary.message };
-  // The text that was served is the text key_data is verified against.
-  const availability = catalogableDocument(await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true, executor: args.executor, userId: args.userId, programId: args.programId }));
-  if (!availability.ok) return availability;
-  const doc = availability.document;
-  const access = await requireCurrentProgramAccess(args.executor, { organizationId: args.organizationId, userId: args.userId, programId: doc.programId });
-  const roleRefusal = vaultWriteRefusal(access.actor.role);
-  if (roleRefusal) return { ok: false, refusal: roleRefusal.message };
-
-  /* Coverage proves the model was served every character; it proved nothing
-     about what the model then wrote. key_data was stored as the model typed
-     it, so a CoA reading batch 23-104 and assay 99.2 % was recorded as batch
-     23-105 and assay 98.4 and served back as fact by every reader of the
-     catalog. The gate now also checks each value against the same stored text
-     read_project_document served, before the embedding and the write, so a
-     refusal stores nothing (CLAUDE.md Rule 2). */
-  const coverage = await getReadCoverage(doc.id, doc.contentHash, doc.catalog.charCount, args.executor);
-  const verdict = assertCatalogWriteAllowed(coverage, args.keyData, doc.extractedText);
-  if (!verdict.allowed) {
-    const { reason, unverifiedKeyData } = verdict;
-    return { ok: false, refusal: reason ?? 'Catalog write refused.', coverage, unverifiedKeyData };
-  }
-
-  // Embed the comprehension record so it is semantically retrievable. The
-  // column only exists where pgvector does; both absence and failure are
-  // recorded as what they are.
+async function embedCatalogProposal(doc: CatalogDocumentRow, args: CompleteCatalogArgs & { executor?: RequestSqlClient }): Promise<{
+  embeddingStatus: 'embedded' | 'failed'; embeddingLiteral: string | null;
+}> {
   let embeddingStatus: 'embedded' | 'failed';
   let embeddingLiteral: string | null = null;
   try {
@@ -261,7 +255,7 @@ export async function completeCatalog(args: {
     ]
       .filter(Boolean)
       .join('\n');
-    const result = await getEmbeddingService(args.executor as any).embed(text);
+    const result = await getEmbeddingService((args.executor ?? pool) as any).embed(text);
     embeddingLiteral = `[${result.embedding.join(',')}]`;
     embeddingStatus = 'embedded';
   } catch (err) {
@@ -272,6 +266,52 @@ export async function completeCatalog(args: {
     });
   }
 
+  return { embeddingStatus, embeddingLiteral };
+}
+
+/**
+ * Write the comprehension tier — refused below full read coverage, and
+ * refused when any key_data value does not occur in the text that was read.
+ * The embedding is best-effort and its outcome is recorded (embedding_status),
+ * never assumed: a catalog entry whose embedding failed is still a valid
+ * record that says its semantic index is missing.
+ */
+export async function completeCatalog(args: CompleteCatalogArgs & { executor?: RequestSqlClient; programId?: string }): Promise<CompleteCatalogResult> {
+  // Clone synchronously, before source load or embedding awaits. The checked
+  // proposal and server-derived attribution must be the proposal handed off.
+  const { executor, ...proposal } = args;
+  try { args = { ...globalThis.structuredClone(proposal), executor }; }
+  catch { return { ok: false, refusal: 'The catalog proposal could not be copied as a private data snapshot. Nothing was saved.' }; }
+  // The kind is the Vault's evidence-kind vocabulary, as placement's is (S4).
+  const vocabulary = filingVocabularyRefusal({ evidenceKind: args.documentKind });
+  if (vocabulary) return { ok: false, refusal: vocabulary.message };
+  // The text that was served is the text key_data is verified against.
+  const availability = await loadCatalogProposalSource(args);
+  if (!availability.ok) return availability;
+  const doc = availability.document;
+  const currentText = doc.extractedText ?? '';
+  const expectedExtractedTextSha256 = createHash('sha256').update(currentText).digest('hex');
+
+  /* The legacy aggregate coverage gate requires stored spans for every
+     character under this byte hash; it does not prove current extraction,
+     current actor or provider delivery. key_data was stored as the model typed
+     it, so a CoA reading batch 23-104 and assay 99.2 % was recorded as batch
+     23-105 and assay 98.4 and served back as fact by every reader of the
+     catalog. The gate now also checks each value against the same stored text
+     read_project_document served, before the embedding and the write, so a
+     refusal stores nothing (CLAUDE.md Rule 2). */
+  const coverage = await getReadCoverage(doc.id, doc.contentHash, currentText.length, executor ?? pool);
+  const verdict = assertCatalogWriteAllowed(coverage, args.keyData, currentText);
+  if (!verdict.allowed) {
+    const { reason, unverifiedKeyData } = verdict;
+    return { ok: false, refusal: reason ?? 'Catalog write refused.', coverage, unverifiedKeyData };
+  }
+
+  // Embed the comprehension record so it is semantically retrievable. The
+  // column only exists where pgvector does; both absence and failure are
+  // recorded as what they are.
+  const { embeddingStatus, embeddingLiteral } = await embedCatalogProposal(doc, args);
+
   /* A suggestion, never a fact: the record names the agent, model and turn
      that wrote it and is committed with its chained audit row, and it never
      replaces a record a person confirmed or corrected (S4, D5;
@@ -279,6 +319,7 @@ export async function completeCatalog(args: {
   const written = await writeCatalogSuggestion({
     documentId: doc.id,
     contentHash: doc.contentHash,
+    expectedExtractedTextSha256,
     organizationId: args.organizationId,
     programId: doc.programId,
     documentTitle: doc.documentTitle,
@@ -291,8 +332,8 @@ export async function completeCatalog(args: {
     userId: args.userId ?? null,
     proposer: args.proposer ?? null,
   });
-  if (!written.ok) return { ok: false, refusal: written.refusal, coverage };
-  return { ok: true, coverage, embeddingStatus: written.embeddingStatus };
+  if (!written.ok) return { ok: false, refusal: written.refusal, coverage, ...(written.unverifiedKeyData ? { unverifiedKeyData: written.unverifiedKeyData } : {}) };
+  return { ok: true, coverage, embeddingStatus: written.embeddingStatus, checkScope: { ...LEGACY_CATALOG_VERIFICATION_SCOPE } };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -320,6 +361,8 @@ export interface ProjectDocumentListing {
   purpose: string | null;
   /** suggested (AnA's, not yet confirmed) | confirmed | corrected; null before a description. */
   catalogState: string | null;
+  /** Describes the legacy check's scope; it is not a new historical pass. */
+  checkScope?: LegacyCatalogVerificationScope;
   extractionError: string | null;
   charCount: number | null;
   createdAt: string;
@@ -349,7 +392,8 @@ export interface ProjectDocumentPage {
 }
 
 /**
- * Every eligible document across the caller's currently accessible programs, each with its filed location and catalog state. A document with no
+ * Every live document across the given programs (or all programs the org
+ * owns), each with its filed location and catalog state. A document with no
  * catalog row is reported as 'uncataloged' — an honest "not assessed", never
  * hidden and never presented as assessed-and-empty.
  *
@@ -369,19 +413,52 @@ export interface ProjectDocumentPage {
  * are window aggregates over the same scan (`COUNT(*) OVER ()`), evaluated
  * before `LIMIT`, so honesty costs no extra round trip.
  */
+export interface RawProjectDocumentOptions {
+  programId?: string | null; limit?: number; executor?: Queryable;
+  allowedProgramIds?: readonly string[]; currentOnly?: boolean;
+}
+export interface ActorProjectDocumentOptions { userId: number | undefined; programId?: string | null; limit?: number }
+export function listProjectDocuments(organizationId: number, opts?: RawProjectDocumentOptions): Promise<ProjectDocumentPage>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
+export function listProjectDocuments(db: Queryable, organizationId: number, opts: ActorProjectDocumentOptions, verifiedScope?: CurrentAccessibleProgramScope): Promise<ProjectDocumentPage>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
 export async function listProjectDocuments(
-  db: Queryable,
-  organizationId: number,
-  opts: { userId: number | undefined; programId?: string | null; limit?: number },
+  dbOrOrganizationId: Queryable | number,
+  organizationIdOrOpts: number | RawProjectDocumentOptions = {},
+  actorOpts?: ActorProjectDocumentOptions,
   verifiedScope?: CurrentAccessibleProgramScope,
 ): Promise<ProjectDocumentPage> {
-  const identity = {organizationId,userId:opts.userId,programId:opts.programId ?? null};
-  if (verifiedScope) assertVerifiedProgramScope(db,identity,verifiedScope);
-  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
+  if (typeof dbOrOrganizationId === 'number') return listProjectDocumentsRaw(dbOrOrganizationId, organizationIdOrOpts as RawProjectDocumentOptions);
+  const db = dbOrOrganizationId;
+  const organizationId = organizationIdOrOpts as number;
+  const opts = { ...actorOpts! };
+  const identity = { organizationId, userId: opts.userId, programId: opts.programId ?? null };
+  if (verifiedScope) assertVerifiedProgramScope(db, identity, verifiedScope);
+  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db, identity);
+  const page = await listProjectDocumentsRaw(organizationId, { ...opts, executor: db, allowedProgramIds: scope.programIds });
+  await requireProgramScopeStillCurrent(db, identity, scope);
+  return page;
+}
+
+async function listProjectDocumentsRaw(
+  organizationId: number,
+  opts: { programId?: string | null; limit?: number; executor?: Queryable; allowedProgramIds?: readonly string[]; currentOnly?: boolean } = {},
+): Promise<ProjectDocumentPage> {
   const limit = Math.min(200, Math.max(1, opts.limit ?? 100));
-  const params: unknown[] = [organizationId, limit, scope.programIds];
-  const res = await db.query(
-    `SELECT d.id, d.program_id, rp.name AS program_name, d.document_code, d.document_title,
+  const params: unknown[] = [organizationId, limit];
+  let programFilter = '';
+  if (opts.programId) {
+    params.push(opts.programId);
+    programFilter = `AND d.program_id = $${params.length}`;
+  }
+  if (opts.allowedProgramIds !== undefined) {
+    params.push([...opts.allowedProgramIds]);
+    programFilter += ` AND d.program_id = ANY($${params.length}::uuid[])`;
+  }
+  if (opts.currentOnly) programFilter += ` AND NOT ${supersededSql('d')}`;
+  const res = await (opts.executor ?? pool).query(
+    `SELECT d.id, d.organization_id, d.program_id, rp.organization_id AS program_organization_id,
+            rp.deleted_at AS program_deleted_at, rp.name AS program_name, d.document_code, d.document_title,
             d.document_type, d.file_name, d.folder_id, d.ctd_section, d.evidence_kind,
             d.placement_status, d.created_at,
             ${vaultDispositionChoiceSql('d')} AS disposition,
@@ -397,15 +474,17 @@ export async function listProjectDocuments(
             COUNT(*) FILTER (WHERE d.placement_status = 'unfiled')
               OVER () AS scope_unfiled
        FROM vault.documents d
-       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
+       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
-      WHERE d.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
-        AND d.program_id = ANY($3::uuid[])
+      WHERE d.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${programFilter}
       ORDER BY d.created_at DESC
       LIMIT $2`,
     params,
   );
-  await requireProgramScopeStillCurrent(db,identity,scope);
+  assertCatalogListingScope(res.rows, organizationId);
+  if (opts.allowedProgramIds !== undefined && res.rows.some(row => !opts.allowedProgramIds!.includes(row.program_id))) {
+    throw new Error('The catalog query returned a source outside its admitted program scope.');
+  }
   const documents = res.rows.map((r: any) => ({
     id: r.id,
     programId: r.program_id,
@@ -426,6 +505,7 @@ export async function listProjectDocuments(
     documentKind: r.document_kind,
     purpose: r.purpose,
     catalogState: catalogStateOf(r),
+    ...(r.catalog_status === 'cataloged' ? { checkScope: { ...LEGACY_CATALOG_VERIFICATION_SCOPE } } : {}),
     extractionError: r.extraction_error,
     charCount: r.char_count,
     createdAt: String(r.created_at),
@@ -445,17 +525,11 @@ export async function listProjectDocuments(
   };
 }
 
-export interface VaultDocDigest {
-  fileName: string;
-  documentTitle: string;
-  programName: string | null;
-  folderId: string | null;
-  ctdSection: string | null;
-  placementStatus: string;
-  catalogStatus: CatalogStatus | 'uncataloged';
-  documentKind: string | null;
-  purpose: string | null;
-  catalogState: string | null;
+export function listProjectDocumentsForActor(
+  input: AnaSourceReadScopeInput,
+  opts: { limit?: number } = {},
+): Promise<ActorProjectDocumentPage> {
+  return runListProjectDocumentsForActor(input, opts, listProjectDocuments);
 }
 
 /** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
@@ -468,10 +542,14 @@ export interface ChatUploadDigest {
   dossier: unknown;
   programId: string | null;
   uploadedAt: string;
+  originalFileAvailable?: boolean;
+  sourceAccessNotice?: string;
 }
 
 /** A page of chat uploads, and whether the limit hid any. */
 export interface ChatUploadPage {
+  actorFiltered?: true;
+  sourceAccessNotice?: string;
   uploads: ChatUploadDigest[];
   /** True when the spine held more than `limit` — established by asking for one extra row. */
   hasMore: boolean;
@@ -493,33 +571,36 @@ export interface ChatUploadPage {
  * needs nothing from the spine service.
  */
 export async function listChatUploads(
-  q: import('../../db/requestDb').RequestSqlClient,
+  q: RequestSqlClient,
   orgId: number,
-  opts: {userId:number | undefined; programId?:string | null; limit?:number},
-  verifiedScope?: import('../c2c/current-program-access').CurrentAccessibleProgramScope,
+  opts: ActorProjectDocumentOptions,
+  verifiedScope?: CurrentAccessibleProgramScope,
 ): Promise<ChatUploadPage> {
-  const {assertVerifiedProgramScope,requireProgramScopeStillCurrent}=await import('../c2c/current-program-access');
-  const identity={organizationId:orgId,userId:opts.userId,programId:opts.programId};
-  if (verifiedScope) assertVerifiedProgramScope(q,identity,verifiedScope);
-  const {listClientDocuments} = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
-  const want=Math.min(499,Math.max(1,opts.limit ?? 100));
-  const sources=await listClientDocuments(q,orgId,{userId:opts.userId,programId:opts.programId,
-    includeUnscoped:true,currentOnly:true,dataEligibleOnly:true,limit:want+1});
-  const hasMore=sources.length>want;
-  const uploads=sources.slice(0,want).map(s=>{
-    const prov=(s.provenance ?? {}) as Record<string,unknown>;
-    const meta=(s.metadata ?? {}) as Record<string,unknown>;
-    return {sourceId:s.id,fileId:typeof prov.fileUploadId==='string' ? prov.fileUploadId : null,
-      fileName:typeof meta.originalName==='string' ? meta.originalName : (s.title ?? 'document'),
-      version:s.version ?? null,extractionStatus:s.extractionStatus,dossier:meta.dossier ?? null,
-      programId:s.clientProgramId ?? null,uploadedAt:String(s.createdAt)};
+  const pinned = { userId: opts.userId, programId: opts.programId ?? null, limit: opts.limit };
+  const identity = { organizationId: orgId, userId: pinned.userId, programId: pinned.programId };
+  if (verifiedScope) assertVerifiedProgramScope(q, identity, verifiedScope);
+  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(q, identity);
+  const { listClientDocuments } = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
+  const want = Math.min(499, Math.max(1, pinned.limit ?? 100));
+  const sources = await listClientDocuments(q, orgId, { userId: pinned.userId, programId: pinned.programId,
+    includeUnscoped: true, currentOnly: true, dataEligibleOnly: true, limit: want + 1 });
+  const hasMore = sources.length > want;
+  const uploads = sources.slice(0, want).map(s => {
+    const prov = (s.provenance ?? {}) as Record<string, unknown>;
+    const meta = (s.metadata ?? {}) as Record<string, unknown>;
+    return { sourceId: s.id, fileId: typeof prov.fileUploadId === 'string' ? prov.fileUploadId : null,
+      fileName: typeof meta.originalName === 'string' ? meta.originalName : (s.title ?? 'document'),
+      version: s.version ?? null, extractionStatus: s.extractionStatus, dossier: meta.dossier ?? null,
+      programId: s.clientProgramId ?? null, uploadedAt: String(s.createdAt),
+      originalFileAvailable: s.originalFileAvailable !== false };
   });
-  if (verifiedScope) await requireProgramScopeStillCurrent(q,identity,verifiedScope);
-  return {uploads,hasMore};
+  await requireProgramScopeStillCurrent(q, identity, scope);
+  return { uploads, hasMore, actorFiltered: true,
+    sourceAccessNotice: 'This listing covers eligible captured sources accessible to the current actor; unbound uploads require their recorded source ownership.' };
 }
 
 /**
- * What session recall needs: a bounded SAMPLE of the caller's accessible project files, and
+ * What session recall needs: a bounded SAMPLE of the org's project files, and
  * the scope-wide numbers that say what the sample leaves out.
  *
  * Both halves matter. Without the sample AnA starts cold on a file the client
@@ -533,16 +614,30 @@ export interface CatalogBootstrapDigest {
   notYetStudied: number;
   extractionFailed: number;
   unfiled: number;
+  actorFiltered?: true;
+  accessibleProgramCount?: number;
+  sourceAccessNotice?: string;
 }
 
-export async function getCatalogBootstrapDigest(
-  db: Queryable,
-  organizationId: number,
-  opts: { userId: number | undefined; programId?: string | null; limit?: number },
-  verifiedScope?: CurrentAccessibleProgramScope,
-): Promise<CatalogBootstrapDigest> {
-  const page = await listProjectDocuments(db, organizationId, { ...opts, limit: opts.limit ?? 12 },verifiedScope);
+export function getCatalogBootstrapDigest(organizationId: number, limit?: number): Promise<CatalogBootstrapDigest>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
+export function getCatalogBootstrapDigest(db: Queryable, organizationId: number, opts: ActorProjectDocumentOptions, verifiedScope?: CurrentAccessibleProgramScope): Promise<CatalogBootstrapDigest>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
+export async function getCatalogBootstrapDigest(dbOrOrganizationId: Queryable | number,
+  orgOrLimit: number = 12, opts?: ActorProjectDocumentOptions, verifiedScope?: CurrentAccessibleProgramScope): Promise<CatalogBootstrapDigest> {
+  opts = opts ? { ...opts } : undefined;
+  let page: ProjectDocumentPage;
+  let admitted: CurrentAccessibleProgramScope | undefined;
+  if (typeof dbOrOrganizationId === 'number') page = await listProjectDocuments(dbOrOrganizationId, { limit: orgOrLimit });
+  else {
+    const identity = { organizationId: orgOrLimit, userId: opts!.userId, programId: opts!.programId ?? null };
+    if (verifiedScope) assertVerifiedProgramScope(dbOrOrganizationId, identity, verifiedScope);
+    admitted = verifiedScope ?? await getCurrentAccessibleProgramScope(dbOrOrganizationId, identity);
+    page = await listProjectDocuments(dbOrOrganizationId, orgOrLimit, { ...opts!, limit: opts!.limit ?? 12 }, admitted);
+  }
   return {
+    ...(admitted ? { actorFiltered: true as const, accessibleProgramCount: admitted.programIds.length,
+      sourceAccessNotice: 'This digest is a bounded sample of the current actor’s accessible projects; counts describe that admitted scope.' } : {}),
     files: page.documents.map(r => ({
       fileName: r.fileName,
       documentTitle: r.documentTitle,
@@ -554,11 +649,31 @@ export async function getCatalogBootstrapDigest(
       documentKind: r.documentKind,
       purpose: r.purpose,
       catalogState: r.catalogState,
+      ...(r.checkScope ? { checkScope: r.checkScope } : {}),
     })),
     total: page.total,
     withheld: page.withheld,
     notYetStudied: page.notYetStudied,
     extractionFailed: page.extractionFailed,
     unfiled: page.unfiled,
+  };
+}
+
+/** Bootstrap receives session identity from the serving host, never the body. */
+export async function getCatalogBootstrapDigestForActor(
+  input: AnaSourceReadScopeInput,
+  limit = 12,
+): Promise<CatalogBootstrapDigest & { actorFiltered: true; admittedScope: ActorProjectDocumentPage['admittedScope']; sourceAccessNotice: string }> {
+  const page = await listProjectDocumentsForActor(input, { limit });
+  return {
+    files: page.documents.map(r => ({ fileName: r.fileName, documentTitle: r.documentTitle,
+      programName: r.programName, folderId: r.location.folderId, ctdSection: r.location.ctdSection,
+      placementStatus: r.location.placementStatus, catalogStatus: r.catalogStatus,
+      documentKind: r.documentKind, purpose: r.purpose, catalogState: r.catalogState,
+      ...(r.checkScope ? { checkScope: r.checkScope } : {}),
+    })),
+    total: page.total, withheld: page.withheld, notYetStudied: page.notYetStudied,
+    extractionFailed: page.extractionFailed, unfiled: page.unfiled,
+    actorFiltered: true, admittedScope: page.admittedScope, sourceAccessNotice: page.sourceAccessNotice,
   };
 }

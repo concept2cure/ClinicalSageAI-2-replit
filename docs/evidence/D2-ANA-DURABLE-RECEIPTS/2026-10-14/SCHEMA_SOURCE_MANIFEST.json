@@ -1,0 +1,17 @@
+{
+  "scope": "schema owner final 40-control sequential SQL, two-root selected typecheck, default-off durable contract",
+  "files": [
+    {
+      "path": "migrations/20261014_ana_source_read_receipts.sql",
+      "sha256": "ec96e38a9cf0466c6abea7c223e0ea715b64bedaccd1b85f43967b462c7cb9dd"
+    },
+    {
+      "path": "shared/schema/ana-source-read-receipts.ts",
+      "sha256": "52051a55c0a8b50de9dde2245877ec0b60033e181291723adf66351f6203588e"
+    },
+    {
+      "path": "tests/schema-contract/ana-source-read-receipts.contract.test.ts",
+      "sha256": "ede1c29f217e4c95f1003a62916230f6493e80c2291d189d2a6c158f13c782ca"
+    }
+  ]
+}

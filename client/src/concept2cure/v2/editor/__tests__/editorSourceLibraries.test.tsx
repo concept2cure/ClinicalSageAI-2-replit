@@ -9,11 +9,42 @@ import { IndDocumentLibrary } from '../IndDocumentLibrary';
 const programId = '11111111-1111-4111-8111-111111111111';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data });
 const sourcePage = (sources: Array<Record<string, unknown>>, total = sources.length, offset = 0) => ({
-  projectId: programId, sources: sources.map(source => ({ isCurrent: true, dataEligible: true, originalFileAvailable: true, ...source })),
+  projectId: programId, sources: sources.map(source => ({ isCurrent: true, dataEligible: true, originalFileAvailable: true, textAvailable: source.extractionStatus === 'extracted', ...source })),
   total, currentTotal: total, page: { limit: 50, offset }, window: { shown: sources.length, truncated: offset + sources.length < total },
 });
 beforeEach(() => { apiRequest.mockReset(); });
 afterEach(() => cleanup());
+
+describe('processing recovery in the existing editor', () => {
+  it('shows a durable processing failure and refuses AnA grounding without persisted text', async () => {
+    apiRequest.mockResolvedValue(ok(sourcePage([{ id: 11, title: 'Recovery candidate', extractionStatus: 'extracted', textAvailable: false,
+      processing: { state: 'failed', retryable: true, reasonCode: 'PERSISTENCE_FAILED', leaseExpiresAt: null, nextRetryAt: '2026-10-14T04:10:00.000Z' } }])));
+    render(<DataRoomSourcesPanel programId={programId} onAsk={vi.fn()} />);
+    const title = await screen.findByText('Recovery candidate');
+    expect(screen.getByText('Processing needs retry')).toBeTruthy();
+    fireEvent.click(title);
+    expect((screen.getByRole('button', { name: 'Ask AnA to study' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Work on document' }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('refreshes the same captured identity after readable recovery without issuing repair writes', async () => {
+    let recovered = false;
+    apiRequest.mockImplementation(async () => ok(sourcePage([{ id: 11, title: 'Recovery candidate', extractionStatus: 'extracted',
+      textAvailable: recovered, processing: { state: recovered ? 'completed' : 'failed', retryable: !recovered,
+        reasonCode: recovered ? null : 'PERSISTENCE_FAILED', leaseExpiresAt: null, nextRetryAt: recovered ? null : '2026-10-14T04:10:00.000Z' } }])));
+    const onAsk = vi.fn();
+    render(<DataRoomSourcesPanel programId={programId} onAsk={onAsk} />);
+    await screen.findByText('Processing needs retry');
+    recovered = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh sources' }));
+    await screen.findByText('Readable');
+    expect(screen.queryByText('Processing needs retry')).toBeNull();
+    fireEvent.click(screen.getByText('Recovery candidate'));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AnA to study' }));
+    expect(onAsk).toHaveBeenCalledWith(expect.stringContaining('source id 11'));
+    expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+});
 
 describe('source libraries in the existing editor', () => {
   it('searches and pages the whole data room instead of an initial capped list', async () => {

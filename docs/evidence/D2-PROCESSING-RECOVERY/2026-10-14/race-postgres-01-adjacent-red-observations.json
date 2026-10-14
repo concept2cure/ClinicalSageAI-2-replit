@@ -1,0 +1,301 @@
+{
+  "fixture": {
+    "name": "c2c-d2-race-87e4e894-cba",
+    "database": "d2_processing_fixture",
+    "ownerRole": "d2_fixture_owner",
+    "host": "127.0.0.1",
+    "phase": "ready",
+    "startedAt": "2026-10-14T04:14:03.553Z",
+    "limitations": "Synthetic local owner fixture; no deployment, workload, OCR/provider, or deployed-role qualification.",
+    "dockerServerVersion": "28.4.0",
+    "image": [
+      "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+    ],
+    "containerId": "d8d4d0d23bdcf895edaeb18a71cf22c3c2d57c48ebd40fb6eb53f80d258f94fd",
+    "port": 32768,
+    "server": {
+      "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+      "database": "d2_processing_fixture",
+      "role": "d2_fixture_owner",
+      "pid": 70,
+      "rolsuper": true,
+      "rolbypassrls": true
+    },
+    "independentBackendPids": [
+      70,
+      71
+    ]
+  },
+  "hashes": {
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260906_vault_documents_fulltext.sql": "b9c50bd1d7f2fd7815ed3e21129add5d30ea673614c5a743d4c9fc9b4d277998",
+    "migrations/20261008c_data_room_source_text.sql": "c649a69cac300e9932b2ead12e7c53eab715bc18043f531afee4e5ef75afdb48",
+    "migrations/20261001_cre_evidence_sources_capture_immutability.sql": "571a2831d8b79526662de877411f2cdeba05a1a0b79e6d1d50a08c2931f0766f",
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": "6b18f8e565f44010a04f22539752a9c56f4229b169b7a09eb151e33080510c59",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "32ec1a5af93273a4ba51a07b0f09d4ac1cb2659b3cc8b2fe140193af0d6099d9",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "8bd18b3b56ed1445f8ff8dd027aa55e28da4fdad0f4835f04fab0c707ad41c04",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "7b86a5ba5d766a324da06dd500db76cd8befbe4bc236ba2be008b9997dbd6ef8",
+    "server/services/document-data-disposition/service.ts": "bad02257299c83bd923adade7067ea50aa40c34729e9271f5c61a1d31d64388a",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.test.mts": "8e4845fbaf7b28ccecb9a32ea238b30175eedd40083eefc30426171cde700f4b",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.config.mts": "d597a877cd3ce8d02ee414d0c33a27c80be34068dc481673aa202a04141ac2ef"
+  },
+  "finalHashes": {
+    "migrations/20261006_document_data_dispositions.sql": "84a14559d159d2df78ffa71c6ebe03783bf804b56c8b8a4ae9587733a9f43568",
+    "migrations/20261008e_document_catalog_attribution.sql": "7e215fd6e5250e6d592406b570fc2c68a99f6793d5621f099b3be78f3332d59e",
+    "migrations/20260906_vault_documents_fulltext.sql": "b9c50bd1d7f2fd7815ed3e21129add5d30ea673614c5a743d4c9fc9b4d277998",
+    "migrations/20261008c_data_room_source_text.sql": "c649a69cac300e9932b2ead12e7c53eab715bc18043f531afee4e5ef75afdb48",
+    "migrations/20261001_cre_evidence_sources_capture_immutability.sql": "571a2831d8b79526662de877411f2cdeba05a1a0b79e6d1d50a08c2931f0766f",
+    "server/services/document-data-disposition/__tests__/disposition-fixture.ts": "6b18f8e565f44010a04f22539752a9c56f4229b169b7a09eb151e33080510c59",
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": "32ec1a5af93273a4ba51a07b0f09d4ac1cb2659b3cc8b2fe140193af0d6099d9",
+    "server/services/clinical-regulatory-evidence/data-room-processing-store.ts": "8bd18b3b56ed1445f8ff8dd027aa55e28da4fdad0f4835f04fab0c707ad41c04",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "7b86a5ba5d766a324da06dd500db76cd8befbe4bc236ba2be008b9997dbd6ef8",
+    "server/services/document-data-disposition/service.ts": "bad02257299c83bd923adade7067ea50aa40c34729e9271f5c61a1d31d64388a",
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.test.mts": "8e4845fbaf7b28ccecb9a32ea238b30175eedd40083eefc30426171cde700f4b",
+    "docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14/race-postgres.config.mts": "d597a877cd3ce8d02ee414d0c33a27c80be34068dc481673aa202a04141ac2ef"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "observations": [
+    {
+      "server": {
+        "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+        "current_database": "d2_processing_fixture",
+        "current_user": "d2_fixture_owner",
+        "pg_backend_pid": 92
+      },
+      "image": [
+        "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+      ],
+      "role": "owner",
+      "RLS": "not established by owner tests"
+    },
+    {
+      "barrier": "claim-",
+      "blocker": 93,
+      "waiters": [
+        {
+          "pid": 94,
+          "application_name": "d2-race-claim-A-1",
+          "wait_event_type": "Lock",
+          "blockers": [
+            93,
+            95
+          ]
+        },
+        {
+          "pid": 95,
+          "application_name": "d2-race-claim-B-1",
+          "wait_event_type": "Lock",
+          "blockers": [
+            93
+          ]
+        }
+      ]
+    },
+    {
+      "case": "late-success",
+      "firstPid": 96,
+      "secondPid": 97,
+      "oldAttempt": "e96ab665-79f0-430f-8904-b8cda02e9255",
+      "acceptedAttempt": "4a5a03bf-9bae-45ac-9760-cf9705341011",
+      "sourceId": 2
+    },
+    {
+      "case": "late-extraction-failure",
+      "firstPid": 98,
+      "secondPid": 99,
+      "oldAttempt": "bd2fdaac-90d0-4ca4-bad2-1e77ad75aa39",
+      "acceptedAttempt": "edd9fe4e-3321-4f05-9e16-f5b1b3c96b81",
+      "sourceId": 3
+    },
+    {
+      "case": "late-profile-catch",
+      "firstPid": 100,
+      "secondPid": 101,
+      "oldAttempt": "15042d51-f1c6-45b6-b648-73b915444959",
+      "acceptedAttempt": "31978143-9753-4c1b-afd5-cf84ac4f7ad9",
+      "sourceId": 4
+    },
+    {
+      "barrier": "clock-A",
+      "blocker": 103,
+      "waiters": [
+        {
+          "pid": 102,
+          "application_name": "d2-race-clock-A-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            103
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "supersede-A",
+      "blocker": 105,
+      "waiters": [
+        {
+          "pid": 104,
+          "application_name": "d2-race-supersede-A-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            105
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "project-A",
+      "blocker": 107,
+      "waiters": [
+        {
+          "pid": 106,
+          "application_name": "d2-race-project-A-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            107
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "recover-same-program",
+      "blocker": 109,
+      "waiters": [
+        {
+          "pid": 108,
+          "application_name": "d2-race-recover-same-program-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            109
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "recover-cross-program",
+      "blocker": 111,
+      "waiters": [
+        {
+          "pid": 110,
+          "application_name": "d2-race-recover-cross-program-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            111
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "recover-null-program",
+      "blocker": 113,
+      "waiters": [
+        {
+          "pid": 112,
+          "application_name": "d2-race-recover-null-program-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            113
+          ]
+        }
+      ]
+    },
+    {
+      "barrier": "reverse-withdrawal",
+      "blocker": 114,
+      "waiters": [
+        {
+          "pid": 115,
+          "application_name": "d2-race-reverse-withdrawal-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            114
+          ]
+        }
+      ]
+    },
+    {
+      "case": "reverse impact freshness",
+      "scope": "same-program",
+      "previewCounts": {
+        "extractedTexts": 0,
+        "chunks": 0,
+        "atoms": 0,
+        "catalogValues": 0,
+        "citations": 0,
+        "downstreamReferences": 0
+      },
+      "receiptCounts": {
+        "atoms": 0,
+        "chunks": 0,
+        "citations": 0,
+        "catalogValues": 0,
+        "extractedTexts": 0,
+        "downstreamReferences": 0
+      },
+      "expectedExtractedTexts": 1,
+      "recoveryStatus": "extracted"
+    },
+    {
+      "barrier": "reverse-withdrawal",
+      "blocker": 116,
+      "waiters": [
+        {
+          "pid": 117,
+          "application_name": "d2-race-reverse-withdrawal-2",
+          "wait_event_type": "Lock",
+          "blockers": [
+            116
+          ]
+        }
+      ]
+    },
+    {
+      "case": "reverse impact freshness",
+      "scope": "cross-program",
+      "previewCounts": {
+        "extractedTexts": 0,
+        "chunks": 0,
+        "atoms": 0,
+        "catalogValues": 0,
+        "citations": 0,
+        "downstreamReferences": 0
+      },
+      "receiptCounts": {
+        "atoms": 0,
+        "chunks": 0,
+        "citations": 0,
+        "catalogValues": 0,
+        "extractedTexts": 0,
+        "downstreamReferences": 0
+      },
+      "expectedExtractedTexts": 0,
+      "recoveryStatus": "extracted"
+    },
+    {
+      "case": "reverse reservation order",
+      "scope": "cross-program",
+      "withdrawal": "committed",
+      "recoveryPid": 116
+    },
+    {
+      "case": "local canonical policy",
+      "identity": {
+        "role": "d2_fixture_runtime",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "enforcement": "on"
+      },
+      "ownSource": 16,
+      "foreignOrg": 1046013,
+      "foreignResult": "blocked"
+    }
+  ],
+  "limits": [
+    "Local synthetic PostgreSQL16 only",
+    "Controlled extraction/loader/profile/classifier/audit-seal seams",
+    "Canonical RLS policy tested locally in last case; deployed roles/configuration not qualified"
+  ]
+}

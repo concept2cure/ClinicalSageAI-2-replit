@@ -3,6 +3,7 @@
 import type { ToolContext } from './AnaToolExecutor.js';
 import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
 import type { CatalogDocumentRow } from '../vault/document-catalog.service.js';
+import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
 export interface DraftSource {
   documentId: string;
@@ -37,22 +38,27 @@ function readableVersion(doc: CatalogDocumentRow | null, meta: CatalogDocumentRo
   return { ...doc, catalog: doc.catalog, extractedText: doc.extractedText };
 }
 
+function hasDraftProjectContext(ctx: ToolContext | undefined): ctx is ToolContext & { organizationId: number; userId: number } {
+  return Boolean(ctx?.organizationId && Number.isSafeInteger(ctx.userId) && ctx.userId && ctx.userId > 0 && (ctx.projectRef || ctx.projectId));
+}
+
 export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext): Promise<DraftSourceContext> {
   if (raw === undefined) return { status: 'unassessed', sources: [] };
   const ids = selectedIds(raw);
-  if (!ctx?.organizationId || !(ctx.projectRef || ctx.projectId)) throw new Error('SOURCE_PROJECT_REQUIRED');
-  const { catalogScope } = await import('./catalog-scope.js');
-  const { loadDocumentForOrg } = await import('../vault/document-catalog.service.js');
+  if (!hasDraftProjectContext(ctx)) throw new Error('SOURCE_PROJECT_REQUIRED');
+  const { catalogScope, sourceReadInput } = await import('./catalog-scope.js');
+  const { loadDocumentForActor, revalidateActorSourceScope } = await import('../vault/document-catalog.service.js');
   const scope = await catalogScope(ctx, ctx.organizationId, null, 'read');
   if ('error' in scope || !scope.programId) throw new Error('SOURCE_PROJECT_REQUIRED');
+  const actor = sourceReadInput(ctx, ctx.organizationId);
   const sources: DraftSource[] = [];
   let remaining = 48000;
   for (const documentId of ids) {
     // Check project ownership before fetching extracted text, not after serving it.
-    const meta = await loadDocumentForOrg(documentId, ctx.organizationId, { executor: scope.executor, userId: scope.accessibleScope.actor.userId, programId: scope.programId, currentOnly: true });
+    const meta = await loadDocumentForActor({ ...actor, documentId }, { currentOnly: true });
     if (!meta || meta.programId.toLowerCase() !== scope.programId.toLowerCase()) throw new Error('SOURCE_UNAVAILABLE');
     if (remaining === 0) throw new Error('SOURCE_UNAVAILABLE');
-    const doc = readableVersion(await loadDocumentForOrg(documentId, ctx.organizationId, { executor: scope.executor, userId: scope.accessibleScope.actor.userId, programId: scope.programId, includeText: true, currentOnly: true }), meta, scope.programId);
+    const doc = readableVersion(await loadDocumentForActor({ ...actor, documentId }, { includeText: true, currentOnly: true }), meta, scope.programId);
     const text = doc.extractedText.slice(0, Math.min(12000, remaining));
     remaining -= text.length;
     sources.push({
@@ -64,6 +70,8 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext): 
       completeText: text.length === doc.extractedText.length, text,
     });
   }
+  await revalidateActorSourceScope(actor, scope.admittedScope);
+  await requireProgramScopeStillCurrent(scope.executor, { organizationId: ctx.organizationId, userId: ctx.userId, programId: scope.programId }, scope.accessibleScope);
   return { status: 'loaded', sources };
 }
 

@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const h = vi.hoisted(() => ({ query: vi.fn(), embed: vi.fn(), scope: vi.fn(), factory: vi.fn() }));
+const h = vi.hoisted(() => ({ query: vi.fn(), embed: vi.fn(), scope: vi.fn(), current: vi.fn(), factory: vi.fn() }));
 vi.mock('../../../db.js', () => ({ pool: { query: h.query } }));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: h.factory }));
 vi.mock('../../c2c/current-program-access.js', async (original) => ({
   ...await original<typeof import('../../c2c/current-program-access.js')>(),
   getCurrentAccessibleProgramScope: h.scope,
+  // This fixture proves SQL predicates; current-access mutation is separately
+  // exercised by canonical real-SQL admission suites.
+  requireProgramScopeStillCurrent: h.current,
 }));
 import { searchCatalog, CatalogSearchUnavailableError } from '../document-catalog-search';
 import { supersededSql } from '../vault-version-family';
 beforeEach(() => {
   vi.clearAllMocks();
+  h.current.mockResolvedValue(undefined);
   h.embed.mockResolvedValue({ embedding: [1, 2, 3] });
   h.factory.mockReturnValue({ embed: h.embed });
   h.scope.mockImplementation(async (_db, input) => ({ scope: 'verified-accessible-programs',
@@ -32,8 +36,9 @@ describe('semantic catalog source-version query contract', () => {
       expect(sql).toContain(`AND NOT ${supersededSql('d')}`);
     }
     expect(countSql).toContain('LEFT JOIN vault.document_catalog');
-    expect(countArgs).toEqual([7, [programId]]);
-    expect(hitArgs).toEqual([7, '[1,2,3]', 0.15, 8, [programId]]);
+    expect(countArgs).toEqual([7, programId, [programId]]);
+    expect(hitArgs).toEqual([7, '[1,2,3]', 0.15, 8, programId, [programId]]);
+    expect(h.current).toHaveBeenCalledWith(db, expect.objectContaining({ organizationId: 7, userId: 3, programId }), expect.objectContaining({ programIds: [programId] }));
   });
 
   it('keeps provider failure unavailable rather than an empty current corpus', async () => {

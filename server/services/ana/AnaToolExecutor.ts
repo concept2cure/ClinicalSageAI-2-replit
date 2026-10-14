@@ -203,6 +203,8 @@ import {
 } from './agentic-loop.js';
 import {
   readReceiptContext,
+  guardReadResultsForHandoff,
+  withdrawSourceReadResult,
   settleReadReceipts,
   type DeferredReadReceipts,
   type ReadReceiptContext,
@@ -967,8 +969,8 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
     const { buildSessionBootstrapContext } = await import('../ana-session-bootstrap.js');
     const context = await buildSessionBootstrapContext({
       db: ctx.sqlClient,
-      userId: ctx.userId,
       organizationId: ctx.organizationId,
+      userId: ctx.userId,
       projectId: ctx.projectId ?? undefined,
       projectRef: ctx.projectRef,
       threadId,
@@ -5173,6 +5175,29 @@ registerToolHandler('read_spreadsheet', async (input, ctx) => {
   }
 });
 
+function spreadsheetProcessingReceipt(saved: import('./uploaded-file-access.js').DerivedUploadResult) {
+  if (!saved.processing) return undefined;
+  return {
+    ok: saved.processing.ok,
+    processed: saved.processing.processed,
+    status: saved.processing.status,
+    ...(saved.processing.reasonCode ? { reasonCode: saved.processing.reasonCode } : {}),
+  };
+}
+
+function spreadsheetCaptureMessage(saved: import('./uploaded-file-access.js').DerivedUploadResult) {
+  if (saved.captureStatus !== 'captured') {
+    return 'The edited copy remains a conversation upload; adopt it into a project before Vault filing. ';
+  }
+  const processing = saved.processing;
+  const readable = processing?.processed === true &&
+    (processing.status === 'completed' || processing.status === 'already_complete');
+  const processingMessage = readable ? 'Readable text is saved. ' :
+    processing ? 'This attempt did not confirm readable text; refresh the Data Room to see the current processing state. ' :
+    'Text processing has not been confirmed; refresh the Data Room to see its current state. ';
+  return 'The edited copy is captured in the open project’s Data Room. ' + processingMessage + 'Vault filing is a separate governed action. ';
+}
+
 // Edit Spreadsheet — apply cell edits, save as a NEW upload (original untouched).
 registerToolHandler('edit_spreadsheet', async (input, ctx) => {
   try {
@@ -5239,11 +5264,12 @@ registerToolHandler('edit_spreadsheet', async (input, ctx) => {
       sourceSha256: sha256Hex(file.buffer),
       sourceId: saved.sourceId ?? null,
       captureStatus: saved.captureStatus,
+      processing: spreadsheetProcessingReceipt(saved),
       derivationAudit: saved.derivationAudit,
       scientificQualification: 'unassessed',
       formulaResults: 'not_recalculated',
       message: `Applied ${result.applied.length} edit(s) and saved the result as a new file (${saved.fileId}). The original upload is unchanged. ` +
-        (saved.captureStatus === 'captured' ? 'The edited copy is captured in the open project’s Data Room; extraction and Vault filing are still required. ' : 'The edited copy remains a conversation upload; adopt it into a project before Vault filing. ') +
+        spreadsheetCaptureMessage(saved) +
         'Formula results have not been recalculated, and scientific suitability has not been assessed.',
     });
   } catch (e) {
@@ -16125,8 +16151,12 @@ export async function executeAgenticLoop(
     // whole (read-receipts.ts).
     pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
     const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
-    await settleReadReceipts(entries, budgeted, readReceipts);
-    return budgeted;
+    const guarded = await guardReadResultsForHandoff(entries, budgeted, readReceipts, { signal });
+    const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
+    await settleReadReceipts(entries, guarded, readReceipts, undefined, {
+      signal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(guarded, id, { signal })),
+    });
+    return guarded;
   };
 
   // Feed the latest tool results back and get the model's next turn. On the

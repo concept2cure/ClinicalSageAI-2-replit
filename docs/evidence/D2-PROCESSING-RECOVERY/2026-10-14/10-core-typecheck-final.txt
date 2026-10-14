@@ -1,0 +1,9 @@
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/workspace/Concept2Cure/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. '/workspace/Concept2Cure/node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/workspace/Concept2Cure/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/workspace/Concept2Cure/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

@@ -1,0 +1,232 @@
+{
+  "baselineHEAD": "ce559705c6e4f5e1249910be1dff569df4bc8433",
+  "originalAudit": "SQL_INTERPOLATION_CHIEF_REVIEW.json remains a historical source-hashed review and was not rewritten.",
+  "reviewScope": "Read-only final19-count and changed-construction audit. No production/baseline/gate edits and no scope extension.",
+  "reviewedNewExternalValueInterpolations": [],
+  "changedConstructionReview": {
+    "programHeldQueries": "programInOrganization forShare chooses explicit static literal queries with bound organization/program identities. No new direct interpolation.",
+    "processingSweep": "programWorkspaceFrame serializes canonically evaluated program/workspace pairs into bind$3::jsonb in both selection arms; diagnostic excluded IDs are bind$4::integer[]. No JSON/frame/source values enter query text.",
+    "captureDiscovery": "Fixed source_artifact/project joins compare recorded row fields; artifact/file identities read from JSON columns are SQL values within those expressions, not interpolated text.",
+    "processingStore": "Current ownership/anchor readmission and attempt-local workspace pins change application admission; guarded SQL uses bound identities and existing fixed policy predicates."
+  },
+  "files": [
+    {
+      "path": "server/services/advancedRAGPipeline.ts",
+      "originalAuditSha256": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+      "currentSourceSha256": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 44,
+      "currentGateCount": 44,
+      "currentBaseline": 44,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-history.ts",
+      "originalAuditSha256": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf",
+      "currentSourceSha256": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 1,
+      "currentGateCount": 1,
+      "currentBaseline": 1,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-store.ts",
+      "originalAuditSha256": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9",
+      "currentSourceSha256": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 1,
+      "currentGateCount": 1,
+      "currentBaseline": 1,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing-store.ts",
+      "originalAuditSha256": "b963de51cbaf5cc8f38cb729f506cd0271cfdd01fc237b6dfd235f4b8486961f",
+      "currentSourceSha256": "eb69cebddaf48093854b4f801432e9bb8e726dce8830263892bca65773677f3b",
+      "changedSinceOriginalAudit": true,
+      "originalAuditedGateCount": 3,
+      "currentGateCount": 3,
+      "currentBaseline": 3,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",
+      "originalAuditSha256": "acc8e9aedc793f7094a5f6c7ebb166a17d3ef6cc4ac995726a0b11fff67c9285",
+      "currentSourceSha256": "b9cae6bb9b9102af929335f0647546d720c338edfb87add543c89d9124c1f931",
+      "changedSinceOriginalAudit": true,
+      "originalAuditedGateCount": 9,
+      "currentGateCount": 9,
+      "currentBaseline": 9,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing.ts",
+      "originalAuditSha256": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+      "currentSourceSha256": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 4,
+      "currentGateCount": 4,
+      "currentBaseline": 4,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+      "originalAuditSha256": "78862a0bf91ba1436fc3cf8cbfa259c0f2b5835134971b6c6ba925a7d6823e3c",
+      "currentSourceSha256": "78862a0bf91ba1436fc3cf8cbfa259c0f2b5835134971b6c6ba925a7d6823e3c",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 8,
+      "currentGateCount": 8,
+      "currentBaseline": 8,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/document-data-disposition/service.ts",
+      "originalAuditSha256": "2cd0f80dc0e867fe0e260267c666e7409858ed5314030c68abf2e0f82f7a0ec6",
+      "currentSourceSha256": "2cd0f80dc0e867fe0e260267c666e7409858ed5314030c68abf2e0f82f7a0ec6",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 2,
+      "currentGateCount": 2,
+      "currentBaseline": 2,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/tenant-export/tenant-full-export.service.ts",
+      "originalAuditSha256": "38242b3622e4d0c8bd96e918f8f705a84b451511d87a855a99a8e56d0a36751c",
+      "currentSourceSha256": "38242b3622e4d0c8bd96e918f8f705a84b451511d87a855a99a8e56d0a36751c",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 9,
+      "currentGateCount": 9,
+      "currentBaseline": 9,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-captures.ts",
+      "originalAuditSha256": "cf8fb4643ec4d3eec6ac7fcfc175a7c8122e58daeaddba1e6ae297321687cb48",
+      "currentSourceSha256": "dbcb51705815c791b26fb48c61dd599c130fb8eab3a496514b4836a20e0b3947",
+      "changedSinceOriginalAudit": true,
+      "originalAuditedGateCount": 8,
+      "currentGateCount": 8,
+      "currentBaseline": 8,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-admission.ts",
+      "originalAuditSha256": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+      "currentSourceSha256": "9393d11fdf67ff831fbda8eb54c77ae99d1e36395431904d2e7a3fa171170d60",
+      "changedSinceOriginalAudit": true,
+      "originalAuditedGateCount": 1,
+      "currentGateCount": 1,
+      "currentBaseline": 1,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-document.ts",
+      "originalAuditSha256": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+      "currentSourceSha256": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 14,
+      "currentGateCount": 14,
+      "currentBaseline": 14,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-governance.service.ts",
+      "originalAuditSha256": "ff609d34de4f3cabf3ad0240623642a24bf77976f042228b96b3db58ddcbd213",
+      "currentSourceSha256": "ff609d34de4f3cabf3ad0240623642a24bf77976f042228b96b3db58ddcbd213",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 3,
+      "currentGateCount": 3,
+      "currentBaseline": 3,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-search-query.ts",
+      "originalAuditSha256": "ce8692877f708ff877ffb51f72c5d513afb062106c9bb2503a897eb442bb4903",
+      "currentSourceSha256": "ce8692877f708ff877ffb51f72c5d513afb062106c9bb2503a897eb442bb4903",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 7,
+      "currentGateCount": 7,
+      "currentBaseline": 7,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-write-integrity.ts",
+      "originalAuditSha256": "d42cec7319a919965099af8c3920d564bcdc8b05790448aa39dc375001a29a20",
+      "currentSourceSha256": "d42cec7319a919965099af8c3920d564bcdc8b05790448aa39dc375001a29a20",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 3,
+      "currentGateCount": 3,
+      "currentBaseline": 3,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "originalAuditSha256": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+      "currentSourceSha256": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 4,
+      "currentGateCount": 4,
+      "currentBaseline": 4,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-passage-search.ts",
+      "originalAuditSha256": "1fe32cf8aca0e43e893edcdddc5a75bc8f51b5dd8831c20e48e4ecab1ac33b96",
+      "currentSourceSha256": "1fe32cf8aca0e43e893edcdddc5a75bc8f51b5dd8831c20e48e4ecab1ac33b96",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 3,
+      "currentGateCount": 3,
+      "currentBaseline": 3,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/retrieval-source-access.ts",
+      "originalAuditSha256": "4e1a195d19ca0c9847d3916f23f3d53463d88494401b4e654fac436ee15aa3d4",
+      "currentSourceSha256": "4e1a195d19ca0c9847d3916f23f3d53463d88494401b4e654fac436ee15aa3d4",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 2,
+      "currentGateCount": 2,
+      "currentBaseline": 2,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-search.ts",
+      "originalAuditSha256": "9410d75a0b44ed665458728e28d1dfb851ce70bfe64497150b1371d48a1c2a05",
+      "currentSourceSha256": "9410d75a0b44ed665458728e28d1dfb851ce70bfe64497150b1371d48a1c2a05",
+      "changedSinceOriginalAudit": false,
+      "originalAuditedGateCount": 0,
+      "currentGateCount": 0,
+      "currentBaseline": 0,
+      "countStillMatchesReviewedConstruction": true,
+      "countMatchesCurrentBaseline": true
+    }
+  ],
+  "sha256": {
+    "server/services/c2c/program-access.ts": "7b49fec6cebaec49b7ad66d4ea1f1561e28e752d2ee1ef017e694ee857d09e0d",
+    "server/services/c2c/program-project-anchor.ts": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496",
+    "docs/architecture/DATA_ROOM_SQL_COMPOSITION_REVIEW_2026-10-14.md": "82b97fbe112c5192c797261f03d741470b16c1e8486797147cff6d00af6f1432",
+    "docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/PUSH_GATE_RECONCILIATION_CONTRACT.md": "be041f9c0b7fd585e9613f9f8795005687b3581c0d5ea963eb67aab5195ed817",
+    "scripts/ci/check-sql-interpolation.mjs": "9e6271d2f24dbdc1f75d1e518f52375a5f679b8f3e91aab9236bbfa09ab30e85",
+    "scripts/ci/check-sql-interpolation.selftest.mjs": "8fa622174fa1c8ff110f086fe8b2a33ddb5119092fb15c980ad6a26027c7567b",
+    "scripts/ci/sql-interpolation-baseline.json": "6fa7ddd2b5fb106843906204ae078243d98f7bfe518097eee3b6d7acc25c9b5c"
+  }
+}

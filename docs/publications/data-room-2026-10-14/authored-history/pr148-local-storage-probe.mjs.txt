@@ -1,0 +1,39 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { stripTypeScriptTypes } from 'node:module';
+import assert from 'node:assert/strict';
+const raw = fs.readFileSync('/workspace/Concept2Cure/server/services/storage/local-provider.ts','utf8');
+const source = raw.replace(/import \{[\s\S]*?\} from '\.\/storage-provider';/,'');
+const js = stripTypeScriptTypes(source, {mode:'strip'});
+const {LocalStorageProvider} = await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+const id = '11111111-1111-4111-8111-111111111111';
+const dir = path.resolve('storage/vault/1/probe/versions',id);
+fs.mkdirSync(dir,{recursive:true});
+const original=Buffer.from('approved synthetic document');
+const changed=Buffer.from('modified synthetic document');
+const sha=b=>createHash('sha256').update(b).digest('hex');
+fs.writeFileSync(path.join(dir,'synthetic.txt'),changed);
+fs.writeFileSync(path.join(dir,'_meta.json'),JSON.stringify({
+vaultFileId:'synthetic',vaultVersionId:id,filename:'synthetic.txt',mime:'text/plain',
+sizeBytes:original.length,sha256:sha(original),metadata:{orgId:'1'},storedAt:new Date().toISOString()
+}));
+const provider=new LocalStorageProvider();
+const got=await provider.get(id,1);
+assert.ok(got);
+assert.equal(got.bytes.toString(),changed.toString());
+assert.equal(got.sha256,sha(original));
+assert.notEqual(got.sha256,sha(got.bytes));
+assert.equal(await provider.get(id,2),null);
+const result={
+commit:'87b27c897c5d1be20b0527009bcaf425ebbf3af6',
+source:'server/services/storage/local-provider.ts',
+method:'Actual provider source type-stripped; only unused storage-provider import removed. Synthetic sidecar/file fixture.',
+returnedChangedBytes:true,
+returnedDigestMatchesBytes:false,
+foreignOrganizationRefused:true
+};
+fs.writeFileSync('/workspace/scratch/pr148-local-storage-result.json',JSON.stringify(result,null,2));
+console.log(JSON.stringify(result));
+fs.rmSync(path.resolve('storage'),{recursive:true,force:true});
+

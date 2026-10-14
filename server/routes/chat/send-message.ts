@@ -607,11 +607,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         );
         const block = await sessionBootstrapBlockFor({
           db: requestPgClient(req),
-          userId: numericUserId,
-          projectRef: admittedProject.projectRef,
           priorMessageCount: previousMessages.length,
           organizationId: numericOrgId ?? null,
+          userId: numericUserId,
           projectId: turnProjectId ?? undefined,
+          projectRef: admittedProject.projectRef,
           threadId,
           atomLimit: 6,
         });

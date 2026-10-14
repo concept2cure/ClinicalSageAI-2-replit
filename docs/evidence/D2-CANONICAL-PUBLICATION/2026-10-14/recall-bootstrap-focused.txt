@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 11ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 3ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > withholds both catalogue arms when access changes after their prose and counts were read 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > bounds a stalled final access read within the original turn budget and discards catalogue results 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > does not start any prose loader for an inactive or unavailable current actor 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > never turns an unresolved open project into a library recall 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > keeps genuine evaluated catalogue emptiness distinct from unavailable access 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > names refused source reads without exposing SQL or private details 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > keeps organization recall actor-filtered with no invented project 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+
+ Test Files  2 passed (2)
+      Tests  34 passed (34)
+   Start at  21:13:32
+   Duration  2.03s (transform 888ms, setup 91ms, import 1.48s, tests 47ms, environment 0ms)
+

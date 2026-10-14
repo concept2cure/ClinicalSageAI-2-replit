@@ -1,0 +1,137 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > searches the whole room on the server, by title and text, and lists its answer 362ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers a way to add sources 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 55ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 36ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > names the affected sections when a source has changed under them 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows no change banner when nothing is stale 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > searches and pages the whole data room instead of an initial capped list 663ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > keeps withdrawn sources visible while refusing work or grounding from them 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > never promotes a stored source title into AnA instructions 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > a catalogue failure is reported with recovery rather than an empty room 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > an IND deliverable from a later phase opens the exact existing working document 28ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > routes official form preparation to AnA without promising to generate the form 28ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > offers recovery when existing documents cannot be checked 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx > source libraries in the existing editor > offers a clear-filter action when the IND search has no matches 21ms
+stderr | server/routes/__tests__/vault-data-room-counts.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-data-room-counts.test.ts
+{
+  "timestamp": "2026-10-14T03:57:54.935Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/vault-data-room-counts.test.ts
+{
+  "timestamp": "2026-10-14T03:57:55.891Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:57:55.892Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/vault-data-room-counts.test.ts
+{
+  "timestamp": "2026-10-14T03:57:55.892Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/vault-data-room-counts.test.ts > data room — the window > asks for current sources only, one past the window
+{
+  "timestamp": "2026-10-14T03:57:55.946Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\"....",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — the window > asks for current sources only, one past the window 27ms
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — the window > a full window says so and lists only the window, while the counts cover the whole project 7ms
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — the window > a window with room to spare is not truncated 4ms
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — what "classified" means > a folder proposal is classified; the classifier's refusal is needs-review, not classified 7ms
+ ✓ server/routes/__tests__/vault-data-room-counts.test.ts > data room — "filed" names the Vault version (VR-16) > a filed source says which version its bytes are, and which version replaced it 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > governed source intake rules > explains the reason rule and refuses a short or overlong reason before sending 154ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > shows exclusion before expansion and explains the disabled work and AnA actions 82ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > keeps retained readable text available to AnA when the original file is unavailable 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > recovers from no search matches by clearing the search rather than hiding project sources 289ms
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-14T03:57:58.047Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-14T03:57:58.114Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:57:58.115Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-sources-window.test.ts
+{
+  "timestamp": "2026-10-14T03:57:58.115Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > asks for the newest 200 by default and reports a page with more after it as truncated, with the total 31ms
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > passes a search and a page through, and refuses an unreadable filter with 400 6ms
+ ✓ server/routes/c2c/__tests__/projects-sources-window.test.ts > GET /:id/sources > says which sources a re-upload retired; a row older than the column is current 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > holds numbering metadata until every page has been confirmed 66ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > retries the full read after a later-page failure without retaining incomplete authority 107ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses a nonprogressing empty page instead of looping or claiming completion 1ms
+
+ Test Files  6 passed (6)
+      Tests  45 passed (45)
+   Start at  03:57:49
+   Duration  11.42s (transform 2.71s, setup 288ms, import 5.94s, tests 3.01s, environment 1.48s)
+

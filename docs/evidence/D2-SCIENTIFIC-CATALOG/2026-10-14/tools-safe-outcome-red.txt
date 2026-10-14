@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+···············x······
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > reports an unconfirmed preview exception without leaking SQL or private metadata
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "DOCUMENT_REQUEST_FAILED",
+-   "ok": false,
+-   "outcome": "unconfirmed",
++   "error": "catalog_project_document failed: SQLSTATE 42501 SELECT private-study-marker FROM vault.document_catalog WHERE organization_id = 999",
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-preview-tools.test.ts:89:20
+     87|     h.previewEnabled = true; h.preview.mockRejectedValue(new Error('SQ…
+     88|     const result = await call(preview);
+     89|     expect(result).toMatchObject({ ok: false, code: 'DOCUMENT_REQUEST_…
+       |                    ^
+     90|     expect(JSON.stringify(result)).not.toMatch(/SQLSTATE|SELECT|privat…
+     91|     expect(result.error).not.toMatch(/nothing was changed|nothing was …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)
+   Start at  06:55:21
+   Duration  947ms (transform 576ms, setup 67ms, import 651ms, tests 25ms, environment 0ms)
+

@@ -1,0 +1,50 @@
+{
+  "nodeMajor": 22,
+  "commands": [
+    {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
+        "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
+        "server/services/tenant/__tests__/tenant-offboarding.test.ts",
+        "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
+        "server/db/__tests__/provision-app-role-append-only.test.ts",
+        "--reporter=json",
+        "--outputFile=docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/lifecycle-focused-final.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/owned-target-typecheck.cjs",
+        "server/services/tenant/tenant-offboarding.ts",
+        "server/services/tenant/tenant-source-read-receipt-purge.ts",
+        "server/services/tenant-export/tenant-full-export.service.ts",
+        "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
+        "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
+        "server/db/__tests__/provision-app-role-append-only.test.ts"
+      ],
+      "exitCode": 0,
+      "stdout": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/lifecycle-target-typecheck.txt"
+    },
+    {
+      "command": [
+        "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "node_modules/eslint/bin/eslint.js",
+        "server/services/tenant/tenant-offboarding.ts",
+        "server/services/tenant/tenant-source-read-receipt-purge.ts",
+        "server/services/tenant-export/tenant-full-export.service.ts",
+        "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
+        "server/services/tenant-export/__tests__/tenant-source-receipt-export.pglite.test.ts",
+        "server/db/__tests__/provision-app-role-append-only.test.ts",
+        "--format=json"
+      ],
+      "exitCode": 0,
+      "stdout": "docs/evidence/D2-ANA-DURABLE-RECEIPTS/2026-10-14/lifecycle-eslint.json"
+    }
+  ],
+  "note": "Observed focused commands; not whole repository or deployed-role checks."
+}

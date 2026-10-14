@@ -1,0 +1,60 @@
+{"fixture":"ready","name":"c2c-source-access-cefb8768-377","port":32769,"version":"PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"}
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts
+{
+  "timestamp": "2026-10-14T19:54:55.708Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > viewer read uses actual active membership and private share 31ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > allowed programs constrain window counts and LIMIT before newer private records 368ms
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > an accessible anchor cannot launder a second private duplicate
+{
+  "timestamp": "2026-10-14T19:54:57.916Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "f1674f20-6f91-4d0d-b83b-d86a59e56a79",
+    "projectIds": [
+      4,
+      5
+    ]
+  }
+}
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > an accessible anchor cannot launder a second private duplicate 16ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > pending canonical review assignment admits a viewer without project membership 7ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > recorded source tenant mismatch cannot trust its otherwise valid program 18ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > keep_data preserves eligible text but withdraws original availability 14ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > remove_data excludes source content and counts 17ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > active viewer inserts the exact unchanged legacy receipt once 50ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > same-length extraction committed during advisory wait refuses the old snapshot 68ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > private access revoked during advisory wait refuses the deferred source 43ms
+stderr | docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > forced synthetic INSERT policy refusal cannot be counted as a receipt
+{
+  "timestamp": "2026-10-14T19:54:58.226Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "ae1a2384-2054-464d-bcfa-38e68b9fb445",
+    "error": "new row violates row-level security policy for table \"document_read_receipts\""
+  }
+}
+
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > source SHARE reservation serializes concurrent extraction through receipt commit 61ms
+ ✓ docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/source-postgres.test.mts > genuine PostgreSQL source scope and source filtering > forced synthetic INSERT policy refusal cannot be counted as a receipt 23ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  19:54:50
+   Duration  8.17s (transform 3.75s, setup 0ms, import 6.92s, tests 791ms, environment 0ms)
+
+{"fixture":"cleaned","name":"c2c-source-access-cefb8768-377","testExitCode":0,"cleanup":"exact owned container removed","cleanupVerified":true}

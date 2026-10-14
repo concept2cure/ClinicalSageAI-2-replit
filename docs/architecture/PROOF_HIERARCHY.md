@@ -37,7 +37,7 @@ is only meaningful because the schema and DB-integration rungs already hold.
 | 4 | **Tenant isolation** | Can one tenant ever see or mutate another tenant's data? | A **negative** proof: a second org/tenant is seeded and a cross-tenant read/write/list is shown to return empty or be rejected **at the DB boundary** (RLS / scoped query), not just in app code. | A single-tenant happy-path test; an `organizationId` filter asserted only in TypeScript with no adversarial second tenant. | `tests/**/*.contract.test.ts` (e.g. `socket-tenant-isolation`, `smart-field-linking-tenant-scope`, `cmc-module3-tenant-arbiter`), `tests/unit/*tenant-isolation*` |
 | 5 | **Browser workflow** | Does the real user journey work in a real browser against a running server? | Playwright driving the built app end-to-end: login, navigate, act, assert persisted state — no fixture pill, no stubbed API. | A component test in jsdom; an E2E spec that only runs against a mock server or is skipped when the app/DB is absent. | `tests/e2e/*.e2e.ts` / `*.spec.ts` |
 | 6 | **Export reopen** | Is the artifact we emit still valid **after we stop looking at it** — reopened from bytes on disk? | The real exporter writes the artifact to disk; a separate reader **reopens the emitted bytes**, parses them, and re-derives every integrity claim (checksums recomputed from the files, references resolved to real files, magic bytes present). | Asserting the *generator's* in-memory return value; trusting a checksum the same code path just wrote; "the XML string contains `<leaf>`." | `tests/golden-journeys/*.journey.test.ts` (see reference below) |
-| 7 | **External validator qualification** | Will the artifact pass the **independent** tool the receiving authority runs — not our own checker? | An external-class validator (agency eValidator, PDF/A conformance engine, XSD/DTD, a third-party parser) run over the reopened package, returning zero error-severity findings — **and** a matching negative proof that a defect is caught. | Our own internal structural validator calling itself "validated"; a claim of conformance with no external tool in the loop. | `server/services/ectd/external-validator/` seam + the reference journey below |
+| 7 | **External validator qualification** | Did the exact artifact pass a **qualified independent check for its declared scope**? | A pinned independent tool/profile run over the reopened, hash-bound artifact, with declared coverage, zero blocking findings and a matched negative case. A parser/schema/PDF conformance check proves only its own scope; regional eCTD qualification needs the applicable criteria/profile evidence. | Internal FDA subset checks called external because of their interface; an unspecified third-party parser treated as complete regional validation; a clean report without tool/profile/package identity. | `server/services/ectd/external-validator/` seam + the reference journey below |
 
 ---
 
@@ -56,8 +56,9 @@ Concretely:
 - "The workflow works for a user" → needs Tier 5; a mounted component is a gap.
 - "The package we export is valid" → needs Tier 6; the generator's return value
   is a gap.
-- "The package will be accepted by the agency" → needs Tier 7; our own internal
-  validator is a gap.
+- "The package passed the specified independent technical validation" → needs
+  Tier 7 for that scope. Actual agency acceptance needs the authority's recorded
+  disposition for the identified submission; a tool pass cannot guarantee it.
 
 A proof gap is not automatically a blocker. It is a **known, written** limitation
 — recorded in the artifact's manifest/limitations or the readiness assessment —
@@ -210,16 +211,16 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
   eSTAR/1571/1572/3674 forms) is now covered too (fill → flatten → independent
   pdf.js reopen of the rendered value). Remaining generators outside these two
   families should follow the same fill/generate → independent-reopen pattern.
-- **Tier 7 (external qualification)** is real but **scoped**: the eCTD path
-  validates the backbone XML with **real libxml2** (`xmllint`) and runs the
-  license-free FDA-criteria subset — but not yet the commercial LORENZ agency
-  validator, nor DTD/XSD validation (which needs the licensed schemas vendored;
-  both drop in behind the same `xml-validator`/`EVALIDATOR_BINARY` seams with no
-  test rewrite). The PDF path uses detection-only `classifyPdfA`, *not* a full
-  veraPDF verdict. Until those licensed engines are wired, a Tier-7 *pass* means
-  "survived an external reopen-and-check by an independent engine (libxml2 /
-  pdf.js / mammoth / FDA-criteria)," not "agency-accepted." That distinction is
-  recorded in every manifest that uses it.
+- **Independent checks have bounded scope**: the eCTD path's real libxml2
+  XML check is independent parsing/validation evidence only for the invoked
+  parser/schema scope. The licence-free FDA-criteria subset is an **internal**
+  check even when selected through the external-validator interface. Neither
+  establishes qualified regional criteria coverage, a genuine licensed tool
+  run or agency acceptance. Retained LORENZ/DTD/XSD seams and any vendored assets
+  require their own current runtime qualification; a detection-only
+  `classifyPdfA` result is not a full veraPDF verdict. Manifests must list the
+  actual check/tool/profile scope and skipped coverage instead of promoting
+  parsing or subset checks to complete regional qualification.
 - **Durability.** `scripts/ci/check-proof-tier.mjs` (`npm run ci:proof-tier`)
   ratchets the proof surface: it fails if a baselined proof file is deleted, if a
   journey/proof stops emitting its manifest, or if this document references a

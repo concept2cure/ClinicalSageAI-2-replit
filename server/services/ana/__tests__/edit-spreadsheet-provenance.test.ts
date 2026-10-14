@@ -113,7 +113,8 @@ describe('confirmed edit_spreadsheet — canonical derivation handoff', () => {
     });
     expect(result.message).toContain('The original upload is unchanged.');
     expect(result.message).toContain('captured in the open project’s Data Room');
-    expect(result.message).toContain('extraction and Vault filing are still required');
+    expect(result.message).toContain('Text processing has not been confirmed');
+    expect(result.message).toContain('Vault filing is a separate governed action');
     expect(result.message).toContain('Formula results have not been recalculated');
     expect(result.message).toContain('scientific suitability has not been assessed');
   });
@@ -126,6 +127,29 @@ describe('confirmed edit_spreadsheet — canonical derivation handoff', () => {
     const result = await edit(input({ new_file_name: requested }));
     expect(h.save.mock.calls[0][0]).toMatchObject({ fileName: expected, mimeType: MIME_XLSX, buffer: DERIVED });
     expect(result).toMatchObject({ ok: true, newFileName: expected });
+  });
+
+  it.each(['completed', 'already_complete'])('relays durable %s processing without claiming extraction is still required', async status => {
+    const processing = { ok: true, processed: true, status };
+    h.save.mockResolvedValueOnce({ ...CAPTURED, processing: { ...processing, extracted: { text: 'private assay rows' }, storagePath: '/private/path' } });
+    const result = await edit();
+    expect(result).toMatchObject({ ok: true, captureStatus: 'captured', sourceId: 77, processing });
+    expect(result.processing).toEqual(processing);
+    expect(result.message).toContain('Readable text is saved');
+    expect(result.message).toContain('Vault filing is a separate governed action');
+    expect(result.message).not.toContain('extraction and Vault filing are still required');
+    expect(result.message).toContain('scientific suitability has not been assessed');
+  });
+
+  it.each(['extraction_failed', 'retryable_failure', 'blocked', 'stale_source', 'busy', 'retry_not_due', 'retry_exhausted'])('preserves the saved receipt when processing returns %s', async status => {
+    const processing = { ok: false, processed: false, status, reasonCode: 'PROCESSING_UNAVAILABLE' };
+    h.save.mockResolvedValueOnce({ ...CAPTURED, processing });
+    const result = await edit();
+    expect(result).toMatchObject({ ok: true, captureStatus: 'captured', sourceId: 77, derivationAudit: CAPTURED.derivationAudit, processing });
+    expect(result.message).toContain('captured in the open project’s Data Room');
+    expect(result.message).toContain('This attempt did not confirm readable text');
+    expect(result.message).not.toContain('Readable text is saved');
+    expect(result.message).toContain('Vault filing is a separate governed action');
   });
 
   it('relays conversation-only status with no project, despite a model-supplied project override', async () => {

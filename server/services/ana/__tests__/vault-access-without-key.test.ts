@@ -51,9 +51,23 @@ vi.mock('../../vault/document-catalog-search.js', () => ({
 }));
 vi.mock('../../../db/tenantStore.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../db/tenantStore.js')>()),
-  getTenantScope: () => ({ tenantId: '42', role: 'member', source: 'request' }),
+  getTenantScope: () => ({ tenantId: '42', role: 'viewer', source: 'request' }),
 }));
-vi.mock('../../vault/document-catalog.service.js', () => ({
+// This suite qualifies keyless ranking and merging, using an explicitly admitted synthetic actor.
+vi.mock('../../vault/document-catalog-actor-access.js', () => ({ withAnaSourceReadScope: syntheticActorWrapper }));
+vi.mock('../source-read-scope.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../source-read-scope.js')>(),
+  revalidateAnaSourceReadScope: async (_q: unknown, scope: unknown) => scope,
+}));
+async function syntheticActorWrapper(input: any, run: any) {
+  const scope = { organizationId: input.organizationId, userId: input.userId, role: 'viewer', projectId: null, programId: null,
+    accessibleProgramIds: ['a0000000-0000-4000-8000-00000000000a'], actorFiltered: true };
+  return run(sourceExecutor, scope);
+}
+vi.mock('../../vault/document-catalog.service.js', async () => ({
+  withAnaSourceReadScope: syntheticActorWrapper, revalidateActorSourceScope: async () => {},
+  listProjectDocumentsForActor: h.list, listChatUploadsForActor: h.uploads,
+  loadDocumentForActor: async (input: any, opts: any) => (await import('./support/source-read-tool-fixture.js')).syntheticActorDocument(input, opts, h.docOf),
   isDocumentCatalogEnabled: h.catalogOn,
   listProjectDocuments: h.list,
   listChatUploads: h.uploads,
@@ -82,9 +96,11 @@ const STABILITY = {
   placementStatus: 'confirmed',
   version: '1',
   current: true,
+  contentHash: 'a'.repeat(64),
   snippet: 'assay remained within <b>specification</b> at 24 months',
   program: { id: 'a0000000-0000-4000-8000-00000000000a', name: 'Program A' },
 };
+const sourceExecutor = { query: async () => ({ rows: [{ document_id: STABILITY.id, program_id: STABILITY.program.id, content_hash: STABILITY.contentHash }] }) };
 
 beforeEach(() => {
   delete process.env.OPENAI_API_KEY;
@@ -94,7 +110,7 @@ beforeEach(() => {
   h.semantic.mockReset();
   h.semantic.mockResolvedValue({ hits: [], searchedCount: 0, unsearchableCount: 0 });
   access.scope.mockImplementation(async (_q, input) => ({ scope: 'verified-accessible-programs',
-    actor: { userId: input.userId, role: 'member' },
+    actor: { userId: input.userId, role: 'viewer' },
     programIds: [STABILITY.program.id], reconciliationRequired: false,
   }));
   access.final.mockReset().mockResolvedValue(undefined);
@@ -114,7 +130,7 @@ describe('AnA reaches the Vault with no key and the catalog off', () => {
     expect(out.hits[0]).toMatchObject({ documentId: STABILITY.id, title: STABILITY.title, matchedBy: ['text'] });
     expect(out.hits[0].snippet).toContain('specification');
     // A question matches on ANY of its terms; requiring all of them answers nothing.
-    expect(h.text.mock.calls[0][0]).toBe(access.db);
+    expect(h.text.mock.calls[0][0]).toBe(sourceExecutor);
     expect(h.text.mock.calls[0][1]).toMatchObject({ organizationId: 42, userId: 7, programId: null, match: 'any' });
     expect(h.semantic).not.toHaveBeenCalled();
   });
@@ -131,7 +147,7 @@ describe('AnA reaches the Vault with no key and the catalog off', () => {
   it('a document found both ways is one hit that says so', async () => {
     h.catalogOn.mockResolvedValue(true);
     h.semantic.mockResolvedValue({
-      hits: [{ documentId: STABILITY.id, programId: STABILITY.program.id, title: STABILITY.title, similarity: 0.82 }],
+      hits: [{ documentId: STABILITY.id, programId: STABILITY.program.id, contentHash: STABILITY.contentHash, title: STABILITY.title, similarity: 0.82 }],
       searchedCount: 3,
       unsearchableCount: 0,
     });

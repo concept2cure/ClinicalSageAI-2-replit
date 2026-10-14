@@ -1,0 +1,76 @@
+Auto-merging client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx
+Auto-merging client/src/concept2cure/v2/surfaces/ProjectHome.tsx
+Auto-merging scripts/db/migration-set.mjs
+CONFLICT (content): Merge conflict in scripts/db/migration-set.mjs
+Auto-merging server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+CONFLICT (content): Merge conflict in server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+Auto-merging server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Auto-merging server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+CONFLICT (content): Merge conflict in server/routes/ana-ri/__tests__/stream-step-presentation.test.ts
+Auto-merging server/routes/ana-ri/stream.ts
+Auto-merging server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+Auto-merging server/routes/c2c/project-vault.ts
+CONFLICT (content): Merge conflict in server/routes/c2c/project-vault.ts
+Auto-merging server/routes/c2c/projects.ts
+Auto-merging server/routes/chat/send-message.ts
+Auto-merging server/services/__tests__/ana-session-bootstrap-latency.test.ts
+CONFLICT (content): Merge conflict in server/services/__tests__/ana-session-bootstrap-latency.test.ts
+Auto-merging server/services/advancedRAGPipeline.ts
+CONFLICT (content): Merge conflict in server/services/advancedRAGPipeline.ts
+Auto-merging server/services/ana-session-bootstrap.ts
+CONFLICT (content): Merge conflict in server/services/ana-session-bootstrap.ts
+Auto-merging server/services/ana/AnaToolExecutor.ts
+Auto-merging server/services/ana/__tests__/document-catalog-tools-id-space.test.ts
+Auto-merging server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts
+CONFLICT (content): Merge conflict in server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts
+Auto-merging server/services/ana/__tests__/document-passage-tools.test.ts
+CONFLICT (content): Merge conflict in server/services/ana/__tests__/document-passage-tools.test.ts
+Auto-merging server/services/ana/__tests__/document-placement-tools.test.ts
+Auto-merging server/services/ana/__tests__/draft-project-sources.test.ts
+CONFLICT (content): Merge conflict in server/services/ana/__tests__/draft-project-sources.test.ts
+Auto-merging server/services/ana/__tests__/read-delivery-executor.test.ts
+Auto-merging server/services/ana/__tests__/read-receipts.test.ts
+Auto-merging server/services/ana/__tests__/step-document-titles.pglite.test.ts
+CONFLICT (content): Merge conflict in server/services/ana/__tests__/step-document-titles.pglite.test.ts
+Auto-merging server/services/ana/__tests__/vault-access-without-key.test.ts
+Auto-merging server/services/ana/catalog-scope.ts
+CONFLICT (content): Merge conflict in server/services/ana/catalog-scope.ts
+Auto-merging server/services/ana/document-catalog-tools.ts
+CONFLICT (content): Merge conflict in server/services/ana/document-catalog-tools.ts
+Auto-merging server/services/ana/document-passage-tools.ts
+CONFLICT (content): Merge conflict in server/services/ana/document-passage-tools.ts
+Auto-merging server/services/ana/document-tools-shared.ts
+CONFLICT (content): Merge conflict in server/services/ana/document-tools-shared.ts
+Auto-merging server/services/ana/draft-project-sources.ts
+CONFLICT (content): Merge conflict in server/services/ana/draft-project-sources.ts
+Auto-merging server/services/ana/read-receipts.ts
+CONFLICT (content): Merge conflict in server/services/ana/read-receipts.ts
+Auto-merging server/services/ana/source-context-admission.ts
+CONFLICT (content): Merge conflict in server/services/ana/source-context-admission.ts
+Auto-merging server/services/ana/step-presentation.ts
+CONFLICT (content): Merge conflict in server/services/ana/step-presentation.ts
+Auto-merging server/services/clinical-regulatory-evidence/evidence-spine.service.ts
+CONFLICT (content): Merge conflict in server/services/clinical-regulatory-evidence/evidence-spine.service.ts
+Auto-merging server/services/document-data-disposition/service.ts
+CONFLICT (content): Merge conflict in server/services/document-data-disposition/service.ts
+Auto-merging server/services/rag-filters.ts
+Auto-merging server/services/ragRouter.ts
+Auto-merging server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts
+CONFLICT (content): Merge conflict in server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts
+Auto-merging server/services/vault/__tests__/catalog-write-result.test.ts
+CONFLICT (content): Merge conflict in server/services/vault/__tests__/catalog-write-result.test.ts
+Auto-merging server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts
+CONFLICT (content): Merge conflict in server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts
+Auto-merging server/services/vault/document-catalog-governance.service.ts
+CONFLICT (content): Merge conflict in server/services/vault/document-catalog-governance.service.ts
+Auto-merging server/services/vault/document-catalog-search.ts
+CONFLICT (content): Merge conflict in server/services/vault/document-catalog-search.ts
+Auto-merging server/services/vault/document-catalog.service.ts
+CONFLICT (content): Merge conflict in server/services/vault/document-catalog.service.ts
+Auto-merging server/services/vault/document-passage-search.ts
+CONFLICT (content): Merge conflict in server/services/vault/document-passage-search.ts
+Auto-merging server/services/vault/vault-assistant-search.ts
+CONFLICT (content): Merge conflict in server/services/vault/vault-assistant-search.ts
+Auto-merging server/services/vault/vault-search.ts
+CONFLICT (content): Merge conflict in server/services/vault/vault-search.ts
+Automatic merge failed; fix conflicts and then commit the result.

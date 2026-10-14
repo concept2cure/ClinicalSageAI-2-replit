@@ -1,0 +1,33 @@
+{
+  "baselineHEAD": "d58e7944ddd0265de07dc3861c7937a24ec3652b",
+  "freshIndependent": {
+    "tests": 38,
+    "files": 3,
+    "bindings": 60,
+    "manifest": "independent-final-manifest.json",
+    "sourceBytesStillMatch": true
+  },
+  "freshNativePostgres": {
+    "tests": 20,
+    "bindings": 49,
+    "actualBlockingBarriers": 10,
+    "sourceBytesStillMatch": true,
+    "nativeRerunPerformed": true,
+    "runtimeLog": "post-upstream844-postgres-final-runtime.log",
+    "observations": "durable-postgres-observations.json",
+    "cleanupVerified": true
+  },
+  "boundChangesSince64": [
+    "server/services/c2c/program-access.ts"
+  ],
+  "changeReview": "Existing read-only role normalization extracted into shared helper; actual held program queries unchanged.",
+  "sqlReview": {
+    "reviewedFiles": 19,
+    "sourceBytesStillMatchPostfreezeReview": true
+  },
+  "dispositionCounterfactual": {
+    "expectedRed": true,
+    "serviceBytesStillMatch": true
+  },
+  "scope": "Fresh proof-artifact reconciliation only, no application edits. Full regression/type/hooks/publication remain lead-owned."
+}

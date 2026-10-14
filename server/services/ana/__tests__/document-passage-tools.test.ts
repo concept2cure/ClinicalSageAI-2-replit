@@ -40,7 +40,8 @@ vi.mock('../../vault/document-passage-search.js', () => ({
   searchDocumentPassages,
   PassageSearchUnavailableError: FakeUnavailable,
 }));
-vi.mock('../../vault/document-catalog.service.js', () => ({
+vi.mock('../../vault/document-catalog.service.js', async () => ({
+  withAnaSourceReadScope: (await import('./support/source-read-tool-fixture.js')).syntheticReadWrapper,
   isDocumentCatalogEnabled: vi.fn(async () => true),
 }));
 
@@ -73,7 +74,8 @@ beforeEach(() => {
   scope.read.mockResolvedValue({ programId: null, executor: scope.db, accessibleScope: {
     scope: 'verified-accessible-programs', actor: { userId: 7, role: 'member' },
     programIds: [], reconciliationRequired: false,
-  } });
+  }, admittedScope: { organizationId: 42, userId: 7, role: 'member', projectId: null, programId: null,
+    accessibleProgramIds: [], actorFiltered: true } });
 });
 
 describe('what it returns on a hit', () => {
@@ -103,7 +105,7 @@ describe('what it returns on a hit', () => {
       scope.db,
       { organizationId: 42, userId: 7, organizationUuid: CTX.organizationUuid, query: 'mortality at the high dose' },
       // No project open: the verified accessible library.
-      { limit: 8, programId: null },
+      expect.objectContaining({ limit: 8, programId: null, sourceReadScope: expect.objectContaining({ userId: 7, actorFiltered: true }) }),
     );
   });
 
@@ -113,7 +115,7 @@ describe('what it returns on a hit', () => {
       coverage: { total: 1, indexed: 1, pending: 0, failed: 0 },
     });
     await call({ query: 'anything', limit: 500 });
-    expect(searchDocumentPassages.mock.calls[0][2]).toEqual({ limit: 25, programId: null });
+    expect(searchDocumentPassages.mock.calls[0][2]).toMatchObject({ limit: 25, programId: null, sourceReadScope: { userId: 7, actorFiltered: true } });
   });
 });
 
@@ -305,7 +307,8 @@ describe('what it says when it could not look', () => {
       throw new Error('connection reset');
     });
     const out = await call({ query: 'stability at 6 months' });
-    expect(out.error).toContain('connection reset');
+    expect(out).toMatchObject({ ok: false, code: 'DOCUMENT_REQUEST_FAILED' });
+    expect(out.error).not.toContain('connection reset');
     expect(out.passages).toBeUndefined();
   });
 

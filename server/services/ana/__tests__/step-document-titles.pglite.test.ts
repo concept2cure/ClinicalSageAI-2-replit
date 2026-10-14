@@ -20,7 +20,7 @@ import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, OTHER_ORG } 
 import { resolveStepDocumentTitles } from '../step-presentation';
 
 let jdb: JourneyDb;
-const query = (sql: string, params: unknown[] = []) => jdb.pglite.query<{ id: string; document_title: string | null }>(sql, params);
+const query = (sql: string, params: unknown[] = []) => jdb.pool.query(sql, params) as Promise<{ rows: Array<{ id: string; document_title: string | null; organization_id: number; program_id: string }> }>;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
@@ -54,41 +54,43 @@ async function doc(title: string, program: string, opts: { deleted?: boolean } =
 }
 
 const reads = (...ids: string[]) => ids.map(id => ({ name: 'read_project_document', input: { document_id: id } }));
+const admitted = (programId: string | null, programs = programId ? [programId] : [PROGRAM, PROGRAM_B]) => ({ organizationId: ORG, userId: 1, role: 'viewer', projectId: programId ? 42 : null, programId, accessibleProgramIds: programs, actorFiltered: true as const });
 // This fixture proves actual title SQL eligibility, not actor admission; the
 // current-access and native suites exercise canonical actor/parent checks.
 const titleScope = (programIds: string[], programId: string | null) => ({
-  programId, executor: { query }, accessibleScope: { scope: 'verified-accessible-programs' as const,
+  programId, admittedScope: admitted(programId, programIds), executor: { query }, accessibleScope: { scope: 'verified-accessible-programs' as const,
     actor: { userId: 1, role: 'viewer' }, programIds, reconciliationRequired: false },
 });
 const recheck = async () => undefined;
-const inProject = { scope: async () => titleScope([PROGRAM], PROGRAM), query, recheck };
+const revalidate = async () => undefined;
+const inProject = { scope: async () => titleScope([PROGRAM], PROGRAM), query, recheck, revalidate };
 
 describe('resolveStepDocumentTitles', () => {
   it('names a document of the open project', async () => {
     const id = await doc('Stability report 2025', PROGRAM);
-    const titles = await resolveStepDocumentTitles(reads(id), { organizationId: ORG }, inProject);
+    const titles = await resolveStepDocumentTitles(reads(id), { organizationId: ORG, userId: 1 }, inProject);
     expect(titles.get(id)).toBe('Stability report 2025');
   });
 
   it('gives no title to a document of another project of the same organisation', async () => {
     const mine = await doc('Stability report 2025', PROGRAM);
     const other = await doc('Project B protocol', PROGRAM_B);
-    const titles = await resolveStepDocumentTitles(reads(mine, other), { organizationId: ORG }, inProject);
+    const titles = await resolveStepDocumentTitles(reads(mine, other), { organizationId: ORG, userId: 1 }, inProject);
     expect([...titles.keys()]).toEqual([mine]);
   });
 
   it('gives no title to another organisation\'s document, even with no project open', async () => {
     const theirs = await doc('Their protocol', OTHER_PROGRAM);
-    const orgWide = { scope: async () => titleScope([PROGRAM, PROGRAM_B], null), query, recheck };
-    const titles = await resolveStepDocumentTitles(reads(theirs), { organizationId: ORG }, orgWide);
+    const orgWide = { scope: async () => titleScope([PROGRAM, PROGRAM_B], null), query, recheck, revalidate };
+    const titles = await resolveStepDocumentTitles(reads(theirs), { organizationId: ORG, userId: 1 }, orgWide);
     expect(titles.size).toBe(0);
   });
 
-  it('with no project open, names documents in the evaluated accessible programme set', async () => {
+  it('with no project open, names documents in the explicitly admitted accessible sample', async () => {
     const a = await doc('A', PROGRAM);
     const b = await doc('B', PROGRAM_B);
-    const orgWide = { scope: async () => titleScope([PROGRAM, PROGRAM_B], null), query, recheck };
-    const titles = await resolveStepDocumentTitles(reads(a, b), { organizationId: ORG }, orgWide);
+    const orgWide = { scope: async () => titleScope([PROGRAM, PROGRAM_B], null), query, recheck, revalidate };
+    const titles = await resolveStepDocumentTitles(reads(a, b), { organizationId: ORG, userId: 1 }, orgWide);
     expect(titles.get(a)).toBe('A');
     expect(titles.get(b)).toBe('B');
   });
@@ -110,15 +112,15 @@ describe('resolveStepDocumentTitles', () => {
         JSON.stringify({ id: 'audit-1', sha256Chain: hex('d') }),
       ],
     );
-    const titles = await resolveStepDocumentTitles(reads(deleted, removed), { organizationId: ORG }, inProject);
+    const titles = await resolveStepDocumentTitles(reads(deleted, removed), { organizationId: ORG, userId: 1 }, inProject);
     expect(titles.size).toBe(0);
   });
 
   it('a scope that refuses the read gives no title and runs no query', async () => {
     const id = await doc('Stability report 2025', PROGRAM);
     let ran = 0;
-    const titles = await resolveStepDocumentTitles(reads(id), { organizationId: ORG }, {
-      scope: async () => ({ error: 'The open project has no program.' }),
+    const titles = await resolveStepDocumentTitles(reads(id), { organizationId: ORG, userId: 1 }, {
+      scope: async () => ({ error: 'The open project has no program.', code: 'NO_PROJECT' }),
       query: async (sql, params) => {
         ran++;
         return query(sql, params);
@@ -127,4 +129,26 @@ describe('resolveStepDocumentTitles', () => {
     expect(titles.size).toBe(0);
     expect(ran).toBe(0);
   });
+  it('organization-level titles exclude a same-org private program before returning metadata', async () => {
+    const mine = await doc('Visible source', PROGRAM), privateId = await doc('PRIVATE source title', PROGRAM_B);
+    const titles = await resolveStepDocumentTitles(reads(mine, privateId), { organizationId: ORG, userId: 1 } ,
+      { scope: async () => titleScope([PROGRAM], null), query, revalidate, recheck });
+    expect([...titles]).toEqual([[mine, 'Visible source']]);
+  });
+
+  it('recorded source organization must agree with the actor and live parent', async () => {
+    const wrong = await doc('WRONG recorded organization', PROGRAM);
+    await jdb.pool.query('UPDATE vault.documents SET organization_id=$1 WHERE id=$2', [OTHER_ORG, wrong]);
+    const titles = await resolveStepDocumentTitles(reads(wrong), { organizationId: ORG, userId: 1 } ,
+      { scope: async () => titleScope([PROGRAM], PROGRAM), query, revalidate, recheck });
+    expect(titles.size).toBe(0);
+  });
+
+  it('a private sharing revocation during metadata lookup returns no title', async () => {
+    const id = await doc('Source title before revocation', PROGRAM);
+    const titles = await resolveStepDocumentTitles(reads(id), { organizationId: ORG, userId: 1 } ,
+      { scope: async () => titleScope([PROGRAM], PROGRAM), query, recheck, revalidate: async () => { throw new Error('REVOKED'); } });
+    expect(titles.size).toBe(0);
+  });
+
 });

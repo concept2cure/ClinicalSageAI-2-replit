@@ -1,0 +1,12 @@
+[
+  {
+    "script": "ci:sql-interpolation",
+    "exitCode": 0,
+    "output": "[ci:sql-interpolation] OK \u2014 no new value interpolated into SQL text. 1068 baselined interpolation(s) in 228 file(s); the baseline may only shrink.\n"
+  },
+  {
+    "script": "ci:program-ownership-single-source",
+    "exitCode": 0,
+    "output": "[ci:program-ownership-single-source] OK \u2014 every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).\n"
+  }
+]

@@ -138,6 +138,8 @@ describe('semantic catalog — canonical legacy-family boundaries', () => {
     await catalog(unrelated);
     const result = await search();
     expect(ids(result)).toContain(original);
+    // Invalid lineage does not hide the original. A foreign/unattributable
+    // recorded source itself is not laundered through the owned parent.
     expect(result.searchedCount).toBe('program' in different || 'organization' in different ? 1 : 2);
     if ('organization' in different) expect(ids(result)).not.toContain(unrelated);
     expect(result.unsearchableCount).toBe(0);

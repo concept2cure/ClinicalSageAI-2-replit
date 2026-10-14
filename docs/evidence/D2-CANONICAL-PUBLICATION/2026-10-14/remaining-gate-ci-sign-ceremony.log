@@ -1,0 +1,2 @@
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baselined.

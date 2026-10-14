@@ -13,6 +13,7 @@
  */
 
 import { pool } from '../../db';
+import { sourceProcessingSummary } from './data-room-processing-read.js';
 import type { RequestSqlClient } from '../../db/requestDb';
 import { requireCurrentProgramAccess } from '../c2c/current-program-access';
 import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent, visibleSourceOrgSql, SourceReadAccessError } from './source-read-access';
@@ -303,7 +304,7 @@ export async function listClientDocuments(q: RequestSqlClient, orgId: number, op
   if (scopes.length) where+=` AND (${scopes.join(' OR ')})`;
   if (opts.workspaceId!=null) {args.push(opts.workspaceId); where+=` AND s.client_workspace_id=$${args.length}`;}
   args.push(Math.min(Math.max(opts.limit ?? 200,1),500));
-  const {rows} = await q.query(`SELECT s.*, ${capturedDataEligibleSql('s')} AS data_eligible,
+  const {rows} = await q.query(`SELECT s.*, clock_timestamp() AS processing_observed_at, ${capturedDataEligibleSql('s')} AS data_eligible,
     ${capturedBinaryAvailableSql('s')} AS original_file_available,
     ${capturedDispositionChoiceSql('s')} AS disposition FROM cre_evidence_sources s
     WHERE ${where} ORDER BY s.created_at DESC,s.id DESC LIMIT $${args.length}`,args);
@@ -805,6 +806,9 @@ const arr = (v: any) => (v == null ? [] : typeof v === 'string' ? JSON.parse(v) 
 
 export function adaptSource(r: any): EvidenceSource {
   return {
+    textAvailable: typeof r.text_available === 'boolean' ? r.text_available
+      : Object.hasOwn(r, 'extracted_text') ? typeof r.extracted_text === 'string' && r.extracted_text.trim().length > 0 : null,
+    processing: sourceProcessingSummary(j(r.metadata), processingObservation(r.processing_observed_at)),
     id: r.id, organizationId: r.organization_id, visibilityClass: r.visibility_class,
     clientWorkspaceId: r.client_workspace_id, clientProgramId: r.client_program_id ?? null,
     sourceType: r.source_type, agency: r.agency,
@@ -822,6 +826,10 @@ export function adaptSource(r: any): EvidenceSource {
     linkedPrecedentId: r.linked_precedent_id, metadata: j(r.metadata),
     createdAt: r.created_at, updatedAt: r.updated_at,
   };
+}
+function processingObservation(value: unknown): string | null {
+  if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString();
+  return typeof value === 'string' ? value : null;
 }
 function adaptStudy(r: any): ClinicalStudy {
   return {

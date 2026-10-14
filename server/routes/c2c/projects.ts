@@ -74,6 +74,7 @@ import {
    create failure could not be looked up in the logs — the reference the UI
    invited the user to quote pointed at nothing. */
 import { serverError } from '../../lib/api-response.js';
+import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { uploadedBinaryAvailableSql } from '../../services/document-data-disposition/eligibility.js';
 import { lockDocumentDispositionProgram } from '../../services/document-data-disposition/program-lock.js';
@@ -1476,6 +1477,10 @@ type AdoptionFileRow = {
   storage_path: string | null; checksum_sha256: string | null;
 };
 
+function requireUnboundConversationUpload(alreadyBound: boolean): void {
+  if (alreadyBound) throw new AdoptionRefusal(409, 'FILE_ALREADY_PROJECT_BOUND', 'This file already has a recorded project association. Nothing was adopted.');
+}
+
 /** The pre-read takes no row lock. Recheck under FOR UPDATE only after the
  * shared disposition advisory lock, so save/withdrawal cannot invert locks. */
 async function authorizeAdoptionProgram(client: PoolClient, req: Request, res: Response, scope: { orgId: number; programId: string }, lock: boolean): Promise<boolean> {
@@ -1535,28 +1540,37 @@ function adoptionRefusalResponse(res: Response, err: unknown): Response | null {
 /**
  * Read, classify and version an adopted file, as an upload is
  * (data-room-processing.ts). After the commit: the adopt is the record and
- * stands without its derived text; a failure is left 'pending' for the sweep.
+ * stands without its derived text. Processing status is separate from capture.
  */
-async function processAdopted(orgId: number, programId: string, sourceId: number, f: AdoptionFileRow, upload: UploadedFile): Promise<boolean> {
-  const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
-  const done = await processCapturedSource(orgId, sourceId, {
-    bytes: upload.buffer, fileName: f.original_name ?? upload.fileName, mimeType: f.mime_type ?? upload.mimeType,
-    programId, processedBy: 'adopt',
-  });
-  return done.ok;
+async function processAdopted(orgId: number, programId: string, sourceId: number, f: AdoptionFileRow, upload: UploadedFile): Promise<Omit<import('../../services/clinical-regulatory-evidence/data-room-processing.js').SourceProcessingResult, 'extracted'>> {
+  try {
+    const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
+    const done = await processCapturedSource(orgId, sourceId, {
+      bytes: upload.buffer, fileName: f.original_name ?? upload.fileName, mimeType: f.mime_type ?? upload.mimeType,
+      programId, expectedWorkspaceId: null, processedBy: 'adopt',
+    });
+    return { ok: done.ok, processed: done.processed, status: done.status, ...(done.reasonCode ? { reasonCode: done.reasonCode } : {}) };
+  } catch (err) {
+    logger.warn('Adopted capture processing unavailable', { sourceId, err: err instanceof Error ? err.message : String(err) });
+    return { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' };
+  }
 }
 
 router.post('/:id/adopt', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
   if (!orgId || !userId) return send403(res);
-  const programId = String(req.params.id);
+  const programId = String(req.params.id).toLowerCase();
   if (!UUID_RE.test(programId)) return send404(res);
   const fileUploadId = typeof req.body?.fileUploadId === 'string' ? req.body.fileUploadId.trim() : '';
   if (!fileUploadId) return send400(res, 'fileUploadId is required.');
   const scope = { orgId, programId };
 
   const client = await pool.connect();
+  let clientOwned = true;
+  const releaseCaptureClient = () => {
+    if (clientOwned) { clientOwned = false; client.release(); }
+  };
   try {
     await client.query('BEGIN');
     if (!await authorizeAdoptionProgram(client, req, res, scope, false)) {
@@ -1580,9 +1594,12 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
     }, client);
     if (existing) {
       await client.query('ROLLBACK');
-      return res.json({ adopted: false, sourceId: existing.id, message: 'This file is already in the project’s Data Room.' });
+      releaseCaptureClient();
+      const processing = await processAdopted(orgId, programId, existing.id, f, upload);
+      return res.json({ adopted: false, sourceId: existing.id, processed: processing.processed, processing,
+        message: 'This file already has a capture in the project’s Data Room.' });
     }
-    if (alreadyBound) throw new AdoptionRefusal(409, 'FILE_ALREADY_PROJECT_BOUND', 'This file already has a recorded project association. Nothing was adopted.');
+    requireUnboundConversationUpload(alreadyBound);
     const source = await createSource(orgId, {
       sourceType: 'client_document',
       visibilityClass: 'project_private',
@@ -1604,15 +1621,18 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
       details: { file_upload_id: upload.fileId, source_id: source.id, checksum: sha256, from: 'conversation' },
     });
     await client.query('COMMIT');
-    const processed = await processAdopted(orgId, programId, source.id, f, upload);
-    return res.status(201).json({ adopted: true, sourceId: source.id, processed });
+    // Processing opens its own short transactions. Return this connection
+    // first so concurrent captures cannot occupy the whole pool while waiting.
+    releaseCaptureClient();
+    const processing = await processAdopted(orgId, programId, source.id, f, upload);
+    return res.status(201).json({ adopted: true, sourceId: source.id, processed: processing.processed, processing });
   } catch (err: unknown) {
-    await client.query('ROLLBACK').catch(() => {});
+    if (clientOwned) await client.query('ROLLBACK').catch(() => {});
     const refusal = adoptionRefusalResponse(res, err);
     if (refusal) return refusal;
     return serverError(res, logger, 'adopting the file into the project', err, { programId });
   } finally {
-    client.release();
+    releaseCaptureClient();
   }
 });
 
@@ -1830,6 +1850,8 @@ function shapeSource(s: ShapeableSource, usage: Map<number, SourceUsageSummary>)
     disposition: s.disposition ?? null,
     ingestionStatus: s.ingestionStatus,
     extractionStatus: s.extractionStatus,
+    textAvailable: s.textAvailable ?? null,
+    processing: s.processing ?? sourceProcessingSummary(meta),
     createdAt: s.createdAt,
     updatedAt: s.updatedAt,
     // Reported from recorded citations only. Nothing here is inferred from

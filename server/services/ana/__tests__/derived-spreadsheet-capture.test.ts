@@ -4,6 +4,7 @@ const h = vi.hoisted(() => ({
   query: vi.fn(), connect: vi.fn(), release: vi.fn(),
   mkdir: vi.fn(), writeFile: vi.fn(), unlink: vi.fn(), readFile: vi.fn(),
   createSource: vi.fn(), audit: vi.fn(), resolveProgram: vi.fn(), lockProgram: vi.fn(),
+  processCapturedSource: vi.fn(),
 }));
 vi.mock('node:fs', () => ({ promises: {
   mkdir: h.mkdir, writeFile: h.writeFile, unlink: h.unlink, readFile: h.readFile,
@@ -17,6 +18,7 @@ vi.mock('../../document-data-disposition/program-lock.js', () => ({ lockDocument
 // project/source access is exercised by source-context-admission.pglite.test.
 vi.mock('../source-context-admission', () => ({ assertAnaUploadAccess: async () => undefined }));
 vi.mock('../project-scope-admission', () => ({ admitAnaProjectScope: async () => undefined }));
+vi.mock('../../clinical-regulatory-evidence/data-room-processing.js', () => ({ processCapturedSource: h.processCapturedSource }));
 
 import { saveDerivedUpload, sha256Hex } from '../uploaded-file-access';
 
@@ -52,6 +54,65 @@ beforeEach(() => {
   h.lockProgram.mockResolvedValue(undefined);
   h.createSource.mockResolvedValue({ id: 77 });
   h.audit.mockResolvedValue(undefined);
+  h.processCapturedSource.mockResolvedValue({ ok: true, processed: true, status: 'completed' });
+});
+
+describe('derived spreadsheet processing outcome after capture commit', () => {
+  it('releases the capture connection after acknowledged COMMIT and before processing', async () => {
+    const out = await saveDerivedUpload(params());
+    expect(out.processing?.processed).toBe(true);
+    const commitIndex = h.query.mock.calls.findIndex(([sql]) => sql === 'COMMIT');
+    expect(h.release).toHaveBeenCalledOnce();
+    expect(h.release.mock.invocationCallOrder[0]).toBeGreaterThan(h.query.mock.invocationCallOrder[commitIndex]);
+    expect(h.release.mock.invocationCallOrder[0]).toBeLessThan(h.processCapturedSource.mock.invocationCallOrder[0]);
+  });
+
+  it.each(['completed', 'already_complete'] as const)('reports readable %s separately from the edit receipt', async status => {
+    h.processCapturedSource.mockResolvedValue({ ok: true, processed: true, status, extracted: { text: 'private source contents' } });
+    const result = await saveDerivedUpload(params());
+    expect(result).toMatchObject({ captureStatus: 'captured', sourceId: 77,
+      processing: { ok: true, processed: true, status } });
+    expect(result.processing).not.toHaveProperty('extracted');
+    expect(h.processCapturedSource).toHaveBeenCalledWith(7, 77, expect.objectContaining({
+      bytes: params().buffer, programId, expectedWorkspaceId: null,
+    }));
+    expect(h.createSource.mock.calls[0][1].metadata).toMatchObject({ scientificQualification: 'unassessed', formulaResults: 'not_recalculated' });
+  });
+
+  it.each(['extraction_failed', 'retryable_failure', 'blocked', 'stale_source', 'busy', 'retry_not_due', 'retry_exhausted'] as const)(
+    'preserves captured bytes and edit receipt for %s', async status => {
+      h.processCapturedSource.mockImplementation(async () => {
+        expect(h.query.mock.calls.at(-1)?.[0]).toBe('COMMIT');
+        return { ok: false, processed: false, status, reasonCode: 'SAFE_REASON' };
+      });
+      const result = await saveDerivedUpload(params());
+      expect(result).toMatchObject({ captureStatus: 'captured', sourceId: 77,
+        processing: { ok: false, processed: false, status, reasonCode: 'SAFE_REASON' },
+        derivationAudit: { resourceId: result.fileId } });
+      expect(h.query.mock.calls.at(-1)?.[0]).toBe('COMMIT');
+      expect(h.unlink).not.toHaveBeenCalled();
+      expect(h.release).toHaveBeenCalledOnce();
+    });
+
+  it('returns the committed capture when processing unexpectedly rejects', async () => {
+    h.processCapturedSource.mockRejectedValue(new Error('private extractor storage /private/workbook'));
+    const result = await saveDerivedUpload(params());
+    expect(result).toMatchObject({ captureStatus: 'captured', sourceId: 77,
+      processing: { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' } });
+    expect(h.query.mock.calls.at(-1)?.[0]).toBe('COMMIT');
+    expect(h.unlink).not.toHaveBeenCalled();
+    expect(h.release).toHaveBeenCalledOnce();
+    expect(JSON.stringify(result)).not.toContain('/private/');
+  });
+
+  it('does not process a conversation-only derivation', async () => {
+    const p = params(); p.derivation.projectRef = '';
+    h.resolveProgram.mockResolvedValue(null);
+    const result = await saveDerivedUpload(p);
+    expect(result.captureStatus).toBe('conversation_only');
+    expect(result.processing).toBeUndefined();
+    expect(h.processCapturedSource).not.toHaveBeenCalled();
+  });
 });
 
 describe('derived spreadsheet upload — parent provenance and project capture', () => {
@@ -153,6 +214,7 @@ describe('derived spreadsheet failures and legacy compatibility', () => {
     await expect(saveDerivedUpload(params())).rejects.toThrow(/connection lost/);
     expect(h.unlink).not.toHaveBeenCalled();
     expect(h.release).toHaveBeenCalledOnce();
+    expect(h.processCapturedSource).not.toHaveBeenCalled();
   });
 
   it('retains honest unverifiable status for an original with no recorded checksum', async () => {

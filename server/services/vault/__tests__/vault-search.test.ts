@@ -9,14 +9,19 @@
  * organisation as $1, for a project search and for the library search.
  */
 import { describe, it, expect, vi } from 'vitest';
-const scope = vi.hoisted(() => vi.fn());
+const authority = vi.hoisted(() => ({ scope: vi.fn(), fresh: vi.fn() }));
+const scope = authority.scope;
 vi.mock('../../c2c/current-program-access.js', async (original) => ({
   ...await original<typeof import('../../c2c/current-program-access.js')>(),
-  getCurrentAccessibleProgramScope: scope,
+  getCurrentAccessibleProgramScope: authority.scope,
+  // Unit adapter seam only; real branded admission and changed persisted
+  // sharing are exercised by vault-search-paging.pglite.integration.test.ts.
+  requireProgramScopeStillCurrent: authority.fresh,
 }));
 import { searchVaultDocuments } from '../vault-search';
 
 function capture() {
+  authority.fresh.mockReset().mockResolvedValue(undefined);
   scope.mockImplementation(async (_db, input) => ({ scope: 'verified-accessible-programs',
     actor: { userId: input.userId, role: 'member' }, programIds: input.programId ? [input.programId] : [PROGRAM],
     reconciliationRequired: false }));
@@ -34,6 +39,14 @@ const ORG = 42;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 
 describe('searchVaultDocuments', () => {
+  it('refuses a materialized count and page when final actor admission changes', async () => {
+    const { db, calls } = capture();
+    authority.fresh.mockRejectedValueOnce(new Error('PROJECT_ACCESS_CHANGED'));
+    await expect(searchVaultDocuments(db, { organizationId: ORG, userId: 7, programId: null, q: 'stability', limit: 25, offset: 0, includeSuperseded: false })).rejects.toThrow('PROJECT_ACCESS_CHANGED');
+    expect(calls).toHaveLength(2);
+    expect(authority.fresh).toHaveBeenCalledWith(db, { organizationId: ORG, userId: 7, programId: null }, expect.objectContaining({ actor: { userId: 7, role: 'member' } }));
+  });
+
   it('the library search names the organisation in the count and in the page', async () => {
     const { db, calls } = capture();
     await searchVaultDocuments(db, { organizationId: ORG, userId: 7, programId: null, q: 'stability', limit: 25, offset: 0, includeSuperseded: false });

@@ -24,7 +24,7 @@ const sections = [
   { id: SEC, doc_id: DOC, code: '3.2.P.8.2', title: 'Current argument', content: '<p>Current<a data-cite="1">Current report</a>.</p>', order_index: 1, updated_at: AT },
 ];
 const source = (id: number, over: Record<string, unknown> = {}) => ({ id, title: id === 201 ? 'Prior protocol' : `Report ${id}`,
-  extractionStatus: 'extracted', checksum: 'a'.repeat(64), isCurrent: true, dataEligible: true, originalFileAvailable: true, ...over });
+  extractionStatus: 'extracted', textAvailable: (over.extractionStatus ?? 'extracted') === 'extracted', checksum: 'a'.repeat(64), isCurrent: true, dataEligible: true, originalFileAvailable: true, ...over });
 const page = (programId: string, rows: ReturnType<typeof source>[], total = rows.length, offset = 0) => ({ projectId: programId,
   sources: rows, total, currentTotal: total, page: { limit: 200, offset }, window: { shown: rows.length, truncated: offset + rows.length < total } });
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;

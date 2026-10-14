@@ -1,17 +1,19 @@
-/** Real PostgreSQL SQL/rollback via PGlite; FS and capture/audit seams are
+/** Real PostgreSQL SQL/rollback via PGlite; FS and capture/audit/processing seams are
  * explicit test doubles. Not live RLS, scanner, audit-HMAC or concurrency PQ. */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createDispositionHarness, type DispositionHarness, type DispositionFixture } from '../../document-data-disposition/__tests__/disposition-fixture';
 
 const h = vi.hoisted(() => ({ db: null as any, original: Buffer.from('study workbook source'),
-  readBytes: Buffer.from('study workbook source'), writeFile: vi.fn(), unlink: vi.fn(), captureFails: false, auditFails: false }));
+  readBytes: Buffer.from('study workbook source'), writeFile: vi.fn(), unlink: vi.fn(), captureFails: false, auditFails: false,
+  processCapturedSource: vi.fn() }));
 vi.mock('node:fs', async importOriginal => {
   const original = await importOriginal<typeof import('node:fs')>();
   return { ...original, promises: { ...original.promises, mkdir: vi.fn(async () => undefined),
     writeFile: h.writeFile, unlink: h.unlink, readFile: vi.fn(async () => h.readBytes) } };
 });
 vi.mock('../../../db.js', () => ({ getPool: () => h.db }));
+vi.mock('../../clinical-regulatory-evidence/data-room-processing.js', () => ({ processCapturedSource: h.processCapturedSource }));
 vi.mock('../../clinical-regulatory-evidence/evidence-spine.service.js', () => ({
   createSource: async (org: number, p: any, q: any) => {
     const result = await q.query(`INSERT INTO cre_evidence_sources
@@ -41,25 +43,18 @@ beforeAll(async () => {
   await harness.pg.exec(`ALTER TABLE file_uploads ADD COLUMN user_id integer,
     ADD COLUMN original_name text, ADD COLUMN mime_type text, ADD COLUMN file_size bigint,
     ADD COLUMN created_at timestamptz DEFAULT now()`);
-  await harness.pg.exec(`CREATE TABLE organizations(id int PRIMARY KEY,status text);
-    CREATE TABLE users(id int PRIMARY KEY,status text);
-    CREATE TABLE organization_users(organization_id int,user_id int,role text);
-    CREATE TABLE project_visibility_settings(project_id int,organization_id int,visibility text);
-    CREATE TABLE project_members(project_id int,organization_id int,user_id int,role text,status text);
-    CREATE TABLE concept2cure_review_assignments(artifact_id int,organization_id int,reviewer_id int,status text);
-    ALTER TABLE projects ADD COLUMN client_workspace_id int,ADD COLUMN owner_id int,
-      ADD COLUMN created_by_id int,ADD COLUMN settings jsonb DEFAULT '{}';
-    ALTER TABLE cre_evidence_sources ADD COLUMN client_workspace_id int;
-    INSERT INTO users VALUES (42,'active')`);
+  // Actor and project precursors come from the shared disposition harness.
+  await harness.pg.exec(`ALTER TABLE cre_evidence_sources ADD COLUMN created_by int, ADD COLUMN client_workspace_id int`);
 });
 afterAll(async () => { await harness.close(); });
 beforeEach(async () => {
   vi.clearAllMocks(); h.captureFails = false; h.auditFails = false;
+  h.processCapturedSource.mockReset();
+  h.processCapturedSource.mockResolvedValue({ ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_WRITE_FAILED' });
   h.readBytes = h.original;
   h.writeFile.mockResolvedValue(undefined); h.unlink.mockResolvedValue(undefined);
   f = await harness.seed();
-  await f.pg.query("INSERT INTO organizations VALUES ($1,'active')", [f.org]);
-  await f.pg.query("INSERT INTO organization_users VALUES ($1,42,'member')", [f.org]);
+  await f.pg.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=42", [f.org]);
   await f.pg.query('UPDATE projects SET owner_id=42,created_by_id=42 WHERE organization_id=$1', [f.org]);
   await f.pg.query('UPDATE file_uploads SET user_id=42 WHERE id=$1', [f.upload]);
   await f.pg.query(`UPDATE file_uploads SET checksum_sha256=$1, original_name='source.xlsx',
@@ -87,10 +82,26 @@ describe('spreadsheet derivation SQL and atomicity', () => {
     expect(capture.provenance.parentSourceIds).toEqual([f.capture]);
     expect(capture.provenance.derivedFromFileId).toBe(f.upload);
     expect(capture.extraction_status).toBe('pending');
+    expect(out.processing).toMatchObject({ processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_WRITE_FAILED' });
     expect(capture.metadata.scientificQualification).toBe('unassessed');
     const audit = (await f.audits())[0] as any;
     expect(audit.entry.details.edits).toEqual(params().derivation.edits);
     expect(audit.entry.details.checksumSha256).toBe(sha256Hex(params().buffer));
+  });
+
+  it('preserves actual committed rows and edit receipt when the processing seam rejects', async () => {
+    h.processCapturedSource.mockImplementation(async (_org, sourceId) => {
+      expect((await f.pg.query('SELECT id FROM cre_evidence_sources WHERE id=$1', [sourceId])).rows).toHaveLength(1);
+      expect(await f.audits()).toHaveLength(1);
+      throw new Error('private workbook extractor /private/source');
+    });
+    const out = await saveDerivedUpload(params());
+    expect(out).toMatchObject({ captureStatus: 'captured', processing: {
+      ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' } });
+    expect((await f.pg.query('SELECT id FROM file_uploads WHERE id=$1', [out.fileId])).rows).toHaveLength(1);
+    expect((await f.pg.query('SELECT extraction_status FROM cre_evidence_sources WHERE id=$1', [out.sourceId])).rows).toEqual([{ extraction_status: 'pending' }]);
+    expect(await f.audits()).toHaveLength(1);
+    expect(h.unlink).not.toHaveBeenCalled();
   });
 
   it.each(['capture', 'audit'])('rolls back every new database record if the %s seam fails', async failure => {

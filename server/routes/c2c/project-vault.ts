@@ -65,6 +65,8 @@ import {
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { sourceReadView } from '../../../shared/data-room-processing-status.js';
+import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
@@ -1424,10 +1426,7 @@ export default function createProjectVaultRoutes(): Router {
               : /image/i.test(mime) ? 'Image'
               : /text|markdown/i.test(mime) ? 'Text'
               : 'File';
-            const readState =
-              s.extractionStatus === 'extracted' ? 'Read'
-              : s.extractionStatus === 'failed' ? 'Text not readable'
-              : 'Not processed yet';
+            const readState = sourceReadView({ ...s, processing: s.processing ?? sourceProcessingSummary(meta) }).label;
             const suggestedFolder = dossier?.suggestedFolder ?? null;
             return {
               id: s.id,
@@ -2132,7 +2131,7 @@ export default function createProjectVaultRoutes(): Router {
       const { readCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
       const record = await readCatalogRecord({
         programId: String(req.params.id ?? ''), documentId: String(req.params.documentId ?? ''), organizationId: orgId,
-        userId: resolveUserId(req) ?? undefined, executor: pool,
+        userId: governedActorId(req), executor: pool,
       });
       if (!record) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
       return res.json({ success: true, data: record });
@@ -2149,6 +2148,10 @@ export default function createProjectVaultRoutes(): Router {
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const body = (req.body ?? {}) as Record<string, unknown>;
     const text = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    if ('expectedExtractedTextSha256' in body && typeof body.expectedExtractedTextSha256 !== 'string') {
+      return res.status(400).json({ success: false, error: 'INVALID_EXTRACTED_TEXT_HASH',
+        message: 'The shown source text must be identified by its SHA-256 digest.' });
+    }
     try {
       const { reviewCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
       const outcome = await reviewCatalogRecord({
@@ -2159,6 +2162,7 @@ export default function createProjectVaultRoutes(): Router {
         userId: governedActorId(req),
         action,
         expectedContentHash: text(body.contentHash),
+        expectedExtractedTextSha256: text(body.expectedExtractedTextSha256),
         expectedRevision: text(body.revision),
         documentKind: text(body.documentKind),
         purpose: text(body.purpose),

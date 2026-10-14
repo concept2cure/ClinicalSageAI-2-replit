@@ -1,0 +1,106 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-14T03:39:36.963Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:39:36.965Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+{
+  "timestamp": "2026-10-14T03:39:36.965Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > warns (does not block) when a required flag is set but the bundle has no evidence 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > forwards the selected external descriptor so a matching clean report can pass the required gate 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > reports a matching external error as a failed assessment and blocks required production 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > keeps a clean selected subset from satisfying the required external assessment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit external assessment classification > refuses required external clearance without a trusted descriptor despite a clean engine-named report 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in production 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps an advisory failed assessment visible without adding blockers in staging 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > keeps advisory unassessed execution distinct from a clean zero-error assessment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > surfaces an advisory mismatched report as invalid rather than passed 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > retains valid internal subset error diagnostics without calling them an external assessment 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > pre-transmit advisory assessment visibility > preserves low-level enforceExternal=false even when required with no descriptor 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 344ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > POSITIVE CONTROL: a complete drop-point clears the same gate 306ms
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-10-14T03:39:38.507Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:39:38.508Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+{
+  "timestamp": "2026-10-14T03:39:38.508Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts
+[database] Database connection successful
+
+stderr | server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result
+{
+  "timestamp": "2026-10-14T03:39:38.657Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/submission-gateways/gateway-accounts.ts:103:29",
+    "queryPreview": "SELECT account_mode, sender_identifier, credentials_ciphertext FROM organization_gateway_accounts WHERE organization_id = $1 AND region = $2 AND gateway = $3...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result 18ms
+ ✓ server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing 4ms
+
+ Test Files  2 passed (2)
+      Tests  30 passed (30)
+   Start at  03:39:34
+   Duration  3.84s (transform 1.48s, setup 74ms, import 2.81s, tests 690ms, environment 0ms)
+

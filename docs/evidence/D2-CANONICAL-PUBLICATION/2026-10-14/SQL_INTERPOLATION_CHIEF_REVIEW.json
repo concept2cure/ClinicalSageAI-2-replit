@@ -1,0 +1,531 @@
+{
+  "reviewScope": "Independent read-only chief audit of all19 files flagged by first canonical push; no production/baseline/gate edits, no application or provider invocation.",
+  "baselineHEAD": "24a4f940b89782f9af549597ea74b43be9cdc4b2",
+  "currentHEAD": "24a4f940b89782f9af549597ea74b43be9cdc4b2",
+  "createdAt": "2026-10-14T21:46:54.998Z",
+  "reviewedUnsafeExternalValueInterpolations": [],
+  "recommendedGateResolution": "Explicitly update only the19 reviewed counts after peer audit, including the5-to0 decrease; document fixed structural provenance and source hashes. Keep scanner/selftest unchanged; no whole-baseline regeneration or query-obscuring rewrite.",
+  "gateCoverageLimit": "The unchanged regex scanner is not a whole-program SQL injection proof. AST inspection includes the inner expressions of nested templates and manual provenance tracing includes assembled-query constants omitted by the scanner.",
+  "files": [
+    {
+      "path": "server/services/advancedRAGPipeline.ts",
+      "sourceSha256": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+      "initialBaseline": 37,
+      "currentGateCount": 44,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Fixed d/rd/a eligibility and original-availability predicates, fixed corpus column maps, finite projection/predicate choices, and $n indexes derived only from params lengths. Query, vector, category, profile, program IDs, tenant IDs and limits remain bind values.",
+      "queryTemplateCalls": [
+        {
+          "line": 893,
+          "expressions": [
+            "vaultBinaryAvailableSql('d')",
+            "filter",
+            "vaultDataEligibleSql('d')",
+            "supersededSql('d')"
+          ]
+        },
+        {
+          "line": 907,
+          "expressions": [
+            "ragOriginalFileAvailableSql('d')",
+            "ragDataEligibleSql('d')"
+          ]
+        },
+        {
+          "line": 919,
+          "expressions": [
+            "atomOriginalFileAvailableSql('a')",
+            "atomDataEligibleSql('a')"
+          ]
+        },
+        {
+          "line": 1217,
+          "expressions": [
+            "vaultDataEligibleSql('d')",
+            "filter",
+            "identity",
+            "supersededSql('d')"
+          ]
+        },
+        {
+          "line": 1234,
+          "expressions": [
+            "ragDataEligibleSql('rd')"
+          ]
+        },
+        {
+          "line": 1357,
+          "expressions": [
+            "vaultBinaryAvailableSql('d')",
+            "withVectors ? 'c.embedding::text AS embedding,' : ''",
+            "args.keyless\n          ? \"ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1), 32)::float8\"\n          : '0::float8'",
+            "withVectors ? 'c.embedding IS NOT NULL' : 'TRUE'",
+            "filter",
+            "vaultDataEligibleSql('d')",
+            "supersededSql('d')"
+          ]
+        },
+        {
+          "line": 1484,
+          "expressions": [
+            "vaultBinaryAvailableSql('d')",
+            "denseFilter",
+            "vaultDataEligibleSql('d')",
+            "supersededSql('d')",
+            "embeddingCol.replace('c.embedding', 's.embedding')"
+          ]
+        },
+        {
+          "line": 1609,
+          "expressions": [
+            "ragOriginalFileAvailableSql('d')",
+            "embeddingCol",
+            "ragDataEligibleSql('d')",
+            "orgFilter",
+            "denseFilter"
+          ]
+        },
+        {
+          "line": 1655,
+          "expressions": [
+            "ragOriginalFileAvailableSql('d')",
+            "embeddingCol",
+            "ragDataEligibleSql('d')",
+            "lexOrgFilter",
+            "lexFilter"
+          ]
+        },
+        {
+          "line": 1745,
+          "expressions": [
+            "profileClause",
+            "thresholdIdx",
+            "categoryClause",
+            "params.length"
+          ]
+        },
+        {
+          "line": 1796,
+          "expressions": [
+            "profileClause",
+            "thresholdIdx",
+            "categoryClause",
+            "params.length"
+          ]
+        },
+        {
+          "line": 1837,
+          "expressions": [
+            "vaultDataEligibleSql('d')"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-history.ts",
+      "sourceSha256": "8e32bcc6d7a796a380626f0393329a64e0ed0f640cb3ba3892dd75a1cc8e5bdf",
+      "initialBaseline": 0,
+      "currentGateCount": 1,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Exact document/receipt predicates contain generated $n placeholders only; UUID selections are pushed into params. Actor and allowed program IDs are bound.",
+      "queryTemplateCalls": [
+        {
+          "line": 82,
+          "expressions": [
+            "exact"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana/source-admission-receipt-store.ts",
+      "sourceSha256": "a761a88e8135e34a7a76e13ea439981c66b79f0fb925179fcaa13313e13dddf9",
+      "initialBaseline": 0,
+      "currentGateCount": 1,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "COLUMNS is a module-private literal projection; the existing INSERT variable also uses only that literal plus sixteen bind placeholders.",
+      "queryTemplateCalls": [
+        {
+          "line": 92,
+          "expressions": [
+            "COLUMNS"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing-store.ts",
+      "sourceSha256": "b963de51cbaf5cc8f38cb729f506cd0271cfdd01fc237b6dfd235f4b8486961f",
+      "initialBaseline": 0,
+      "currentGateCount": 3,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Only fixed captured/upload eligibility predicates with literal s/f aliases; source/upload/org identities are bound.",
+      "queryTemplateCalls": [
+        {
+          "line": 100,
+          "expressions": [
+            "capturedDataEligibleSql('s')",
+            "capturedBinaryAvailableSql('s')"
+          ]
+        },
+        {
+          "line": 113,
+          "expressions": [
+            "uploadedBinaryAvailableSql('f')"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",
+      "sourceSha256": "acc8e9aedc793f7094a5f6c7ebb166a17d3ef6cc4ac995726a0b11fff67c9285",
+      "initialBaseline": 0,
+      "currentGateCount": 9,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Private factories emit only fixed stage field names, aliases, code enum reason labels and predetermined SQL branches. Source/org IDs, limits and source-ID arrays remain bound. The main assembled query was also reviewed; no change was made to evade gate detection.",
+      "queryTemplateCalls": [
+        {
+          "line": 137,
+          "expressions": [
+            "select",
+            "join",
+            "base",
+            "ordinary",
+            "run",
+            "healthy",
+            "S",
+            "validStageSql()",
+            "text('state')"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing.ts",
+      "sourceSha256": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+      "initialBaseline": 0,
+      "currentGateCount": 4,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Four uses of the fixed persisted extraction nonblank predicate; all source/model/extraction metadata and facts remain bind values.",
+      "queryTemplateCalls": [
+        {
+          "line": 209,
+          "expressions": [
+            "persistedTextAvailableSql()",
+            "persistedTextAvailableSql()",
+            "persistedTextAvailableSql()",
+            "persistedTextAvailableSql()"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+      "sourceSha256": "78862a0bf91ba1436fc3cf8cbfa259c0f2b5835134971b6c6ba925a7d6823e3c",
+      "initialBaseline": 7,
+      "currentGateCount": 8,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Fixed projection/search-vector/nonblank/eligibility helpers, parameterized filter clauses, generated qParam and page indexes. Raw query text, source kind/status/dates, program/org and page limits remain bound.",
+      "queryTemplateCalls": [
+        {
+          "line": 138,
+          "expressions": [
+            "capturedDataEligibleSql('s')",
+            "where"
+          ]
+        },
+        {
+          "line": 147,
+          "expressions": [
+            "LIST_COLUMNS",
+            "SOURCE_TEXT_AVAILABLE_SQL",
+            "capturedDataEligibleSql('s')",
+            "capturedBinaryAvailableSql('s')",
+            "capturedDispositionChoiceSql('s')",
+            "qParam\n              ? `ts_headline('english', left(s.extracted_text, 900000), websearch_to_tsquery('english', ${qParam}),\n                   'MaxFragments=1, MaxWords=28, MinWords=8, ShortWord=2')`\n              : 'NULL::text'",
+            "where",
+            "qParam ? `ts_rank_cd(${SEARCH_VECTOR}, websearch_to_tsquery('english', ${qParam})) DESC, ` : ''",
+            "page.length - 1",
+            "page.length"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/document-data-disposition/service.ts",
+      "sourceSha256": "2cd0f80dc0e867fe0e260267c666e7409858ed5314030c68abf2e0f82f7a0ec6",
+      "initialBaseline": 1,
+      "currentGateCount": 2,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "New holdProgram branch is only an empty string or literal AND deleted_at IS NULL FOR SHARE. Existing IMPACT_TABLES is a module-private fixed identifier allowlist. Program and organization remain bind values.",
+      "queryTemplateCalls": [
+        {
+          "line": 85,
+          "expressions": [
+            "holdProgram ? ' AND deleted_at IS NULL FOR SHARE' : ''"
+          ]
+        },
+        {
+          "line": 113,
+          "expressions": [
+            "IMPACT_TABLES.join(', ')"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/tenant-export/tenant-full-export.service.ts",
+      "sourceSha256": "38242b3622e4d0c8bd96e918f8f705a84b451511d87a855a99a8e56d0a36751c",
+      "initialBaseline": 8,
+      "currentGateCount": 9,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "New hold clause is empty string or literal FOR SHARE; org and digest remain bound. Existing catalog-driven schema/table/tenant-column identifiers are discovered through fixed schema/key-name sets, regex validated and separately quoted; scoped predicates and cap are fixed code.",
+      "queryTemplateCalls": [
+        {
+          "line": 349,
+          "expressions": [
+            "schema",
+            "table",
+            "scoped",
+            "MAX_ROWS_PER_TABLE + 1"
+          ]
+        },
+        {
+          "line": 353,
+          "expressions": [
+            "schema",
+            "table",
+            "tenantColumn",
+            "MAX_ROWS_PER_TABLE + 1"
+          ]
+        },
+        {
+          "line": 500,
+          "expressions": [
+            "opts.hold ? ' FOR SHARE' : ''"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-actor-captures.ts",
+      "sourceSha256": "cf8fb4643ec4d3eec6ac7fcfc175a7c8122e58daeaddba1e6ae297321687cb48",
+      "initialBaseline": 0,
+      "currentGateCount": 8,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Literal identity/projection/joins plus eligibility helpers with fixed s alias. Scope, actor, admitted IDs, upload IDs and limit remain bind values.",
+      "queryTemplateCalls": [
+        {
+          "line": 116,
+          "expressions": [
+            "identities",
+            "captureJoinsSql()",
+            "captureScopeSql()"
+          ]
+        },
+        {
+          "line": 121,
+          "expressions": [
+            "identities",
+            "capturedDispositionChoiceSql('s')",
+            "capturedBinaryAvailableSql('s')",
+            "captureJoinsSql()",
+            "captureScopeSql()"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-admission.ts",
+      "sourceSha256": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+      "initialBaseline": 0,
+      "currentGateCount": 1,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Only empty string or literal FOR SHARE OF ou,u,o; actor/org identifiers are parameters.",
+      "queryTemplateCalls": [
+        {
+          "line": 29,
+          "expressions": [
+            "opts.hold ? 'FOR SHARE OF ou, u, o' : ''"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-document.ts",
+      "sourceSha256": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+      "initialBaseline": 7,
+      "currentGateCount": 14,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Fixed text-versus-null projection and current-source policy predicates with literal d alias; program clauses contain only generated placeholders. All document/org/actor/program identities remain bound. Raw trusted helper moved here retains query visibility.",
+      "queryTemplateCalls": [
+        {
+          "line": 70,
+          "expressions": [
+            "vaultDataEligibleSql('d')",
+            "currentClause"
+          ]
+        },
+        {
+          "line": 104,
+          "expressions": [
+            "textCol",
+            "vaultDispositionChoiceSql('d')",
+            "vaultBinaryAvailableSql('d')",
+            "vaultDataEligibleSql('d')",
+            "currentClause"
+          ]
+        },
+        {
+          "line": 215,
+          "expressions": [
+            "textCol",
+            "vaultDispositionChoiceSql('d')",
+            "vaultBinaryAvailableSql('d')",
+            "supersededSql('d')",
+            "vaultDataEligibleSql('d')",
+            "programClause",
+            "currentClause"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-governance.service.ts",
+      "sourceSha256": "ff609d34de4f3cabf3ad0240623642a24bf77976f042228b96b3db58ddcbd213",
+      "initialBaseline": 0,
+      "currentGateCount": 3,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Three fixed original/data/current-source helper fragments with literal d alias. Exact source selection remains bound.",
+      "queryTemplateCalls": [
+        {
+          "line": 571,
+          "expressions": [
+            "vaultDataEligibleSql('d')",
+            "vaultBinaryAvailableSql('d')",
+            "supersededSql('d')"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-search-query.ts",
+      "sourceSha256": "ce8692877f708ff877ffb51f72c5d513afb062106c9bb2503a897eb442bb4903",
+      "initialBaseline": 0,
+      "currentGateCount": 7,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Fixed policy fragments and generated allowed-program placeholders from params.push. Tenant, program, vector, similarity and limit remain bound. Extracted helper now owns the genuine query calls.",
+      "queryTemplateCalls": [
+        {
+          "line": 13,
+          "expressions": [
+            "vaultDataEligibleSql('d')",
+            "supersededSql('d')",
+            "countAllowed"
+          ]
+        },
+        {
+          "line": 25,
+          "expressions": [
+            "vaultBinaryAvailableSql('d')",
+            "vaultDataEligibleSql('d')",
+            "supersededSql('d')",
+            "hitAllowed"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-write-integrity.ts",
+      "sourceSha256": "d42cec7319a919965099af8c3920d564bcdc8b05790448aa39dc375001a29a20",
+      "initialBaseline": 0,
+      "currentGateCount": 3,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Three fixed original/data/current-source helper fragments with literal d alias; exact document/org/program values remain bound.",
+      "queryTemplateCalls": [
+        {
+          "line": 28,
+          "expressions": [
+            "vaultDataEligibleSql('d')",
+            "vaultBinaryAvailableSql('d')",
+            "supersededSql('d')"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "sourceSha256": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+      "initialBaseline": 3,
+      "currentGateCount": 4,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Fixed data/original/disposition helpers and generated program placeholders, with optional fixed current-source clause. All selected program lists and limits remain parameters.",
+      "queryTemplateCalls": [
+        {
+          "line": 459,
+          "expressions": [
+            "vaultDispositionChoiceSql('d')",
+            "vaultBinaryAvailableSql('d')",
+            "vaultDataEligibleSql('d')",
+            "programFilter"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-passage-search.ts",
+      "sourceSha256": "1fe32cf8aca0e43e893edcdddc5a75bc8f51b5dd8831c20e48e4ecab1ac33b96",
+      "initialBaseline": 1,
+      "currentGateCount": 3,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Fixed data/current-source helpers and literal program ANY($3::uuid[]) predicate; all scope values remain bind parameters.",
+      "queryTemplateCalls": [
+        {
+          "line": 184,
+          "expressions": [
+            "vaultDataEligibleSql('d')",
+            "supersededSql('d')",
+            "allowed"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/retrieval-source-access.ts",
+      "sourceSha256": "4e1a195d19ca0c9847d3916f23f3d53463d88494401b4e654fac436ee15aa3d4",
+      "initialBaseline": 0,
+      "currentGateCount": 2,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "Two fixed data/current-source predicates with literal d alias; source/program identity arrays and org remain bound.",
+      "queryTemplateCalls": [
+        {
+          "line": 53,
+          "expressions": [
+            "vaultDataEligibleSql('d')",
+            "supersededSql('d')"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "server/services/vault/document-catalog-search.ts",
+      "sourceSha256": "9410d75a0b44ed665458728e28d1dfb851ce70bfe64497150b1371d48a1c2a05",
+      "initialBaseline": 5,
+      "currentGateCount": 0,
+      "classification": "fixed_server_owned_sql_structure_no_external_value_interpolation_found",
+      "reason": "No direct query interpolation remains after actual query extraction into document-catalog-search-query.ts; lower old5 to0. This is not an assembled-string workaround.",
+      "queryTemplateCalls": []
+    }
+  ],
+  "dependencySha256": {
+    "server/services/document-data-disposition/eligibility.ts": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+    "server/services/document-data-disposition/recorded-lineage.ts": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733",
+    "server/services/vault/vault-version-family.ts": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+    "server/services/rag-filters.ts": "20f013c86e949f7ab5a080d1d4ced47680ab22d0d6dc192b5e16198a9b4077b6",
+    "server/services/clinical-regulatory-evidence/data-room-processing-state.ts": "64f5d5fd40b1ab1201797a38b7b3ee58d176a54770d593ad8006b95a17c708e4",
+    "shared/data-room-processing-status.ts": "7f4788b2527bbd67bd32a41cd2d9da9a5d5b8ebe1b9b5368b2c50c83baa16ebe",
+    "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "c1a013197976c32976c515edd46c316baacae62ecae63d12bbba107b74a140ea",
+    "scripts/ci/check-sql-interpolation.mjs": "9e6271d2f24dbdc1f75d1e518f52375a5f679b8f3e91aab9236bbfa09ab30e85",
+    "scripts/ci/check-sql-interpolation.selftest.mjs": "8fa622174fa1c8ff110f086fe8b2a33ddb5119092fb15c980ad6a26027c7567b"
+  }
+}

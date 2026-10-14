@@ -62,9 +62,9 @@ beforeEach(() => {
   sources.catalogEnabled.mockResolvedValue(true);
   sources.vault.mockImplementation(() => delay({
     files: [{ fileName: 'study.pdf', documentTitle: 'Study report', placementStatus: 'confirmed', catalogStatus: 'cataloged' }],
-    total: 1, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0,
+    total: 1, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0, actorFiltered: true,
   }));
-  sources.uploads.mockImplementation(() => delay({ uploads: [{ fileName: 'prior-upload.pdf', fileId: 'file-7' }], hasMore: false }));
+  sources.uploads.mockImplementation(() => delay({ uploads: [{ fileName: 'prior-upload.pdf', fileId: 'file-7' }], hasMore: false, actorFiltered: true, total: 1, withheld: 0 }));
 });
 
 afterEach(() => {
@@ -217,5 +217,55 @@ describe('session recall current access', () => {
     expect(text).not.toContain('Session recall incomplete');
     expect(text).not.toContain('Study report');
     expect(text).toContain('Project fact');
+  });
+});
+
+
+describe('source recall admitted actor and sample projection', () => {
+  it('does not inject recall for a session without an authenticated actor', async () => {
+    expect(await sessionBootstrapBlockFor({ ...input, userId: null, priorMessageCount: 0 })).toBe('');
+    expect(sources.actor).not.toHaveBeenCalled();
+    expect(sources.vault).not.toHaveBeenCalled();
+    expect(sources.uploads).not.toHaveBeenCalled();
+  });
+  it('names refused source reads without exposing SQL or private details', async () => {
+    sources.vault.mockRejectedValue(new Error('private source sentinel detail'));
+    sources.uploads.mockRejectedValue(new Error('private upload sentinel'));
+    const result = sessionBootstrapBlockFor({ ...input, priorMessageCount: 0 });
+    await vi.runAllTimersAsync();
+    const text = await result;
+    expect(sources.vault).toHaveBeenCalledWith(db, 7, { userId: 3, programId, limit: 12 }, accessibleScope);
+    expect(text).toContain('Session recall incomplete');
+    expect(text).toContain('vault file recall');
+    expect(text).toContain('chat upload recall');
+    expect(text).not.toContain('private source sentinel');
+    expect(text).not.toContain('private upload');
+    expect(text).not.toContain('no files');
+  });
+
+  it('keeps organization recall actor-filtered with no invented project', async () => {
+    const libraryScope = { ...accessibleScope, programIds: [programId] };
+    sources.scope.mockResolvedValue({ programId: null, accessibleScope: libraryScope });
+    sources.uploads.mockResolvedValue({ uploads: [{ fileName: 'upload.pdf', fileId: 'upload-1' }],
+      hasMore: true, actorFiltered: true, total: 4, withheld: 3,
+      sourceAccessNotice: 'Source identities are limited to currently accessible programmes.' });
+    const result = buildSessionBootstrapContext({ db, organizationId: 7, userId: 3 });
+    await vi.runAllTimersAsync();
+    const text = await result;
+    expect(sources.scope).toHaveBeenCalledWith({ userId: 3, projectId: undefined, projectRef: undefined, sqlClient: db }, 7, null, 'read', db);
+    expect(sources.vault).toHaveBeenCalledWith(db, 7, { userId: 3, programId: null, limit: 12 }, libraryScope);
+    expect(sources.uploads).toHaveBeenCalledWith(db, 7, { userId: 3, programId: null, limit: 8 }, libraryScope);
+    expect(text).toContain('accessible source scope');
+    expect(text).toContain('scope total was not measured');
+    expect(text).not.toContain('this is all of them');
+  });
+
+  it('derives an exact chat scope count only from a page with no next row', async () => {
+    sources.uploads.mockResolvedValue({ uploads: [{ fileName: 'only.pdf', fileId: 'upload-1' }], hasMore: false, actorFiltered: true });
+    const result = buildSessionBootstrapContext(input);
+    await vi.runAllTimersAsync();
+    const text = await result;
+    expect(text).toContain('1 chat file(s) in your accessible source scope at this recall check');
+    expect(text).not.toContain('scope total was not measured');
   });
 });

@@ -412,10 +412,60 @@ export function stepUsedModel(
 type TitleScopeContext = Pick<ToolContext, 'organizationId' | 'userId' | 'projectId' | 'projectRef' | 'sqlClient'>;
 type TitleReadScope = Exclude<Awaited<ReturnType<typeof import('./catalog-scope.js').catalogScope>>, { error: string }>;
 
+interface TitleRow { id: string; document_title: string | null; organization_id: number; program_id: string; }
 interface TitleDeps {
-  query?: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
+  query?: (sql: string, params: unknown[]) => Promise<{ rows: TitleRow[] }>;
   scope?: (ctx: TitleScopeContext, orgId: number) => Promise<TitleReadScope | { error: string }>;
+  /** Explicit test seam for authority revalidation; never supplied by a model. */
+  revalidate?: (scope: import('./source-read-scope.js').AdmittedAnaSourceReadScope) => Promise<void>;
   recheck?: typeof requireProgramScopeStillCurrent;
+}
+
+function titleActorReady(ctx: TitleScopeContext): ctx is TitleScopeContext & { organizationId: number; userId: number } {
+  return Number.isSafeInteger(ctx.organizationId) && Number(ctx.organizationId) > 0 &&
+    Number.isSafeInteger(ctx.userId) && Number(ctx.userId) > 0;
+}
+function titleScopeMatches(scope: import('./source-read-scope.js').AdmittedAnaSourceReadScope, ctx: TitleScopeContext): boolean {
+  return Boolean(scope && scope.organizationId === ctx.organizationId && scope.userId === ctx.userId);
+}
+function titleReadScopeReady(scope: TitleReadScope, ctx: TitleScopeContext): boolean {
+  return Boolean(titleScopeMatches(scope.admittedScope, ctx) && scope.executor && scope.accessibleScope &&
+    scope.programId === scope.admittedScope.programId &&
+    scope.accessibleScope.actor.userId === scope.admittedScope.userId &&
+    scope.accessibleScope.actor.role === scope.admittedScope.role &&
+    scope.admittedScope.accessibleProgramIds.every(id => scope.accessibleScope.programIds.includes(id)));
+}
+function titleRowAllowed(row: TitleRow, orgId: number, programs: readonly string[], ids: readonly string[]): boolean {
+  return row.organization_id === orgId && programs.includes(row.program_id) && ids.includes(row.id);
+}
+
+async function titleQuery(ids: readonly string[], orgId: number, scope: TitleReadScope) {
+  const { vaultDataEligibleSql } = await import('../document-data-disposition/eligibility.js');
+  const programClause = scope.programId ? ' AND d.program_id = $4::uuid' : '';
+  const sql =
+    `SELECT d.id::text AS id, d.document_title, d.organization_id, d.program_id::text AS program_id FROM vault.documents d
+      WHERE d.id = ANY($1::uuid[]) AND d.organization_id=$2 AND d.program_id = ANY($3::uuid[])
+        AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
+        AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)`;
+  const params = [ids, orgId, [...scope.admittedScope.accessibleProgramIds], ...(scope.programId ? [scope.programId] : [])];
+  return { sql, params };
+}
+
+async function currentTitleRows(ids: readonly string[], orgId: number, scope: TitleReadScope, deps: TitleDeps): Promise<TitleRow[]> {
+  // Keep both admissions on the request executor. The canonical source scope
+  // can be stricter after counting all anchors; the upstream grant cannot widen it.
+  const { revalidateAnaSourceReadScope } = await import('./source-read-scope.js');
+  const revalidate: NonNullable<TitleDeps['revalidate']> = deps.revalidate ??
+    (pinned => revalidateAnaSourceReadScope(scope.executor, pinned).then(() => undefined));
+  if (deps.query && (!deps.revalidate || !deps.recheck)) return [];
+  await revalidate(scope.admittedScope);
+  const { sql, params } = await titleQuery(ids, orgId, scope);
+  const { rows } = await (deps.query ?? ((text, values) => scope.executor.query(text, values)))(sql, params);
+  await (deps.recheck ?? requireProgramScopeStillCurrent)(scope.executor, {
+    organizationId: orgId, userId: scope.accessibleScope.actor.userId, programId: scope.programId,
+  }, scope.accessibleScope);
+  await revalidate(scope.admittedScope);
+  return rows as TitleRow[];
 }
 
 /**
@@ -441,24 +491,16 @@ export async function resolveStepDocumentTitles(
         .filter((id): id is string => id !== null),
     ),
   ];
+  if (ids.length === 0 || !titleActorReady(ctx)) return new Map();
   const orgId = ctx.organizationId;
-  if (ids.length === 0 || !orgId) return new Map();
   try {
     const scope = await (deps.scope ?? defaultScope)(ctx, orgId);
     if ('error' in scope) return new Map();
-    const { vaultDataEligibleSql } = await import('../document-data-disposition/eligibility.js');
-    const sql =
-      `SELECT d.id::text AS id, d.document_title FROM vault.documents d
-        WHERE d.id = ANY($1::uuid[]) AND d.organization_id = $2 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
-          AND d.program_id = ANY($3::uuid[])
-          AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2)`;
-    const params = [ids, orgId, scope.accessibleScope.programIds];
-    const { rows } = await (deps.query ?? ((text, values) => scope.executor.query(text, values)))(sql, params);
-    await (deps.recheck ?? requireProgramScopeStillCurrent)(scope.executor, {
-      organizationId: orgId, userId: scope.accessibleScope.actor.userId, programId: scope.programId,
-    }, scope.accessibleScope);
+    if (!titleReadScopeReady(scope, ctx)) return new Map();
+    const rows = await currentTitleRows(ids, orgId, scope, deps);
     const titles = new Map<string, string>();
     for (const row of rows) {
+      if (!titleRowAllowed(row, orgId, scope.admittedScope.accessibleProgramIds, ids)) return new Map();
       const title = cleanStepText(row.document_title);
       if (title && typeof row.id === 'string') titles.set(row.id, title);
     }

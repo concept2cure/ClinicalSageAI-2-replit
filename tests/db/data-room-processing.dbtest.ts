@@ -183,26 +183,56 @@ describe('an adopted conversation file is read, classified and stored', () => {
 
 describe('the pending sweep reads what was captured before', () => {
   it('processes a pending capture from its stored bytes, and names one it cannot read', async () => {
-    const fileId = await conversationFile('Stability summary.txt', 'Stability summary for batch 23-104: assay 98.4 percent at six months.');
+    const body='Stability summary for batch 23-104: assay 98.4 percent at six months.';
+    const fileId = await conversationFile('Stability summary.txt',body);
+    const digest=createHash('sha256').update(body).digest('hex');
     const { rows } = await owner.query(
       `INSERT INTO cre_evidence_sources (organization_id, visibility_class, source_type, title, checksum, client_program_id,
-          ingestion_status, extraction_status, provenance, metadata)
-       VALUES ($1, 'project_private', 'client_document', $2, $3, $4, 'ingested', 'pending', $5::jsonb, '{"mimeType":"text/plain"}'::jsonb)
+          ingestion_status, extraction_status, provenance, metadata,stored_artifact_ref)
+       VALUES ($1, 'project_private', 'client_document', $2, $3, $4, 'ingested', 'pending', $5::jsonb, '{"mimeType":"text/plain"}'::jsonb,$6)
        RETURNING id`,
-      [orgId, `${PROBE} Stability summary.txt`, `pending-${fileId}`, programId, JSON.stringify({ origin: 'adopt', fileUploadId: fileId })],
+      [orgId, `${PROBE} Stability summary.txt`,digest,programId,JSON.stringify({ origin:'adopt',fileUploadId:fileId }),`uploads/org-${orgId}/${fileId}`],
     );
     const unreadable = await source(programId, 'no file', null);
     const { processPendingSources } = await import('../../server/services/clinical-regulatory-evidence/data-room-processing');
     const dry = await asTenant(exec => processPendingSources(orgId, { limit: 50, exec }));
     expect(dry.dryRun).toBe(true);
-    expect(dry.examined).toBeGreaterThanOrEqual(2);
-    const applied = await asTenant(exec => processPendingSources(orgId, { apply: true, limit: 50, exec }));
+    expect(dry.examined).toBeGreaterThanOrEqual(1);
+    expect(dry.processed).toBe(0);
+    expect(dry.diagnosticCounts.blocked).toBeGreaterThanOrEqual(1);
+    const applied = await asTenant(() => processPendingSources(orgId, { apply: true, limit: 50 }));
     expect(applied.processed).toBeGreaterThanOrEqual(1);
     expect(applied.unreadable.map(u => u.sourceId)).toContain(unreadable);
-    const after = await owner.query('SELECT extraction_status, char_count FROM cre_evidence_sources WHERE id = $1', [rows[0].id]);
+    const after = await owner.query('SELECT extraction_status,char_count,extracted_text,metadata FROM cre_evidence_sources WHERE id=$1',[rows[0].id]);
     expect(after.rows[0].extraction_status).toBe('extracted');
     expect(after.rows[0].char_count).toBeGreaterThan(0);
+    expect(after.rows[0].extracted_text).toContain('assay 98.4');
+    expect(after.rows[0].metadata.dataRoomProcessing).toMatchObject({version:1,state:'completed',attempts:1,
+      identity:{organizationId:orgId,sourceId:Number(rows[0].id),sha256:digest,fileUploadId:fileId,programId,workspaceId:null}});
   }, 60_000);
+
+  it('repairs legacy extracted-without-text and a same-identity rerun does not create an attempt',async()=>{
+    const body='Cardiotoxicity monitoring follows the clinical protocol; legacy derived persistence was interrupted.';
+    const fileId=await conversationFile('Legacy recovery.txt',body);
+    const digest=createHash('sha256').update(body).digest('hex');
+    const inserted=await owner.query(`INSERT INTO cre_evidence_sources
+      (organization_id,visibility_class,source_type,title,checksum,client_program_id,stored_artifact_ref,
+       ingestion_status,extraction_status,provenance,metadata)
+      VALUES($1,'project_private','client_document',$2,$3,$4,$5,'ingested','extracted',$6::jsonb,'{"mimeType":"text/plain"}') RETURNING id`,
+    [orgId,`${PROBE} Legacy recovery.txt`,digest,programId,`uploads/org-${orgId}/${fileId}`,JSON.stringify({origin:'chat_upload',fileUploadId:fileId})]);
+    const id=Number(inserted.rows[0].id);
+    const {processPendingSources,processCapturedSource}=await import('../../server/services/clinical-regulatory-evidence/data-room-processing');
+    const dry=await asTenant(exec=>processPendingSources(orgId,{sourceId:id,limit:1,exec}));
+    expect(dry.items).toEqual([{sourceId:id,status:'candidate'}]); expect(dry.processed).toBe(0);
+    const applied=await asTenant(()=>processPendingSources(orgId,{sourceId:id,limit:1,apply:true}));
+    expect(applied).toMatchObject({examined:1,processed:1,completed:1,failed:0});
+    const before=await owner.query('SELECT metadata FROM cre_evidence_sources WHERE id=$1',[id]);
+    const again=await asTenant(()=>processCapturedSource(orgId,id,{bytes:Buffer.from(body),fileName:'Legacy recovery.txt',
+      mimeType:'text/plain',programId,expectedWorkspaceId:null,processedBy:'dbtest same-identity retry'}));
+    expect(again).toMatchObject({ok:true,processed:true,status:'already_complete'});
+    const after=await owner.query('SELECT metadata FROM cre_evidence_sources WHERE id=$1',[id]);
+    expect(after.rows[0].metadata.dataRoomProcessing).toEqual(before.rows[0].metadata.dataRoomProcessing);
+  },60_000);
 });
 
 describe('the room pages past 200, and stays in its project', () => {

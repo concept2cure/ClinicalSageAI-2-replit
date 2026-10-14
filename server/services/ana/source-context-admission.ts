@@ -137,12 +137,31 @@ function exactSourceIds(value: unknown): number[] {
   return [...new Set(ids)];
 }
 
+/** The persisted chat capture has no project association. This is not a
+ * project-access bypass: every other recorded parent of its upload is checked. */
+function unboundChatFile(row: Record<string, any>): string | null {
+  const provenance = record(row.provenance);
+  return row.client_program_id == null && row.client_workspace_id == null && row.project_id == null
+    && row.source_type === 'client_document' && provenance?.origin === 'chat_upload'
+    && typeof provenance.fileUploadId === 'string' && !!provenance.fileUploadId.trim()
+    ? provenance.fileUploadId : null;
+}
+
+async function admitUploadParent(q: RequestSqlClient, actor: { organizationId: number; userId: number },
+  upload: Record<string, any>, scope: Record<string, any>): Promise<void> {
+  if (!unboundChatFile(scope)) return admitRecordedScope(q, actor, scope);
+  if (Number(scope.created_by) !== actor.userId || Number(upload.user_id) !== actor.userId) return deny();
+  // Creator identity alone cannot erase another recorded parent, including
+  // the upstream checksum/artifact ancestry checks for purportedly unbound captures.
+  await admitRecordedScope(q, actor, scope);
+}
+
 export async function admitAnaSelectedSources(q: RequestSqlClient, input: SourceActor & { sourceIds: unknown }): Promise<void> {
   const ids = exactSourceIds(input.sourceIds);
   if (!ids.length) return;
   try {
     const actor = await activeActor(q, input);
-    const { rows } = await q.query(`SELECT id, organization_id, visibility_class, source_type, client_program_id, client_workspace_id,
+    const { rows } = await q.query(`SELECT id, organization_id, visibility_class, source_type, created_by, client_program_id, client_workspace_id,
         jsonb_build_object('origin',provenance->>'origin','fileUploadId',provenance->>'fileUploadId','authoringDocumentId',provenance->>'authoringDocumentId') AS provenance,
         jsonb_build_object('artifactId',metadata->>'artifactId') AS metadata
       FROM cre_evidence_sources WHERE id = ANY($1::int[]) AND deleted_at IS NULL
@@ -150,6 +169,13 @@ export async function admitAnaSelectedSources(q: RequestSqlClient, input: Source
     if (rows.length !== ids.length) return deny();
     for (const row of rows) {
       if (row.organization_id == null && row.visibility_class === 'global_public') continue;
+      const unboundFile = unboundChatFile(row);
+      if (unboundFile) {
+        if (Number(row.created_by) !== actor.userId) return deny();
+        await admitRecordedScope(q, actor, row);
+        await assertAnaUploadAccess(q, { ...actor, fileIds: [unboundFile] });
+        continue;
+      }
       await admitRecordedScope(q, actor, row);
     }
   } catch (error) {
@@ -168,12 +194,12 @@ export async function assertAnaUploadAccess(q: RequestSqlClient, input: SourceAc
     const actor = await activeActor(q, input);
     const { rows } = await q.query(`SELECT id, user_id FROM file_uploads WHERE organization_id = $1 AND id = ANY($2::text[])`, [actor.organizationId, ids]);
     if (rows.length !== ids.length) return deny();
-    const scopes = await q.query(`SELECT provenance->>'fileUploadId' AS file_id, client_program_id, client_workspace_id, NULL::int AS project_id,
+    const scopes = await q.query(`SELECT provenance->>'fileUploadId' AS file_id, client_program_id, client_workspace_id, NULL::int AS project_id, created_by,
         jsonb_build_object('origin',provenance->>'origin','fileUploadId',provenance->>'fileUploadId','authoringDocumentId',provenance->>'authoringDocumentId') AS provenance,
         jsonb_build_object('artifactId',metadata->>'artifactId') AS metadata,source_type,'cre'::text AS scope_kind
       FROM cre_evidence_sources WHERE organization_id = $1 AND provenance->>'fileUploadId' = ANY($2::text[])
       UNION ALL
-      SELECT metadata->>'fileId' AS file_id, NULL::uuid AS client_program_id, NULL::int AS client_workspace_id, project_id, NULL::jsonb AS provenance,NULL::jsonb AS metadata,NULL::text AS source_type,'artifact'::text AS scope_kind
+      SELECT metadata->>'fileId' AS file_id, NULL::uuid AS client_program_id, NULL::int AS client_workspace_id, project_id, NULL::int AS created_by, NULL::jsonb AS provenance,NULL::jsonb AS metadata,NULL::text AS source_type,'artifact'::text AS scope_kind
       FROM concept2cure_artifacts WHERE organization_id = $1 AND metadata->>'fileId' = ANY($2::text[])`, [actor.organizationId, ids]);
     for (const upload of rows) {
       const recorded = scopes.rows.filter(scope => scope.file_id === upload.id);
@@ -183,7 +209,7 @@ export async function assertAnaUploadAccess(q: RequestSqlClient, input: SourceAc
         // recorded CRE/artifact parent is always enforced, even for its creator.
         if (Number(upload.user_id) !== actor.userId && !await admitLegacyFigure(q, actor, upload)) return deny();
       } else {
-        for (const scope of recorded) await admitRecordedScope(q, actor, scope);
+        for (const scope of recorded) await admitUploadParent(q, actor, upload, scope);
       }
     }
   } catch (error) {

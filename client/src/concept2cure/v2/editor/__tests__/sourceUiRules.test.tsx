@@ -12,7 +12,7 @@ import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 
 const programId = '11111111-1111-4111-8111-111111111111';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data });
-const source = { id: 9, title: 'Protocol source', extractionStatus: 'extracted', extractionMethod: 'text', dataEligible: true };
+const source = { id: 9, title: 'Protocol source', extractionStatus: 'extracted', textAvailable: true, extractionMethod: 'text', dataEligible: true };
 const sourcePage = (sources: Array<typeof source & { originalFileAvailable?: boolean }>) => ({
   projectId: programId, sources: sources.map(row => ({ isCurrent: true, originalFileAvailable: true, ...row })),
   total: sources.length, currentTotal: sources.length, page: { limit: 50, offset: 0 }, window: { shown: sources.length, truncated: false },

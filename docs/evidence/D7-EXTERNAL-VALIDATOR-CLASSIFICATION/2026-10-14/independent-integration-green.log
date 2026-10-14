@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ docs/evidence/D7-EXTERNAL-VALIDATOR-CLASSIFICATION/2026-10-14/independent-integration.test.ts > independent compound external-assessment review > keeps malformed unrun diagnostics from crashing the assessor 2ms
+ ✓ docs/evidence/D7-EXTERNAL-VALIDATOR-CLASSIFICATION/2026-10-14/independent-integration.test.ts > independent compound external-assessment review > does not attribute another reported engine execution to the selected subset 1ms
+ ✓ docs/evidence/D7-EXTERNAL-VALIDATOR-CLASSIFICATION/2026-10-14/independent-integration.test.ts > independent compound external-assessment review > keeps a malformed count unknown through gate-view construction 1ms
+ ✓ docs/evidence/D7-EXTERNAL-VALIDATOR-CLASSIFICATION/2026-10-14/independent-integration.test.ts > independent compound external-assessment review > preserves failed advisory assessment across policy and legacy gate metadata 2ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  03:42:45
+   Duration  3.68s (transform 1.96s, setup 0ms, import 3.45s, tests 6ms, environment 0ms)
+

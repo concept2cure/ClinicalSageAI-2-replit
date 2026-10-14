@@ -1,5 +1,5 @@
 /** Real adoption eligibility SQL/rollback via PGlite. Filesystem bytes,
- * source persistence and audit sealing are explicit seams, not live RLS,
+ * source persistence, processing and audit sealing are explicit seams, not live RLS,
  * immutable storage, independent-connection concurrency or audit-HMAC PQ. */
 import { randomUUID, createHash } from 'node:crypto';
 import path from 'node:path';
@@ -11,7 +11,7 @@ import { createDispositionHarness, insertCapturedSuccessor, type DispositionHarn
 const h = vi.hoisted(() => ({ db: null as any, bytes: Buffer.from('original scientific source'),
   files: new Map<string, Buffer>(),
   captureFails: false, auditFails: false, missing: false,
-  beforeRead: null as (() => Promise<void>) | null }));
+  beforeRead: null as (() => Promise<void>) | null, processCapturedSource: vi.fn() }));
 vi.mock('node:fs', async importOriginal => {
   const original = await importOriginal<typeof import('node:fs')>();
   return { ...original, promises: { ...original.promises, readFile: vi.fn(async (filePath: string) => {
@@ -24,6 +24,7 @@ vi.mock('node:fs', async importOriginal => {
 });
 vi.mock('../../../db.js', () => ({ getPool: () => h.db,
   pool: { query: (...args: any[]) => h.db.query(...args), connect: () => h.db.connect() } }));
+vi.mock('../../../services/clinical-regulatory-evidence/data-room-processing.js', () => ({ processCapturedSource: h.processCapturedSource }));
 vi.mock('../../../services/audit/chain.js', () => ({
   hashPayload: (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex'),
   computeAuditChainSealed: async () => {
@@ -63,12 +64,15 @@ beforeAll(async () => {
     ADD COLUMN mime_type text, ADD COLUMN file_size bigint,
     ADD COLUMN user_id integer, ADD COLUMN created_at timestamptz DEFAULT now();
     ALTER TABLE cre_evidence_sources ADD COLUMN client_workspace_id integer,
+      ADD COLUMN created_by integer,
       ADD COLUMN visibility_class text NOT NULL DEFAULT 'project_private';`);
 });
 afterAll(async () => { await harness.close(); });
 beforeEach(async () => {
   vi.clearAllMocks(); h.bytes = original; h.captureFails = false; h.auditFails = false; h.missing = false; h.beforeRead = null;
   h.files.clear();
+  h.processCapturedSource.mockReset();
+  h.processCapturedSource.mockResolvedValue({ ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_WRITE_FAILED' });
   f = await harness.seed(); uploadId = randomUUID();
   await f.pg.query(`INSERT INTO file_uploads
     (id,organization_id,user_id,checksum_sha256,storage_path,status,original_name,mime_type,file_size)
@@ -78,12 +82,12 @@ beforeEach(async () => {
 function app() {
   const instance = express(); instance.use(express.json());
   instance.use((req: Request, _res: Response, next: NextFunction) => {
-    Object.assign(req, { organizationId: f.org, userId: 42, userRole: 'manager' }); next();
+    Object.assign(req, { organizationId: f.org, userId: 42, userRole: 'manager', dbClient: h.db }); next();
   });
   instance.use('/api/c2c/projects', projectsRouter);
   return instance;
 }
-function adopt(program = f.program) {
+function adopt(program: string = f.program) {
   return request(app()).post(`/api/c2c/projects/${program}/adopt`).send({ fileUploadId: uploadId });
 }
 async function captures() {
@@ -156,10 +160,26 @@ describe('conversation adoption: actual SQL and transaction boundary', () => {
     expect(rows[0].checksum).toBe(sha256Hex(original));
     expect(rows[0].extraction_status).toBe('pending');
     expect(rows[0].provenance.fileUploadId).toBe(uploadId);
+    expect(response.body).toMatchObject({ adopted: true, processed: false,
+      processing: { status: 'retryable_failure', reasonCode: 'PROCESSING_WRITE_FAILED' } });
     const trail = await audits(); expect(trail).toHaveLength(1);
     expect(trail[0].action).toBe('c2c.project.adopt');
     expect(trail[0].new_values.source_id).toBe(rows[0].id);
     expect((await f.pg.query<any>('SELECT status FROM file_uploads WHERE id=$1 AND organization_id=$2', [uploadId, f.org])).rows[0].status).toBe('uploaded');
+  });
+
+  it('retains the committed capture and audit when the processing seam rejects', async () => {
+    h.processCapturedSource.mockImplementation(async () => {
+      expect(await captures()).toHaveLength(1);
+      expect(await audits()).toHaveLength(1);
+      throw new Error('private extractor path /private/source');
+    });
+    const response = await adopt();
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ adopted: true, processed: false,
+      processing: { status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' } });
+    expect((await captures())[0].extraction_status).toBe('pending');
+    expect(await audits()).toHaveLength(1);
   });
 
   it('repeated adoption returns the same source without another capture or audit', async () => {
@@ -168,7 +188,43 @@ describe('conversation adoption: actual SQL and transaction boundary', () => {
     expect(second.body.sourceId).toBe(first.body.sourceId);
     expect(await captures()).toHaveLength(1); expect(await audits()).toHaveLength(1);
   });
+});
 
+describe('conversation adoption: current actor and canonical identity', () => {
+  it('preserves idempotency when a valid program UUID uses uppercase letters', async () => {
+    const first = await adopt();
+    expect(first.status).toBe(201);
+    const repeated = await adopt(f.program.toUpperCase());
+    expect(repeated.status).toBe(200);
+    expect(repeated.body).toMatchObject({ adopted: false, sourceId: first.body.sourceId });
+    expect(await captures()).toHaveLength(1);
+    expect(await audits()).toHaveLength(1);
+  });
+
+  it('refuses revoked persisted membership despite a stale request manager role', async () => {
+    await f.pg.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=42', [f.org]);
+    const beforeByteRead = vi.fn(async () => undefined);
+    h.beforeRead = beforeByteRead;
+    expect((await adopt()).status).toBe(403);
+    expect(beforeByteRead).not.toHaveBeenCalled();
+    expect(await captures()).toEqual([]);
+    expect(await audits()).toEqual([]);
+  });
+
+  it('refuses another member’s unbound upload before its bytes despite a manager project grant', async () => {
+    await f.pg.query('UPDATE file_uploads SET user_id=99 WHERE id=$1 AND organization_id=$2', [uploadId, f.org]);
+    const beforeByteRead = vi.fn(async () => undefined);
+    h.beforeRead = beforeByteRead;
+    const response = await adopt();
+    expect(response.status).toBe(403);
+    expect(response.body.error).toBe('ANA_SOURCE_ACCESS_DENIED');
+    expect(beforeByteRead).not.toHaveBeenCalled();
+    expect(await captures()).toEqual([]);
+    expect(await audits()).toEqual([]);
+  });
+});
+
+describe('conversation adoption: actual SQL rollback and source identity', () => {
   it.each(['capture', 'audit'])('rolls back capture and audit when the %s seam fails', async failure => {
     h.captureFails = failure === 'capture'; h.auditFails = failure === 'audit';
     expect((await adopt()).status).toBe(500);

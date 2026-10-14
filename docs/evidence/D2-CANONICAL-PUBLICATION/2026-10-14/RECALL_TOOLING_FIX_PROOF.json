@@ -1,0 +1,19 @@
+{
+  "scope": "Only audit-recall-sql.mjs tooling refactor; application, gate, baseline and historical audit facts unchanged",
+  "originalSnapshot": "pre-publication-tooling/audit-recall-sql.mjs.txt",
+  "originalScriptSha256": "c55352778d33012536c77fbaac4d110595aac91966229dab12edf22f039673a8",
+  "fixedScriptSha256": "1944d999b363df5b16c9735bad914b5ccd594ceae71dc2170f1b3cbebc39194a",
+  "originalExitCode": 0,
+  "fixedExitCode": 0,
+  "auditJsonByteIdentical": true,
+  "stdoutByteIdentical": true,
+  "stderrByteIdentical": true,
+  "generatedAuditJsonSha256": "75f9811787223a3280771deb9a4832a3834de6a0f37b9c17290e78c1b9528b11",
+  "generatedStdoutSha256": "b5df1ae38bdcfa4fe4b32e7b8af3b16eb030733b354a57ca582679b3ec9764ef",
+  "historicalAuditSha256Before": "dc736581ed57d382cdbe5b40819d7de23cf7d1279a28c431803a6f692932bc47",
+  "historicalAuditRestored": true,
+  "eslintExitCode": 0,
+  "eslintErrors": 0,
+  "eslintWarnings": 0,
+  "eslintLog": "recall-tooling-eslint.txt"
+}

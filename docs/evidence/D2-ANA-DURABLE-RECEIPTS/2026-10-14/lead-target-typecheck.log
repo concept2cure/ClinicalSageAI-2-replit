@@ -1,0 +1,14 @@
+Scope: 11 owned roots plus imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+shared/ana/source-admission-receipts.ts: 0 target diagnostics
+shared/schema/ana-source-read-receipts.ts: 0 target diagnostics
+server/services/ana/source-admission-receipt-store.ts: 0 target diagnostics
+server/services/ana/source-admission-receipt-history.ts: 0 target diagnostics
+server/services/ana/read-receipts.ts: 0 target diagnostics
+server/services/ana/source-read-receipt.ts: 0 target diagnostics
+server/services/tenant/tenant-source-read-receipt-purge.ts: 0 target diagnostics
+server/services/tenant/tenant-offboarding.ts: 0 target diagnostics
+server/services/tenant-export/tenant-full-export.service.ts: 0 target diagnostics
+server/services/audit/audit-immutability-triggers.ts: 0 target diagnostics
+server/routes/ana-ri/__tests__/stream-read-delivery.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4758
+Total selected-scope diagnostics: 0

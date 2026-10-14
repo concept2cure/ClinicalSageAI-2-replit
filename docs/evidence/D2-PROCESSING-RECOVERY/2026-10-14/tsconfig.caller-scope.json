@@ -1,0 +1,18 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": [
+    "../../../../server/auth.ts",
+    "../../../../server/middleware/tenantContext.ts",
+    "../../../../server/types/**/*.d.ts",
+    "../../../../shared/types/**/*.d.ts",
+    "../../../../server/routes/chat/upload.ts",
+    "../../../../server/routes/c2c/projects.ts",
+    "../../../../server/services/ana/uploaded-file-access.ts",
+    "../../../../server/routes/__tests__/chat-upload-durability.test.ts",
+    "../../../../server/routes/c2c/__tests__/projects-adoption.test.ts",
+    "../../../../server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+    "../../../../server/services/ana/__tests__/derived-spreadsheet-capture.test.ts",
+    "../../../../server/services/ana/__tests__/derived-spreadsheet-sql.test.ts"
+  ]
+}

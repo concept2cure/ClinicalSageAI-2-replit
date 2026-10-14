@@ -27,6 +27,7 @@ const m = vi.hoisted(() => ({
   resolveVaultView: vi.fn(),
   resolveOrgVaultView: vi.fn(),
   classifyForFiling: vi.fn(),
+  processCapturedSource: vi.fn(),
 }));
 
 vi.mock('../../db.js', () => {
@@ -70,6 +71,10 @@ vi.mock('../../services/vault/vault-filing.service.js', () => ({
   resolveOrgVaultView: m.resolveOrgVaultView,
   classifyForFiling: m.classifyForFiling,
 }));
+vi.mock('../../services/clinical-regulatory-evidence/data-room-processing.js', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../services/clinical-regulatory-evidence/data-room-processing.js')>();
+  return { ...actual, processCapturedSource: m.processCapturedSource };
+});
 
 // Unrelated handlers imported by the real chat router are outside this path.
 vi.mock('../../services/chat-thread-helpers.js', () => ({
@@ -121,7 +126,7 @@ function expectNoConsequences() {
   for (const entrypoint of [
     m.extractDocumentText, m.resolveGovernedContext, m.recordArtifactProvenance,
     m.findSourceByChecksum, m.findSupersededCandidate, m.createSource,
-    m.createSupersedingSource, m.writeUploadRetrievalAtom, m.classifyForFiling,
+    m.createSupersedingSource, m.writeUploadRetrievalAtom, m.classifyForFiling, m.processCapturedSource,
   ]) expect(entrypoint).not.toHaveBeenCalled();
 }
 
@@ -149,6 +154,10 @@ beforeEach(() => {
   m.resolveVaultView.mockResolvedValue('ctd');
   m.resolveOrgVaultView.mockResolvedValue('ctd');
   m.classifyForFiling.mockReturnValue({ needsReview: true });
+  m.processCapturedSource.mockImplementation(async () => {
+    m.events.push('process-capture');
+    return { ok: true, processed: true, status: 'completed' };
+  });
   m.writeUploadRetrievalAtom.mockResolvedValue({
     atomId: 81, extractedChars: ORIGINAL.length, embeddedChars: ORIGINAL.length,
     truncated: false, embedded: true,
@@ -182,9 +191,7 @@ describe('original-byte storage is required before canonical upload consequences
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: { recorded: true }, extractionMethod: 'utf8' });
-    // After the bytes are stored: the project's facts are read (S3, catalog
-    // facts), then the text and facts are recorded (recordSourceProcessing).
-    expect(m.events).toEqual(['scan', 'ownership-read', 'mkdir', 'write-file', 'database-write', 'extract', 'ownership-read', 'database-write']);
+    expect(m.events).toEqual(['scan', 'ownership-read', 'mkdir', 'write-file', 'database-write', 'extract', 'process-capture']);
     expect(m.writeFile).toHaveBeenCalledWith(path.resolve(process.cwd(), `uploads/org-5/${res.body.fileId}`), ORIGINAL);
     expect(m.poolQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO file_uploads'), [
       res.body.fileId, 9, 5, 'protocol.txt', 'text/plain', ORIGINAL.length,
@@ -192,7 +199,7 @@ describe('original-byte storage is required before canonical upload consequences
     ]);
     expect(m.createSource).toHaveBeenCalledWith(5, expect.objectContaining({
       clientProgramId: PROGRAM_ID, checksum: CHECKSUM, ingestionStatus: 'ingested',
-      extractionStatus: 'extracted', storedArtifactRef: `uploads/org-5/${res.body.fileId}`,
+      extractionStatus: 'pending', storedArtifactRef: `uploads/org-5/${res.body.fileId}`,
     }));
     expect(m.writeUploadRetrievalAtom).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       sourceId: 'cre_source:41', text: ORIGINAL.toString('utf8'), tags: ['source', 'chat_upload', `program:${PROGRAM_ID}`],
@@ -240,5 +247,72 @@ describe('original-byte storage is required before canonical upload consequences
     expect(m.mkdir).not.toHaveBeenCalled();
     expect(m.writeFile).not.toHaveBeenCalled();
     expectNoConsequences();
+  });
+});
+
+describe('capture processing is separate from upload availability', () => {
+  it.each(['completed', 'already_complete'] as const)('reports persisted readable processing for %s', async status => {
+    m.processCapturedSource.mockResolvedValue({ ok: true, processed: true, status,
+      extracted: { text: 'private persisted text', error: '/private/extractor' } });
+    const res = await upload(PROGRAM_ID);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: {
+      recorded: true, readable: true, processing: { ok: true, processed: true, status },
+    } });
+    expect(m.processCapturedSource).toHaveBeenCalledWith(5, 41, expect.objectContaining({
+      bytes: ORIGINAL, fileName: 'protocol.txt', mimeType: 'text/plain', programId: PROGRAM_ID,
+      expectedWorkspaceId: null, preExtracted: expect.objectContaining({ text: ORIGINAL.toString('utf8') }),
+    }));
+    expect(JSON.stringify(res.body)).not.toMatch(/private persisted|\/private\/extractor/);
+  });
+
+  it.each(['extraction_failed', 'retryable_failure', 'blocked', 'stale_source', 'busy', 'retry_not_due', 'retry_exhausted'] as const)(
+    'keeps stored capture available without readable claim for %s', async status => {
+      m.processCapturedSource.mockResolvedValue({ ok: false, processed: false, status, reasonCode: 'SAFE_REASON' });
+      const res = await upload(PROGRAM_ID);
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: {
+        recorded: true, readable: false, processing: { ok: false, processed: false, status, reasonCode: 'SAFE_REASON' },
+      } });
+      expect(m.createSource).toHaveBeenCalledOnce();
+      expect(m.createSource.mock.calls[0][1].extractionStatus).toBe('pending');
+    });
+
+  it('does not deny a committed capture when processing unexpectedly rejects', async () => {
+    m.processCapturedSource.mockRejectedValue(new Error('private processing storage /private/original'));
+    const res = await upload(PROGRAM_ID);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: { recorded: true, readable: false,
+      processing: { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' } } });
+    expect(JSON.stringify(res.body)).not.toContain('/private/');
+  });
+
+  it.each([
+    { projectId: PROGRAM_ID, programId: PROGRAM_ID, workspaceId: null },
+    { projectId: 'proj_12', programId: null, workspaceId: 12 },
+  ])('retries a duplicate canonical source within its original scope ($projectId)', async scope => {
+    m.findSourceByChecksum.mockResolvedValue({ id: 16, provenance: { fileUploadId: 'file_original' }, is_current: true });
+    m.processCapturedSource.mockResolvedValue({ ok: true, processed: true, status: 'completed' });
+    const res = await upload(scope.projectId);
+    expect(res.status).toBe(200);
+    expect(res.body.sourceId).toBe(16);
+    expect(m.createSource).not.toHaveBeenCalled();
+    expect(m.createSupersedingSource).not.toHaveBeenCalled();
+    expect(m.processCapturedSource).toHaveBeenCalledWith(5, 16, expect.objectContaining({
+      bytes: ORIGINAL, programId: scope.programId, expectedWorkspaceId: scope.workspaceId,
+    }));
+    const input = m.processCapturedSource.mock.calls[0][2];
+    expect(input).not.toHaveProperty('fileUploadId');
+    expect(input).not.toHaveProperty('storagePath');
+  });
+
+  it('reports a historical duplicate as stale without recreating or rebinding it', async () => {
+    m.findSourceByChecksum.mockResolvedValue({ id: 16, is_current: false });
+    m.processCapturedSource.mockResolvedValue({ ok: false, processed: false, status: 'stale_source', reasonCode: 'SOURCE_NOT_CURRENT' });
+    const res = await upload(PROGRAM_ID);
+    expect(res.body).toMatchObject({ sourceId: 16, dataRoom: { recorded: true, readable: false,
+      processing: { status: 'stale_source', reasonCode: 'SOURCE_NOT_CURRENT' } } });
+    expect(m.createSource).not.toHaveBeenCalled();
+    expect(m.createSupersedingSource).not.toHaveBeenCalled();
   });
 });

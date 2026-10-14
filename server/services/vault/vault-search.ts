@@ -18,7 +18,7 @@
  * stays authoritative; a separate earlier check cannot widen these reads.
  */
 import { supersededSql } from './vault-version-family.js';
-import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
+import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
@@ -41,6 +41,8 @@ export interface VaultSearchParams {
    * answers nothing (D2, docs/evidence/D2/2026-10-01-vault-search-no-key/).
    */
   match?: 'all' | 'any';
+  /** Additional server-admitted source restriction; never establishes access. */
+  allowedProgramIds?: readonly string[];
 }
 
 /**
@@ -57,6 +59,8 @@ export interface VaultSearchHit {
   originalFileAvailable?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   id: string;
+  /** Exact original identity used by actor adapters after asynchronous retrieval. */
+  contentHash?: string;
   title: string;
   fileName: string | null;
   documentType: string | null;
@@ -75,12 +79,15 @@ const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(
                @@ websearch_to_tsquery('english', $2)`;
 
 export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[] }> {
+  p = Object.freeze({ ...p, allowedProgramIds: p.allowedProgramIds ? Object.freeze([...p.allowedProgramIds]) : undefined });
   // Verify on the same executor before counting, ranking or returning prose.
   // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
   const identity = {organizationId:p.organizationId,userId:p.userId,programId:p.programId};
   if (verifiedScope) assertVerifiedProgramScope(db,identity,verifiedScope);
   const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
-  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q, scope.programIds];
+  const permitted = p.allowedProgramIds === undefined ? scope.programIds
+    : scope.programIds.filter(id => p.allowedProgramIds!.includes(id));
+  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q, permitted];
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
   const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
@@ -99,7 +106,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
       WHERE ${where}`, params);
   const page = [...params, p.limit, p.offset];
   const rows = await db.query(
-    `SELECT d.id, d.document_title, d.file_name, d.document_type, d.file_size,
+    `SELECT d.id, d.content_hash, d.document_title, d.file_name, d.document_type, d.file_size,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             ${vaultDispositionChoiceSql('d')} AS disposition,
             d.folder_id, d.ctd_section, d.placement_status, d.created_at, d.version,
@@ -121,12 +128,14 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, 
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
+  await requireProgramScopeStillCurrent(db, identity, scope);
   return {
     total: counted.rows[0]?.total ?? 0,
     results: rows.rows.map((r) => ({
       originalFileAvailable: r.original_file_available ?? true,
       disposition: r.disposition ?? null,
       id: String(r.id),
+      contentHash: r.content_hash,
       title: r.document_title || r.file_name || 'Untitled',
       fileName: r.file_name ?? null,
       documentType: r.document_type ?? null,

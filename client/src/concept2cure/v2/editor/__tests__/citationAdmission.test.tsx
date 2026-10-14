@@ -6,7 +6,7 @@ vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof impo
 import { admittedCitationSources, useDocumentCitationAdmission } from '../citationAdmission';
 const docId = '11111111-1111-4111-8111-111111111111';
 const sectionId = '22222222-2222-4222-8222-222222222222';
-const source = { id: 5, title: 'Recorded protocol', extractionStatus: 'extracted', isCurrent: true, dataEligible: true, originalFileAvailable: true };
+const source = { id: 5, title: 'Recorded protocol', extractionStatus: 'extracted', textAvailable: true, isCurrent: true, dataEligible: true, originalFileAvailable: true };
 beforeEach(() => { apiRequest.mockReset(); });
 afterEach(cleanup);
 

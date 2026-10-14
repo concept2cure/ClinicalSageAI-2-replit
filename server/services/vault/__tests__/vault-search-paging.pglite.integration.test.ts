@@ -17,9 +17,10 @@ async function document(n: number, options: { program?: string; organization?: n
       '2026-10-13T10:00:00Z',$6,$7,$8)`, [id(n), options.program ?? PROGRAM, options.organization ?? ORG,
     options.code ?? `PAGE-${n}`, String(n).padStart(64, '0'), options.supersedes ?? null, options.deleted ? '2026-10-13T11:00:00Z' : null, options.supersedes ? '2.0' : '1.0']);
 }
-const search = (offset = 0, options: { programId?: string | null; organizationId?: number; includeSuperseded?: boolean } = {}) => searchVaultDocuments(db.pool, {
+const search = (offset = 0, options: { programId?: string | null; organizationId?: number; includeSuperseded?: boolean; allowedProgramIds?: readonly string[]; limit?: number } = {}) => searchVaultDocuments(db.pool, {
   organizationId: options.organizationId ?? ORG, userId: Number(AUTHOR.id), programId: options.programId === undefined ? PROGRAM : options.programId,
-  q: 'stability', limit: 25, offset, includeSuperseded: options.includeSuperseded ?? false,
+  q: 'stability', limit: options.limit ?? 25, offset, includeSuperseded: options.includeSuperseded ?? false,
+  allowedProgramIds: options.allowedProgramIds,
 });
 const resultIds = (result: Awaited<ReturnType<typeof search>>) => result.results.map(row => row.id);
 
@@ -40,10 +41,53 @@ beforeAll(async () => {
   await document(34, { program: OTHER_PROGRAM, organization: 2 });
   await document(35, { program: PROGRAM_B });
   await document(36, { deleted: true });
+  await document(37, { organization: 2 });
 }, 60_000);
 afterAll(async () => { try { assertNoSchemaGaps(db); } finally { await db?.close(); } });
 
 describe('canonical Vault full-text paging with tied matches', () => {
+  it('intersects narrowing IDs with canonical access before count/rank/LIMIT', async () => {
+    const allowed = await search(0, { programId: null, allowedProgramIds: [PROGRAM_B, OTHER_PROGRAM], limit: 1 });
+    expect(allowed.total).toBe(1);
+    expect(resultIds(allowed)).toEqual([id(35)]);
+    expect(await search(0, { programId: null, allowedProgramIds: [], limit: 1 })).toMatchObject({ total: 0, results: [] });
+  });
+
+  it('places actual private sharing ahead of tied counts and pages for a viewer', async () => {
+    await db.pool.query('BEGIN');
+    try {
+      await db.pool.query("INSERT INTO users (id,name,email,status) VALUES (99,'viewer','viewer@example.test','active')");
+      await db.pool.query(`INSERT INTO organization_users (organization_id,user_id,role) VALUES (${ORG},99,'viewer')`);
+      await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id IN (42,43)");
+      await db.pool.query(`INSERT INTO project_members (project_id,organization_id,user_id,role,status) VALUES (43,${ORG},99,'use','active')`);
+      const found = await searchVaultDocuments(db.pool, { organizationId: ORG, userId: 99, programId: null, allowedProgramIds: [PROGRAM, PROGRAM_B], q: 'stability', limit: 1, offset: 0, includeSuperseded: false });
+      expect(found.total).toBe(1);
+      expect(found.results.map(row => row.id)).toEqual([id(35)]);
+      await expect(searchVaultDocuments(db.pool, { organizationId: ORG, userId: 99, programId: PROGRAM, q: 'stability', limit: 1, offset: 0, includeSuperseded: false })).rejects.toMatchObject({ status: 403, code: 'PROJECT_PERMISSION_DENIED' });
+      // A controlled checkpoint changes real persisted access after the page
+      // query has materialized, before the canonical helper returns it.
+      let withdrawn = false;
+      const changingClient = { query: async (sql: string, params?: unknown[]) => {
+        const result = await db.pool.query(sql, params);
+        if (/ts_headline/.test(sql) && !withdrawn) {
+          withdrawn = true;
+          await db.pool.query('DELETE FROM project_members WHERE user_id=99');
+        }
+        return result;
+      } };
+      await expect(searchVaultDocuments(changingClient, { organizationId: ORG, userId: 99, programId: null, q: 'stability', limit: 1, offset: 0, includeSuperseded: false })).rejects.toMatchObject({ status: 503, code: 'PROJECT_ACCESS_CHANGED' });
+      expect(withdrawn).toBe(true);
+      expect(await searchVaultDocuments(db.pool, { organizationId: ORG, userId: 99, programId: null, q: 'stability', limit: 1, offset: 0, includeSuperseded: false })).toMatchObject({ total: 0, results: [] });
+    } finally {
+      await db.pool.query('ROLLBACK');
+    }
+  });
+
+  it('cannot launder a foreign source organization through an owned program', async () => {
+    expect(resultIds(await search(25))).not.toContain(id(37));
+    expect((await search()).total).toBe(32);
+  });
+
   it('returns every current match exactly once across a heap reorder between pages', async () => {
     const first = await search();
     expect(first.total).toBe(currentIds.length);

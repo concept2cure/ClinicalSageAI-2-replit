@@ -1,0 +1,549 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-14T19:39:23.561Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:39:23.562Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-14T19:39:23.562Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped 49ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > an explicit program without a verified relationship is refused before context 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed access lookup refuses the turn, without source context 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > an access lookup deadline refuses the turn without starting optional readers 3005ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream 19ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"} 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key 1ms
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T19:39:34.989Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:39:34.990Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T19:39:34.991Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 57ms
+   → the result the model received carries its window: expected undefined to be truthy
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt 22ms
+   → read 1 is delivered whole: expected false to be true // Object.is equality
+   → read 1's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+   → read 2 is delivered whole: expected false to be true // Object.is equality
+   → read 2's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+   → read 3 is delivered whole: expected false to be true // Object.is equality
+   → read 3's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+   → read 4 is delivered whole: expected false to be true // Object.is equality
+   → read 4's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole 10ms
+ × server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it 14ms
+   → a receipt covers the planted span (else this case proves nothing): expected 0 to be greater than 0
+stdout | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:39:38.622Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:39:38.623Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:39:38.624Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":"11111111-2222-4333-8444-555555555555"} before SSE 44ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_id":42} before SSE 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"context":{"projectId":"11111111-2222-4333-8444-555555555555"}} before SSE 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses an unrelated member for scope {"project_context":{"projectId":"11111111-2222-4333-8444-555555555555"}} before SSE 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses before the intelligence-answer direct-handler path 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > allows an active private member, then refuses a new turn after revocation 24ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > fails closed when current membership cannot be read 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > preserves an organization conversation without a selected project 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a selected private source even when the open project is public and accessible 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts > AnA admits a private project before its context, run or tools > refuses a direct upload whose recorded source belongs to another private project 12ms
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:39:42.414Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:39:42.415Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:39:42.416Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > keeps the persisted creator upload readable and selectable by a viewer 41ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > denies another active member both upload and selected capture 23ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > requires both persisted capture creator and upload owner 25ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not turn an unknown unbound capture origin into a creator grant 16ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > enforces an additional recorded private parent even for the uploader 29ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > retains a deleted private capture association when an unbound copy also exists 30ms
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not let a creator bypass a recorded private workspace 15ms
+stderr | server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > preserves actual committed rows and edit receipt when the processing seam rejects
+{
+  "timestamp": "2026-10-14T19:39:48.195Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] Captured spreadsheet processing unavailable",
+  "context": {
+    "sourceId": 4,
+    "err": "private workbook extractor /private/source"
+  }
+}
+
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > stores a new project-visible capture with parent hash and edit audit on the same transaction 84ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > preserves actual committed rows and edit receipt when the processing seam rejects 50ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the capture seam fails 49ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rolls back every new database record if the audit seam fails 47ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > refuses a withdrawn source using the real disposition eligibility SQL 82ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > rejects another tenant’s project using the canonical ownership query before writes 33ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > keeps a no-project edit conversation-only but refuses another edit after its recorded ancestor was removed 97ms
+ ✓ server/services/ana/__tests__/derived-spreadsheet-sql.test.ts > spreadsheet derivation SQL and atomicity > permits a further edited copy when a recorded ancestor retained extracted data 102ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+{
+  "timestamp": "2026-10-14T19:39:55.492Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows 98ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships
+{
+  "timestamp": "2026-10-14T19:39:55.616Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "dd0a77d4-80d8-4816-87ff-f255cbd0a872",
+    "projectIds": [
+      8,
+      9
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses a private destination even when the actor owns an unbound conversation source 38ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses an unassigned organization member before source text or bytes 15ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > allows an explicitly shared project and honors revocation on the next read 24ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses a selected source from another organization 21ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships 15ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > keeps global public references readable without relabeling private records 12ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > rejects malformed IDs rather than dropping them into an unscoped turn 10ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > inspect_uploaded_document refuses a private upload before file content can reach the tool 14ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_uploaded_document refuses a private upload before file content can reach the tool 13ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > ocr_document_pages refuses a private upload before file content can reach the tool 15ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_spreadsheet refuses a private upload before file content can reach the tool 12ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > search_large_document refuses a private upload before file content can reach the tool 70ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost 14ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read 12ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > uses the same canonical byte and integrity reader once current sharing permits it 23ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > restricts a conversation-only upload to its authenticated uploader 13ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > does not discard a historic private association after source deletion 13ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes 12ms
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-14T19:39:56.574Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:39:56.575Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-14T19:39:56.575Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 7ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt 5ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole 2ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through 4ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it 5ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 7ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > does not read files with a missing actor, while preserving other recall and naming the gap 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > keeps an explicit refused scope unavailable and consumes safe failure without disclosing details 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source-file recall uses current actor admission > org-level source recall carries the actor and no fabricated project 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-14T19:40:00.690Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-14T19:40:00.881Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:40:00.881Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts
+{
+  "timestamp": "2026-10-14T19:40:00.881Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-private-project.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:53:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads
+[AnA] Chat error: Error: test stopped at admitted thread boundary
+    at /workspace/Concept2Cure/server/routes/chat/__tests__/send-message-private-project.test.ts:53:43
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":"11111111-2222-4333-8444-555555555555"} despite stale token admin role 31ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_id":42} despite stale token admin role 8ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 7ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {"project_context":{"projectId":"11111111-2222-4333-8444-555555555555"}} despite stale token admin role 7ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > refuses unreadable membership before retrieval 5ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn 15ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads 3ms
+ ✓ server/routes/chat/__tests__/send-message-private-project.test.ts > canonical JSON chat checks current project access before thread and retrieval > rejects another member’s unbound file_id before thread or model work 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received
+AssertionError: the result the model received carries its window: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:164:77
+    162|     expect.soft(streamed, 'the read ran').toBeTruthy();
+    163|     expect.soft(sent?.length ?? Infinity, 'what the model received fit…
+    164|     expect.soft(window, 'the result the model received carries its win…
+       |                                                                             ^
+    165|     expect.soft(receiptsFor('11111111-1111-4111-8111-000000000001'), '…
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 1 is delivered whole: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:182:64
+    180|       if (k < 4) {
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    184|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 1's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+- [
+-   "a delivered window",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:183:79
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    184|       } else {
+    185|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 2 is delivered whole: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:182:64
+    180|       if (k < 4) {
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    184|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 2's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+- [
+-   "a delivered window",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:183:79
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    184|       } else {
+    185|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 3 is delivered whole: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:182:64
+    180|       if (k < 4) {
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    184|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 3's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+- [
+-   "a delivered window",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:183:79
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    184|       } else {
+    185|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 4 is delivered whole: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:182:64
+    180|       if (k < 4) {
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+       |                                                                ^
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+    184|       } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt
+AssertionError: read 4's receipt is its window: expected [] to deeply equal [ 'a delivered window' ]
+
+- Expected
++ Received
+
+- [
+-   "a delivered window",
+- ]
++ []
+
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:183:79
+    181|         const r = parsed(body);
+    182|         expect.soft(r?.ok, `read ${k + 1} is delivered whole`).toBe(tr…
+    183|         expect.soft(receiptsFor(id), `read ${k + 1}'s receipt is its w…
+       |                                                                               ^
+    184|       } else {
+    185|         expect.soft(body, `read ${k + 1} is past the budget`).toBe(NOT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it
+AssertionError: a receipt covers the planted span (else this case proves nothing): expected 0 to be greater than 0
+ ❯ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts:215:98
+    213|     }
+    214|     const covering = receiptsFor('11111111-1111-4111-8111-000000000003…
+    215|     expect(covering.length, 'a receipt covers the planted span (else t…
+       |                                                                                                  ^
+    216|     expect(received.slice(6000, 7000).join(''), 'the planted sentence …
+    217|     for (const s of receiptsFor('11111111-1111-4111-8111-000000000003'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed | 9 passed (10)
+      Tests  3 failed | 113 passed (116)
+   Start at  19:39:12
+   Duration  50.79s (transform 14.92s, setup 473ms, import 34.62s, tests 13.88s, environment 1ms)
+

@@ -93,7 +93,7 @@ export async function loadRecentOutcomeLessons(
  */
 export async function sessionBootstrapBlockFor(opts: {
   db: RequestSqlClient;
-  userId: number;
+  userId: number | null | undefined;
   priorMessageCount: number;
   organizationId?: number | null;
   projectId?: number;
@@ -110,6 +110,7 @@ export async function sessionBootstrapBlockFor(opts: {
   ) {
     return '';
   }
+  if (typeof opts.userId !== 'number') return '';
   try {
     return await buildSessionBootstrapContext({
       db: opts.db,
@@ -189,6 +190,12 @@ function scopedSessionCatalogLoader(input: SessionBootstrapInput, actor: ReturnT
             uploadedAt: u.uploadedAt,
           })),
           hasMore: page.hasMore,
+          actorFiltered: page.actorFiltered,
+          // The canonical spine page measures one extra row, not a total.
+          // Only an exhausted page proves the scope count for this read.
+          total: page.hasMore ? undefined : page.uploads.length,
+          withheld: page.hasMore ? undefined : 0,
+          sourceAccessNotice: page.sourceAccessNotice,
         };
       }, undefined),
     ]);

@@ -6,7 +6,7 @@ vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof impo
 import { useProjectSourceCatalog } from '../useProjectSourceCatalog';
 import { parseProjectSourcePage } from '../projectSourceCatalog';
 const programId = '11111111-1111-4111-8111-111111111111';
-const source = (id: number) => ({ id, title: `Source ${id}`, extractionStatus: 'extracted', isCurrent: true, dataEligible: true, originalFileAvailable: true });
+const source = (id: number) => ({ id, title: `Source ${id}`, extractionStatus: 'extracted', textAvailable: true, isCurrent: true, dataEligible: true, originalFileAvailable: true });
 const page = (offset: number, ids: number[], total: number) => ({ projectId: programId, sources: ids.map(source), total,
   currentTotal: total, page: { limit: 200, offset }, window: { shown: ids.length, truncated: offset + ids.length < total } });
 const first = () => page(0, Array.from({ length: 200 }, (_, index) => index + 1), 201);
@@ -53,5 +53,15 @@ describe('complete citation catalogue reads', () => {
 
   it('refuses a nonprogressing empty page instead of looping or claiming completion', () => {
     expect(parseProjectSourcePage(page(0, [], 201), { programId, offset: 0, limit: 200 }).ok).toBe(false);
+  });
+
+  it.each([
+    { textAvailable: 'true' },
+    { processing: { state: 'completed', retryable: false, reasonCode: null, leaseExpiresAt: 'not-a-date', nextRetryAt: null } },
+    { processing: { state: 'future_state', retryable: false, reasonCode: null, leaseExpiresAt: null, nextRetryAt: null } },
+  ])('refuses malformed supplied processing/availability fields without citation authority (%j)', over => {
+    const body = page(0, [1], 1);
+    Object.assign(body.sources[0], over);
+    expect(parseProjectSourcePage(body, { programId, offset: 0, limit: 200 }).ok).toBe(false);
   });
 });

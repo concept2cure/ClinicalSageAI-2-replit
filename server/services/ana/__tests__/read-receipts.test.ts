@@ -9,16 +9,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ToolContext } from '../AnaToolExecutor.js';
 
 const vaultModule = vi.hoisted(() => () => import('./support/read-delivery-vault.js'));
+const readFixtureModule = vi.hoisted(() => () => import('./support/source-read-tool-fixture.js'));
 // Actor admission is covered by current-access/native suites. These handler
 // cases isolate delivery budgets and receipts after a successful admission.
-vi.mock('../catalog-scope.js', async importOriginal => ({
-  ...await importOriginal<typeof import('../catalog-scope.js')>(),
-  catalogScope: async (ctx: { userId: number }) => ({
-  programId: null, executor: { query: vi.fn() }, accessibleScope: { actor: { userId: ctx.userId, role: 'viewer' }, programIds: [] },
-}) }));
+vi.mock('../catalog-scope.js', async importOriginal =>
+  (await vaultModule()).catalogScopeMock(await importOriginal<Record<string, unknown>>()),
+);
+vi.mock('../../c2c/current-program-access.js', async importOriginal =>
+  (await readFixtureModule()).syntheticProgramAccessMock(await importOriginal<Record<string, unknown>>()),
+);
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(async () => ({ rows: [] })) }, getPool: () => ({}), db: {} }));
 vi.mock('../../vault/document-catalog.service.js', async () => (await vaultModule()).serviceMock());
 vi.mock('../document-tools-shared.js', async importOriginal => (await vaultModule()).gatesMock(await importOriginal<Record<string, unknown>>()));
+vi.mock('../source-read-receipt.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()), ...(await vaultModule()).receiptHelperMock(),
+}));
 
 import { budgetToolResultsForModel, notDeliveredResult, RESULT_BUDGET, type ToolResultEntry } from '../agentic-loop.js';
 import {
@@ -34,12 +39,16 @@ import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 import { addDocument, prose, receiptsFor, resetVault } from './support/read-delivery-vault.js';
 
 const entry = (id: string, content: string): ToolResultEntry => ({ tool_use_id: id, name: 'read_project_document', content });
+const fixtureDocumentId = (id: string) => '30000000-0000-4000-8000-' + String(['whole', 'replaced', 'cancelled', 'amended', 'a', 'b'].indexOf(id) + 1).padStart(12, '0');
 const receipt = (id: string, result: string, start = 0): DeferredReadReceipt => ({
-  documentId: `doc-${id}`,
-  contentHash: 'h',
+  documentId: fixtureDocumentId(id),
+  contentHash: 'a'.repeat(64),
   span: { start, end: start + 10 },
   readBy: 7,
   result,
+  sourceSnapshot: { organizationId: 42, userId: 7, programId: '20000000-0000-4000-8000-000000000001',
+    documentId: fixtureDocumentId(id), contentHash: 'a'.repeat(64), extractedTextSha256: 'a'.repeat(64),
+    totalChars: 100, span: { start, end: start + 10 } },
 });
 
 describe('settleReadReceipts', () => {
@@ -57,7 +66,7 @@ describe('settleReadReceipts', () => {
     const n = await settleReadReceipts(original, budgeted, deferred, async r => void written.push(r.documentId));
 
     expect(n).toBe(1);
-    expect(written).toEqual(['doc-whole']);
+    expect(written).toEqual([fixtureDocumentId('whole')]);
     expect(deferred.size, 'settled receipts are cleared').toBe(0);
   });
 
@@ -66,11 +75,11 @@ describe('settleReadReceipts', () => {
     const both = [entry('a', 'A'), entry('b', 'B')];
     const written: string[] = [];
     const n = await settleReadReceipts(both, both, deferred, async r => {
-      if (r.documentId === 'doc-a') throw new Error('database unavailable');
+      if (r.documentId === fixtureDocumentId('a')) throw new Error('database unavailable');
       written.push(r.documentId);
     });
     expect(n).toBe(1);
-    expect(written).toEqual(['doc-b']);
+    expect(written).toEqual([fixtureDocumentId('b')]);
   });
 
   it('with nothing deferred, writes nothing and touches no database', async () => {
@@ -137,6 +146,7 @@ describe('fitReadWindow', () => {
 });
 
 describe('read_project_document', () => {
+  const DOC = '10000000-0000-4000-8000-000000000001';
   const handlers = new Map<string, (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>>();
   registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
   const ORG: ToolContext = { organizationId: 42, userId: 7 };
@@ -145,30 +155,31 @@ describe('read_project_document', () => {
   beforeEach(() => resetVault());
 
   it('outside a settling host it records nothing, counts nothing, and says so', async () => {
-    addDocument('d', prose(3000));
-    const r = await readIt({ document_id: 'd' }, ORG);
+    addDocument(DOC, prose(3000));
+    const r = await readIt({ document_id: DOC }, ORG);
     expect(r.ok).toBe(true);
     expect(r.window).toMatchObject({ start: 0, end: 3000 });
     expect(r.coverage).toMatchObject({ coveredChars: 0, complete: false });
-    expect(r.message).toMatch(/not recorded as read/);
-    expect(receiptsFor('d')).toEqual([]);
+    expect(r.message).toMatch(/No new legacy receipt is deferred/);
+    expect(r.message).toMatch(/does not establish current-actor, extraction-specific or provider-served delivery/);
+    expect(receiptsFor(DOC)).toEqual([]);
   });
 
   it('inside one it defers the receipt for exactly the window it serves, with the result it serves', async () => {
-    addDocument('d', prose(12_000));
+    addDocument(DOC, prose(12_000));
     const deferred: DeferredReadReceipts = new Map();
-    const raw = await handlers.get('read_project_document')!({ document_id: 'd', offset: 100, max_chars: 80_000 }, { ...ORG, ...readReceiptContext(deferred, 'tu_1') });
+    const raw = await handlers.get('read_project_document')!({ document_id: DOC, offset: 100, max_chars: 80_000 }, { ...ORG, ...readReceiptContext(deferred, 'tu_1') });
     const r = JSON.parse(raw);
     expect(raw.length).toBeLessThanOrEqual(RESULT_BUDGET);
-    expect(deferred.get('tu_1')).toMatchObject({ documentId: 'd', span: { start: 100, end: r.window.end }, readBy: 7, result: raw });
-    expect(r.coverage.coveredChars, 'coverage counts this window: true once it is delivered').toBe(r.window.end - 100);
+    expect(deferred.get('tu_1')).toMatchObject({ documentId: DOC, span: { start: 100, end: r.window.end }, readBy: 7, result: raw });
+    expect(r.coverage.coveredChars, 'prospective legacy aggregate coverage counts this window if admitted').toBe(r.window.end - 100);
     expect(r.message).toMatch(new RegExp(`Continue with offset=0`));
-    expect(receiptsFor('d'), 'nothing is written by the read itself').toEqual([]);
+    expect(receiptsFor(DOC), 'nothing is written by the read itself').toEqual([]);
   });
 
   it('a comprehension record too large to leave room for text gives way, and says so', async () => {
-    addDocument('d', prose(12_000), { status: 'cataloged', documentKind: 'Report', summary: 's'.repeat(4500) });
-    const r = await readIt({ document_id: 'd' }, ORG);
+    addDocument(DOC, prose(12_000), { status: 'cataloged', documentKind: 'Report', summary: 's'.repeat(4500) });
+    const r = await readIt({ document_id: DOC }, ORG);
     expect(r.comprehension).toBeUndefined();
     expect(r.comprehensionWithheld).toMatch(/too long to send beside/);
     expect(r.window.end - r.window.start).toBeGreaterThan(1000);

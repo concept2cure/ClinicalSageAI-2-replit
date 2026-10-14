@@ -1,0 +1,29 @@
+{
+  "baselineHEAD": "64bdf9cea891d9df5dd090e18aa51de01517f220",
+  "freshIndependent": {
+    "tests": 38,
+    "files": 3,
+    "bindings": 60,
+    "manifest": "independent-final-manifest.json",
+    "sourceBytesStillMatch": true
+  },
+  "reusedNativePostgres": {
+    "tests": 20,
+    "bindings": 49,
+    "actualBlockingBarriers": 10,
+    "sourceBytesStillMatch": true,
+    "nativeRerunNeeded": false,
+    "basis": "All49 exact source/test/migration/config hashes match the ce559705 native run; loopback fixture cleanup verified.",
+    "observations": "durable-postgres-observations.json",
+    "cleanupVerified": true
+  },
+  "sqlReview": {
+    "reviewedFiles": 19,
+    "sourceBytesStillMatchPostfreezeReview": true
+  },
+  "dispositionCounterfactual": {
+    "expectedRed": true,
+    "serviceBytesStillMatch": true
+  },
+  "scope": "Proof-artifact reconciliation only; no application edits. Full regression, type gates and publication remain lead-owned."
+}

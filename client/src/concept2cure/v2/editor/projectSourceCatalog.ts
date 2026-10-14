@@ -1,10 +1,13 @@
 import type { SourceCatalog } from './SourceCatalogLine';
+import { isDataRoomProcessingSummary, sourceHasGroundingText, type DataRoomProcessingSummary } from '@shared/data-room-processing-status';
 
 export interface ProjectSourceRecord {
   id: number; title: string | null; extractionStatus: string | null;
   checksum?: string | null; isCurrent: boolean; dataEligible: boolean; originalFileAvailable: boolean;
   extractionMethod?: string | null; catalog?: SourceCatalog | null; snippet?: string | null;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  textAvailable?: boolean | null;
+  processing?: DataRoomProcessingSummary | null;
 }
 export interface ProjectSourcePage<T extends ProjectSourceRecord = ProjectSourceRecord> {
   projectId: string; sources: T[]; total: number; currentTotal: number;
@@ -20,7 +23,12 @@ function sourceRow(value: unknown): value is ProjectSourceRecord {
   const row = object(value);
   return Boolean(row && Number.isSafeInteger(row.id) && Number(row.id) > 0 && text(row.title) && text(row.extractionStatus)
     && text(row.checksum, true) && typeof row.isCurrent === 'boolean' && typeof row.dataEligible === 'boolean'
-    && typeof row.originalFileAvailable === 'boolean' && text(row.extractionMethod, true) && text(row.snippet, true));
+    && typeof row.originalFileAvailable === 'boolean' && text(row.extractionMethod, true) && text(row.snippet, true)
+    && processingFieldsValid(row));
+}
+function processingFieldsValid(row: Record<string, unknown>): boolean {
+  return (row.textAvailable === undefined || row.textAvailable === null || typeof row.textAvailable === 'boolean')
+    && (row.processing === undefined || row.processing === null || isDataRoomProcessingSummary(row.processing));
 }
 function validPageWindow(body: Record<string, unknown>, request: SourcePageRequest, length: number): boolean {
   const page = object(body.page);
@@ -50,4 +58,4 @@ export function projectSourceCatalogUrl(programId: string, request: { limit: num
 }
 
 /** File withdrawal may retain readable data; new grounding still requires current eligible text. */
-export const sourceCitationEligible = (source: ProjectSourceRecord): boolean => source.isCurrent && source.dataEligible && source.extractionStatus === 'extracted';
+export const sourceCitationEligible = sourceHasGroundingText;

@@ -1,4 +1,9 @@
 /** Canonical document read: actor and recorded source parent precede metadata. */
+import { pool } from '../../db.js';
+import type { Queryable } from './document-catalog.service.js';
+import type { CompleteCatalogArgs } from './document-catalog-operation-types.js';
+import { vaultWriteRefusal } from './vault-write-authority.js';
+import { catalogableExpectedProgram } from './document-catalog-source-scope.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { MissingRequestDbContextError } from '../../db/requestDb.js';
 import { ProgramReadAccessError, readCurrentProgramActor, requireCurrentProgramAccess } from '../c2c/current-program-access.js';
@@ -7,10 +12,13 @@ import { supersededSql } from './vault-version-family.js';
 import { catalogStateOf } from './document-catalog-governance.service.js';
 import type { CatalogStatus } from './document-catalog-core.js';
 
+const SHA256 = /^[0-9a-f]{64}$/i;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The org-checked document row every tool call resolves through (see module header on tenancy). */
 export interface CatalogDocumentRow {
+  organizationId?: number;
+  isCurrent?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   originalFileAvailable?: boolean;
   id: string;
@@ -62,11 +70,12 @@ async function admittedProgram(documentId: string, organizationId: number, opts:
   const source = await q.query(
     `SELECT d.id::text, d.program_id::text, d.organization_id FROM vault.documents d
       WHERE d.id = $1::uuid AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${currentClause}
-        AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2)
+        AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
       LIMIT 1`, [documentId, organizationId],
   );
   const record = source.rows[0];
   if (!record) return null;
+  if (source.rows.length !== 1 || requiredText(record.id).toLowerCase() !== documentId.toLowerCase()) return invalidDocumentRow();
   const programId = requiredText(record.program_id);
   if (!UUID.test(programId)) return invalidDocumentRow();
   const recordedTenant = documentTenant(record.organization_id);
@@ -83,6 +92,9 @@ export async function loadDocumentForOrg(
   opts: CatalogDocumentReadOptions,
 ): Promise<CatalogDocumentRow | null> {
   if (!opts?.executor) throw new MissingRequestDbContextError();
+  // Preserve request identity and selection before either admission can yield.
+  opts = Object.freeze({ executor: opts.executor, userId: opts.userId,
+    includeText: opts.includeText === true, currentOnly: opts.currentOnly === true, programId: opts.programId });
   const q = opts.executor;
   const programId = await admittedProgram(documentId, organizationId, opts);
   if (!programId) return null;
@@ -100,16 +112,19 @@ export async function loadDocumentForOrg(
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
             c.catalog_state, c.proposed_model
        FROM vault.documents d
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
       WHERE d.id = $1::uuid AND d.program_id = $3::uuid AND d.organization_id = $2 AND d.deleted_at IS NULL
         AND ${vaultDataEligibleSql('d')}${currentClause}
-        AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2)
+        AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
       LIMIT 1`, [documentId, organizationId, programId],
   );
   const r = res.rows[0];
   if (!r) return null;
+  // Snapshot the private row before the final permission await; a successful
+  // guard attests only this already checked projection.
+  const projected = globalThis.structuredClone(projectDocumentRow(r, { documentId, programId }));
   await requireCurrentProgramAccess(q, accessInput);
-  return projectDocumentRow(r, { documentId, programId });
+  return projected;
 }
 
 function invalidDocumentRow(): never {
@@ -125,6 +140,11 @@ function documentTenant(value: unknown): number | null {
 function requiredText(value: unknown): string {
   if (typeof value !== 'string') return invalidDocumentRow();
   return value;
+}
+
+function sourceHash(value: unknown): string {
+  const text = requiredText(value);
+  return SHA256.test(text) ? text.toLowerCase() : invalidDocumentRow();
 }
 
 function nullableText(value: unknown): string | null {
@@ -150,7 +170,7 @@ function projectCatalogRow(r: Record<string, unknown>): CatalogDocumentRow['cata
   const charCount = nullableNumber(r.char_count);
   if (charCount === null || !Number.isSafeInteger(charCount) || charCount < 0) return invalidDocumentRow();
   return {
-    status, contentHash: requiredText(r.catalog_content_hash),
+    status, contentHash: sourceHash(r.catalog_content_hash),
     extractionMethod: nullableText(r.extraction_method), extractionConfidence: nullableNumber(r.extraction_confidence),
     extractionError: nullableText(r.extraction_error), charCount,
     wordCount: nullableNumber(r.word_count), pageCount: nullableNumber(r.page_count),
@@ -171,9 +191,101 @@ function projectDocumentRow(r: Record<string, unknown>, bound: { documentId: str
     id, programId,
     documentCode: nullableText(r.document_code), documentTitle: nullableText(r.document_title),
     documentType: nullableText(r.document_type), fileName: nullableText(r.file_name),
-    mimeType: nullableText(r.mime_type), contentHash: requiredText(r.content_hash),
+    mimeType: nullableText(r.mime_type), contentHash: sourceHash(r.content_hash),
     disposition, originalFileAvailable: r.original_file_available, extractedText: nullableText(r.extracted_text),
     folderId: nullableText(r.folder_id), evidenceKind: nullableText(r.evidence_kind), ctdSection: nullableText(r.ctd_section),
     placementStatus: requiredText(r.placement_status), catalog: projectCatalogRow(r),
   };
+}
+
+/** Trusted internal read. The calling actor/source facade owns canonical
+ * admission and a pinned allowed-program set before and after this query. */
+export async function loadDocumentForAdmittedScope(
+  documentId: string, organizationId: number,
+  opts: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] } = {},
+): Promise<CatalogDocumentRow | null> {
+  const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
+  const params: unknown[] = [documentId, organizationId];
+  let programClause = '';
+  if (opts.programId) { params.push(opts.programId); programClause += ` AND d.program_id = $${params.length}::uuid`; }
+  if (opts.allowedProgramIds !== undefined) { params.push([...opts.allowedProgramIds]); programClause += ` AND d.program_id = ANY($${params.length}::uuid[])`; }
+  // Newly admitted sources require both recorded tenant consistency and a
+  // current version. Programme ownership alone cannot repair legacy conflicts.
+  const currentClause = opts.currentOnly ? ` AND NOT ${supersededSql('d')}` : '';
+  const res = await (opts.executor ?? pool).query(
+    `SELECT d.id, d.organization_id, d.program_id, d.document_code, d.document_title, d.document_type,
+            d.file_name, d.mime_type, d.content_hash, ${textCol},
+            ${vaultDispositionChoiceSql('d')} AS disposition,
+            ${vaultBinaryAvailableSql('d')} AS original_file_available,
+            NOT ${supersededSql('d')} AS is_current,
+            d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
+            c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
+            c.extraction_error, c.char_count, c.word_count, c.page_count,
+            c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
+            c.catalog_state, c.proposed_model
+       FROM vault.documents d
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+      WHERE d.id = $1 AND d.organization_id = $2 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}${currentClause}
+        AND EXISTS (SELECT 1 FROM regulatory_programs rp
+                     WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
+      LIMIT 1`,
+    params,
+  );
+  const r = res.rows[0];
+  if (!r || r.organization_id !== organizationId) return null;
+  return projectAdmittedDocumentRow(r);
+}
+
+function projectAdmittedDocumentRow(r: Record<string, any>): CatalogDocumentRow {
+  return {
+    id: r.id,
+    organizationId: r.organization_id,
+    isCurrent: r.is_current,
+    programId: r.program_id,
+    documentCode: r.document_code,
+    documentTitle: r.document_title,
+    documentType: r.document_type,
+    fileName: r.file_name,
+    mimeType: r.mime_type,
+    contentHash: r.content_hash,
+    disposition: r.disposition ?? null,
+    originalFileAvailable: r.original_file_available ?? true,
+    extractedText: r.extracted_text,
+    folderId: r.folder_id,
+    evidenceKind: r.evidence_kind,
+    ctdSection: r.ctd_section,
+    placementStatus: r.placement_status,
+    catalog: r.catalog_status
+      ? {
+          status: r.catalog_status,
+          contentHash: r.catalog_content_hash,
+          extractionMethod: r.extraction_method,
+          extractionConfidence: r.extraction_confidence,
+          extractionError: r.extraction_error,
+          charCount: r.char_count ?? 0,
+          wordCount: r.word_count,
+          pageCount: r.page_count,
+          documentKind: r.document_kind,
+          purpose: r.purpose,
+          summary: r.summary,
+          keyData: r.key_data,
+          catalogedAt: r.cataloged_at ? String(r.cataloged_at) : null,
+          state: catalogStateOf(r),
+          proposedModel: r.proposed_model ?? null,
+        }
+      : null,
+  };
+}
+
+/** Current interactive actor/source admission before proposal embedding. The
+ * final guarded writer independently pins its exact source under held locks. */
+export async function loadCatalogProposalSource(args: CompleteCatalogArgs & { executor?: RequestSqlClient; programId?: string }) {
+  const source = args.executor
+    ? await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true, executor: args.executor, userId: args.userId ?? undefined, programId: args.programId })
+    : await loadDocumentForAdmittedScope(args.documentId, args.organizationId, { includeText: true });
+  const availability = catalogableExpectedProgram(source, args.expectedProgramId ?? args.programId);
+  if (!availability.ok || !args.executor) return availability;
+  const access = await requireCurrentProgramAccess(args.executor, { organizationId: args.organizationId, userId: args.userId ?? undefined, programId: availability.document.programId });
+  const refusal = vaultWriteRefusal(access.actor.role);
+  return refusal ? { ok: false as const, refusal: refusal.message } : availability;
 }

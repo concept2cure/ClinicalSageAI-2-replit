@@ -1,0 +1,122 @@
+[
+  {
+    "file": "server/services/__tests__/rag-actor-programme-scope.test.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": true
+  },
+  {
+    "file": "server/services/advancedRAGPipeline.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 9,
+    "currentErrors": 0,
+    "currentWarnings": 9,
+    "newFile": false
+  },
+  {
+    "file": "server/services/rag-filters.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/ragRouter.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/vault/__tests__/retrieval-actor-filter.test.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": true
+  },
+  {
+    "file": "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": true
+  },
+  {
+    "file": "server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/vault/document-catalog-search-query.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": true
+  },
+  {
+    "file": "server/services/vault/document-catalog-search.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/vault/document-passage-search.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/vault/retrieval-source-access.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": true
+  },
+  {
+    "file": "server/services/vault/vault-assistant-search.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/vault/vault-search.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": false
+  },
+  {
+    "file": "server/services/vault/vector-index-availability.ts",
+    "baselineErrors": 0,
+    "baselineWarnings": 0,
+    "currentErrors": 0,
+    "currentWarnings": 0,
+    "newFile": true
+  }
+]

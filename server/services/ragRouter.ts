@@ -111,6 +111,7 @@ export interface RagRetrievalParams {
   useCorrectiveLoop?: boolean;
   useCompression?: boolean;
   filters?: RetrievalOptions['filters'];
+  sourceReadScope?: RetrievalOptions['sourceReadScope'];
 }
 
 export interface RagRouterResult {
@@ -189,6 +190,7 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     memoryScope: params.memoryScope,
     persistCitations: params.persistCitations,
     filters: params.filters,
+    sourceReadScope: params.sourceReadScope,
   };
 }
 

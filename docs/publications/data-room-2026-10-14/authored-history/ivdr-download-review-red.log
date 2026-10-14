@@ -1,0 +1,97 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded pdf artifact with its actual digest 24ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded docx artifact with its actual digest 5ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded zip artifact with its actual digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > serves an intact recorded manifest artifact with its actual digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement pdf from the wrong pack identity 5ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement docx from the wrong pack identity 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement zip from the wrong pack identity 4ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an internally consistent replacement manifest from the wrong pack identity 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf whose recorded pack byte length was changed 6ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx whose recorded pack byte length was changed 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip whose recorded pack byte length was changed 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest whose recorded pack byte length was changed 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses pdf with no recorded artifact digest 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses docx with no recorded artifact digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses zip with no recorded artifact digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses manifest with no recorded artifact digest 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > requests authoritative artifact hashes and sizes from the scoped pack row 3ms
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for pdf 7ms
+   → expected 409 to be 200 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for docx 2ms
+   → expected 409 to be 200 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for zip 5ms
+   → expected 409 to be 200 // Object.is equality
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for manifest 2ms
+   → expected 409 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an invalid BIGINT receipt null 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an invalid BIGINT receipt "" 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an invalid BIGINT receipt " " 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an invalid BIGINT receipt "-1" 5ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an invalid BIGINT receipt "1.5" 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an invalid BIGINT receipt "2e1" 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses an invalid BIGINT receipt "9007199254740993" 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > reports a provider integrity refusal and records no successful download 3ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > keeps missing/foreign pack identity absent without reaching storage 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not record a successful download when the stored version is missing 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > does not emit a provider-supplied digest unrelated to the verified bytes 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > refuses to substitute a snapshot when the recorded original manifest is missing 2ms
+ × server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > legacy snapshot fallback remains an integrity-checked view > verifies canonical nested content and hashes the actual rendered JSON 4ms
+   → expected [ Array(1) ] to deeply equal [ …(2) ]
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > legacy snapshot fallback remains an integrity-checked view > refuses the snapshot when its row hash does not establish identity 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > legacy snapshot fallback remains an integrity-checked view > refuses the snapshot when its pack hash does not establish identity 2ms
+ ✓ server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > legacy snapshot fallback remains an integrity-checked view > refuses the snapshot when its missing hash does not establish identity 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for pdf
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for docx
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for zip
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > accepts the PostgreSQL BIGINT decimal byte length for manifest
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:112:24
+    110|     pack[`${format}_size_bytes`] = String(GOOD.length);
+    111|     const res = await request(app()).get(`/api/ivdr/packs/${PACK}/down…
+    112|     expect(res.status).toBe(200);
+       |                        ^
+    113|     expect(res.headers['x-content-sha256']).toBe(computeSha256(GOOD));
+    114|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/__tests__/ivdr-pack-download-integrity.test.ts > IVDR stored artifact identity > legacy snapshot fallback remains an integrity-checked view > verifies canonical nested content and hashes the actual rendered JSON
+AssertionError: expected [ Array(1) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    "11111111-1111-4111-8111-111111111111",
+-   7,
+  ]
+
+ ❯ server/routes/__tests__/ivdr-pack-download-integrity.test.ts:198:26
+    196|         expect(downloaded()).toHaveLength(1);
+    197|         const call = query.mock.calls.find(([sql]) => sql.includes('FR…
+    198|         expect(call![1]).toEqual([PACK, ORG]);
+       |                          ^
+    199|         expect(call![0]).toContain('organization_id = $2');
+    200|       } finally { resetQuery(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 32 passed (37)
+   Start at  03:04:35
+   Duration  819ms (transform 150ms, setup 75ms, import 202ms, tests 133ms, environment 0ms)
+

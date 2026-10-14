@@ -1,52 +1,31 @@
 /**
  * The vault full-text search must carry its tenant boundary IN the statement.
  *
- * `GET /api/c2c/project-vault/:id/search` reads vault.documents through the one
- * search query (server/services/vault/vault-search.ts, since the library search
- * of 2026-10-01) with `d.program_id = $3` and the organisation as `$1`.
- * vault.documents has no organization_id to filter on —
- * its own RLS is program-scoped through core.can_access_program(program_id) —
- * so for a while the only thing standing between one tenant and another's
- * documents was the regulatory_programs ownership SELECT twenty lines earlier.
- * That check is real and the endpoint was not exploitable, but `ci:tenant-isolation`
- * flagged both queries and was right to: a query whose safety lives in a
- * different statement loses it the first time someone moves or copies it.
- *
- * Proven against a real Postgres 16 before this test was written — with the
- * EXISTS removed, org 1 passing org 2's program id counts org 2's document
- * (leaked=1); with it, 0. These cases pin the predicate so it cannot quietly
- * come back out.
+ * Actual parent admission and the count/page SQL execute on a synthetic PGlite
+ * database. The recorded document tenant and its parent program tenant must
+ * both match. Canonical accessible programs are bound before count and LIMIT.
  */
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi, beforeEach } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
 
+const io = vi.hoisted(() => ({ query: vi.fn() }));
 const queries: Array<{ sql: string; params: unknown[] }> = [];
-
-vi.mock('../../../db.js', () => ({
-  pool: {
-    query: vi.fn(async (sql: string, params: unknown[] = []) => {
-      queries.push({ sql, params });
-      // The ownership pre-check must find the program, or the route 404s before
-      // it ever reaches the reads this test is about.
-      if (/FROM regulatory_programs\s*\n?\s*WHERE id = \$1/.test(sql)) {
-        return { rows: [{ id: 'p' }], rowCount: 1 };
-      }
-      if (/count\(\*\)::int AS total/.test(sql)) return { rows: [{ total: 0 }], rowCount: 1 };
-      return { rows: [], rowCount: 0 };
-    }),
-  },
-}));
+vi.mock('../../../db.js', () => ({ pool: { query: io.query } }));
 
 import express from 'express';
 import request from 'supertest';
 import createProjectVaultRoutes from '../project-vault';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
+const DOCUMENT = '22222222-2222-4222-8222-222222222222';
 const ORG = 7;
+let database: PGlite;
 
 function app() {
   const a = express();
   a.use((req, _res, next) => {
-    (req as unknown as { user: unknown }).user = { organizationId: ORG };
+    Object.assign(req, { user: { id: 3, role: 'member', organizationId: ORG }, dbClient: { query: io.query } });
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
@@ -59,31 +38,75 @@ const search = (q = 'stability') =>
 /** The two reads this file is about: count and rows over vault.documents. */
 const vaultReads = () => queries.filter(c => /FROM vault\.documents d/.test(c.sql));
 
-beforeEach(() => {
+beforeAll(async () => {
+  database = new PGlite();
+  await database.exec(`
+    CREATE TABLE organizations (id integer PRIMARY KEY, status text);
+    CREATE TABLE users (id integer PRIMARY KEY, status text);
+    CREATE TABLE organization_users (organization_id integer, user_id integer, role text);
+    CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer, name text, deleted_at timestamptz);
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, regulatory_program_id uuid,
+      owner_id integer, created_by_id integer, settings jsonb, status text, client_workspace_id integer);
+    CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
+    CREATE TABLE project_members (project_id integer, organization_id integer, user_id integer, role text, status text);
+    CREATE TABLE concept2cure_artifacts (id integer, organization_id integer, project_id integer);
+    CREATE TABLE concept2cure_review_assignments (artifact_id integer, reviewer_id integer, organization_id integer, status text);
+    CREATE SCHEMA vault;
+    CREATE TABLE vault.documents (id uuid PRIMARY KEY, program_id uuid, organization_id integer,
+      document_code text, document_title text, file_name text, document_type text, file_size bigint, folder_id text, ctd_section text,
+      placement_status text, version text, extracted_text text, content_hash text, supersedes_id uuid,
+      deleted_at timestamptz, created_at timestamptz DEFAULT now());
+    CREATE TABLE document_data_dispositions (id integer, organization_id integer, program_id uuid,
+      vault_document_id uuid, source_sha256 text, linked_ids jsonb, choice text,
+      disposition_sequence integer, created_at timestamptz);
+    INSERT INTO organizations VALUES (7,'active');
+    INSERT INTO users VALUES (3,'active');
+    INSERT INTO regulatory_programs VALUES ('${PROGRAM}',7,'Private stability program',NULL);
+    INSERT INTO projects VALUES (42,7,'${PROGRAM}',3,3,'{}','active',NULL);
+    INSERT INTO project_visibility_settings VALUES (42,7,'private');
+    INSERT INTO vault.documents (id,program_id,organization_id,document_title,extracted_text)
+      VALUES ('${DOCUMENT}','${PROGRAM}',7,'Stability report','Observed stability data'),
+             ('33333333-3333-4333-8333-333333333333','${PROGRAM}',9,'Stability cross-tenant row','Hidden stability data');
+  `);
+  await database.exec(fs.readFileSync('migrations/20260906_vault_documents_fulltext.sql', 'utf8'));
+});
+afterAll(async () => { await database.close(); });
+beforeEach(async () => {
   queries.length = 0;
+  await database.exec("TRUNCATE organization_users; INSERT INTO organization_users VALUES (7,3,'member');");
+  io.query.mockReset().mockImplementation(async (sql: string, params: unknown[] = []) => {
+    queries.push({ sql, params });
+    return database.query(sql, params);
+  });
 });
 
 describe('vault search carries the org predicate in-statement', () => {
   it('runs both reads — the count and the rows', async () => {
-    await search();
+    const res = await search();
+    expect(res.status).toBe(200);
+    expect(res.body.data.total).toBe(1);
+    expect(res.body.data.results.map((r: { id: string }) => r.id)).toEqual([DOCUMENT]);
     expect(vaultReads()).toHaveLength(2);
   });
 
   it('every vault read names the caller organization in its own SQL', async () => {
-    await search();
+    expect((await search()).status).toBe(200);
+    expect(vaultReads()).toHaveLength(2);
     for (const { sql } of vaultReads()) {
       expect(sql).toMatch(/EXISTS\s*\(\s*SELECT 1 FROM regulatory_programs rp/);
       // The one search query (vault-search.ts) binds the organisation first.
       expect(sql).toMatch(/rp\.organization_id = \$1/);
-      expect(sql).toMatch(/d\.program_id = \$3::uuid/);
+      expect(sql).toMatch(/d\.organization_id = \$1/);
+      expect(sql).toMatch(/d\.program_id = ANY\(\$3::uuid\[\]\)/);
     }
   });
 
   it('binds the caller organization, not a value from the request', async () => {
-    await search();
+    expect((await search()).status).toBe(200);
+    expect(vaultReads()).toHaveLength(2);
     for (const { params } of vaultReads()) {
       expect(params[0]).toBe(ORG);
-      expect(params[2]).toBe(PROGRAM);
+      expect(params[2]).toEqual([PROGRAM]);
     }
   });
 
@@ -98,9 +121,10 @@ describe('vault search carries the org predicate in-statement', () => {
     expect(whereOf(counted.sql)).toBe(whereOf(rows.sql));
   });
 
-  it('does not reach the store at all for an empty query', async () => {
+  it('verifies access but does not search the corpus for an empty query', async () => {
     const res = await search('');
     expect(res.body.data.reason).toBe('EMPTY_QUERY');
     expect(vaultReads()).toHaveLength(0);
+    expect(queries.some(q => /organization_users/.test(q.sql))).toBe(true);
   });
 });
