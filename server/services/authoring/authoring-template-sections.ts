@@ -1,8 +1,7 @@
-/** Existing template resolution plus IND start checks; all writes remain in authoring-documents. */
+/** Existing template resolution and builtin start checks; writes stay in authoring-documents. */
 import { createScopedLogger } from '../../utils/logger';
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
-import { getIndAuthoringTemplate, indTemplateSnapshot } from './ind-authoring-templates';
-import type { IndAuthoringTemplate } from './ind-template-types';
+import { getBuiltinAuthoringTemplate, builtinTemplateSnapshot, type BuiltinAuthoringTemplate } from './builtin-authoring-templates';
 import type { AuthoringPool, Binding, CreateContext, CreateDocumentInput, Refusal } from './authoring-documents';
 
 const logger = createScopedLogger('authoring-documents');
@@ -28,11 +27,12 @@ export async function resolveTemplateSections(
   pool: AuthoringPool,
   tenantId: number,
   templateId: string,
+  resolved?: { builtin: BuiltinAuthoringTemplate | undefined },
 ): Promise<TemplateSectionSeed[] | Refusal> {
   if (!UUID_RE.test(templateId)) {
     return { kind: 'refused', status: 400, error: 'template_id must be a valid UUID' };
   }
-  const builtin = getIndAuthoringTemplate(templateId);
+  const builtin = resolved ? resolved.builtin : await getBuiltinAuthoringTemplate(templateId);
   if (builtin) return builtin.sections;
   // (a) The global reference store. Deliberately no tenant filter — these
   // templates describe agency expectations, not customer content; tenancy
@@ -88,9 +88,10 @@ export async function resolveTemplateSections(
 }
 
 /** A builtin must use its actual module and the current writable project. */
-export async function refuseIndTemplateStart(ctx: CreateContext, input: CreateDocumentInput, builtin: IndAuthoringTemplate | undefined): Promise<Refusal | null> {
+export async function refuseBuiltinTemplateStart(ctx: CreateContext, input: CreateDocumentInput, builtin: BuiltinAuthoringTemplate | undefined): Promise<Refusal | null> {
   if (!builtin) return null;
-  if (input.module !== undefined && input.module !== builtin.module) return { kind: 'refused', status: 400, error: 'Choose the module recorded by this IND template.', code: 'TEMPLATE_MODULE_MISMATCH' };
+  if (input.module !== undefined && input.module !== builtin.module) return { kind: 'refused', status: 400,
+    error: `Choose the module recorded by this ${builtin.filingContext ? 'regulatory' : 'IND'} template.`, code: 'TEMPLATE_MODULE_MISMATCH' };
   try {
     await authorizeAuthoringProgram(ctx.pool, { tenantId: ctx.tenantId, actor: ctx.actor, programId: String(input.client_program_id) });
     return null;
@@ -100,23 +101,25 @@ export async function refuseIndTemplateStart(ctx: CreateContext, input: CreateDo
   }
 }
 
-export function indTemplateSource(builtin: IndAuthoringTemplate | undefined) {
+export function builtinTemplateSource(builtin: BuiltinAuthoringTemplate | undefined) {
   return builtin ? { id: builtin.id, entryId: builtin.entryId, version: builtin.version,
-    sha256: indTemplateSnapshot(builtin), kind: builtin.kind, aiDraftable: builtin.aiDraftable,
-    authoringMode: builtin.authoringMode, originalFormat: builtin.originalFormat, limitations: builtin.limitations } : null;
+    sha256: builtinTemplateSnapshot(builtin), kind: builtin.kind, aiDraftable: builtin.aiDraftable,
+    authoringMode: builtin.authoringMode, originalFormat: builtin.originalFormat, limitations: builtin.limitations,
+    ...(builtin.filingContext ? { filingContext: { ...builtin.filingContext } } : {}) } : null;
 }
 
-type TemplateSource = ReturnType<typeof indTemplateSource>;
+type TemplateSource = ReturnType<typeof builtinTemplateSource>;
 
-export function indTemplateDocumentFields(builtin: IndAuthoringTemplate | undefined, fallbackModule: unknown, source: TemplateSource) {
+export function builtinTemplateDocumentFields(builtin: BuiltinAuthoringTemplate | undefined, fallbackModule: unknown, source: TemplateSource) {
   return { module: builtin ? builtin.module : fallbackModule == null ? null : String(fallbackModule),
     ...(source ? { provenance: { source: 'template', governedWrite: 'unverified', templateSource: source } } : {}) };
 }
 
-export function indTemplateSectionMetadata(builtin: IndAuthoringTemplate | undefined, source: TemplateSource, code: string) {
+export function builtinTemplateSectionMetadata(builtin: BuiltinAuthoringTemplate | undefined, source: TemplateSource, code: string) {
   return builtin ? { templateSource: source, templateGuidance: builtin.sections.find(row => row.code === code)?.guidance } : {};
 }
 
-export async function templateWorkingBinding(builtin: IndAuthoringTemplate | undefined, existing: () => Promise<Binding>): Promise<Binding> {
-  return builtin ? { documentId: null, reason: 'IND template working copy; review and deliberately place it through the governed filing workflow.' } : existing();
+export async function templateWorkingBinding(builtin: BuiltinAuthoringTemplate | undefined, existing: () => Promise<Binding>): Promise<Binding> {
+  return builtin ? { documentId: null,
+    reason: `${builtin.filingContext ? 'Regulatory' : 'IND'} template working copy; review and deliberately place it through the governed filing workflow.` } : existing();
 }

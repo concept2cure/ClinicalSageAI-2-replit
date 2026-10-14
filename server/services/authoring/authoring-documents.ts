@@ -21,8 +21,8 @@ import type { Pool } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
 import { programInOrganization } from '../c2c/program-access';
-import { getIndAuthoringTemplate } from './ind-authoring-templates';
-import { resolveTemplateSections, refuseIndTemplateStart, indTemplateSource, indTemplateDocumentFields, indTemplateSectionMetadata, templateWorkingBinding, type TemplateSectionSeed } from './authoring-template-sections';
+import { getBuiltinAuthoringTemplate } from './builtin-authoring-templates';
+import { resolveTemplateSections, refuseBuiltinTemplateStart, builtinTemplateSource, builtinTemplateDocumentFields, builtinTemplateSectionMetadata, templateWorkingBinding, type TemplateSectionSeed } from './authoring-template-sections';
 export type { TemplateSectionSeed } from './authoring-template-sections';
 import {
   canonicalIdFor,
@@ -456,13 +456,13 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
   const programRefusal = await refuseProgramAnchor(ctx, client_program_id);
   if (programRefusal) return programRefusal;
 
-  const builtin = getIndAuthoringTemplate(String(template_id));
-  const templateRefusal = await refuseIndTemplateStart(ctx, input, builtin);
+  const builtin = template_id ? await getBuiltinAuthoringTemplate(String(template_id)) : undefined;
+  const templateRefusal = await refuseBuiltinTemplateStart(ctx, input, builtin);
   if (templateRefusal) return templateRefusal;
 
   let templateSections: TemplateSectionSeed[] | null = null;
   if (template_id) {
-    const resolved = await resolveTemplateSections(ctx.pool, ctx.tenantId, String(template_id));
+    const resolved = await resolveTemplateSections(ctx.pool, ctx.tenantId, String(template_id), { builtin });
     if (!Array.isArray(resolved)) return resolved;
     const seedRefusal = await refuseTemplateFigures(resolved);
     if (seedRefusal) return seedRefusal;
@@ -471,14 +471,14 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
 
   const clientProgramId = client_program_id ? String(client_program_id) : null;
   const resolvedBinding = await templateWorkingBinding(builtin, () => resolveBinding(ctx.pool, ctx.tenantId, clientProgramId));
-  const templateSource = indTemplateSource(builtin);
+  const templateSource = builtinTemplateSource(builtin);
 
   const { document, binding } = await insertDocumentTx(
     ctx,
     {
       docId,
       title: String(title),
-      ...indTemplateDocumentFields(builtin, module, templateSource),
+      ...builtinTemplateDocumentFields(builtin, module, templateSource),
       productCode: product_code == null ? null : String(product_code),
       locale: String(locale),
       templateId: template_id ? String(template_id) : null,
@@ -494,7 +494,7 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
       content: s.content,
       orderIndex: s.ordering,
       changeReason: 'Seeded from template',
-      metadata: { template_id, seeded: true, ...indTemplateSectionMetadata(builtin, templateSource, s.code) },
+      metadata: { template_id, seeded: true, ...builtinTemplateSectionMetadata(builtin, templateSource, s.code) },
     })),
   );
   await grantCreatorOwnership(ctx, docId);

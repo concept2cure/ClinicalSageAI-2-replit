@@ -129,6 +129,56 @@ describe('template identity is recorded rather than inferred from the document n
   });
 });
 
+describe('regional filing source stays recorded in the one editor', () => {
+  it.each([
+    ['US_NDA', 'US', 'FDA'], ['CA_CTA', 'CA', 'Health_Canada'],
+    ['EU_CTA', 'EU', 'EMA'], ['JP_CTN', 'JP', 'PMDA'],
+  ])('preserves %s scope after the working document is renamed', async (registryId, region, agency) => {
+    const templateId = '33333333-2222-4333-8444-000000000003';
+    const filingContext = { registryId, region, agency };
+    const source = { ...SOURCE, id: templateId, entryId: `registry:${registryId}`,
+      authoringMode: 'manual', originalFormat: 'source-dependent', filingContext };
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => {
+      if (url === `/api/authoring/docs/${DOC}`) return Promise.resolve(ok({ document: {
+        ...doc, module: null, title: 'Renamed regional working document', template_id: templateId,
+        provenance: { source: 'template', templateSource: source },
+      } }));
+      if (url.startsWith('/api/authoring/guidance/')) return Promise.resolve(ok({ template_guidance: [{
+        guidance_text: 'Confirm the current regional source and product applicability.', template_source: source,
+      }] }));
+      return normal(method, url);
+    });
+    const onAsk = vi.fn();
+    render(<DocumentCanvas docId={DOC} programId={PID} conversationId={null} expanded fromThisConversation={false}
+      onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={onAsk} fireToast={vi.fn()} />);
+    await ready(); ask('Review document');
+    const context = onAsk.mock.calls[0]?.[1]?.moduleContext;
+    expect.soft(context?.templateSource?.filingContext).toEqual(filingContext);
+    expect.soft(screen.queryByTestId('doc-provenance')?.textContent ?? '').toContain('regulatory template');
+    expect(context?.templateId).toBe(templateId);
+    expect(context?.templateSource?.aiDraftable).toBe(false);
+    expect(context?.templateSource?.limitations).toEqual(SOURCE.limitations);
+    expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it('marks malformed recorded regional identity unavailable rather than dropping it', async () => {
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => url === `/api/authoring/docs/${DOC}`
+      ? Promise.resolve(ok({ document: { ...doc, provenance: { source: 'template', templateSource: {
+        ...SOURCE, filingContext: { registryId: 'CA_CTA', region: 'unknown', agency: 'Health_Canada' },
+      } } } })) : normal(method, url));
+    const onAsk = vi.fn();
+    render(<DocumentCanvas docId={DOC} programId={PID} conversationId={null} expanded fromThisConversation={false}
+      onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={onAsk} fireToast={vi.fn()} />);
+    await ready(); ask('Review document');
+    expect(onAsk.mock.calls[0]?.[1]?.moduleContext?.templateSourceState).toBe('unavailable');
+    expect(onAsk.mock.calls[0]?.[1]?.moduleContext?.templateSource).toBeUndefined();
+    expect(screen.queryByTestId('doc-provenance')).toBeNull();
+  });
+});
+
 describe('template context is scoped to the saved document currently open', () => {
   it('bounds long handoff limits explicitly and points to complete saved-review pages', async () => {
     const normal = apiRequest.getMockImplementation()!;
@@ -189,6 +239,7 @@ describe('fixed oversight instructions preserve template authority', () => {
     expect(prompt).toContain('critique_document');
     expect(prompt).toContain('get_document_template');
     expect(prompt).toContain('aiDraftable');
+    expect(prompt).toContain('filingContext');
     expect(prompt).toContain('original');
     expect(prompt).toContain('read_authoring_section');
     expect(prompt).toContain('do not save, accept, approve or file');

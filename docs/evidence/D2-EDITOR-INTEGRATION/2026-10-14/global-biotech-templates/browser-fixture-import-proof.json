@@ -1,0 +1,125 @@
+{
+  "status": "pass",
+  "repositoryRoot": "/workspace/ClinicalSageAI",
+  "checks": [
+    {
+      "file": "browser.mjs",
+      "imported": "./mock-api.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/mock-api.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "browser.mjs",
+      "imported": "./visual-checks.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/visual-checks.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "generate.ts",
+      "imported": "../../../../../../server/services/authoring/builtin-authoring-templates",
+      "target": "server/services/authoring/builtin-authoring-templates.ts",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../design-system/colors_and_type.css",
+      "target": "design-system/colors_and_type.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/app-v2.css",
+      "target": "client/src/concept2cure/v2/styles/app-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/journey-v2.css",
+      "target": "client/src/concept2cure/v2/styles/journey-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/coverage-v2.css",
+      "target": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/authoring-v2.css",
+      "target": "client/src/concept2cure/v2/styles/authoring-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "target": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "target": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/editor/DocumentCanvas",
+      "target": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/editor/DocumentWorkbench",
+      "target": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/editor/askAnaToDraft",
+      "target": "client/src/concept2cure/v2/editor/askAnaToDraft.ts",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/surfaces/AuthoringCreateExport",
+      "target": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/services/portal/authService",
+      "target": "client/src/services/portal/authService.tsx",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/shellProject",
+      "target": "client/src/concept2cure/v2/shellProject.ts",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "./api-contract.json",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/api-contract.json",
+      "exists": true,
+      "productionTargetTracked": null
+    }
+  ]
+}

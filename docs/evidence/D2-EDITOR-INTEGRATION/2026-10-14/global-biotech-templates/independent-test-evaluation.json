@@ -1,0 +1,82 @@
+{
+  "scope": "W1 / D2 independent local route and saved-review evaluation",
+  "productionModifiedByEvaluator": false,
+  "testSourceSha256": {
+    "server/routes/__tests__/_template-editor-fixture.ts": "0c316dc7ed4cf3d771125b26c1d9655909f9f9ee4803cc9b1a05dff7a6baa235",
+    "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts": "a82942e92b4d97b4fa2b9101b3aca2c20e6f0adca0e137f576fb0591cbe33eee",
+    "server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts": "263c78315c8ac71d5ead163358b9c1ffedfcd0a01853fffd51071e88ee632356",
+    "server/services/ana/__tests__/saved-global-template-oversight.pglite.test.ts": "b238cd798b474ae65029801750f9178ca113e3804ce74513acea34565f1eefab",
+    "server/routes/__tests__/authoringTemplateStartFrom.test.ts": "26a99385c772d5deb9c56df20e8176ad5078f330feee9aee9b430d03e5ce7a37"
+  },
+  "coverage": {
+    "existingIndTemplates": 200,
+    "existingIndSections": 2725,
+    "registryFilings": 87,
+    "indexedBiotechComponents": 17,
+    "metadataOnlyPreparationWorksheets": 1,
+    "newTemplates": 105,
+    "newSections": 1581,
+    "totalTemplates": 305,
+    "totalSections": 4306,
+    "everyNewSavedReviewAllPages": true,
+    "everyPageMaximumSerializedCharactersAsserted": 5000
+  },
+  "results": {
+    "initialRouteRed": {
+      "failed": 8,
+      "passed": 0
+    },
+    "initialSavedReviewRed": {
+      "rawFailed": 12,
+      "rawPassed": 2,
+      "substantiveProductFailures": 11,
+      "harnessInputIssueCases": 1,
+      "note": "The empty-array parameter was boxed before final evaluation; raw initial failure is not substantive product evidence."
+    },
+    "focusedFirstAfter": {
+      "files": 3,
+      "passed": 51
+    },
+    "uuidPreparationCompletenessSupplement": {
+      "passed": 9
+    },
+    "finalEverySavedReviewAfter": {
+      "files": 1,
+      "passed": 20,
+      "durationSeconds": 189.61,
+      "allRegistryAndComponentCaseSeconds": 153.489
+    },
+    "migrationFixtureClosure": {
+      "passed": 4
+    },
+    "ownedStrictLint": {
+      "files": 4,
+      "errors": 0,
+      "warnings": 0
+    },
+    "postSyncLegacyFixture": {
+      "fullCoreRun": {
+        "files": 92,
+        "passedFiles": 91,
+        "failedFiles": 1,
+        "passedTests": 1527,
+        "failedTests": 3
+      },
+      "failureReason": "Three existing database-store subset name assertions excluded IND builtins but not new filingContext builtin rows.",
+      "correction": "Filter both builtin classes from DB-only assertions, and assert exact regional UUID roster plus all 200 IND rows remain offered, including the unavailable shared DB case.",
+      "productionChanges": false,
+      "focusedAfter": {
+        "passed": 8,
+        "durationSeconds": 9.23,
+        "strictLintErrors": 0,
+        "strictLintWarnings": 0
+      },
+      "qualification": "91 green files from full core run plus corrected focused file; full 92 not repeated for fixture-only assertion correction."
+    }
+  },
+  "limits": [
+    "Local PGlite SQL; no native PostgreSQL concurrency or deployed RLS qualification.",
+    "No live model, provider, agency-readiness or transmission qualification.",
+    "Regional scope follows current canonical US/CA/EU/JP/GLOBAL records; no maintained duplicate filing registry."
+  ]
+}
