@@ -1,0 +1,80 @@
+import { chromium } from '/opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs';
+import fs from 'node:fs';
+const out='/workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/saved-review';
+const programId='11111111-1111-4111-8111-111111111111';
+const docId='11111111-1111-4111-8111-111111111113';
+const firstId='11111111-1111-4111-8111-111111111114';
+const sectionId='11111111-1111-4111-8111-111111111112';
+const at='2026-10-13T12:00:00.000Z';
+fs.mkdirSync(out,{recursive:true});
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const results=[];
+for(const [theme,width] of [['light',1440],['dark',1440],['light',390],['dark',390]]) {
+  const page=await browser.newPage({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390,reducedMotion:'reduce'});
+  const errors=[]; const saves=[]; let refuseSave=false;
+  const saved=[{id:firstId,doc_id:docId,code:'2.5.1',title:'First',content:'<p>First saved text.</p>',order_index:0,updated_at:at},
+    {id:sectionId,doc_id:docId,code:'2.5.2',title:'Target',content:'<p>Saved target text.</p>',order_index:1,updated_at:at}];
+  const doc={id:docId,title:'Synthetic saved overview',status:'draft',module:'M2',section_count:2,updated_at:at};
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.route('**/api/**',async route=>{
+    const url=new URL(route.request().url()); let status=200; let body={success:true,data:{tree:[],documentCount:0}};
+    if(route.request().method()==='PATCH'&&url.pathname.includes('/authoring/sections/')) {
+      const update=route.request().postDataJSON(); saves.push(update);
+      if(refuseSave) {status=403;body={message:'The server refused this save.'};}
+      else {const section=saved.find(s=>url.pathname.endsWith(s.id));section.content=update.content;section.updated_at='2026-10-14T11:00:00.000Z';body={section,sha256:'a'.repeat(64)};}
+    } else if(url.pathname.endsWith('/sections')) body={sections:saved};
+    else if(url.pathname.endsWith('/authoring/docs/'+docId)) body={document:doc};
+    else if(url.pathname.endsWith('/authoring/docs')) body={documents:[doc]};
+    else if(url.pathname.endsWith('/citations'))body=[];
+    else if(url.pathname.match(/\/projects\/[^/]+\/sources$/))body={projectId:programId,sources:[],total:0,currentTotal:0,page:{limit:200,offset:0},window:{shown:0,truncated:false}};
+    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  });
+  const checks=[];
+  const check=async(name,condition)=>{if(!await condition)throw new Error(`${theme}/${width}: ${name}`);checks.push(name);};
+  await page.goto('http://127.0.0.1:5174/.visual-qa/editor-consistency/saved-review.html?theme='+theme);
+  const sectionButton=page.getByRole('button',{name:'Section',exact:true});
+  const documentButton=page.getByRole('button',{name:'Document',exact:true});
+  await page.locator('.tiptap').waitFor();
+  await check('one native editor',page.locator('.tiptap').count().then(n=>n===1));
+  const editor=page.locator('.tiptap');
+  await editor.click(); await editor.press('Control+Home');await page.keyboard.type('Unsaved local evidence. ');
+  await page.getByLabel('Reason for change',{exact:true}).fill('Clarify the saved evidence.');
+  await documentButton.click();
+  await page.getByRole('alertdialog').waitFor();
+  await check('guard keeps dirty editor mounted',editor.textContent().then(s=>s.includes('Unsaved local evidence.')));
+  await page.getByRole('button',{name:'Cancel',exact:true}).click();
+  await check('cancel retains Section view',sectionButton.getAttribute('aria-pressed').then(s=>s==='true'));
+  await check('cancel performs no save',saves.length===0);
+  refuseSave=true;
+  await documentButton.click(); await page.getByRole('button',{name:'Save and continue',exact:true}).click();
+  await page.getByRole('alertdialog').waitFor();
+  await check('refused save retains dirty text',editor.textContent().then(s=>s.includes('Unsaved local evidence.')));
+  await check('refused save retains Section view',sectionButton.getAttribute('aria-pressed').then(s=>s==='true'));
+  refuseSave=false;
+  await page.getByRole('button',{name:'Save and continue',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('button[aria-pressed="true"]')?.textContent?.trim()==='Document'||[...document.querySelectorAll('button')].some(el=>el.textContent.trim()==='Document'&&el.getAttribute('aria-pressed')==='true'));
+  await check('deliberate save includes dirty text',saves.at(-1).content.includes('Unsaved local evidence.'));
+  await page.screenshot({path:'/workspace/scratch/saved-review-before-remedy.png',fullPage:true});
+  fs.writeFileSync('/workspace/scratch/saved-review-debug.json',JSON.stringify(await page.evaluate(()=>({bridge:window.probeBridge,text:document.body.textContent})),null,2));
+  await page.getByRole('button',{name:'Open section 2.5.2 Target',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('.tiptap')?.textContent?.includes('Saved target text.'));
+  await check('remedy enters Section view',sectionButton.getAttribute('aria-pressed').then(s=>s==='true'));
+  const savesBeforeProposal=saves.length;
+  await page.getByRole('button',{name:'Apply as tracked suggestion',exact:true}).click();
+  await page.getByRole('button',{name:'Added as tracked suggestion',exact:true}).waitFor();
+  await check('proposal records AnA attribution locally',page.locator('.tiptap ins[data-author-id="ana"]').textContent().then(s=>s==='Corrected target text.'));
+  await check('proposal does not save or approve',saves.length===savesBeforeProposal);
+  await check('one editor after remedy',page.locator('.tiptap').count().then(n=>n===1));
+  await page.addScriptTag({path:'/workspace/scratch/editor-ui-tools/node_modules/axe-core/axe.min.js'});
+  const accessibility=await page.evaluate(async()=>await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}}));
+  await page.locator('.tiptap').scrollIntoViewIfNeeded();
+  await page.locator('.tiptap').click();
+  const metrics=await page.evaluate(()=>({editorViewport:(()=>{const r=document.querySelector('.rse-body').getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height};})(),overflow:document.documentElement.scrollWidth>innerWidth,editors:document.querySelectorAll('.tiptap').length,targets:[...document.querySelectorAll('.authoring-remedy-action')].map(el=>({name:el.textContent.trim(),height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width}))}));
+  await page.screenshot({path:`${out}/saved-review-${theme}-${width}.png`,fullPage:true});
+  results.push({theme,width,touch:width===390,checks,errors,metrics,violations:accessibility.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});
+  await page.close();
+}
+await browser.close();
+fs.writeFileSync(out+'/browser.json',JSON.stringify(results,null,2)+'\n');
+if(results.some(r=>r.errors.length||r.metrics.overflow||r.violations.length))throw new Error('Browser or accessibility validation failed; inspect browser.json');
+process.stdout.write(JSON.stringify(results.map(r=>({theme:r.theme,width:r.width,checks:r.checks.length,errors:r.errors.length,overflow:r.metrics.overflow,violations:r.violations.length})),null,2)+'\n');

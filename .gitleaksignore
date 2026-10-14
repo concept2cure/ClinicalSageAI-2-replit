@@ -182,3 +182,13 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:17
 83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:19
 83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:20
+
+# 2026-10-14: Four exact stream-manifest source SHA-256 pins at14362ef00.
+# status: not a secret
+# reason: Exact SHA-256 source digests recomputed from the original committed file bytes.
+# Each value matches the named original committed file bytes; no credentials.
+# Review: docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/security-source-pins/.
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:97
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:118
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:120
+14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:121

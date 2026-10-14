@@ -17,6 +17,7 @@
 import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { critiqueSavedDocument } from './saved-document-critique';
 import { frameToolOutput } from './tool-output-frame.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 import { registeredToolTier } from './governed-tool-gate.js';
@@ -3986,16 +3987,15 @@ registerToolHandler('verify_revision', async (input) => {
   });
 });
 
-registerToolHandler('critique_document', async (input) => {
+registerToolHandler('critique_document', async (input, ctx) => {
+  if (input.document_id !== undefined) return critiqueSavedDocument(input, ctx);
   const sections = Array.isArray(input.sections) ? input.sections : [];
-  const clean = sections
-    .filter((s): s is { title: string; text: string } =>
-      !!s && typeof (s as any).title === 'string' && typeof (s as any).text === 'string')
-    .map((s) => ({ title: s.title, text: s.text }));
-  if (clean.length === 0) {
+  const valid = (s: unknown): s is { title: string; text: string } => !!s && typeof s === 'object' &&
+    'title' in s && typeof s.title === 'string' && 'text' in s && typeof s.text === 'string';
+  if (sections.length === 0 || !sections.every(valid)) {
     return JSON.stringify({ status: 'needs_parameters', message: 'sections[] with {title, text} is required' });
   }
-  const result = critiqueDocument(clean, {
+  const result = critiqueDocument(sections, {
     audience: precisionAudience(input.audience),
     documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
     register: precisionRegister(input.register),
@@ -4003,6 +4003,7 @@ registerToolHandler('critique_document', async (input) => {
   return JSON.stringify({
     status: 'computed',
     engine: 'deterministic',
+    scope: 'provided_text',
     documentScore: result.documentScore,
     verdict: result.verdict,
     register: result.register,

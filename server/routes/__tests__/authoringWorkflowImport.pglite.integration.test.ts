@@ -7,6 +7,8 @@ import type express from 'express';
 import { SignJWT } from 'jose';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, PROGRAM_B, ORG, JWT_SECRET, makeApp, asToken } from './_authoring-canvas-fixture';
+import { readWorkflowImportResult } from '../../../client/src/concept2cure/v2/authoringHandoff';
+import type { WorkflowImportSource } from '../../../shared/authoring/source-import';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../db', () => ({ get db() { return h.db; }, get pool() { return h.pool; }, getPool: () => h.pool,
@@ -40,8 +42,7 @@ beforeAll(async () => {
     'migrations/20260921_audit_logs_chain_seq.sql',
     'migrations/20260921_authoring_document_provenance.sql',
     'migrations/20260628_csr_job_state.sql',
-  ], testOnlySql: `ALTER TABLE projects ADD COLUMN status text DEFAULT 'active';
-    CREATE TABLE client_workspaces(id integer PRIMARY KEY,organization_id integer);` });
+  ], testOnlySql: `CREATE TABLE client_workspaces(id integer PRIMARY KEY,organization_id integer);` });
   h.db = db.db; h.pool = db.pool;
   author = asToken(await new SignJWT({ userId: AUTHOR.id, email: AUTHOR.email, organizationId: ORG, role: 'member' })
     .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('1h').sign(new TextEncoder().encode(JWT_SECRET)));
@@ -54,7 +55,7 @@ beforeAll(async () => {
 }, 180_000);
 afterAll(async () => { await db?.close(); });
 
-const body = () => ({ programId: PROGRAM, source: { kind: 'csr', jobId, sectionNumbers: ['11.1'] } });
+const body = (): { programId: string; source: WorkflowImportSource } => ({ programId: PROGRAM, source: { kind: 'csr', jobId, sectionNumbers: ['11.1'] } });
 async function preview() {
   const response = await author(request(app).post('/api/authoring/import/source')).send({ ...body(), previewOnly: true });
   expect(response.status, JSON.stringify(response.body)).toBe(200);
@@ -163,5 +164,31 @@ describe('stored CSR output through canonical verified source intake', () => {
       expect(await counts()).toEqual(before);
       expect((await db.pool.query('SELECT content,content_hash FROM csr_section_outputs WHERE job_id=$1', [other])).rows).toEqual([{ content: sourceText, content_hash: hash(sourceText) }]);
     } finally { await db.pool.query('DROP TRIGGER workflow_import_fail_audit ON authoring_audit_trail'); }
+  });
+});
+
+describe('saved workflow structure can evolve in the existing unbound editor', () => {
+  it('reopens the exact reused working copy after a governed section addition and code rename', async () => {
+    const p = await preview();
+    const first = await author(request(app).post('/api/authoring/import/source')).send({ ...body(), expectedFingerprint: p.fingerprint, reason });
+    expect(first.status, JSON.stringify(first.body)).toBe(200);
+    const docId = first.body.data.doc.id;
+    const original = first.body.data.sections[0];
+    const renamed = await author(request(app).patch(`/api/authoring/sections/${original.id}`)).send({ code: 'reviewed.efficacy', title: 'Reviewed efficacy' });
+    expect(renamed.status, JSON.stringify(renamed.body)).toBe(200);
+    const added = await author(request(app).post('/api/authoring/sections')).send({ doc_id: docId, code: 'review.notes',
+      title: 'Independent review notes', content: '<p>Saved independent reviewer work.</p>' });
+    expect(added.status, JSON.stringify(added.body)).toBe(201);
+    const before = await counts();
+    const reused = await author(request(app).post('/api/authoring/import/source')).send({ ...body(), expectedFingerprint: p.fingerprint, reason });
+    expect(reused.status, JSON.stringify(reused.body)).toBe(200);
+    expect(reused.body.data).toMatchObject({ reused: true, doc: { id: docId, client_program_id: PROGRAM } });
+    const accepted = readWorkflowImportResult(reused.body, PROGRAM, body().source, p);
+    expect(accepted).not.toBeNull();
+    expect(accepted!.sections.map(section => section.code)).toContain('reviewed.efficacy');
+    expect(accepted!.sections).toContainEqual(expect.objectContaining({ code: 'review.notes', content: '<p>Saved independent reviewer work.</p>' }));
+    expect(await counts()).toEqual(before);
+    expect((await db.pool.query('SELECT content,content_hash FROM csr_section_outputs WHERE job_id=$1', [jobId])).rows)
+      .toEqual([{ content: sourceText, content_hash: hash(sourceText) }]);
   });
 });

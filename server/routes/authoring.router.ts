@@ -3140,11 +3140,16 @@ router.get('/sections/:sectionId/sources', async (req: Request, res: Response) =
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
     client = await pool.connect();
+    // Checked-out clients receive their RLS scope after BEGIN; checkout alone
+    // does not stamp tenant variables. Keep the complete read on that client.
+    await client.query('BEGIN READ ONLY');
     const usages = await listSectionSources(tenantId, String(req.params.sectionId), {
       executor: client, userId: Number(getActorId(req)),
     });
+    await client.query('COMMIT');
     res.json({ success: true, sectionId: String(req.params.sectionId), sources: usages });
   } catch (error) {
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (error instanceof SourceReadAccessError || error instanceof ProgramReadAccessError) {
       res.status(error.status).json({ success: false, error: error.code, message: error.message });
       return;
@@ -5584,9 +5589,10 @@ router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
     // authenticated user could enumerate another organization's citations —
     // source names, citation text, checksums — by guessing document UUIDs.
     const tenantId = getTenantId(req);
-    // Pin the tenant-stamped connection for both the citation census and its
-    // current source admission. This router owns its existing pool scope.
+    // BEGIN applies this router's existing verified tenant scope to the owned
+    // connection before both the citation census and current source admission.
     client = await pool.connect();
+    await client.query('BEGIN READ ONLY');
     const { rows } = await client.query(
       `
       SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code, s.title
@@ -5605,9 +5611,11 @@ router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
         documentId: String(req.params.docId), sectionId, userId: Number(getActorId(req)),
       }, client));
     }
+    await client.query('COMMIT');
     res.json(rows.map(row => ({ ...row, source_details: row.source === 'cre_evidence_source'
       ? metadata.get(String(row.section_id))?.find(source => source.id === String(row.reference_id)) ?? null : undefined })));
   } catch (e) {
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (e instanceof SourceReadAccessError || e instanceof ProgramReadAccessError) {
       res.status(e.status).json({ error: e.code, message: e.message });
       return;

@@ -4,6 +4,9 @@ import {afterAll,beforeAll,describe,expect,it} from 'vitest';
 import {Pool,type PoolClient} from 'pg';
 import {createHash,randomUUID} from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import express from 'express';
+import request from 'supertest';
+import {SignJWT} from 'jose';
 import {databaseUrl} from '../setup.db';
 import {setTenantContextTx} from '../../server/services/tenant/governed-tenant-context';
 import {getPool} from '../../server/db/runtime';
@@ -26,6 +29,31 @@ const docs={} as Record<'open'|'private',string>;
 const sections={} as Record<'open'|'private'|'otherSection',string>;
 let privatePermission:string;
 let bibliographyCitationId:string;
+let httpApp:express.Express;
+
+async function buildNativeHttpApp() {
+  const {requireTenantContext}=await import('../../server/middleware/tenantContext');
+  const {authoringObjectAuthorization}=await import('../../server/middleware/authoringObjectAuthorization');
+  const {requestPgClient}=await import('../../server/db/requestDb');
+  const {default:authoringRouter}=await import('../../server/routes/authoring.router');
+  const app=express();app.use(express.json());
+  app.use('/api',requireTenantContext,authoringObjectAuthorization);
+  app.get('/api/native-rls-probe',async(req,res)=>{
+    const {rows}=await requestPgClient(req).query(`SELECT current_user AS who,r.rolsuper,r.rolbypassrls,
+      current_setting('app.rls_enforce',true) AS enforced,current_setting('app.current_tenant_id',true) AS tenant
+      FROM pg_roles r WHERE r.rolname=current_user`);
+    res.json(rows[0]);
+  });
+  app.use('/api/authoring',authoringRouter);
+  return app;
+}
+async function nativeHttpToken(userId:number) {
+  const secret=process.env.JWT_SECRET_DEV || process.env.JWT_SECRET;
+  if (!secret) throw new Error('The native suite requires its configured JWT signing secret.');
+  return new SignJWT({userId:String(userId),organizationId:String(orgId),organizationUuid:orgUuid,role:'member',type:'access'})
+    .setProtectedHeader({alg:'HS256'}).setIssuedAt().setExpirationTime('5m').setJti(randomUUID())
+    .sign(new TextEncoder().encode(secret));
+}
 
 async function asUser<T>(userId:number,work:(q:PoolClient)=>Promise<T>):Promise<T> {
   const q=await runtime.connect();
@@ -102,6 +130,7 @@ beforeAll(async()=>{
   sections.otherSection=randomUUID();
   await owner.query("INSERT INTO authoring_sections(id,doc_id,code,title,content,tenant_id) VALUES($1,$2,'2',$3,'QA other section',$4)",
     [sections.otherSection,docs.private,`${TAG}-other-private-section`,orgId]);
+  httpApp=await buildNativeHttpApp();
 },120_000);
 afterAll(async()=>{
   if (owner && orgId) await owner.query("UPDATE organizations SET status='inactive' WHERE id=$1 AND slug=$2",[orgId,TAG]);
@@ -220,6 +249,39 @@ describe('native bibliography admission uses the current original uploader',()=>
     } finally {
       await owner.query(`UPDATE doc_permissions SET revoked_at=now(),revoked_by=$2,
         revoke_reason='Native bibliography fixture completed' WHERE id=$1 AND tenant_id=$3`,[grant,String(users.a),orgId]);
+    }
+  });
+  it('runs bibliography and Sources HTTP reads through actual JWT, object ACL and instrumented app_service tenant transactions',async()=>{
+    const originalToken=await nativeHttpToken(users.a);
+    const role=await request(httpApp).get('/api/native-rls-probe').set('Authorization',`Bearer ${originalToken}`);
+    expect(role.status,JSON.stringify(role.body)).toBe(200);
+    expect(role.body).toMatchObject({who:'app_service',rolsuper:false,rolbypassrls:false,enforced:'on',tenant:String(orgId)});
+    const paths=[`/api/authoring/docs/${docs.open}/citations`,`/api/authoring/sections/${sections.open}/sources`];
+    const positive=[];
+    for (const path of paths) {
+      const response=await request(httpApp).get(path).set('Authorization',`Bearer ${originalToken}`);
+      expect(response.status,JSON.stringify(response.body)).toBe(200);positive.push(response.body);
+    }
+    expect(positive[0].find((row:{id:string})=>row.id===bibliographyCitationId).source_details)
+      .toMatchObject({id:String(sources.unbound),title:`${TAG}-unbound`});
+    expect(positive[1].sources.find((row:{citationId:string})=>row.citationId===bibliographyCitationId))
+      .toMatchObject({source:{id:sources.unbound,title:`${TAG}-unbound`},citedChecksum:sha('unbound')});
+    const grant=(await owner.query(`INSERT INTO doc_permissions(doc_id,section_id,tenant_id,principal_id,role,granted_by)
+      VALUES($1,NULL,$2,$3,'VIEWER',$4) RETURNING id`,[docs.open,orgId,String(users.reader),String(users.a)])).rows[0].id;
+    try {
+      const peerToken=await nativeHttpToken(users.reader);const withheld=[];
+      for (const path of paths) {
+        const response=await request(httpApp).get(path).set('Authorization',`Bearer ${peerToken}`);
+        expect(response.status,JSON.stringify(response.body)).toBe(200);withheld.push(response.body);
+      }
+      expect(withheld[0].find((row:{id:string})=>row.id===bibliographyCitationId))
+        .toMatchObject({source_details:null,payload_sha256:sha('unbound')});
+      expect(withheld[1].sources.find((row:{citationId:string})=>row.citationId===bibliographyCitationId))
+        .toMatchObject({source:null,state:'unresolved',citedChecksum:sha('unbound')});
+      expect(JSON.stringify(withheld)).not.toContain(`${TAG}-unbound`);
+    } finally {
+      await owner.query(`UPDATE doc_permissions SET revoked_at=now(),revoked_by=$2,
+        revoke_reason='Native HTTP bibliography fixture completed' WHERE id=$1 AND tenant_id=$3`,[grant,String(users.a),orgId]);
     }
   });
 });

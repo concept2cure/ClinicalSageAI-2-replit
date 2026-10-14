@@ -1,0 +1,146 @@
+[
+  {
+    "theme": "light",
+    "width": 1440,
+    "touch": false,
+    "checks": [
+      "one native editor",
+      "guard keeps dirty editor mounted",
+      "cancel retains Section view",
+      "cancel performs no save",
+      "refused save retains dirty text",
+      "refused save retains Section view",
+      "deliberate save includes dirty text",
+      "remedy enters Section view",
+      "proposal records AnA attribution locally",
+      "proposal does not save or approve",
+      "one editor after remedy"
+    ],
+    "errors": [],
+    "metrics": {
+      "editorViewport": {
+        "top": 285.296875,
+        "bottom": 667.296875,
+        "height": 382
+      },
+      "overflow": false,
+      "editors": 1,
+      "targets": [
+        {
+          "name": "Added as tracked suggestion",
+          "height": 32,
+          "width": 199.859375
+        }
+      ]
+    },
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "touch": false,
+    "checks": [
+      "one native editor",
+      "guard keeps dirty editor mounted",
+      "cancel retains Section view",
+      "cancel performs no save",
+      "refused save retains dirty text",
+      "refused save retains Section view",
+      "deliberate save includes dirty text",
+      "remedy enters Section view",
+      "proposal records AnA attribution locally",
+      "proposal does not save or approve",
+      "one editor after remedy"
+    ],
+    "errors": [],
+    "metrics": {
+      "editorViewport": {
+        "top": 285.296875,
+        "bottom": 667.296875,
+        "height": 382
+      },
+      "overflow": false,
+      "editors": 1,
+      "targets": [
+        {
+          "name": "Added as tracked suggestion",
+          "height": 32,
+          "width": 199.859375
+        }
+      ]
+    },
+    "violations": []
+  },
+  {
+    "theme": "light",
+    "width": 390,
+    "touch": true,
+    "checks": [
+      "one native editor",
+      "guard keeps dirty editor mounted",
+      "cancel retains Section view",
+      "cancel performs no save",
+      "refused save retains dirty text",
+      "refused save retains Section view",
+      "deliberate save includes dirty text",
+      "remedy enters Section view",
+      "proposal records AnA attribution locally",
+      "proposal does not save or approve",
+      "one editor after remedy"
+    ],
+    "errors": [],
+    "metrics": {
+      "editorViewport": {
+        "top": 423,
+        "bottom": 841,
+        "height": 418
+      },
+      "overflow": false,
+      "editors": 1,
+      "targets": [
+        {
+          "name": "Added as tracked suggestion",
+          "height": 44,
+          "width": 199.859375
+        }
+      ]
+    },
+    "violations": []
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "touch": true,
+    "checks": [
+      "one native editor",
+      "guard keeps dirty editor mounted",
+      "cancel retains Section view",
+      "cancel performs no save",
+      "refused save retains dirty text",
+      "refused save retains Section view",
+      "deliberate save includes dirty text",
+      "remedy enters Section view",
+      "proposal records AnA attribution locally",
+      "proposal does not save or approve",
+      "one editor after remedy"
+    ],
+    "errors": [],
+    "metrics": {
+      "editorViewport": {
+        "top": 423,
+        "bottom": 841,
+        "height": 418
+      },
+      "overflow": false,
+      "editors": 1,
+      "targets": [
+        {
+          "name": "Added as tracked suggestion",
+          "height": 44,
+          "width": 199.859375
+        }
+      ]
+    },
+    "violations": []
+  }
+]
