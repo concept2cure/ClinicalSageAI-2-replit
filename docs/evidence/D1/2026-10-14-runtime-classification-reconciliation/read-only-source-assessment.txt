@@ -1,0 +1,59 @@
+# Read-only reconciliation of stale image runtime-path classifications
+
+No repository changes or Docker/build/compiler/native/test execution occurred in
+this follow-up. The five validator-download source files still match their
+frozen evidence hashes exactly. Source pins and proposed two-line patch are
+recorded alongside this note.
+
+The existing gate's actual earlier output rejected only these two classifications:
+RUNTIME_PATHS lists logs/output, which no module in the production bundle resolves.
+That result is preserved in the earlier separate pinned-download evidence phase.
+The scanner is deliberately defined over modules with bytesInOutput>0 in the
+production esbuild entry server/index.ts, then over literal app-root paths those
+modules resolve. It also rejects every unused classification, including entries
+marked not-shipped (check-image-runtime-assets.mjs:693-698).
+
+Current source facts:
+- RUNTIME_PATHS logs and output at lines204-205 are both not-shipped entries,
+  described as generated process-log/CMC-output directories. They are not
+  immutable assets that need repository COPY instructions.
+- The only literal cwd/logs construction in server source is the legacy
+  server/utils/globalErrorHandler.ts:23. It mkdirs recursively before appending
+  uncaught_errors.log. No server/scripts importer or caller of its named
+  registration functions exists. Current index.ts wires
+  server/startup/shutdown.ts instead, and production logging uses the redacting
+  Pino wrapper server/utils/logger.ts:180-219 with its default stdout destination.
+  Existing production dist/index.js contains neither that module identifier nor
+  uncaught_errors.log. The legacy source file remains present; no deletion is
+  proposed.
+- No literal app-root output directory construction exists in current server,
+  shared or workers source. AnaToolExecutor.ts:7713-7720 uses output only as a
+  fallback safe filename inside anaScratchDir, not as a root directory.
+  document-workspace.ts:78-82 creates the path specification
+  tmp/<kind>/org-<id>/<uuid>; the writer recursively mkdirs it before writing.
+  The existing tmp not-shipped classification already records generated scratch.
+- scripts/setup-protection.js:25 mentions logs for optional development setup;
+  production index/start command does not invoke that setup script.
+- Dockerfile.optimized's final ownership step creates /app/storage/vault and
+  owns /app as appuser. No logs/output COPY exists or is needed for this current
+  runtime. .dockerignore excludes logs as generated/private data. Neither that
+  ignore nor the current ownership/runtime directories should change for this
+  reconciliation.
+
+Minimal proposed change: remove only the two unused RUNTIME_PATHS entries from
+scripts/ci/check-image-runtime-assets.mjs. Leave every scanner algorithm,
+classification of an actually discovered path, runtime writer, Docker COPY,
+filesystem ownership and .dockerignore line unchanged. This reconciles stale
+inventory with the current production graph; it is not a scanner waiver or a
+broad asset-tree ignore. A newly reachable literal logs/output path would still
+fail as unclassified until its owner explicitly records the correct contract.
+The existing self-test case for a classification no shipped module uses remains
+unchanged and must continue to fail its synthetic stale case.
+
+After root review/resource READY: apply the two-line patch only if source pins
+still match; run the actual image runtime-assets gate and its existing full
+self-test (both invoke esbuild internally, so require the designated runner
+slot). Preserve original red and new green outcomes under a separate evidence
+phase. Recheck the five frozen validator-source hashes and retain all earlier
+sealed artifacts. Root owns staging, commit and publication. This reconciliation
+alone does not qualify a production image, boot/sign-in, or strict PDF/A output.

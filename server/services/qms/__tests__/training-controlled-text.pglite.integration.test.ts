@@ -85,6 +85,7 @@ beforeAll(async () => {
     CREATE TABLE qms_text_audit_proof (organization_id integer NOT NULL, user_id integer NOT NULL, details jsonb);
     CREATE TABLE qms_approval_proof (id serial PRIMARY KEY, kind text NOT NULL, user_id integer NOT NULL, content_digest text NOT NULL);
   `);
+  await database.exec(readFileSync(new URL('../../../../migrations/20260603_governance_permission_grants.sql', import.meta.url), 'utf8'));
 }, 60_000);
 
 beforeEach(async () => {
@@ -319,6 +320,24 @@ describe('recorded section provenance across native controlled-text edits', () =
 });
 
 describe('actual controlled-text contributors and the canonical approval gate', () => {
+  it('refuses an unavailable actual strict grant store after reserving the parent, before any approval effect', async () => {
+    const beforeApproval = await contributorDocumentUnderReview();
+    const originalFlag = process.env.GOVERNANCE_RBAC_ENFORCE;
+    process.env.GOVERNANCE_RBAC_ENFORCE = 'true';
+    await database.exec('ALTER TABLE c2c_governance_grants RENAME TO unavailable_qms_grants');
+    try {
+      state.sql = [];
+      await expect(approveAs(12)).rejects.toMatchObject({ status: 503, code: 'SIGNING_PERMISSION_UNVERIFIED' });
+      expect(state.sql.some(sql => /qms_documents[\s\S]*FOR UPDATE/.test(sql))).toBe(true);
+      expect(state.sql.some(sql => /UPDATE qms_documents/.test(sql))).toBe(false);
+      expect(await currentDocument()).toEqual(beforeApproval);
+      expect((await database.query('SELECT * FROM qms_approval_proof')).rows).toHaveLength(0);
+    } finally {
+      await database.exec('ALTER TABLE unavailable_qms_grants RENAME TO c2c_governance_grants');
+      if (originalFlag == null) delete process.env.GOVERNANCE_RBAC_ENFORCE;
+      else process.env.GOVERNANCE_RBAC_ENFORCE = originalFlag;
+    }
+  });
   it('refuses the actual text contributor as approver without a document update, governed act, signature, or approval audit', async () => {
     const beforeApproval = await contributorDocumentUnderReview();
     state.sql = [];

@@ -1,6 +1,7 @@
 import type { TrainingSqlClient } from './training';
 import type { QmsDocumentRow } from './document-approval-signature';
-import { describeQmsTrainingDocument, verifiedTrainingReceipt } from './training-content';
+import { verifiedTrainingReceipt } from './training-content';
+import { readQmsTrainingReleaseContext } from './current-release-approval';
 import { ACCOUNT_STATUS_ACTIVE } from '../account-standing';
 import { QMS_TRAINABLE_DOCUMENT_TYPES } from '../../../shared/qms/training';
 
@@ -29,15 +30,17 @@ export async function readQmsTrainingCompliance(client: TrainingSqlClient, organ
     [organizationId, now.toISOString()],
   );
   const receipts = records.rows.map(row => verifiedTrainingReceipt(row, now)).filter(row => row !== null);
-  return documents.rows.map(raw => {
+  const result = [];
+  for (const raw of documents.rows) {
     const document = raw as QmsDocumentRow;
-    const context = describeQmsTrainingDocument(document, now);
+    const { context } = await readQmsTrainingReleaseContext(client, document, now);
     const matching = context.eligible ? receipts.filter(receipt => activeMembers.has(receipt.userId) &&
       receipt.documentId === document.id && receipt.documentVersion === document.version && receipt.contentDigest === context.contentDigest) : [];
     const latest = matching.map(row => row.acknowledgedAt).sort().at(-1) ?? null;
-    return { id: document.id, doc_number: document.doc_number, title: document.title,
+    result.push({ id: document.id, doc_number: document.doc_number, title: document.title,
       document_version: document.version, content_digest: context.contentDigest,
       eligible: context.eligible, unavailable_reason: context.unavailableReason,
-      current: new Set(matching.map(row => row.userId)).size, of: activeMembers.size, last_cycle: latest };
-  });
+      current: new Set(matching.map(row => row.userId)).size, of: activeMembers.size, last_cycle: latest });
+  }
+  return result;
 }

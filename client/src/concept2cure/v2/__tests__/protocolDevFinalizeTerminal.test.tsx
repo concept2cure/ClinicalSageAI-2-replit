@@ -17,13 +17,18 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
+}));
+
+const downloads = vi.hoisted(() => ({ text: vi.fn(), blob: vi.fn() }));
+vi.mock('../download', async (original) => ({
+  ...(await original<typeof import('../download')>()), downloadText: downloads.text, downloadBlob: downloads.blob,
 }));
 
 import { ProtocolWorkspace } from '../surfaces/ProtocolDev';
@@ -59,7 +64,11 @@ async function mount(doc: Record<string, unknown>) {
   await screen.findByRole('button', { name: /^Ask AnA$/ });
 }
 
-beforeEach(() => { apiRequest.mockReset(); });
+beforeEach(() => {
+  apiRequest.mockReset();
+  downloads.text.mockReset().mockReturnValue(true);
+  downloads.blob.mockReset().mockReturnValue(true);
+});
 afterEach(() => cleanup());
 
 describe('the finalize gate shows a terminal protocol\'s state, not the action (P11-C-4)', () => {
@@ -95,5 +104,39 @@ describe('the finalize gate shows a terminal protocol\'s state, not the action (
     const finalize = screen.getByRole('button', { name: /Finalize protocol/ });
     expect((finalize as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(/1 blocker/)).toBeTruthy();
+  });
+});
+
+describe('a legacy signed protocol keeps its existing qualified-copy downloads reachable', () => {
+  const signedDocument = { ...DOC, finalization: { state: 'signed', signature: {
+    signerName: 'Dana Approver', signedAt: '2026-09-28T04:40:12.000Z', meaning: 'approval',
+    reason: 'Recorded approval', recordedOnBehalfOf: null,
+  } } };
+  const copy = '# A Phase II Study of X\n## Electronic signature\n- Declared meaning: Approval\n- Signing-time independence evidence not recorded.\n- Independent approval not verified from this signature record.';
+
+  it.each(['markdown', 'pdf', 'docx'] as const)('downloads %s through the existing Export drawer and carries the exact qualified server copy', async (format) => {
+    await mount(signedDocument);
+    expect(screen.getByText(/Signing-time independence evidence not recorded/)).toBeTruthy();
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/protocol-export/41') return ok({ markdown: copy });
+      if (method === 'POST' && url === `/api/concept2cure/artifacts/export-${format}`) {
+        return { ok: true, status: 200, blob: async () => new Blob(['rendered qualified protocol']) } as Response;
+      }
+      return ok({});
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Export$/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Export protocol' });
+    fireEvent.click(within(dialog).getByRole('radio', { name: format }));
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Export$/ }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/protocol-export/41'));
+    if (format === 'markdown') {
+      await waitFor(() => expect(downloads.text).toHaveBeenCalledWith('X-201-v2.0.md', copy, 'text/markdown;charset=utf-8'));
+      expect(downloads.blob).not.toHaveBeenCalled();
+    } else {
+      await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', `/api/concept2cure/artifacts/export-${format}`, {
+        title: signedDocument.title, content: copy,
+      }));
+      await waitFor(() => expect(downloads.blob).toHaveBeenCalledWith(`X-201-v2.0.${format}`, expect.any(Blob)));
+    }
   });
 });

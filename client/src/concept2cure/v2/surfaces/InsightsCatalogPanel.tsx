@@ -53,16 +53,27 @@ export function familyLabel(id: string): string {
 }
 
 /** One runnable type: what it is, where it runs, and the one control. */
+function runControlTitle(canRun: boolean, unavailableReason?: string): string | undefined {
+  return unavailableReason || (canRun ? undefined : 'Running a governed report needs an editor role');
+}
+
+function RunUnavailableNote({ reason }: { reason?: string }) {
+  if (!reason) return null;
+  return <div className="rl-card-meta">{reason}</div>;
+}
+
 function TypeCard({
   type,
   canRun,
   onRun,
   busy,
+  unavailableReason,
 }: {
   type: LibraryReportType;
   canRun: boolean;
   onRun: (t: LibraryReportType) => void;
   busy: boolean;
+  unavailableReason?: string;
 }) {
   return (
     <div className="rl-card">
@@ -81,6 +92,7 @@ function TypeCard({
       {type.computedScope === 'organization' && <div className="rl-card-meta">Counts are not narrowed to the selected program.</div>}
       {(type.region || type.allowedPersonas?.length) && <div className="rl-card-meta">{[type.region, type.allowedPersonas?.map(readable).join(', ')].filter(Boolean).join(' · ')}</div>}
       {type.availabilityReason && <div className="rl-card-meta">{type.availabilityReason}</div>}
+      {type.entitled !== false && <RunUnavailableNote reason={unavailableReason} />}
       {type.entitled === false ? (
         <div className="rl-card-lock">
           {I.lock} {type.requiredTier ? `${type.requiredTier} plan` : 'A higher plan'} unlocks this report.
@@ -89,9 +101,9 @@ function TypeCard({
         <button
           type="button"
           className="rl-card-run"
-          disabled={!canRun || busy}
+          disabled={!canRun || busy || Boolean(unavailableReason)}
           onClick={() => onRun(type)}
-          title={canRun ? undefined : 'Running a governed report needs an editor role'}
+          title={runControlTitle(canRun, unavailableReason)}
         >
           {I.play} Run
         </button>
@@ -130,6 +142,7 @@ export function CatalogPanel({
   types,
   onRun,
   canRun,
+  runUnavailableReason,
   programLabel,
   busy = false,
   projectId,
@@ -137,6 +150,7 @@ export function CatalogPanel({
   types: LibraryReportType[];
   onRun: (t: LibraryReportType) => void;
   canRun: boolean;
+  runUnavailableReason?: (type: LibraryReportType) => string | undefined;
   programLabel: string | null;
   busy?: boolean;
   projectId?: number;
@@ -197,11 +211,11 @@ export function CatalogPanel({
         <CatalogFilter label="Region" value={region} onChange={setRegion} options={regions} />
         <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} />
         <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} />
-        <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'disabled', 'unregistered', 'not-computed']} />
+        <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'filing-context-required', 'not-applicable', 'context-unavailable', 'disabled', 'unregistered', 'not-computed']} />
       </div>
       <ReportingPersonaError profile={profile} />
 
-      {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {type.label} — {type.availabilityReason || 'This report is unavailable in the current context.'}</div>)}
+      {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(type)} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {type.label} — {type.availabilityReason || 'This report is unavailable in the current context.'}</div>)}
 
       {byFamily.length === 0 && notComputed.length === 0 && needsContext.length === 0 ? (
         <EmptyState
@@ -221,7 +235,7 @@ export function CatalogPanel({
           <div className="ro-rep-eyebrow">{familyLabel(family)}</div>
           <div className="rl-grid">
             {rows.map((t) => (
-              <TypeCard key={t.typeId} type={t} canRun={canRun} busy={busy} onRun={onRun} />
+              <TypeCard key={t.typeId} type={t} canRun={canRun} busy={busy} onRun={onRun} unavailableReason={runUnavailableReason?.(t)} />
             ))}
           </div>
         </section>
@@ -255,7 +269,7 @@ function CatalogFilter({ label, value, options, onChange }: { label: string; val
 }
 
 interface TraceArtifact { id: string; title: string; status?: string }
-function DocumentTracePicker({ type, projectId, canRun, busy, onRun }: { type: LibraryReportType; projectId?: number; canRun: boolean; busy: boolean; onRun: (type: LibraryReportType) => void }) {
+function DocumentTracePicker({ type, projectId, canRun, busy, onRun, unavailableReason }: { type: LibraryReportType; projectId?: number; canRun: boolean; busy: boolean; onRun: (type: LibraryReportType) => void; unavailableReason?: string }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -266,13 +280,14 @@ function DocumentTracePicker({ type, projectId, canRun, busy, onRun }: { type: L
   const picked = artifacts.find(a => a.id === selected);
   if (!projectId) return <div className="ro-dash-note" role="note">{I.info} {type.label} requires a document. Open its program to choose the governed document.</div>;
   const run = () => { if (picked) onRun({ ...type, runnable: true, runScopeType: 'document', runScopeId: picked.id, computedScope: 'document', availabilityReason: null }); };
-  const mayRun = Boolean(picked && canRun && !busy && type.entitled !== false);
+  const mayRun = Boolean(picked && canRun && !busy && type.entitled !== false && !unavailableReason);
   let content: React.ReactNode = <button type="button" className="btn ghost" onClick={() => setOpen(true)}>Choose a document</button>;
   if (open && read.loading) content = <EmptyState busy title="Loading governed documents…" />;
   else if (open && read.error) content = <ErrorState title="Couldn’t read governed documents" message={read.error} retry={() => setAttempt(n => n + 1)} />;
   else if (open && !artifacts.length) content = <EmptyState title="No governed documents in this program" hint="Create or retain a document in the program before running its evidence trace." />;
-  else if (open) content = <div className="rl-filters"><div className="rl-filter rl-filter-wide"><label className="gov-label" htmlFor={id}>Document</label><select id={id} className="rl-input" value={selected} onChange={e => setSelected(e.target.value)}><option value="">Choose a governed document</option>{artifacts.map(a => <option key={a.id} value={a.id}>{a.title}{a.status ? ` · ${a.status}` : ''}</option>)}</select></div><button type="button" className="btn primary" disabled={!mayRun} onClick={run}>Run document trace</button></div>;
+  else if (open) content = <div className="rl-filters"><div className="rl-filter rl-filter-wide"><label className="gov-label" htmlFor={id}>Document</label><select id={id} className="rl-input" value={selected} onChange={e => setSelected(e.target.value)}><option value="">Choose a governed document</option>{artifacts.map(a => <option key={a.id} value={a.id}>{a.title}{a.status ? ` · ${a.status}` : ''}</option>)}</select></div><button type="button" className="btn primary" disabled={!mayRun} title={unavailableReason} onClick={run}>Run document trace</button></div>;
   return <section className="rl-form" aria-label="Document evidence trace"><div className="rl-card-h">{type.label}</div><p className="rl-sub">Trace a retained document’s sources, versions and governed decisions. This reports its evidence record; it does not approve the document.</p>
     {content}
+    <RunUnavailableNote reason={unavailableReason} />
   </section>;
 }

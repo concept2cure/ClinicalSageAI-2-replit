@@ -65,7 +65,7 @@ async function parsedPdf(bytes: Buffer) {
   try { return await parser.getText(); } finally { await parser.destroy(); }
 }
 async function exportsFor(bundleId: string) {
-  return (await owner.query("SELECT id,actor_id,user_id,new_values::jsonb AS details,sha256_chain FROM audit_logs WHERE tenant_id=$1 AND action='report_os.bundle_exported' AND record_id=$2 ORDER BY id", [orgId, bundleId])).rows;
+  return (await owner.query("SELECT id,chain_seq,actor_id,user_id,new_values::jsonb AS details,sha256_chain FROM audit_logs WHERE tenant_id=$1 AND action='report_os.bundle_exported' AND record_id=$2 ORDER BY chain_seq", [orgId, bundleId])).rows;
 }
 async function seedProject(label: string, reader?: Actor): Promise<number> {
   const projectId = Number((await owner.query("INSERT INTO projects(organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,settings) VALUES($1,$2,$3,'regulatory','active',$4,$4,'{}'::jsonb) RETURNING id", [orgId, workspace, `${TAG} ${label}`, actors.author.id])).rows[0].id);
@@ -263,7 +263,9 @@ describe('native retained complete report packets', () => {
       assertObservedInterval(interval); expect(interval.finalizerBlocked).toBe(true);
       const first = (await exportsFor(bundleId))[0].details.constituents[0]; expect(first).toMatchObject({ statusAtRead: 'completed', sourceDocument: 'retained-run-render', sealVerdict: null });
       const after = await packet(actors.reader, bundleId); expect(after.status).toBe(200);
-      expect((await exportsFor(bundleId))[1].details.constituents[0]).toMatchObject({ statusAtRead: 'final', sourceDocument: 'verified-sealed', sealVerdict: 'intact' });
+      const exports = await exportsFor(bundleId); expect(exports).toHaveLength(2);
+      expect(Number(exports[1].chain_seq)).toBeGreaterThan(Number(exports[0].chain_seq));
+      expect(exports[1].details.constituents[0]).toMatchObject({ statusAtRead: 'final', sourceDocument: 'verified-sealed', sealVerdict: 'intact' });
       observe('contention', { runId: run.id, bundleId, exportPid: exportWait.pid, signerPid: signerWait.pid, interval, priorExport: first, finalStatus: signed.status });
     } finally { await holder.client.query('ROLLBACK').catch(() => undefined); holder.client.release(); await observer?.stop(); }
   });

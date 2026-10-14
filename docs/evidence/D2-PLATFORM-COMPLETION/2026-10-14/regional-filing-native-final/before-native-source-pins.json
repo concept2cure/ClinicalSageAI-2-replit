@@ -1,0 +1,7 @@
+{
+  "beforeRun": "exact unchanged native10 after ROOTRELEASE #2 and backend frozen-green handoff",
+  "files": {
+    "server/routes/insights-canvas-routes.ts": "427eb63e2746d9580e9de61925006f39d8cd9f7cb650ee0a33f49e1c61ba021d",
+    "tests/db/insights-regional-filing.dbtest.ts": "1b1cc614d46d92887a25bf14a9b4f2680355fb43d590f78fa8e3ac560180481c"
+  }
+}

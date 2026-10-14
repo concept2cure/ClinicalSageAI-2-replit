@@ -1,0 +1,19 @@
+{
+  "before": {
+    "('complexity', 1)": 1,
+    "('max-depth', 1)": 2,
+    "('max-lines', 1)": 1
+  },
+  "after": {
+    "('complexity', 1)": 1,
+    "('max-depth', 1)": 2,
+    "('max-lines', 1)": 1
+  },
+  "errorsBefore": 0,
+  "errorsAfter": 0,
+  "warningsBefore": 4,
+  "warningsAfter": 4,
+  "sourceTestErrors": 0,
+  "sourceTestWarnings": 0,
+  "warningGrowth": 0
+}

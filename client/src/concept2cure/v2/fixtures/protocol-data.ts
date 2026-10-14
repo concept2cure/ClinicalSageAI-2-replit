@@ -70,12 +70,38 @@ export interface PdevSignature {
   /** Set when the decision of a reviewer with no account was recorded for them. */
   recordedOnBehalfOf: string | null;
 }
+/** Separate read facts: a matching digest does not establish signing-time
+ * independence. No assurance schema is recognized in this read-only increment. */
+export type PdevHistoricalSigningPolicyReason =
+  | 'signing-time-independence-evidence-not-recorded'
+  | 'signing-time-authorship-evidence-not-recorded'
+  | 'signing-time-policy-evidence-not-recorded';
+
+export interface PdevSignatureQualification {
+  contentBinding: 'matches' | 'changed' | 'unverified';
+  historicalSigningPolicy: {
+    state: 'unassessed';
+    reason: PdevHistoricalSigningPolicyReason;
+  };
+  currentContentQualification: {
+    state: 'unassessed' | 'held';
+    reason: PdevHistoricalSigningPolicyReason | 'content-changed' | 'binding-unverified' | 'signature-revoked';
+  };
+  signatureReference: {
+    signatureId: number | null;
+    signerId: number | null;
+    signatureHash: string | null;
+    bindingBasis: string | null;
+    signedContentDigest: string | null;
+  };
+}
+
 /** `none`: the store holds no signature for the act. `unavailable`: the store
  *  could not be read, which is never to be shown as unsigned. */
 export type PdevSignatureFacet =
-  | { state: 'signed' | 'revoked'; signature: PdevSignature }
-  | { state: 'changed'; signature: PdevSignature; historicalIntegrity: 'verified' }
-  | { state: 'unverified'; signature: PdevSignature; historicalIntegrity: 'verified' | 'unverified' }
+  | { state: 'signed' | 'revoked'; signature: PdevSignature; qualification?: PdevSignatureQualification }
+  | { state: 'changed'; signature: PdevSignature; historicalIntegrity: 'verified'; qualification?: PdevSignatureQualification }
+  | { state: 'unverified'; signature: PdevSignature; historicalIntegrity: 'verified' | 'unverified'; qualification?: PdevSignatureQualification }
   | { state: 'none' }
   | { state: 'unavailable' };
 export interface PdevReview {

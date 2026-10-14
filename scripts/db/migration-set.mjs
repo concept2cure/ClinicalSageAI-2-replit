@@ -118,6 +118,12 @@ export const C2C_MIGRATION_FILES = [
   // and is one chain per tenant. Depends on sha256_chain/occurred_at from
   // mutation_primitives, so it follows the seal file; additive and idempotent.
   'migrations/20260921_audit_logs_chain_seq.sql',
+  // Sole existing creators for the sharing/reviewer admission stores that
+  // the golden journeys provision. Parent projects/users/organizations/artifacts
+  // come from the declared Drizzle base. Review owns BEGIN/COMMIT; the canonical
+  // applier detects that. Both entries precede the unchanged isolation tail.
+  'db/migrations/20260314_phase12_multi_user_review.sql',
+  'db/migrations/20260401_project_sharing_visibility.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
   // ── The canonical submission core ───────────────────────────────────────────

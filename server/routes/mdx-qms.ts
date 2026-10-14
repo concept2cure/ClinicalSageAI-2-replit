@@ -111,7 +111,8 @@ import { approveQmsChangeSigned } from '../services/qms/change-approval-signatur
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { governedReason } from './governed-reason';
-import { requestPgClient } from '../db/requestDb';
+import { requestConnectable, requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { QmsSigningAdmissionRefused } from '../services/qms/current-signing-admission';
 import { qmsTrainingAcknowledgementInputSchema, qmsControlledTextInputSchema } from '../../shared/qms/training';
 import {
   acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance,
@@ -123,6 +124,14 @@ import { describeQmsTrainingDocument } from '../services/qms/training-content';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
+
+function trainingRefusalResponse(res: Response, error: QmsTrainingRefused) {
+  if (error.status === 503) return res.status(503).json({
+    error: 'The current approval signature could not be checked. Reload the document before trying again.',
+    details: { code: error.code },
+  });
+  return clientError(res, error.status, error.message, { code: error.code });
+}
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -457,7 +466,7 @@ router.get('/qms/documents/:id', async (req: Request, res: Response) => {
     const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document: rows[0] as QmsDocumentRow });
     return ok(res, rows[0], { training });
   } catch (err) {
-    if (err instanceof QmsTrainingRefused) return clientError(res, err.status, err.message, { code: err.code });
+    if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
     return serverError(res, log, 'doc-get', err);
   }
 });
@@ -475,7 +484,7 @@ async function saveControlledTextResponse(req: Request, res: Response, orgId: nu
     });
     return ok(res, document, { training: describeQmsTrainingDocument(document), auditTrail: { persisted: true, chained: true } });
   } catch (err) {
-    if (err instanceof QmsTrainingRefused) return clientError(res, err.status, err.message, { code: err.code });
+    if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
     if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({
       error: 'The controlled text save could not be confirmed. Reload the document to check the saved text before trying again.',
       details: { code: 'QMS_TRAINING_COMMIT_UNCONFIRMED' },
@@ -658,8 +667,9 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
   } catch (err) { return serverError(res, log, 'doc-approve-verify', err); }
   if (!verified) return res;
 
-  const client = await pool.connect();
+  let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   try {
+    client = await requestConnectable(req).connect();
     await client.query('BEGIN');
     const result = await approveQmsDocumentSigned(client, {
       orgId, userId, documentId: id,
@@ -676,11 +686,12 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
       signature: result.signature,
     });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err);
+    if (err instanceof QmsSigningAdmissionRefused) return res.status(err.status).json({ error: err.message, details: { code: err.code } });
     return serverError(res, log, 'doc-approve', err);
   } finally {
-    client.release();
+    client?.release();
   }
 });
 
@@ -770,8 +781,9 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
   } catch (err) { return serverError(res, log, 'doc-retire-verify', err); }
   if (!verified) return res;
 
-  const client = await pool.connect();
+  let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   try {
+    client = await requestConnectable(req).connect();
     await client.query('BEGIN');
     const result = await retireQmsDocumentSigned(client, {
       orgId, userId, documentId: id,
@@ -787,11 +799,12 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
       signature: result.signature,
     });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err);
+    if (err instanceof QmsSigningAdmissionRefused) return res.status(err.status).json({ error: err.message, details: { code: err.code } });
     return serverError(res, log, 'doc-retire', err);
   } finally {
-    client.release();
+    client?.release();
   }
 });
 
@@ -812,7 +825,7 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
     if (result.alreadyAcknowledged) return ok(res, result.acknowledgement, { alreadyAcknowledged: true });
     return created(res, result.acknowledgement, { auditTrail: { persisted: true, chained: true } });
   } catch (err) {
-    if (err instanceof QmsTrainingRefused) return clientError(res, err.status, err.message, { code: err.code });
+    if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
     if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({
       error: 'The acknowledgement could not be confirmed. Reload the document to check your record before trying again.',
       details: { code: 'QMS_TRAINING_COMMIT_UNCONFIRMED' },
@@ -1504,8 +1517,9 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'change-approve-verify', err); }
   if (!verified) return res;
 
-  const client = await pool.connect();
+  let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   try {
+    client = await requestConnectable(req).connect();
     await client.query('BEGIN');
     const result = await approveQmsChangeSigned(client, {
       orgId, userId, changeId: id,
@@ -1521,11 +1535,12 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       signature: result.signature,
     });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err, 'Change');
+    if (err instanceof QmsSigningAdmissionRefused) return res.status(err.status).json({ error: err.message, details: { code: err.code } });
     return serverError(res, log, 'change-approve', err);
   } finally {
-    client.release();
+    client?.release();
   }
 });
 

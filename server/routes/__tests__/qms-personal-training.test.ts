@@ -1,3 +1,4 @@
+import { qmsApprovalFixture } from '../../services/qms/__tests__/_release-approval-fixture';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -66,6 +67,7 @@ beforeEach(() => {
       h.pendingDoc = { ...h.doc!, metadata: JSON.parse(String(params[2])), status: 'draft', approver_id: null, approved_at: null };
       return { rows: [h.pendingDoc] };
     }
+    if (/FROM electronic_signatures/.test(sql)) return { rows: [{ id: 501, ...qmsApprovalFixture(h.doc!) }] };
     if (/FROM qms_documents/.test(sql)) return { rows: h.doc && Number(params[0]) === h.doc.id && Number(params[1]) === ORG ? [h.doc] : [] };
     if (/INSERT INTO qms_training_records/.test(sql)) {
       const row = { id: h.records.length + 1, organization_id: ORG, user_id: USER, document_id: 11,

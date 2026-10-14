@@ -95,6 +95,7 @@ function app(userId = SIGNER) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId, role: 'member' };
+    Object.assign(req, { dbClient: { query: (...args: unknown[]) => H.txQuery(...args) } });
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);

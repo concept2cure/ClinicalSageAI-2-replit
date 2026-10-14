@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), orgSegments: vi.fn(), projectSegments: vi.fn(), anchor: vi.fn(), registry: vi.fn() }));
+const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), orgSegments: vi.fn(), projectSegments: vi.fn(), anchor: vi.fn(), scope: vi.fn(), scopeRecheck: vi.fn(), actualAnchor: vi.fn(), registry: vi.fn() }));
 
 
 // These suites isolate audit/compute contracts; sharing itself is exercised
@@ -44,7 +44,10 @@ vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
   fetchOrgPortfolioSummary: h.summary,
 }));
-vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor }));
+vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor, readProgramAnchorRow: h.actualAnchor }));
+// Consumer fixtures retain their original auth/portfolio assumptions; canonical
+// sharing and RLS are qualified separately by native current-program tests.
+vi.mock('../../services/c2c/current-program-access', async importOriginal => ({ ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()), getCurrentAccessibleProgramScope: h.scope, requireProgramScopeStillCurrent: h.scopeRecheck }));
 
 import createInsightsCanvasRoutes from '../insights-canvas-routes';
 import { REPORT_TYPE_SEED } from '../../services/report-os/taxonomy';
@@ -61,7 +64,7 @@ const app = express();
 // (establishRequestTenantScope); the open program's anchor is read on it.
 app.use((req, _res, next) => {
   (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = { id: 5, role: 'manager', organizationId: 7 };
-  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async () => ({ rows: await h.registry() })) };
+  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async (sql: string, values?: unknown[]) => ({ rows: /SELECT id FROM regulatory_programs/.test(sql) ? [{ id: values?.[0] }] : /SELECT metadata FROM projects/.test(sql) ? [{ metadata: { registryId: values?.[0] === 14 ? 'US_510K' : 'US_NDA' } }] : await h.registry() })) };
   next();
 });
 app.use('/api/insights-canvas', createInsightsCanvasRoutes());
@@ -81,6 +84,11 @@ const SUMMARY = {
 };
 
 beforeEach(() => {
+  // The title deliberately says IND while the recorded filing is NDA: titles
+  // cannot supply applicability, and the pre-existing NDA assertion remains.
+  h.scope.mockReset().mockImplementation(async (_q, input) => ({ scope: 'verified-accessible-programs', actor: { userId: 5, role: 'manager' }, programIds: [input.programId], reconciliationRequired: false }));
+  h.scopeRecheck.mockReset().mockResolvedValue(undefined);
+  h.actualAnchor.mockReset().mockImplementation(async (_q, input) => ({ id: input.programId === CV ? 14 : 11 }));
   h.registry.mockReset().mockResolvedValue(deployedTypes());
   h.gate.mockReset().mockResolvedValue({ entitled: true, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'enterprise', tierResolved: true });
   h.orgSegments.mockReset().mockResolvedValue(['pharma', 'biotech', 'device', 'ivd']);

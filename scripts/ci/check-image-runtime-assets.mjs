@@ -201,8 +201,6 @@ export const RUNTIME_PATHS = {
     reason: 'Local vault and compute output; /app/storage/vault is created by the Dockerfile and mounted as a volume.',
   },
   generated_documents: { kind: 'not-shipped', reason: 'Generated DOCX output, created on write.' },
-  logs: { kind: 'not-shipped', reason: 'Process log directory, created on write.' },
-  output: { kind: 'not-shipped', reason: 'CMC tool output, created on write.' },
   exports: { kind: 'not-shipped', reason: 'Planner/analytics export output, created on write.' },
   temp: { kind: 'not-shipped', reason: 'analytics-routes scratch, created on write.' },
   temp_documents: { kind: 'not-shipped', reason: 'Document-ingestion scratch, created on write.' },

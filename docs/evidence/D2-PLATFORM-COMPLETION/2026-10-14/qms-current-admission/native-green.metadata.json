@@ -1,0 +1,39 @@
+{
+  "phase": "native-green",
+  "exitCode": 0,
+  "testObservationLines": [
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > uses an actual non-owner NOSUPERUSER/NOBYPASSRLS runtime connection under tenant RLS 8ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > binds a genuine independently signed release to a personal receipt and its canonical chained audit 353ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > withdraws current training after actual post-release revocation while retaining the old personal receipt and signature history 203ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses approve after actual target wait and signer demotion without domain/audit/signature writes 106ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses retire after actual target wait and signer demotion without domain/audit/signature writes 99ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses change after actual target wait and signer demotion without domain/audit/signature writes 77ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > refuses an actor disabled during the actual target wait 106ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > allows a genuinely authorized signer through the same actual target wait 52ms",
+    " \u2713 tests/db/qms-current-signing-and-training-admission.dbtest.ts > QMS current native signing and released training admission > honors an actual strict resource denial added during the target wait 113ms",
+    " Test Files  1 passed (1)",
+    "      Tests  9 passed (9)",
+    "   Start at  09:11:39",
+    "   Duration  5.30s (transform 2.01s, setup 115ms, import 250ms, tests 4.40s, environment 0ms)"
+  ],
+  "unexpectedSuccessfulRefusals": [],
+  "containsRawAssertionsOrResponses": false,
+  "sourceWorkingTreeBase": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "runner": {
+    "nodeMajorVersion": 22,
+    "maxOldSpaceSizeMb": 4096,
+    "commandArguments": [
+      "npx",
+      "vitest",
+      "run",
+      "--config",
+      "vitest.db.config.ts",
+      "tests/db/qms-current-signing-and-training-admission.dbtest.ts"
+    ],
+    "ownerUrlVariable": "TEST_DATABASE_URL",
+    "restrictedRuntimeUrlVariable": "APP_DATABASE_URL",
+    "rlsEnforce": "on",
+    "nodeEnvironment": "test",
+    "credentialValuesRecorded": false
+  }
+}

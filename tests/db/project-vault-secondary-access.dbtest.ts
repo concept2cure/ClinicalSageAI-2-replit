@@ -102,9 +102,13 @@ async function authoring(key:keyof typeof docs,creator:number) {
 }
 
 beforeAll(async()=>{
-  if (new URL(databaseUrl).pathname!=='/platform_ci_native_recheck_20261013' ||
-    !process.env.APP_DATABASE_URL || new URL(process.env.APP_DATABASE_URL).pathname!=='/platform_ci_native_recheck_20261013') {
-    throw new Error('Use only the existing isolated canonical native recheck DB.');
+  if (!process.env.APP_DATABASE_URL) throw new Error('A real restricted APP_DATABASE_URL is required.');
+  const ownerTarget = new URL(databaseUrl); const runtimeTarget = new URL(process.env.APP_DATABASE_URL);
+  const approvedDatabase = ownerTarget.pathname === '/platform_ci_native_recheck_20261013' ||
+    process.env.CI === 'true' && process.env.NODE_ENV === 'test' && ownerTarget.pathname === '/concept2cure-ri_dbtest';
+  if (!approvedDatabase || ownerTarget.pathname !== runtimeTarget.pathname ||
+    ownerTarget.hostname !== runtimeTarget.hostname || ownerTarget.port !== runtimeTarget.port || runtimeTarget.username !== 'app_service') {
+    throw new Error('Use matching declared isolated QA connections and the restricted application role.');
   }
   owner=new Pool({connectionString:databaseUrl,max:3});runtime=new Pool({connectionString:process.env.APP_DATABASE_URL,max:3});
   const org=(await owner.query("INSERT INTO organizations(name,slug,status) VALUES($1,$1,'active') RETURNING id,uuid",[TAG])).rows[0];

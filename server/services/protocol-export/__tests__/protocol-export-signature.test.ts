@@ -46,9 +46,12 @@ describe('the export’s status line and signature block', () => {
     expect(md).toContain('**Status:** Finalized');
     expect(signatureSection(md)).toEqual([
       '- Signed by: Dana Approver',
-      '- Meaning: Approval',
+      '- Declared meaning: Approval',
       '- Executed: 2026-09-28 04:40:12 UTC',
       '- Reason: Protocol complete; approved for IRB submission',
+      '- Current content binding: Matches the signed content.',
+      '- Signing-time independence evidence not recorded.',
+      '- Independent approval not verified from this signature record.',
     ]);
   });
 
@@ -87,12 +90,14 @@ describe('the export’s status line and signature block', () => {
 
   it('a meaning outside the protocol vocabulary is printed as stored, not mapped to a guess', () => {
     const lines = signatureSection(markdown('finalized', { ...SIGNED, signature: { ...SIGNED.signature, meaning: 'APPROVED' } }));
-    expect(lines).toContain('- Meaning: APPROVED');
+    expect(lines).toContain('- Declared meaning: APPROVED');
+    expect(lines).toContain('- Signing-time policy-check evidence not recorded.');
+    expect(lines).not.toContain('- Signing-time independence evidence not recorded.');
   });
 
   it('a decision recorded on someone’s behalf names them', () => {
     const lines = signatureSection(markdown('finalized', { ...SIGNED, signature: { ...SIGNED.signature, meaning: 'responsibility', recordedOnBehalfOf: 'Dr Iyer' } }));
-    expect(lines).toContain('- Meaning: Responsibility');
+    expect(lines).toContain('- Declared meaning: Responsibility');
     expect(lines).toContain('- Recorded on behalf of: Dr Iyer');
   });
 });
@@ -106,5 +111,43 @@ describe('historical signatures never attest to changed or unverified current co
     expect(lines[0]).toContain('no current attestation');
     expect(lines).toContain('- Historically recorded signer: Dana Approver');
     expect(lines).not.toContain('- Signed by: Dana Approver');
+  });
+});
+
+describe('content binding and historical independence are separate export facts', () => {
+  it.each([
+    ['approval', 'Signing-time independence evidence not recorded'],
+    ['authorship', 'Signing-time authorship-check evidence not recorded'],
+    ['review', 'Signing-time independence evidence not recorded'],
+    ['responsibility', 'Signing-time independence evidence not recorded'],
+  ])('preserves the declared %s without claiming independent approval', (meaning, unknownPolicy) => {
+    const facet = { ...SIGNED, signature: { ...SIGNED.signature, meaning } };
+    const before = JSON.stringify(facet);
+    const md = markdown('finalized', facet);
+    expect(md).toContain(`- Declared meaning: ${meaning.charAt(0).toUpperCase() + meaning.slice(1)}`);
+    expect(md).toContain('- Current content binding: Matches the signed content.');
+    expect(md).toContain(`- ${unknownPolicy}.`);
+    expect(md).toContain('- Independent approval not verified from this signature record.');
+    expect(md).not.toContain('Independence checked during signing');
+    expect(JSON.stringify(facet)).toBe(before);
+  });
+
+  it('keeps qualification out of draft content imports', () => {
+    const document = assembleProtocolExport({ ...base, status: 'finalized', finalization: SIGNED }, [], [], [], []);
+    const md = renderProtocolMarkdown(document, { contentOnly: true });
+    expect(md).not.toContain('Electronic signature');
+    expect(md).not.toContain('Declared meaning');
+    expect(md).not.toContain('independence');
+    expect(md).toContain('A randomized study.');
+  });
+
+  it.each(['changed', 'unverified', 'revoked'] as const)('never prints a matching-current-content claim for %s history', (state) => {
+    const facet: PdevSignatureFacet = state === 'revoked'
+      ? { ...SIGNED, state }
+      : { state, signature: SIGNED.signature, historicalIntegrity: 'verified' };
+    const md = markdown('finalized', facet);
+    expect(md).not.toContain('Current content binding: Matches');
+    expect(md).toContain('Independent approval not verified from this signature record');
+    expect(md).toContain('- Declared meaning: Approval');
   });
 });

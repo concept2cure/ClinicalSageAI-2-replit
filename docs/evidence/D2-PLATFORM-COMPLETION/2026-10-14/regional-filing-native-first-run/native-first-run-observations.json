@@ -1,0 +1,935 @@
+{
+  "tag": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6",
+  "scope": "Synthetic native implementation checks only",
+  "cases": {
+    "ind": {
+      "program": {
+        "id": "b98e296b-e826-4277-a3ad-abb835bc1f5c",
+        "projectId": 175,
+        "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 ind misleading IND/FDA title"
+      },
+      "registryId": "US_IND",
+      "rows": [
+        {
+          "typeId": "ema.maa_readiness_assessment",
+          "label": "EMA MAA Readiness Assessment",
+          "family": "ema_maa",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "executive",
+            "medical_writer"
+          ],
+          "region": "EU_EMA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "EMA MAA Readiness Assessment assesses a EU filing. This program is recorded as Investigational New Drug Application, so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "175",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "usa_fda.ind_safety_readiness",
+          "label": "FDA IND Safety & Readiness Pack (21 CFR 312)",
+          "family": "usa_fda_ind",
+          "allowedScopes": [
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "pv_lead",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": null,
+          "availabilityReason": null,
+          "availabilityState": "available",
+          "runScopeType": "project",
+          "runScopeId": "175",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": true
+        },
+        {
+          "typeId": "usa_fda.nda_bla_filing_readiness",
+          "label": "FDA NDA / BLA Filing Readiness Assessment (eCTD)",
+          "family": "usa_fda_nda_bla",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_KIND_MISMATCH",
+          "availabilityReason": "FDA NDA / BLA Filing Readiness Assessment (eCTD) assesses a nda or bla filing. This program is recorded as Investigational New Drug Application, so it was not assessed under this report’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "175",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "japan_pmda.jnda_shonin_readiness",
+          "label": "PMDA J-NDA / Shonin Approval Readiness Pack",
+          "family": "japan_pmda_jnda",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive"
+          ],
+          "region": "JP_PMDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "PMDA J-NDA / Shonin Approval Readiness Pack assesses a JP filing. This program is recorded as Investigational New Drug Application, so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "175",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        }
+      ],
+      "executor": {
+        "metadataReads": [
+          {
+            "sql": "SELECT metadata FROM projects WHERE id=$1 AND organization_id=$2 AND regulatory_program_id=$3",
+            "params": [
+              175,
+              75,
+              "b98e296b-e826-4277-a3ad-abb835bc1f5c"
+            ]
+          }
+        ],
+        "posture": {
+          "database": "platform_ci_native_recheck_20261013",
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on",
+          "tenant": "75"
+        },
+        "actorReadsAfterMetadata": 1,
+        "metadataReturned": true
+      }
+    },
+    "bla": {
+      "program": {
+        "id": "2279c35a-7bbd-4e1e-bfab-f66a6039ed91",
+        "projectId": 176,
+        "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 bla misleading IND/FDA title"
+      },
+      "registryId": "US_BLA",
+      "rows": [
+        {
+          "typeId": "ema.maa_readiness_assessment",
+          "label": "EMA MAA Readiness Assessment",
+          "family": "ema_maa",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "executive",
+            "medical_writer"
+          ],
+          "region": "EU_EMA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "EMA MAA Readiness Assessment assesses a EU filing. This program is recorded as Biologics License Application, so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "176",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "usa_fda.ind_safety_readiness",
+          "label": "FDA IND Safety & Readiness Pack (21 CFR 312)",
+          "family": "usa_fda_ind",
+          "allowedScopes": [
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "pv_lead",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_KIND_MISMATCH",
+          "availabilityReason": "FDA IND Safety & Readiness Pack (21 CFR 312) assesses a ind filing. This program is recorded as Biologics License Application, so it was not assessed under this report’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "176",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "usa_fda.nda_bla_filing_readiness",
+          "label": "FDA NDA / BLA Filing Readiness Assessment (eCTD)",
+          "family": "usa_fda_nda_bla",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": null,
+          "availabilityReason": null,
+          "availabilityState": "available",
+          "runScopeType": "project",
+          "runScopeId": "176",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": true
+        },
+        {
+          "typeId": "japan_pmda.jnda_shonin_readiness",
+          "label": "PMDA J-NDA / Shonin Approval Readiness Pack",
+          "family": "japan_pmda_jnda",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive"
+          ],
+          "region": "JP_PMDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "PMDA J-NDA / Shonin Approval Readiness Pack assesses a JP filing. This program is recorded as Biologics License Application, so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "176",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        }
+      ],
+      "executor": {
+        "metadataReads": [
+          {
+            "sql": "SELECT metadata FROM projects WHERE id=$1 AND organization_id=$2 AND regulatory_program_id=$3",
+            "params": [
+              176,
+              75,
+              "2279c35a-7bbd-4e1e-bfab-f66a6039ed91"
+            ]
+          }
+        ],
+        "posture": {
+          "database": "platform_ci_native_recheck_20261013",
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on",
+          "tenant": "75"
+        },
+        "actorReadsAfterMetadata": 1,
+        "metadataReturned": true
+      }
+    },
+    "maa": {
+      "program": {
+        "id": "0843e4ac-e456-4eac-a8f5-f07bdf0cb076",
+        "projectId": 177,
+        "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 maa misleading IND/FDA title"
+      },
+      "registryId": "EU_MAA",
+      "rows": [
+        {
+          "typeId": "ema.maa_readiness_assessment",
+          "label": "EMA MAA Readiness Assessment",
+          "family": "ema_maa",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "executive",
+            "medical_writer"
+          ],
+          "region": "EU_EMA",
+          "computedScope": "project",
+          "reasonCode": null,
+          "availabilityReason": null,
+          "availabilityState": "available",
+          "runScopeType": "project",
+          "runScopeId": "177",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": true
+        },
+        {
+          "typeId": "usa_fda.ind_safety_readiness",
+          "label": "FDA IND Safety & Readiness Pack (21 CFR 312)",
+          "family": "usa_fda_ind",
+          "allowedScopes": [
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "pv_lead",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "FDA IND Safety & Readiness Pack (21 CFR 312) assesses a US filing. This program is recorded as Marketing Authorisation Application, so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "177",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "usa_fda.nda_bla_filing_readiness",
+          "label": "FDA NDA / BLA Filing Readiness Assessment (eCTD)",
+          "family": "usa_fda_nda_bla",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "FDA NDA / BLA Filing Readiness Assessment (eCTD) assesses a US filing. This program is recorded as Marketing Authorisation Application, so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "177",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "japan_pmda.jnda_shonin_readiness",
+          "label": "PMDA J-NDA / Shonin Approval Readiness Pack",
+          "family": "japan_pmda_jnda",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive"
+          ],
+          "region": "JP_PMDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "PMDA J-NDA / Shonin Approval Readiness Pack assesses a JP filing. This program is recorded as Marketing Authorisation Application, so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "177",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        }
+      ],
+      "executor": {
+        "metadataReads": [
+          {
+            "sql": "SELECT metadata FROM projects WHERE id=$1 AND organization_id=$2 AND regulatory_program_id=$3",
+            "params": [
+              177,
+              75,
+              "0843e4ac-e456-4eac-a8f5-f07bdf0cb076"
+            ]
+          }
+        ],
+        "posture": {
+          "database": "platform_ci_native_recheck_20261013",
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on",
+          "tenant": "75"
+        },
+        "actorReadsAfterMetadata": 1,
+        "metadataReturned": true
+      }
+    },
+    "jnda": {
+      "program": {
+        "id": "5e159bf7-6fdc-4bff-b9de-15304a471ebd",
+        "projectId": 178,
+        "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 jnda misleading IND/FDA title"
+      },
+      "registryId": "JP_MKT_APPROVAL",
+      "rows": [
+        {
+          "typeId": "ema.maa_readiness_assessment",
+          "label": "EMA MAA Readiness Assessment",
+          "family": "ema_maa",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "executive",
+            "medical_writer"
+          ],
+          "region": "EU_EMA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "EMA MAA Readiness Assessment assesses a EU filing. This program is recorded as Marketing Approval Application (Japan), so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "178",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "usa_fda.ind_safety_readiness",
+          "label": "FDA IND Safety & Readiness Pack (21 CFR 312)",
+          "family": "usa_fda_ind",
+          "allowedScopes": [
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "pv_lead",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "FDA IND Safety & Readiness Pack (21 CFR 312) assesses a US filing. This program is recorded as Marketing Approval Application (Japan), so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "178",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "usa_fda.nda_bla_filing_readiness",
+          "label": "FDA NDA / BLA Filing Readiness Assessment (eCTD)",
+          "family": "usa_fda_nda_bla",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive",
+            "qa"
+          ],
+          "region": "USA_FDA",
+          "computedScope": "project",
+          "reasonCode": "REGIONAL_REPORT_MARKET_MISMATCH",
+          "availabilityReason": "FDA NDA / BLA Filing Readiness Assessment (eCTD) assesses a US filing. This program is recorded as Marketing Approval Application (Japan), so its readiness for that market was not assessed under this market’s name.",
+          "availabilityState": "not-applicable",
+          "runScopeType": "project",
+          "runScopeId": "178",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "forbidFinalIfMissingCritical": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": false
+        },
+        {
+          "typeId": "japan_pmda.jnda_shonin_readiness",
+          "label": "PMDA J-NDA / Shonin Approval Readiness Pack",
+          "family": "japan_pmda_jnda",
+          "allowedScopes": [
+            "program",
+            "project",
+            "submission"
+          ],
+          "computedScopes": [
+            "project"
+          ],
+          "allowedClientSegments": [
+            "pharma",
+            "biotech"
+          ],
+          "allowedPersonas": [
+            "ra_lead",
+            "medical_writer",
+            "executive"
+          ],
+          "region": "JP_PMDA",
+          "computedScope": "project",
+          "reasonCode": null,
+          "availabilityReason": null,
+          "availabilityState": "available",
+          "runScopeType": "project",
+          "runScopeId": "178",
+          "truthfulnessRules": {
+            "allowPartial": true,
+            "requireBlockers": true,
+            "requireConfidence": true
+          },
+          "entitled": true,
+          "feature": "report_families",
+          "requiredTier": "standard",
+          "runnable": true
+        }
+      ],
+      "executor": {
+        "metadataReads": [
+          {
+            "sql": "SELECT metadata FROM projects WHERE id=$1 AND organization_id=$2 AND regulatory_program_id=$3",
+            "params": [
+              178,
+              75,
+              "5e159bf7-6fdc-4bff-b9de-15304a471ebd"
+            ]
+          }
+        ],
+        "posture": {
+          "database": "platform_ci_native_recheck_20261013",
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on",
+          "tenant": "75"
+        },
+        "actorReadsAfterMetadata": 1,
+        "metadataReturned": true
+      }
+    },
+    "unassigned": {
+      "status": 404,
+      "body": {
+        "success": false,
+        "error": "Program not found"
+      },
+      "executor": {
+        "metadataReads": [],
+        "posture": {
+          "database": "platform_ci_native_recheck_20261013",
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on",
+          "tenant": "75"
+        },
+        "actorReadsAfterMetadata": 0,
+        "metadataReturned": false
+      }
+    },
+    "withdrawal": {
+      "posture": {
+        "database": "platform_ci_native_recheck_20261013",
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "enforcement": "on",
+        "tenant": "75"
+      },
+      "changedRows": 1,
+      "projectId": 181,
+      "userId": 260
+    },
+    "late-refusal": {
+      "status": 403,
+      "body": {
+        "success": false,
+        "error": {
+          "code": "PROJECT_PERMISSION_DENIED",
+          "message": "Current project access does not permit this operation."
+        }
+      },
+      "executor": {
+        "metadataReads": [
+          {
+            "sql": "SELECT metadata FROM projects WHERE id=$1 AND organization_id=$2 AND regulatory_program_id=$3",
+            "params": [
+              181,
+              75,
+              "6ceab514-5dab-4be9-9d59-1d32026829a6"
+            ]
+          }
+        ],
+        "posture": {
+          "database": "platform_ci_native_recheck_20261013",
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on",
+          "tenant": "75"
+        },
+        "actorReadsAfterMetadata": 1,
+        "metadataReturned": true
+      }
+    },
+    "recorded-market-change": {
+      "posture": {
+        "database": "platform_ci_native_recheck_20261013",
+        "role": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "enforcement": "on",
+        "tenant": "75"
+      },
+      "changedRows": 1,
+      "projectId": 175,
+      "registryId": "EU_MAA"
+    },
+    "current-market-refusal": {
+      "projectId": 175,
+      "status": 422,
+      "body": {
+        "error": "FDA IND Safety & Readiness Pack (21 CFR 312) assesses a US filing. This program is recorded as Marketing Authorisation Application, so its readiness for that market was not assessed under this market’s name.",
+        "code": "REPORT_TYPE_NOT_COMPUTED"
+      },
+      "before": {
+        "runs": 0,
+        "snapshots": 0,
+        "signatures": 0,
+        "reporting_audits": 0
+      },
+      "after": {
+        "runs": 0,
+        "snapshots": 0,
+        "signatures": 0,
+        "reporting_audits": 0
+      }
+    }
+  },
+  "organizationId": 75,
+  "programs": {
+    "ind": {
+      "id": "b98e296b-e826-4277-a3ad-abb835bc1f5c",
+      "projectId": 175,
+      "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 ind misleading IND/FDA title"
+    },
+    "bla": {
+      "id": "2279c35a-7bbd-4e1e-bfab-f66a6039ed91",
+      "projectId": 176,
+      "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 bla misleading IND/FDA title"
+    },
+    "maa": {
+      "id": "0843e4ac-e456-4eac-a8f5-f07bdf0cb076",
+      "projectId": 177,
+      "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 maa misleading IND/FDA title"
+    },
+    "jnda": {
+      "id": "5e159bf7-6fdc-4bff-b9de-15304a471ebd",
+      "projectId": 178,
+      "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 jnda misleading IND/FDA title"
+    },
+    "missing": {
+      "id": "e8e4c30e-3030-451e-ab6f-086d61330087",
+      "projectId": 179,
+      "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 missing misleading IND/FDA title"
+    },
+    "conflict": {
+      "id": "3322e7ee-a4d6-4987-8e40-543e146cb7a8",
+      "projectId": 180,
+      "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 conflict misleading IND/FDA title"
+    },
+    "late": {
+      "id": "6ceab514-5dab-4be9-9d59-1d32026829a6",
+      "projectId": 181,
+      "title": "regional-native-e0f7561e-961e-4520-8fb9-dd5c7ad6cfc6 late misleading IND/FDA title"
+    }
+  },
+  "stores": [
+    {
+      "relname": "organization_users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_members",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_visibility_settings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "projects",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "regulatory_programs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "catalog": [
+    {
+      "type_id": "ema.maa_readiness_assessment",
+      "enabled": true
+    },
+    {
+      "type_id": "japan_pmda.jnda_shonin_readiness",
+      "enabled": true
+    },
+    {
+      "type_id": "usa_fda.ind_safety_readiness",
+      "enabled": true
+    },
+    {
+      "type_id": "usa_fda.nda_bla_filing_readiness",
+      "enabled": true
+    }
+  ]
+}

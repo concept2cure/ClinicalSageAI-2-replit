@@ -31,6 +31,7 @@ afterEach(() => {
 const calls = (method: string, prefix: string) => requestCalls(apiRequest, method, prefix);
 
 const bundleId = BUNDLES[0].bundleId;
+const exportButtonName = { reports: /Export reports PDF/, manifest: /Export manifest PDF/ } as const;
 const exportPath = `/api/report-os/bundles/${bundleId}/export.pdf`;
 const pdf = new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d])], { type: 'application/pdf' });
 const pdfResponse = () => ({ ok: true, status: 200, blob: async () => pdf }) as Response;
@@ -234,7 +235,7 @@ describe('bundle export session revisions — delayed transport', () => {
     await installSessionTransport(() => response.promise);
     const session = authService.captureSessionReadGuard();
     await openBundles();
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`Export ${content} PDF`) }));
+    fireEvent.click(screen.getByRole('button', { name: exportButtonName[content] }));
     await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalledWith(expect.stringContaining(exportPath), expect.any(Object)));
     await changeSession(change);
     expect(session.sameRevision()).toBe(false);
@@ -286,7 +287,7 @@ describe('bundle export session revisions — body reads and failures', () => {
     await installSessionTransport(() => ({ ok: true, status: 200, blob: readBlob }) as unknown as Response);
     const session = authService.captureSessionReadGuard();
     await openBundles();
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`Export ${content} PDF`) }));
+    fireEvent.click(screen.getByRole('button', { name: exportButtonName[content] }));
     await waitFor(() => expect(readBlob).toHaveBeenCalledOnce());
     expect(await authService.refreshToken()).toBe(true);
     expect(session.sameRevision()).toBe(true);

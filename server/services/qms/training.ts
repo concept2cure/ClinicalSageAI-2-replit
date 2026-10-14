@@ -7,7 +7,8 @@ import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { isActiveAccountStatus } from '../account-standing';
 import { derivePosture } from '../tenant/tenant-lifecycle';
 import type { QmsDocumentRow } from './document-approval-signature';
-import { describeQmsTrainingDocument, verifiedTrainingReceipt } from './training-content';
+import { verifiedTrainingReceipt } from './training-content';
+import { readQmsTrainingReleaseContext, type CurrentQmsReleaseApproval } from './current-release-approval';
 
 export { readQmsTrainingCompliance } from './training-compliance';
 export interface TrainingSqlClient {
@@ -19,11 +20,20 @@ interface TrainingInput extends TrainingActor {
   ipAddress?: string; userAgent?: string;
 }
 export class QmsTrainingRefused extends Error {
-  constructor(public readonly status: 403 | 404 | 409, public readonly code: string, message: string) { super(message); }
+  constructor(public readonly status: 403 | 404 | 409 | 503, public readonly code: string, message: string) { super(message); }
 }
 export class QmsTrainingCommitUnconfirmed extends Error {
   constructor(message = 'The acknowledgement could not be confirmed. Reload the document to check your record before trying again.',
     public readonly code = 'QMS_TRAINING_COMMIT_UNCONFIRMED') { super(message); }
+}
+
+function approvedTrainingSignatureId(context: QmsTrainingContext, approval: CurrentQmsReleaseApproval | null): number {
+  if (!context.eligible || approval?.state !== 'valid' || approval.signatureId === null) {
+    throw new QmsTrainingRefused(approval?.state === 'unavailable' ? 503 : 409,
+      approval?.state === 'unavailable' ? 'QMS_TRAINING_APPROVAL_UNAVAILABLE' : 'QMS_TRAINING_UNAVAILABLE',
+      context.unavailableReason ?? 'The exact recorded approval signature for this release could not be verified.');
+  }
+  return approval.signatureId;
 }
 
 export async function currentStanding(client: TrainingSqlClient, actor: TrainingActor, lock = false) {
@@ -68,7 +78,7 @@ async function currentReceipt(client: TrainingSqlClient, actor: TrainingActor, c
 export async function readQmsTrainingContext(client: TrainingSqlClient, input: TrainingActor & { document: QmsDocumentRow }) {
   if (input.document.organization_id !== input.organizationId) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
   const posture = await currentStanding(client, input);
-  const context = describeQmsTrainingDocument(input.document, input.now);
+  const { context } = await readQmsTrainingReleaseContext(client, input.document, input.now);
   const acknowledgement = await currentReceipt(client, input, context);
   const canEditControlledText = posture.decision === 'allow' && !!posture.membershipRole
     && GOVERNED_WRITE_ROLES.has(posture.membershipRole) && ['draft', 'in_review'].includes(input.document.status);
@@ -86,14 +96,14 @@ async function recordAcknowledgement(client: TrainingSqlClient, params: Training
   );
   const document = rows[0] as QmsDocumentRow | undefined;
   if (!document) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
-  const context = describeQmsTrainingDocument(document, now);
-  if (!context.eligible) throw new QmsTrainingRefused(409, 'QMS_TRAINING_UNAVAILABLE', context.unavailableReason!);
+  const { context, approval } = await readQmsTrainingReleaseContext(client, document, now, { lock: true });
+  const releaseApprovalSignatureId = approvedTrainingSignatureId(context, approval);
   if (params.input.documentVersion !== context.documentVersion || params.input.contentDigest !== context.contentDigest) throw new QmsTrainingRefused(409, 'QMS_TRAINING_STALE', 'The released revision changed. Reload and read it before acknowledging.');
   const existing = await currentReceipt(client, { ...params, now }, context);
   if (existing) return { acknowledgement: existing, alreadyAcknowledged: true };
   const expiresAt = new Date(now.getTime() + 365 * 86_400_000);
   const metadata = { declaration: QMS_TRAINING_DECLARATION, contentDigest: context.contentDigest,
-    bindingBasis: 'qms-document-version-content-sha256', documentSnapshot: document };
+    bindingBasis: 'qms-document-version-content-sha256', releaseApprovalSignatureId, documentSnapshot: document };
   const inserted = await client.query(
     `INSERT INTO qms_training_records (organization_id, user_id, document_id, document_version,
        acknowledgment_method, acknowledged_at, expires_at, metadata)
@@ -107,6 +117,7 @@ async function recordAcknowledgement(client: TrainingSqlClient, params: Training
     resourceType: 'qms_document', resourceId: String(params.documentId),
     ipAddress: params.ipAddress, userAgent: params.userAgent,
     details: { method: 'attestation', documentVersion: context.documentVersion, contentDigest: context.contentDigest,
+      releaseApprovalSignatureId,
       declaration: QMS_TRAINING_DECLARATION, trainingRecordId: acknowledgement.id },
   });
   return { acknowledgement, alreadyAcknowledged: false };

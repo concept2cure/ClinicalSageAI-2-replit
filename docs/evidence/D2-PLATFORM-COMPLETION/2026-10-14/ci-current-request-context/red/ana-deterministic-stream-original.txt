@@ -1,0 +1,87 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+ ↓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+ ↓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+ ↓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+ ↓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+ ↓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+[database] Database connection successful
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-10-14T09:04:09.724Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-10-14T09:04:09.723Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T09:04:09.724Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-10-14T09:04:09.944Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+[AnA RI Stream] Error: Request-scoped database context is required
+
+ × tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers 19473ms
+   → expected 'data: {"type":"status","phase":"orche…' to contain '"type":"done"'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+AssertionError: expected 'data: {"type":"status","phase":"orche…' to contain '"type":"done"'
+
+- Expected
++ Received
+
+- "type":"done"
++ data: {"type":"status","phase":"orchestrating","message":"Planning response…"}
++
++ data: {"type":"status","phase":"loading_context","message":"Loading project memory…"}
++
++ data: {"type":"timeline","event":{"seq":1,"at":"2026-10-14T09:04:15.253Z","kind":"end","round":0,"outcome":"failed","stoppedReason":null}}
++
++ data: {"type":"error","error":"An error occurred while generating the response","turnRecord":{"status":"not_recorded","reason":"This turn had no organization to file it under."}}
++
++
+
+ ❯ tests/routes/ana-ri-health.test.ts:415:22
+    413|
+    414|     expect(res.status).toBe(200);
+    415|     expect(res.body).toContain('"type":"done"');
+       |                      ^
+    416|   });
+    417| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  09:03:54
+   Duration  20.59s (transform 17.22s, setup 265ms, import 252ms, tests 19.48s, environment 0ms)

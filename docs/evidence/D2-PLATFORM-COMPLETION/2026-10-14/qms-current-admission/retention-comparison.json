@@ -1,0 +1,22 @@
+{
+  "qaOrganization": {
+    "id": 71,
+    "slug": "qms-current-a2f97d68",
+    "status": "inactive"
+  },
+  "counts": {
+    "qms_documents": 7,
+    "qms_change_controls": 1,
+    "qms_training_records": 3,
+    "electronic_signatures": 9,
+    "c2c_ana_actions": 9,
+    "audit_logs": 12
+  },
+  "comparedRows": 41,
+  "allExactRowDigestsAndTupleVersionsUnchanged": true,
+  "comparisonBeginsAfterInitialNativeGreen": true,
+  "noRetroactivePreFirstGreenHashClaim": true,
+  "retainedHistoryDeleted": false,
+  "triggersDisabled": false,
+  "databasePrivilegesGranted": false
+}

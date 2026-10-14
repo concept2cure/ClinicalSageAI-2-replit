@@ -117,6 +117,7 @@ function appAs(role: string, userId = SIGNER) {
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: userId, organizationId: ORG, role };
+    Object.assign(req, { dbClient: { query: (...args: unknown[]) => H.txQuery(...args) } });
     (req as unknown as { userRole: string }).userRole = role;
     (req as unknown as { tenantId: number }).tenantId = ORG;
     next();
@@ -255,7 +256,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the refusals', () => {
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
     expect(H.recordGoverned).not.toHaveBeenCalled();
     expect(H.persistSignature).not.toHaveBeenCalled();
-    expect(H.release).toHaveBeenCalledTimes(1);
+    expect(H.release).not.toHaveBeenCalled();
   });
 
   it('404s a document outside the tenant', async () => {
@@ -335,6 +336,6 @@ describe('POST /api/mdx/qms/documents/:id/retire — the signed write path', () 
     expect(res.status).toBe(500);
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'ROLLBACK']);
     expect(JSON.stringify(res.body)).not.toMatch(/insert failed/);
-    expect(H.release).toHaveBeenCalledTimes(1);
+    expect(H.release).not.toHaveBeenCalled();
   });
 });

@@ -82,9 +82,38 @@ const MEANING_LABEL: Record<string, string> = {
   authorship: 'Authorship', review: 'Review', approval: 'Approval', responsibility: 'Responsibility',
 };
 
+/** A recorded meaning identifies the policy question, never its past result. */
+function unknownHistoricalPolicyLabel(meaning: string): string {
+  if (meaning === 'authorship') return 'Signing-time authorship-check evidence not recorded';
+  if (meaning === 'approval' || meaning === 'review' || meaning === 'responsibility') {
+    return 'Signing-time independence evidence not recorded';
+  }
+  return 'Signing-time policy-check evidence not recorded';
+}
+
 /** A protocol that has been finalized, and so carries a finalization signature
  *  (the two statuses finalizeProtocolTx refuses to finalize again). */
 export const isFinalizedStatus = (status: string | null): boolean => status === 'finalized' || status === 'superseded';
+
+type SignatureRecordFacet = Extract<PdevSignatureFacet, { signature: unknown }>;
+
+/** Negative qualification and retained references remain separate from the manifestation. */
+function signatureQualificationLines(f: SignatureRecordFacet): string[] {
+  const s = f.signature;
+  const lines: string[] = [];
+  // A signature-bearing older DTO has the same honest fallback: this reader
+  // recognizes no signing-time independence assurance, including metadata that
+  // calls itself an approval check. The declared meaning remains historical.
+  lines.push(
+    `- Current content binding: ${f.state === 'signed' ? 'Matches the signed content' : f.state === 'changed' ? 'Changed after signing' : f.state === 'revoked' ? 'Not verified; signature withdrawn' : 'Not verified'}.`,
+    `- ${unknownHistoricalPolicyLabel(s.meaning)}.`,
+    '- Independent approval not verified from this signature record.',
+  );
+  const reference = f.qualification?.signatureReference;
+  if (reference?.signatureId != null) lines.push(`- Signature record: ${reference.signatureId}`);
+  if (reference?.signatureHash) lines.push(`- Signature hash: ${reference.signatureHash}`);
+  return lines;
+}
 
 /**
  * The status line and the finalization signature block (periodic review
@@ -108,11 +137,12 @@ function signatureBlockLines(status: string | null, f: PdevSignatureFacet): stri
   if (f.state === 'revoked') lines.push('- REVOKED: this signature has been withdrawn and no longer attests to this protocol.');
   lines.push(
     `- ${f.state === 'changed' || f.state === 'unverified' ? 'Historically recorded signer' : 'Signed by'}: ${s.signerName}`,
-    `- Meaning: ${s.meaning ? (MEANING_LABEL[s.meaning] ?? s.meaning) : 'Not recorded'}`,
+    `- Declared meaning: ${s.meaning ? (MEANING_LABEL[s.meaning] ?? s.meaning) : 'Not recorded'}`,
     `- Executed: ${Number.isNaN(at.getTime()) ? 'Not recorded' : at.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'}`,
   );
   if (s.reason) lines.push(`- Reason: ${s.reason}`);
   if (s.recordedOnBehalfOf) lines.push(`- Recorded on behalf of: ${s.recordedOnBehalfOf}`);
+  lines.push(...signatureQualificationLines(f));
   return lines;
 }
 

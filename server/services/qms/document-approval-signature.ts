@@ -73,6 +73,7 @@ import {
 } from '../part11/signature-persistence';
 import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
 import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from './controlled-text-authorship';
+import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 
 /**
  * The §11.50(a)(3) meaning an approval carries. Taken from the platform's
@@ -324,6 +325,7 @@ export async function approveQmsDocumentSigned(
 ): Promise<ApproveQmsDocumentSignedResult> {
   const { orgId, userId, documentId } = params;
   const row = await lockApprovableDocument(client, orgId, userId, documentId);
+  await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
   const controlledTextAuthorUserIds = qmsControlledTextAuthorIds(row.metadata);
   const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';
   const contentDigest = computeQmsDocumentContentDigest(row);
@@ -489,6 +491,7 @@ export async function retireQmsDocumentSigned(
 ): Promise<RetireQmsDocumentSignedResult> {
   const { orgId, userId, documentId } = params;
   const row = await lockRetirableDocument(client, orgId, documentId);
+  await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
   const contentDigest = computeQmsDocumentRetirementDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();

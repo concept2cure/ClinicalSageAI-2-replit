@@ -33,15 +33,41 @@ export interface PdevSignature {
   recordedOnBehalfOf: string | null;
 }
 
+/** Separate read facts: a matching digest does not establish signing-time
+ * independence. No assurance schema is recognized in this read-only increment. */
+export type PdevHistoricalSigningPolicyReason =
+  | 'signing-time-independence-evidence-not-recorded'
+  | 'signing-time-authorship-evidence-not-recorded'
+  | 'signing-time-policy-evidence-not-recorded';
+
+export interface PdevSignatureQualification {
+  contentBinding: 'matches' | 'changed' | 'unverified';
+  historicalSigningPolicy: {
+    state: 'unassessed';
+    reason: PdevHistoricalSigningPolicyReason;
+  };
+  currentContentQualification: {
+    state: 'unassessed' | 'held';
+    reason: PdevHistoricalSigningPolicyReason | 'content-changed' | 'binding-unverified' | 'signature-revoked';
+  };
+  signatureReference: {
+    signatureId: number | null;
+    signerId: number | null;
+    signatureHash: string | null;
+    bindingBasis: string | null;
+    signedContentDigest: string | null;
+  };
+}
+
 /**
  * What the signature store says about one signed act. `none` is a read that
  * found no row; `unavailable` is a store that could not be read, which is not
  * the same thing and must never be shown as unsigned.
  */
 export type PdevSignatureFacet =
-  | { state: 'signed' | 'revoked'; signature: PdevSignature }
-  | { state: 'changed'; signature: PdevSignature; historicalIntegrity: 'verified' }
-  | { state: 'unverified'; signature: PdevSignature; historicalIntegrity: 'verified' | 'unverified' }
+  | { state: 'signed' | 'revoked'; signature: PdevSignature; qualification?: PdevSignatureQualification }
+  | { state: 'changed'; signature: PdevSignature; historicalIntegrity: 'verified'; qualification?: PdevSignatureQualification }
+  | { state: 'unverified'; signature: PdevSignature; historicalIntegrity: 'verified' | 'unverified'; qualification?: PdevSignatureQualification }
   | { state: 'none' }
   | { state: 'unavailable' };
 
@@ -121,18 +147,51 @@ function verifiedHistoricalManifest(row: Record<string, unknown>, orgId: number,
     && typeof row.signature_hash === 'string' && manifestSignatureHash(manifest) === row.signature_hash;
 }
 
+/** These are read qualifications, not a retrospective policy verdict. Current
+ * authors, dates, is_valid and arbitrary manifest metadata cannot establish a
+ * past independence check. Keep the original signature/manifest/hash untouched. */
+function historicalPolicyReasonFor(meaning: unknown): PdevHistoricalSigningPolicyReason {
+  if (meaning === 'authorship') return 'signing-time-authorship-evidence-not-recorded';
+  if (meaning === 'approval' || meaning === 'review' || meaning === 'responsibility') {
+    return 'signing-time-independence-evidence-not-recorded';
+  }
+  return 'signing-time-policy-evidence-not-recorded';
+}
+
+function qualificationFor(row: Record<string, unknown>, state: 'signed' | 'changed' | 'unverified' | 'revoked'): PdevSignatureQualification {
+  const id = (value: unknown): number | null => {
+    const n = typeof value === 'number' ? value : typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : NaN;
+    return Number.isSafeInteger(n) && n > 0 ? n : null;
+  };
+  const storedString = (value: unknown): string | null => typeof value === 'string' ? value : null;
+  const historicalReason = historicalPolicyReasonFor(row.signature_meaning);
+  const reason = state === 'signed' ? historicalReason
+    : state === 'changed' ? 'content-changed'
+      : state === 'revoked' ? 'signature-revoked' : 'binding-unverified';
+  return {
+    contentBinding: state === 'signed' ? 'matches' : state === 'changed' ? 'changed' : 'unverified',
+    historicalSigningPolicy: { state: 'unassessed', reason: historicalReason },
+    currentContentQualification: { state: state === 'signed' ? 'unassessed' : 'held', reason },
+    signatureReference: {
+      signatureId: id(row.id), signerId: id(row.signer_id),
+      signatureHash: storedString(row.signature_hash), bindingBasis: storedString(row.binding_basis),
+      signedContentDigest: storedString(row.bound_payload_digest),
+    },
+  };
+}
+
 async function boundFacet(client: SignatureDbClient, orgId: number, target: string, row: Record<string, unknown>, coherent: boolean): Promise<PdevSignatureFacet> {
   const signature = historicalSignature(row);
-  if (isSignatureWithdrawn(row)) return { state: 'revoked', signature };
+  if (isSignatureWithdrawn(row)) return { state: 'revoked', signature, qualification: qualificationFor(row, 'revoked') };
   const validHistory = verifiedHistoricalManifest(row, orgId, target);
-  const unverified: PdevSignatureFacet = { state: 'unverified', signature, historicalIntegrity: validHistory ? 'verified' : 'unverified' };
+  const unverified: PdevSignatureFacet = { state: 'unverified', signature, historicalIntegrity: validHistory ? 'verified' : 'unverified', qualification: qualificationFor(row, 'unverified') };
   if (!validHistory || !coherent) return unverified;
   try {
     const current = await deriveGovernedTargetBinding(client, target, orgId);
     if (current.basis !== BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT || !current.digest) return unverified;
     return current.digest === row.bound_payload_digest
-      ? { state: 'signed', signature }
-      : { state: 'changed', signature, historicalIntegrity: 'verified' };
+      ? { state: 'signed', signature, qualification: qualificationFor(row, 'signed') }
+      : { state: 'changed', signature, historicalIntegrity: 'verified', qualification: qualificationFor(row, 'changed') };
   } catch { return unverified; }
 }
 

@@ -4,6 +4,7 @@
  * mock writes a real row on the supplied client, so transaction rollback is real.
  */
 import { readFileSync } from 'node:fs';
+import { QMS_APPROVAL_FIXTURE_DDL, seedQmsApprovalFixture } from './_release-approval-fixture';
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -105,6 +106,7 @@ beforeAll(async () => {
     );
     ${canonicalQmsTable('qms_documents')}
     ${canonicalQmsTable('qms_training_records')}
+    ${QMS_APPROVAL_FIXTURE_DDL}
     CREATE TABLE qms_training_audit_proof (
       organization_id integer NOT NULL,
       user_id integer NOT NULL,
@@ -120,7 +122,7 @@ beforeEach(async () => {
   state.auditFails = false;
   state.sql = [];
   await database.exec(`
-    TRUNCATE qms_training_audit_proof, qms_training_records, qms_documents,
+    TRUNCATE electronic_signatures, qms_training_audit_proof, qms_training_records, qms_documents,
       organization_users, users, organizations RESTART IDENTITY CASCADE;
     INSERT INTO organizations (id) VALUES (1), (2);
     INSERT INTO users (id, status) VALUES
@@ -135,6 +137,51 @@ beforeEach(async () => {
 });
 
 afterAll(async () => { await database?.close(); });
+
+describe('actual retained approval controls current training', () => {
+  it.each([
+    "verification_status='revoked'",
+    'is_valid=false',
+    'superseded_by=1234',
+  ])('holds a withdrawn approval (%s) without changing old receipts or signatures', async mutation => {
+    const first = await acknowledge();
+    const signatures = (await database.query('SELECT signature_manifest,signature_hash FROM electronic_signatures ORDER BY id')).rows;
+    if (mutation === "verification_status='revoked'") await database.query("UPDATE electronic_signatures SET verification_status='revoked' WHERE signed_target=$1", [`qms-document:${releasedDocument.id}`]);
+    else if (mutation === 'is_valid=false') await database.query('UPDATE electronic_signatures SET is_valid=false WHERE signed_target=$1', [`qms-document:${releasedDocument.id}`]);
+    else await database.query('UPDATE electronic_signatures SET superseded_by=1234 WHERE signed_target=$1', [`qms-document:${releasedDocument.id}`]);
+    await expect(acknowledge(MEMBER)).rejects.toMatchObject({ status: 409 });
+    const context = await readQmsTrainingContext(client, { organizationId: ORG, userId: VIEWER, document: await documentById(), now: NOW });
+    expect(context).toMatchObject({ eligible: false, acknowledgement: null });
+    expect(context.unavailableReason).toMatch(/withdrawn/);
+    expect((await trainingRows()).map(row => row.id)).toEqual([first.acknowledgement.id]);
+    expect((await database.query('SELECT * FROM qms_training_audit_proof')).rows).toHaveLength(1);
+    expect((await database.query('SELECT signature_manifest,signature_hash FROM electronic_signatures ORDER BY id')).rows).toEqual(signatures);
+    expect((await readQmsTrainingCompliance(client, ORG, NOW))[0]).toMatchObject({ eligible: false, current: 0 });
+  });
+
+  it('refuses an ambiguous exact approval identity without choosing the latest duplicate', async () => {
+    await seedQmsApprovalFixture(client, releasedDocument);
+    await expect(acknowledge()).rejects.toMatchObject({ status: 409 });
+    await expectNoTrainingOrAudit();
+  });
+
+  it('requires the exact signature manifest integrity, not just its target and content digest', async () => {
+    await database.query("UPDATE electronic_signatures SET signature_hash='changed-manifest' WHERE signed_target=$1", [`qms-document:${releasedDocument.id}`]);
+    await expect(acknowledge()).rejects.toMatchObject({ status: 409 });
+    await expectNoTrainingOrAudit();
+  });
+
+  it('returns unavailable on a failed signature read instead of treating it as a revoked or missing release', async () => {
+    await database.exec('ALTER TABLE electronic_signatures RENAME TO unavailable_qms_signatures');
+    try {
+      await expect(acknowledge()).rejects.toMatchObject({ status: 503, code: 'QMS_TRAINING_APPROVAL_UNAVAILABLE' });
+      const context = await readQmsTrainingContext(client, { organizationId: ORG, userId: VIEWER, document: await documentById(), now: NOW });
+      expect(context).toMatchObject({ eligible: false, acknowledgement: null });
+      expect(context.unavailableReason).toMatch(/could not be checked/);
+      await expectNoTrainingOrAudit();
+    } finally { await database.exec('ALTER TABLE unavailable_qms_signatures RENAME TO electronic_signatures'); }
+  });
+});
 
 async function documentById(id = releasedDocument.id): Promise<QmsDocumentRow> {
   return (await database.query<QmsDocumentRow>('SELECT * FROM qms_documents WHERE id = $1', [id])).rows[0];
@@ -161,10 +208,12 @@ async function seedReleasedDocument(organizationId: number, docNumber: string, a
   );
   const row = inserted.rows[0];
   const metadata = { ...row.metadata, approval: approvalFor(row) };
-  return (await database.query<QmsDocumentRow>(
+  const released = (await database.query<QmsDocumentRow>(
     'UPDATE qms_documents SET metadata = $1 WHERE id = $2 RETURNING *',
     [JSON.stringify(metadata), row.id],
   )).rows[0];
+  await seedQmsApprovalFixture(client, released);
+  return released;
 }
 
 function inputFor(document = releasedDocument): QmsTrainingAcknowledgementInput {
@@ -299,9 +348,11 @@ describe('released revision binding and acknowledgement transaction integrity', 
     const first = await acknowledge();
     const newMetadata = { sections: [{ ...SECTIONS[0], body: 'The newly released revision has a different procedure.' }] };
     await database.query('UPDATE qms_documents SET version = $1, metadata = $2 WHERE id = $3', ['2.0', JSON.stringify(newMetadata), releasedDocument.id]);
+    await database.query('UPDATE qms_documents SET approved_at=$1::timestamptz WHERE id=$2', [NOW.toISOString(), releasedDocument.id]);
     const revised = await documentById();
     const approval = approvalFor(revised);
     await database.query('UPDATE qms_documents SET metadata = $1 WHERE id = $2', [JSON.stringify({ ...newMetadata, approval }), revised.id]);
+    await seedQmsApprovalFixture(client, await documentById());
     await expect(acknowledge()).rejects.toThrow();
     const history = await trainingRows();
     expect(history).toHaveLength(1);
@@ -484,9 +535,11 @@ describe('current roster coverage from real training history', () => {
   it('does not credit an old acknowledgement after the controlled version changes', async () => {
     await acknowledge();
     await database.query("UPDATE qms_documents SET version = '2.0' WHERE id = $1", [releasedDocument.id]);
+    await database.query('UPDATE qms_documents SET approved_at=$1::timestamptz WHERE id=$2', [NOW.toISOString(), releasedDocument.id]);
     const changed = await documentById();
     const metadata = { ...changed.metadata, approval: approvalFor(changed) };
     await database.query('UPDATE qms_documents SET metadata = $1 WHERE id = $2', [JSON.stringify(metadata), changed.id]);
+    await seedQmsApprovalFixture(client, await documentById());
     const rows = await readQmsTrainingCompliance(client, ORG, NOW);
     expect(rows[0]).toMatchObject({ document_version: '2.0', content_digest: computeQmsDocumentContentDigest(changed), current: 0, of: 2 });
     expect(await trainingRows()).toHaveLength(1);

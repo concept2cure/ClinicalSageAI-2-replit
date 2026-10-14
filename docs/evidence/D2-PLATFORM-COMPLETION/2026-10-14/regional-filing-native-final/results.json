@@ -1,0 +1,48 @@
+{
+  "workstream": "W1/D2-D3",
+  "native": {
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "files": 1,
+    "durationSeconds": 11.85,
+    "exit": 0
+  },
+  "sourceLint": {
+    "errors": 0,
+    "warnings": 0,
+    "nativeSourceUnchangedSinceLint": true
+  },
+  "actualRuntime": "app_service NOSUPERUSER/NOBYPASSRLS, RLS on, correct requester tenant; actual authenticators/request-pinned client",
+  "fixtureOrganizationId": 79,
+  "firstRunRedPreserved": "../regional-filing-native-first-run",
+  "assertionsUnchanged": true,
+  "mutations": "fresh invented QA records; separate restricted RLS-scoped sharing withdrawal and recorded market update",
+  "historyDeleted": false,
+  "postgresOrPlatformRolesGranted": false,
+  "providerCalls": false,
+  "compilerRun": false,
+  "scopeLimit": "Implementation/admission checks for four existing regional Module1 report engines; no clinical/agency/global filing validation claim",
+  "rawFiles": [
+    {
+      "original": "/tmp/regional-filing-native-contract-second.txt",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-filing-native-final/native-final-green.log",
+      "sha256": "ab5ea372b1d7082c362532437f3685a846d3ae2939ed60fcdc5c44be99c06fba"
+    },
+    {
+      "original": "/tmp/regional-filing-native-observations-second.json",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-filing-native-final/native-observations.json",
+      "sha256": "55b0a738b97fb368e47dcf841c4da9d6ef30b06ff697fdd9fc472884cc98d5b2"
+    },
+    {
+      "original": "/tmp/regional-filing-native-second-source-pins.json",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-filing-native-final/before-native-source-pins.json",
+      "sha256": "86f5b6c723adb0471537ec2960b1c3b7e9c8cb38db26ca063214cae180bf221c"
+    },
+    {
+      "original": "/tmp/regional-filing-native-source-lint.txt",
+      "copy": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/regional-filing-native-final/native-source-lint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

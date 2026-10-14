@@ -26,6 +26,7 @@
  */
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from '../../services/qms/document-approval-signature';
+import { qmsApprovalFixture } from '../../services/qms/__tests__/_release-approval-fixture';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
@@ -33,6 +34,7 @@ type Row = Record<string, unknown>;
 
 const H = vi.hoisted(() => ({
   doc: null as Record<string, unknown> | null,
+  signature: null as Record<string, unknown> | null,
   supplier: null as Record<string, unknown> | null,
   nc: null as Record<string, unknown> | null,
   audit_: null as Record<string, unknown> | null,
@@ -41,11 +43,12 @@ const H = vi.hoisted(() => ({
   session: { id: 7, organizationId: 9, role: 'viewer' } as { id: number; organizationId: number; role: string },
 }));
 
-const TABLES: Array<[RegExp, 'doc' | 'supplier' | 'nc' | 'audit']> = [
+const TABLES: Array<[RegExp, 'doc' | 'supplier' | 'nc' | 'audit' | 'signature']> = [
   [/qms_documents/i, 'doc'],
   [/qms_suppliers/i, 'supplier'],
   [/qms_nonconforming_products/i, 'nc'],
   [/qms_internal_audits/i, 'audit'],
+  [/electronic_signatures/i, 'signature'],
 ];
 
 /** One row per QMS table, read and written the way Postgres would. */
@@ -144,6 +147,7 @@ beforeEach(() => {
     metadata: { sections: [{ key: 'purpose', body: 'Controls design inputs.' }] } };
   H.doc.metadata = { ...(H.doc.metadata as Row), approval: { contentDigest: computeQmsDocumentContentDigest(H.doc as QmsDocumentRow),
     meaning: 'APPROVED', bindingBasis: 'qms-document-version-content-sha256', by: 5, at: H.doc.approved_at } };
+  H.signature = { id: 501, ...qmsApprovalFixture(H.doc as QmsDocumentRow) };
   H.supplier = { id: 12, organization_id: 9, supplier_name: 'Acme Resins', criticality: 'critical', approval_status: 'approved' };
   H.nc = { id: 13, organization_id: 9, nc_number: 'NC-001', description: 'Out of spec', disposition: 'pending' };
   H.audit_ = { id: 14, organization_id: 9, audit_number: 'IA-0', status: 'in_progress' };

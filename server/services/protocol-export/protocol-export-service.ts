@@ -78,7 +78,9 @@ async function composeProtocolSnapshot(orgId: number, documentId: number, execut
 export async function getProtocolExport(orgId: number, documentId: number, options: { executor?: Queryable; contentOnly?: boolean } = {}): Promise<{ document: AssembledProtocol; markdown: string }> {
   const { document } = await loadProtocolExportSnapshot(orgId, documentId, options.executor, options);
   // Controlled export requires the historical signature to bind this exact
-  // current snapshot. A draft content import deliberately carries no signature.
+  // current snapshot. `signed` establishes a content match, not signing-time
+  // independence; the copy carries the separate unassessed qualification.
+  // A draft content import deliberately carries no signature.
   if (!options.contentOnly && isFinalizedStatus(document.status)) {
     const state = document.finalization.state;
     if (state === 'unavailable') throw new ProtocolExportError('SIGNATURE_UNREADABLE', 'The signature record could not be read, so the finalized protocol was not exported without its signature.');

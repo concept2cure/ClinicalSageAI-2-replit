@@ -1,0 +1,201 @@
+{
+  "tag": "report-pack-native-173520-mv7wf8zb-21b98fd1",
+  "scope": "Synthetic native implementation checks only",
+  "cases": {
+    "positive": {
+      "bundleId": "e56a1ef5-d0f7-4791-a646-9cb6e7c0ddd2",
+      "byteLength": 131269,
+      "sha256": "f6f285428408f16b49493a34d7db61bd723baa73b72e8e426df03f1be7831e42",
+      "pages": 29,
+      "auditId": "9db5348d-17bc-48a8-92d9-24d535f46c38",
+      "constituents": [
+        {
+          "runId": 17,
+          "runUuid": "1de80148-8f31-45da-994e-410f82b6f796",
+          "scopeId": "183",
+          "lastPage": 28,
+          "sealHash": null,
+          "firstPage": 2,
+          "scopeType": "project",
+          "sealVerdict": null,
+          "reportTypeId": "report-pack-native-173520-mv7wf8zb-21b98fd1.retained_status",
+          "statusAtRead": "completed",
+          "bundledStatus": "completed",
+          "sourceDocument": "retained-run-render"
+        },
+        {
+          "runId": 16,
+          "runUuid": "8faef41e-adb3-4c9c-80d8-749d6dc7ed02",
+          "scopeId": "182",
+          "lastPage": 29,
+          "sealHash": "f38e9048b2b20a0480e45ad951baeae6f6c64cd93b06088bf506340685dd0cef",
+          "firstPage": 29,
+          "scopeType": "project",
+          "sealVerdict": "intact",
+          "reportTypeId": "report-pack-native-173520-mv7wf8zb-21b98fd1.retained_status",
+          "statusAtRead": "final",
+          "bundledStatus": "final",
+          "sourceDocument": "verified-sealed"
+        }
+      ],
+      "signatureCount": 1
+    },
+    "private": {
+      "bundleId": "2aa1f673-3b9e-4a24-9ca9-6a09f715f824",
+      "status": 404,
+      "code": "REPORT_BUNDLE_NOT_FOUND",
+      "exportAuditCount": 0
+    },
+    "foreign": {
+      "bundleId": "87bb5b75-7149-4b3f-9889-d9ee1714406a",
+      "status": 404,
+      "code": "REPORT_BUNDLE_NOT_FOUND",
+      "exportAuditCount": 0
+    },
+    "missing": {
+      "bundleId": "767205bd-80ba-4be4-934b-d2fb66c8338e",
+      "status": 404,
+      "code": "REPORT_BUNDLE_NOT_FOUND",
+      "exportAuditCount": 0
+    },
+    "contention": {
+      "runId": 20,
+      "bundleId": "09dc08f0-c938-4bd5-9c22-993660f7f094",
+      "exportPid": 11779,
+      "signerPid": 11780,
+      "interval": {
+        "sourceQueryStart": "2026-10-14T09:20:00.409Z",
+        "afterSourceQueryStart": "2026-10-14T09:20:03.873Z",
+        "stableSourceMs": 40,
+        "finalizerBlocked": true,
+        "withdrawalCommitted": false,
+        "afterSourcePhase": "fresh-actor-read"
+      },
+      "priorExport": {
+        "runId": 20,
+        "runUuid": "e91f56c5-893e-45ed-8559-599222b501d3",
+        "scopeId": "185",
+        "lastPage": 28,
+        "sealHash": null,
+        "firstPage": 2,
+        "scopeType": "project",
+        "sealVerdict": null,
+        "reportTypeId": "report-pack-native-173520-mv7wf8zb-21b98fd1.retained_status",
+        "statusAtRead": "completed",
+        "bundledStatus": "completed",
+        "sourceDocument": "retained-run-render"
+      },
+      "finalStatus": 200
+    },
+    "scopeWithdrawal": {
+      "runId": 21,
+      "bundleId": "b02fc1cb-6e01-449c-a1c7-d350f6c00bf5",
+      "status": 404,
+      "interval": {
+        "sourceQueryStart": "2026-10-14T09:20:08.179Z",
+        "afterSourceQueryStart": "2026-10-14T09:20:12.567Z",
+        "stableSourceMs": 44,
+        "finalizerBlocked": false,
+        "withdrawalCommitted": true,
+        "mutationRuntime": {
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on"
+        },
+        "afterSourcePhase": "fresh-actor-read"
+      },
+      "exportAuditCount": 0
+    },
+    "roleWithdrawal": {
+      "runId": 22,
+      "bundleId": "9121ff50-20f2-42c6-a49c-38c116f79208",
+      "status": 404,
+      "interval": {
+        "sourceQueryStart": "2026-10-14T09:20:13.158Z",
+        "afterSourceQueryStart": "2026-10-14T09:20:17.329Z",
+        "stableSourceMs": 41,
+        "finalizerBlocked": false,
+        "withdrawalCommitted": true,
+        "mutationRuntime": {
+          "role": "app_service",
+          "rolsuper": false,
+          "rolbypassrls": false,
+          "enforcement": "on"
+        },
+        "afterSourcePhase": "fresh-actor-read"
+      },
+      "exportAuditCount": 0
+    },
+    "resolverFault": {
+      "faultCode": "22012",
+      "positive": {
+        "entitled": true,
+        "feature": "report_families",
+        "requiredTier": "standard",
+        "tier": "standard",
+        "tierResolved": true
+      },
+      "refusal": {
+        "entitled": false,
+        "feature": "report_families",
+        "requiredTier": "standard",
+        "tier": "standard",
+        "tierResolved": false
+      },
+      "executor": "actual tenant-stamped app_service transaction"
+    }
+  },
+  "runtime": {
+    "database": "platform_ci_native_recheck_20261013",
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on"
+  },
+  "stores": [
+    {
+      "relname": "audit_logs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "electronic_signatures",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_members",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_memory_entries",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_visibility_settings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "report_runs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "report_snapshots",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "organizationId": 77,
+  "actorIds": {
+    "author": 262,
+    "reader": 263,
+    "signer": 264,
+    "scopeReader": 265,
+    "roleReader": 266
+  }
+}

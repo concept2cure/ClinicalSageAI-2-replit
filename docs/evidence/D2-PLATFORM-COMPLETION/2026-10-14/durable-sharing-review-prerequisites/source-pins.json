@@ -1,0 +1,83 @@
+{
+  "phase": "source/static proof only; actual replay/historical NULL/native RLS pending",
+  "sources": [
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "sha256": "df9cb9c6f3a54ca6630eadedd89bc125ecd2e360fe5d8ab4b46f73d63be41cf0",
+      "bytes": 229714,
+      "ownedChange": true
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "sha256": "7779c85dd10275568b0fb2116b94d981863ecbd50ea32a373e0889767b5b6fb0",
+      "bytes": 5282,
+      "ownedChange": true
+    },
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "sha256": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5",
+      "bytes": 6392,
+      "ownedChange": true
+    },
+    {
+      "path": "docs/design/DURABLE_SHARING_REVIEW_PREREQUISITES.md",
+      "sha256": "37023037414173932c8454b8282cebbde7b6dd12f2f00a2f5f095c8803da36af",
+      "bytes": 6195,
+      "ownedChange": true
+    },
+    {
+      "path": "tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts",
+      "sha256": "e612a7f15e0eb170154fb014959ba802c54d87ef9b8eb606d17ac13105128a73",
+      "bytes": 4441,
+      "ownedChange": true
+    },
+    {
+      "path": "shared/schema.ts",
+      "sha256": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9",
+      "bytes": 862248,
+      "ownedChange": false
+    },
+    {
+      "path": "server/routes/c2c/artifacts.ts",
+      "sha256": "b5e73bfbeb05bb0b88837abc2b945e67e5c634ee0b30a70964c41ba9e5bd6440",
+      "bytes": 170486,
+      "ownedChange": false
+    },
+    {
+      "path": "server/routes/concept2cure.ts",
+      "sha256": "28290c03d5f35dab6495f84d6203dabb84f29e315de332d81282c04e55145d16",
+      "bytes": 109329,
+      "ownedChange": false
+    },
+    {
+      "path": "scripts/ci/check-journey-migration-reachability.mjs",
+      "sha256": "6e529d2cb5c21cb1228bf943de907282b821e6d476fb047681c9676731651521",
+      "bytes": 6857,
+      "ownedChange": false
+    },
+    {
+      "path": "scripts/ci/model-migration-agreement-baseline.json",
+      "sha256": "f184f667deaac78ab073678f81aee2ca948f84985587d883709d8c4b08652dd9",
+      "bytes": 3565,
+      "ownedChange": false
+    },
+    {
+      "path": "scripts/ci/duplicate-table-ddl-baseline.json",
+      "sha256": "3b3291d83e22edc4699bc150df2b344ba2723b7aef8c573226924f9d8f667eb7",
+      "bytes": 32447,
+      "ownedChange": false
+    },
+    {
+      "path": "scripts/ci/migration-guard-order-baseline.json",
+      "sha256": "c708d34b915f55830c182e1bd9f40069d4015dbc34f7ba61a2bdd9fdeefdbda9",
+      "bytes": 247,
+      "ownedChange": false
+    },
+    {
+      "path": "scripts/ci/migration-drop-safety-baseline.json",
+      "sha256": "94b880098a74216bc54deeca912aba95c1571443d87ddb16db44da04087bc99b",
+      "bytes": 4519,
+      "ownedChange": false
+    }
+  ]
+}
