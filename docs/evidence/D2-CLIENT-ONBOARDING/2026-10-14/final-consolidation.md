@@ -51,9 +51,12 @@ overlap this consolidated run.
 
 The pinned full-history scan at the captured repair head passed with zero
 findings after seven exact, proven checksum dispositions. The independently
-scanned additional upstream range also had zero findings. Final committed
-range/hosted verdicts are recorded separately when available; none of this
-asserts that older failed workflow runs changed their conclusions.
+scanned additional upstream range also had zero findings. The pinned scanner
+then verified every committed addition from the full-history-verified repair
+head through final code merge `bbe4cee7152bbe0cb38adff52a454af1f04fb93b`:
+exit zero, zero findings. [The safe committed-range record](final-commit-range-scan.json)
+identifies the exact revisions and scanner settings. Hosted reruns are
+separate evidence; older failed workflow runs retain their conclusions.
 
 The original isolated hosted browser proof and local bundled-initialization
 proof retain the boundaries described in [hosted verification](hosted-verification.md)
