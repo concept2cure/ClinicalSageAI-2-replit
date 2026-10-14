@@ -1,0 +1,39 @@
+{
+  "exitCode": 1,
+  "sourceUnchanged": true,
+  "log": "/tmp/retained-report-pack-red/red-output.log",
+  "testCopy": "/tmp/retained-report-pack-red/report-pack-red.test.ts",
+  "config": "/tmp/retained-report-pack-red/vitest.red.config.mjs",
+  "setupFiles": [],
+  "sourcePins": [
+    {
+      "path": "server/services/report-os/pdf/run-pdf.ts",
+      "bytes": 12021,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b5227dd3cb923869b345e282362dcaacd334498c09e2b0b4aad86f1cdd5b8c1b"
+    },
+    {
+      "path": "server/services/report-os/pdf/bundle-pdf.ts",
+      "bytes": 3348,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c659c01f2f7422000fac6b3c790d5e0c06429f5cf05dc89ce94bfb5def7a4bff"
+    },
+    {
+      "path": "server/services/report-os/pdf/writer.ts",
+      "bytes": 12163,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5d90c209c355dec3eab5bab62479a9c618c62548002ca435e9da18bc1ca6a38a"
+    }
+  ],
+  "limitation": "Five prospective packet cases exercise the absent builder; the sixth exercises current run PDF missing signature presentation. Renderer inputs are synthetic; no authorization, database, provider or clinical qualification.",
+  "counts": {
+    "numTotalTestSuites": 2,
+    "numPassedTestSuites": 0,
+    "numFailedTestSuites": 2,
+    "numTotalTests": 6,
+    "numPassedTests": 0,
+    "numFailedTests": 6,
+    "numPendingTests": 0,
+    "numTodoTests": 0
+  }
+}

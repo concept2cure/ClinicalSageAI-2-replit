@@ -1,0 +1,42 @@
+2026-10-14T06:43:40.1921695Z
+2026-10-14T06:43:40.1925265Z  FAIL  tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+2026-10-14T06:43:40.1933082Z AssertionError: {"success":false,"error":"PROJECT_ACTOR_ACCESS_DENIED","message":"The actor is not a current active member of this organization."}: expected 403 to be 201 // Object.is equality
+2026-10-14T06:43:40.1934072Z
+2026-10-14T06:43:40.1934241Z - Expected
+2026-10-14T06:43:40.1934533Z + Received
+2026-10-14T06:43:40.1934682Z
+2026-10-14T06:43:40.1934802Z - 201
+2026-10-14T06:43:40.1935039Z + 403
+2026-10-14T06:43:40.1935163Z
+2026-10-14T06:43:40.1935671Z  ❯ tests/golden-journeys/cer-eu-mdr.journey.test.ts:290:52
+2026-10-14T06:43:40.2071822Z     288|         indication: 'Continuous glucose monitoring in adults',
+2026-10-14T06:43:40.2073349Z     289|       });
+2026-10-14T06:43:40.2075457Z     290|       expect(res.status, JSON.stringify(res.body)).toBe(201);
+2026-10-14T06:43:40.2077585Z        |                                                    ^
+2026-10-14T06:43:40.2079020Z     291|       programId = res.body.data.id;
+2026-10-14T06:43:40.2081099Z     292|       anchorProjectId = res.body.meta.projectAnchorId;
+2026-10-14T06:43:40.2082995Z  ❯ JourneyRecorder.step tests/golden-journeys/harness.ts:393:24
+2026-10-14T06:43:40.2084631Z  ❯ tests/golden-journeys/cer-eu-mdr.journey.test.ts:282:21
+2026-10-14T06:43:40.2085486Z
+2026-10-14T06:43:40.2086133Z ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+2026-10-14T06:43:40.2086727Z
+2026-10-14T06:43:40.2088512Z  FAIL  tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+2026-10-14T06:43:40.2092119Z AssertionError: {"success":false,"error":"PROJECT_ACTOR_ACCESS_DENIED","message":"The actor is not a current active member of this organization."}: expected 403 to be 201 // Object.is equality
+2026-10-14T06:43:40.2093775Z
+2026-10-14T06:43:40.2094231Z - Expected
+2026-10-14T06:43:40.2094928Z + Received
+2026-10-14T06:43:40.2095370Z
+2026-10-14T06:43:40.2095795Z - 201
+2026-10-14T06:43:40.2096431Z + 403
+2026-10-14T06:43:40.2096821Z
+2026-10-14T06:43:40.2097820Z  ❯ tests/golden-journeys/device-510k-estar.journey.test.ts:384:52
+2026-10-14T06:43:40.2249649Z     382|         deviceClassification: { flags: [] },
+2026-10-14T06:43:40.2250840Z     383|       });
+2026-10-14T06:43:40.2252530Z     384|       expect(res.status, JSON.stringify(res.body)).toBe(201);
+2026-10-14T06:43:40.2254028Z        |                                                    ^
+2026-10-14T06:43:40.2255144Z     385|       programId = res.body.data.id;
+2026-10-14T06:43:40.2256421Z     386|       anchorProjectId = res.body.meta.projectAnchorId;
+2026-10-14T06:43:40.2257765Z  ❯ JourneyRecorder.step tests/golden-journeys/harness.ts:393:24
+2026-10-14T06:43:40.2258986Z  ❯ tests/golden-journeys/device-510k-estar.journey.test.ts:372:21
+2026-10-14T06:43:40.2259588Z
+2026-10-14T06:43:40.2259997Z ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯

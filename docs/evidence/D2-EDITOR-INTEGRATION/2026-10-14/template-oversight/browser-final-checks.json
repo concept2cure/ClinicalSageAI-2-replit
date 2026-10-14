@@ -1,0 +1,48 @@
+{
+  "status": "pass",
+  "productionFrozenDuringCapture": true,
+  "contexts": 4,
+  "cases": 24,
+  "stageCaptures": 72,
+  "prefillCallbacks": 96,
+  "editorCounts": [
+    1
+  ],
+  "viewportMin": [
+    {
+      "label": "desktop-light",
+      "width": 1104,
+      "height": 320
+    },
+    {
+      "label": "desktop-dark",
+      "width": 1104,
+      "height": 320
+    },
+    {
+      "label": "touch-light",
+      "width": 298,
+      "height": 110
+    },
+    {
+      "label": "touch-dark",
+      "width": 298,
+      "height": 110
+    }
+  ],
+  "completeVisibleParagraphs": 48,
+  "violations": 0,
+  "incompleteRules": [
+    "aria-prohibited-attr",
+    "color-contrast",
+    "label-content-name-mismatch"
+  ],
+  "mutations": 0,
+  "unexpectedEndpoints": 0,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "relativeImportProof": "pass",
+  "sourcePinMatch": true,
+  "fixturePinMatch": true,
+  "syntheticApisOnly": true
+}

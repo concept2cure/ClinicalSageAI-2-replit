@@ -43,8 +43,11 @@ function confirmation(f: DispositionFixture, changed?: 'deleted' | 'owner' | 'le
 describe('confirmation rechecks the current owned live program after reservations', () => {
   it.each(['deleted', 'owner', 'lead'] as const)('refuses a program %s change before any decision or audit is committed', async change => {
     const f = await harness.seed();
+    // A lead change is relevant to a persisted member. The shared harness's
+    // manager retains organization mutation authority independently of lead.
+    await f.pg.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=42", [f.org]);
     await expect(confirmation(f, change).apply()).rejects.toMatchObject({
-      status: change === 'lead' ? 403 : 404, code: change === 'lead' ? 'FORBIDDEN' : 'NOT_FOUND',
+      status: change === 'lead' ? 403 : 404, code: change === 'lead' ? 'FORBIDDEN' : 'PROJECT_NOT_FOUND',
     });
     expect(await f.records()).toEqual([]);
     expect(await f.audits()).toEqual([]);

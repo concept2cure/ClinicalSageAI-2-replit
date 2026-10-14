@@ -39,6 +39,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 beforeEach(() => {
+  localStorage.clear();
   window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_method: string, url: string) => {
@@ -50,7 +51,7 @@ beforeEach(() => {
     return ok({ success: true });
   });
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); delete window.C2C_PROJECT; delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO; clearEditorTarget(); });
+afterEach(() => { cleanup(); localStorage.clear(); vi.unstubAllGlobals(); delete window.C2C_PROJECT; delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO; clearEditorTarget(); });
 
 function stream(text: string, turnRecord: AnaTurnRecordStatus) {
   return new ReadableStream<Uint8Array>({ start(controller) {
@@ -103,7 +104,7 @@ describe('AnA remedies reach the existing editor', () => {
     expect(document.querySelector('.tiptap ins[data-author-id="ana"]')?.textContent).toBe('24 months');
     expect(document.querySelector('.tiptap ins')?.getAttribute('data-source-record')).toBe(TURN);
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
-    expect(screen.getByText(/This fix has not been saved or approved/)).toBeTruthy();
+    expect(screen.getByText(/Adding the suggestion did not save or approve the document/)).toBeTruthy();
   });
 
   it('refuses a stale saved base, leaving the current section intact', async () => {
@@ -179,6 +180,44 @@ describe('AnA remedies reach the existing editor', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }));
     expect(onNav).toHaveBeenCalledWith('document-authoring');
     expect(peekEditorTarget()).toMatchObject({ docId: 'cccccccc-0000-4000-8000-000000000001', programId: PID });
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+});
+
+describe('tracked remedy review lifecycle', () => {
+  it('offers the same guarded remedy again after every tracked part is rejected', async () => {
+    const { apply } = await prepareFix();
+    fireEvent.click(apply);
+    await screen.findByRole('button', { name: 'Added as tracked suggestion' });
+    fireEvent.click(screen.getByRole('button', { name: /suggested edit/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reject all' }));
+    await waitFor(() => expect(document.querySelector('.tiptap ins, .tiptap del')).toBeNull());
+    expect(document.querySelector('.tiptap')?.textContent).toContain('18 months');
+    const retry = screen.queryByRole('button', { name: 'Apply as tracked suggestion' });
+    expect(retry, document.querySelector('.authoring-remedy-note')?.textContent ?? 'No status').toBeTruthy();
+    expect((retry as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(retry!);
+    await waitFor(() => expect(document.querySelector('.tiptap ins[data-author-id="ana"]')?.textContent).toBe('24 months'));
+    expect(document.querySelector('.tiptap del[data-author-id="ana"]')?.textContent).toBe('18 months');
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it.each(['accept all', 'accept part then reject rest'])('keeps %s settled without allowing another application', async mode => {
+    const { apply } = await prepareFix();
+    fireEvent.click(apply);
+    await screen.findByRole('button', { name: 'Added as tracked suggestion' });
+    fireEvent.click(screen.getByRole('button', { name: /suggested edit/i }));
+    if (mode === 'accept all') fireEvent.click(screen.getByRole('button', { name: 'Accept all' }));
+    else {
+      fireEvent.click(screen.getAllByRole('button', { name: 'Accept' })[0]);
+      expect(document.querySelector('.tiptap ins, .tiptap del')).toBeTruthy();
+      expect((screen.getByRole('button', { name: 'Added as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.click(screen.getByRole('button', { name: 'Reject all' }));
+    }
+    await waitFor(() => expect(document.querySelector('.tiptap ins, .tiptap del')).toBeNull());
+    expect(screen.getByText(/tracked change has been reviewed in the editor/)).toBeTruthy();
+    expect((screen.getByRole('button', { name: 'Added as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Apply as tracked suggestion' })).toBeNull();
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
   });
 });

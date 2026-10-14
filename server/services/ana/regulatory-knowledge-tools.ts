@@ -236,13 +236,15 @@ const indClip = (value: string | null | undefined, max: number) => value && valu
 function indDeliverableRow(d: IndDocumentCatalog['deliverables'][number]): Record<string, unknown> {
   return { kind: 'deliverable', id: d.id, title: indClip(d.title, 120), titleClipped: d.title.length > 120,
     phaseId: d.phaseId, taskId: d.taskId, sectionCodes: d.sectionCodes, artifactTypes: d.artifactTypes,
-    aiDraftable: d.aiDraftable, description: indClip(d.description, 180), descriptionClipped: (d.description?.length ?? 0) > 180 };
+    aiDraftable: d.aiDraftable, template_id: d.template?.id, template_kind: d.template?.kind,
+    description: indClip(d.description, 180), descriptionClipped: (d.description?.length ?? 0) > 180 };
 }
 
 function indSectionRow(s: IndDocumentCatalog['sections'][number]): Record<string, unknown> {
   return { kind: 'section', id: s.id, code: s.code, title: indClip(s.title, 120), titleClipped: s.title.length > 120,
     phaseId: s.phaseId, taskId: s.taskId, required: s.required, aiDraftable: s.aiDraftable,
-    authoringMode: s.authoringMode, regulatoryRef: indClip(s.regulatoryRef, 180), regulatoryRefClipped: s.regulatoryRef.length > 180 };
+    authoringMode: s.authoringMode, template_id: s.template?.id, template_kind: s.template?.kind,
+    regulatoryRef: indClip(s.regulatoryRef, 180), regulatoryRefClipped: s.regulatoryRef.length > 180 };
 }
 
 function indPageEntries(catalog: IndDocumentCatalog, request: IndPageRequest): Array<Record<string, unknown>> {

@@ -1,0 +1,184 @@
+{
+  "workstream": "W1 / D2 reporting and analytics",
+  "phase": "Regional filing applicability before any later Free-plan revision",
+  "scope": "Approved six production files, five new tests, four existing test adaptations and design document",
+  "qualification": {
+    "originalRed": {
+      "files": 4,
+      "failed": 38,
+      "passed": 14,
+      "skipped": 0,
+      "durationSeconds": 9.91
+    },
+    "finalScopedGreen": {
+      "files": 9,
+      "passed": 146,
+      "skipped": 0,
+      "durationSeconds": 12.02
+    },
+    "insightsUiRegression": {
+      "files": 18,
+      "passed": 169,
+      "skipped": 0,
+      "durationSeconds": 35.11
+    },
+    "lint": {
+      "errors": 0,
+      "warningsBefore": 7,
+      "warningsAfter": 7,
+      "newFileRuleSeverityWarningCounts": 0,
+      "warningsOutsideLegacyInsights": 0
+    },
+    "native": "Separate auth-owned test placed; execution pending root slot and not claimed here",
+    "compiler": "Root-owned, not claimed here"
+  },
+  "sourcePins": [
+    {
+      "path": "server/services/report-os/regional/filing-applicability.ts",
+      "sha256": "9ca395e53f099aeeb676c618bec1e5c156653f7da8f92f191a45e56003f25b58",
+      "bytes": 7491
+    },
+    {
+      "path": "server/services/report-os/regional/filing-readiness.ts",
+      "sha256": "6bc47b14fb8a1a317429a024dd6a20c15e3336e256510a299b3540c91ff90a63",
+      "bytes": 24753
+    },
+    {
+      "path": "server/routes/insights-canvas-routes.ts",
+      "sha256": "8ff460812a12fe664751c54a6df07ba1ca42e9e7b9c76245a270d1561b358c24",
+      "bytes": 32336
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+      "sha256": "73dff8e364d28848afceec3353d0912d6ada5abe57d9f03679161d88c16639a5",
+      "bytes": 120711
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/insightsLibraryShared.tsx",
+      "sha256": "a6960bea7e9bac82388e405d14666797ce010a167c6c22252658f9d08f50f350",
+      "bytes": 7935
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/InsightsCatalogPanel.tsx",
+      "sha256": "3c42ac23ca3609e4d1e5f66ac47c4fa73bb3263d45bb097da47658d20ed97fcf",
+      "bytes": 14789
+    },
+    {
+      "path": "server/routes/__tests__/insights-canvas-catalog.test.ts",
+      "sha256": "4d318ceb170d04329b0fc8c57eae681706c86dce23701d042150ac2eb81a013e",
+      "bytes": 14200
+    },
+    {
+      "path": "server/routes/__tests__/insights-canvas-open-program.test.ts",
+      "sha256": "01a65e3854c388694e8817ea0a7cda109fd943ba7c6914aeb8f9f291d1251bee",
+      "bytes": 8396
+    },
+    {
+      "path": "server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts",
+      "sha256": "af1e9764dbb06407c4a0dca18ad80528a3759c7b3201cf823040c473b44809d6",
+      "bytes": 6738
+    },
+    {
+      "path": "server/services/report-os/regional/__tests__/filing-readiness.test.ts",
+      "sha256": "cf9bdfb64726f5f4f71c86d46cf3599e4dbc75dea1b027ec20dcc0e8a43610a4",
+      "bytes": 15206
+    },
+    {
+      "path": "server/services/report-os/regional/__tests__/filing-applicability.test.ts",
+      "sha256": "e03f456dc751a56fbd1bef02369de91261ef7bfd707c075b36a2d6344ee826ab",
+      "bytes": 4157
+    },
+    {
+      "path": "server/services/report-os/regional/__tests__/filing-current-context.test.ts",
+      "sha256": "7cfdf05849a9a81ebfa897efd7e91901bf4f6bcc289fedaef6c1861ef1ec8b79",
+      "bytes": 2991
+    },
+    {
+      "path": "server/routes/__tests__/insights-canvas-regional-filing.test.ts",
+      "sha256": "3c32cc781b6640b4c1daf45002518310df46b0496254c8a5e9f3cb05e5e6c6a5",
+      "bytes": 14728
+    },
+    {
+      "path": "server/routes/__tests__/report-os-regional-context.test.ts",
+      "sha256": "11f3fe2ba0fa646f6562e9c07d4d6eab9f4388f77aafc8041467a33447b31926",
+      "bytes": 6839
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx",
+      "sha256": "b9fb0b36a6ad1b5f4f583ab3d0f3cbe9146a0ef2ee0e3ad8ccc940b9e5449400",
+      "bytes": 4587
+    },
+    {
+      "path": "docs/design/REGIONAL_REPORT_APPLICABILITY.md",
+      "sha256": "13ac358eface521ef79353feaa3610b4541226e016adbbd3e21c7e594a76ca23",
+      "bytes": 9195
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "artifacts/overview-original-red.log",
+      "sha256": "bd337e3c488652b3aa5bc969bd049d2512a202a3e5eeb5f2aaf7227075d89353",
+      "bytes": 16709
+    },
+    {
+      "path": "artifacts/regional-overview-original-22.red.test.ts.source",
+      "sha256": "0b701c9689d77a2dd9d6434e655b990e7b0ce628fb386334e4b2ede46adfa004",
+      "bytes": 13546
+    },
+    {
+      "path": "artifacts/current-original-red.log",
+      "sha256": "9c9e70e0817aef6cfa7a530f8d78bf54bab1933ea3b09374af9b2a4e8bba408a",
+      "bytes": 78385
+    },
+    {
+      "path": "artifacts/scoped-first-green.log",
+      "sha256": "c5983ef0a14bd627007254a2631183fbe9e2cfad69de0b25ab93f0c35351ba2e",
+      "bytes": 33825
+    },
+    {
+      "path": "artifacts/scoped-final-green.log",
+      "sha256": "c9cb35e35b83b96273379666ab9dc2e729d4bb41e34734c2783b32ed217655d9",
+      "bytes": 33825
+    },
+    {
+      "path": "artifacts/ui-regression-first-green.log",
+      "sha256": "d2f85816a620216deac4cadc4f8635c8b65994e5fe7c5500cd19799c63dbe8a2",
+      "bytes": 33725
+    },
+    {
+      "path": "artifacts/baseline-lint.json",
+      "sha256": "5fb1dd49c9bd9dbbc724afb0db355a24cb77c28e524a260bf265855a83b32f2a",
+      "bytes": 127868
+    },
+    {
+      "path": "artifacts/scoped-first-lint.json",
+      "sha256": "79f3212590e7443a4c47ff68b4e9f1420b6737a4b438f7deb119667aa15bdf9a",
+      "bytes": 162538
+    },
+    {
+      "path": "artifacts/scoped-final-lint.json",
+      "sha256": "20e14d0c17a366d35802ba8ba73fffbd4180bb608442e0f23a43d932a5aeedb1",
+      "bytes": 129513
+    },
+    {
+      "path": "artifacts/lint-comparison.json",
+      "sha256": "945066d659dbfa4122a566882375c629b663df4b05ded6087a332e65b32ddcb7",
+      "bytes": 394
+    },
+    {
+      "path": "artifacts/bounded-check-results.json",
+      "sha256": "04ac59df5fe219daa3b114a99b37c2de2ba3e991b524c2d4e761d2333f69eaad",
+      "bytes": 4722
+    },
+    {
+      "path": "artifacts/final-qualified-source-pins.json",
+      "sha256": "8047adef9bf1438ccd2ef5e05c1980b0e3364381d5b81542aed4bf756bf81c3d",
+      "bytes": 3285
+    },
+    {
+      "path": "artifacts/preparation-source-pins.pre-entitlement-rebase.json",
+      "sha256": "b0f37df41d926ba3b5b541187407ae610adc5691cce6743501ff918fbd75765e",
+      "bytes": 1547
+    }
+  ]
+}

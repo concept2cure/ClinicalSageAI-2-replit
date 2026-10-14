@@ -1,0 +1,23 @@
+{
+  "pre_correction_source_sha256": "d476f4a8644bbf8c7107c4daa5b71ecf629d704769f6954f914e4722f3320cc6",
+  "reconstructed_source_matches": true,
+  "stdin_before_exit_code": 0,
+  "before_warnings": 5,
+  "after_warnings": 5,
+  "new_warning_growth": 0,
+  "before_warning_rules": [
+    "max-lines",
+    "max-lines-per-function",
+    "complexity",
+    "complexity",
+    "complexity"
+  ],
+  "after_warning_rules": [
+    "max-lines",
+    "max-lines-per-function",
+    "complexity",
+    "complexity",
+    "complexity"
+  ],
+  "unchanged_warning_classes": true
+}

@@ -12,6 +12,7 @@
 
 import type { Request, Response } from 'express';
 import { getPool, pool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb.js';
 import { currentTenantOrgUuid } from '../../db/currentTenant.js';
 import {
   getOrCreateThread,
@@ -605,6 +606,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           '../../services/ana-session-bootstrap.js'
         );
         const block = await sessionBootstrapBlockFor({
+          db: requestPgClient(req),
           priorMessageCount: previousMessages.length,
           organizationId: numericOrgId ?? null,
           userId: numericUserId,
@@ -842,6 +844,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: resolveMaxRounds('balanced'),
         toolContext: {
+          sqlClient: requestPgClient(req),
           organizationId: numericOrgId,
           userId: numericUserId || null,
           projectId: turnProjectId,

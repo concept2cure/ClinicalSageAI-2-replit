@@ -2,6 +2,7 @@
  * biotech preparation questions. No model, tenant data, writes or readiness decision.
  */
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { indTemplateReferencePage } from './ind-template-reference';
 import {
   buildDocumentPreparation, resolveDocumentPreparationScope, PREPARATION_MARKETS, PREPARATION_TOPICS,
   type PreparationInput, type PreparationMarket, type PreparationTopic,
@@ -101,6 +102,10 @@ export async function documentTemplateTool(input: Record<string, unknown>): Prom
 }
 
 async function runTemplateRequest(request: TemplateRequest): Promise<string> {
+  if (request.templateId) {
+    const ind = indTemplateReferencePage(request.templateId, request);
+    if (ind !== null) return ind;
+  }
   const prepInput = preparationInput(request);
   // Explicit false removes the brief, never exact identity or market validation.
   resolveDocumentPreparationScope(prepInput);

@@ -9,6 +9,7 @@ import {
   resolveAuthoringSectionScope,
   type AuthoringObjectScope,
   type AuthoringPermissionAction,
+  type AuthoringPermissionDecision,
 } from '../services/authoring/authoring-permissions';
 
 const logger = createScopedLogger('authoring-object-authorization');
@@ -178,16 +179,15 @@ async function resolveCitationScope(
  * out. 'edit' also refuses a sealed document (FROZEN, APPROVED, …) with 409: a
  * review request would reopen verdicts on a record that is already signed.
  *
- * A broader match on all of /documents/ was considered and rejected: it also
- * covers /documents/:id/review, the verdict, whose reviewers are named by
- * POST /documents/:id/request-review — a flow that writes only
- * authoring_reviews and grants no doc_permissions row — so classifying the
- * verdict as 'review'/'edit' here would 403 every non-admin reviewer using the
- * review workflow as designed. The verdict stays unclassified.
+ * Native review reads require whole-document view access; verdicts require
+ * review access. The service independently rechecks current membership, ACL,
+ * assignment, authorship and saved content on its request-pinned transaction.
  */
 const DOCUMENTS_ROUTES: ReadonlyArray<{ pattern: RegExp; action: AuthoringPermissionAction }> = [
   { pattern: /^\/documents\/([^/]+)\/tracked-change-decisions(?:\/bulk)?$/i, action: 'edit' },
   { pattern: /^\/documents\/([^/]+)\/request-review$/i, action: 'edit' },
+  { pattern: /^\/documents\/([^/]+)\/review$/i, action: 'review' },
+  { pattern: /^\/documents\/([^/]+)\/reviews$/i, action: 'view' },
 ];
 
 /** The classified /documents/:id route `path` names, with its document id, or null. */
@@ -288,13 +288,30 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
  * necessary but not sufficient to mutate a governed document. Any policy-store
  * or query failure returns 503 and denies the write.
  */
+function unavailableObjectRefusal(res: Response, decision: AuthoringPermissionDecision): Response | null {
+  if (decision.reason === 'object-not-found') return res.status(404).json({
+    error: { code: 'AUTHORING_OBJECT_NOT_FOUND', message: 'Authoring object not found.' },
+  });
+  if (decision.reason === 'document-immutable') return res.status(409).json({
+    error: { code: 'AUTHORING_DOCUMENT_IMMUTABLE',
+      message: `Document status ${decision.scope?.documentStatus ?? 'unknown'} does not permit this action.` },
+  });
+  return null;
+}
+
+function skipsObjectAuthorization(req: Request, path: string | null): boolean {
+  if (path == null) return true;
+  if (req.method === 'GET' && /^\/documents\/[^/]+\/reviews$/i.test(path)) return false;
+  return SAFE_METHODS.has(req.method);
+}
+
 export async function authoringObjectAuthorization(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void | Response> {
   const authoringPath = relativeAuthoringPath(req);
-  if (authoringPath == null || SAFE_METHODS.has(req.method)) {
+  if (skipsObjectAuthorization(req, authoringPath)) {
     next();
     return;
   }
@@ -310,7 +327,7 @@ export async function authoringObjectAuthorization(
     });
   }
 
-  const target = targetForRequest(req, tenantId, authoringPath);
+  const target = targetForRequest(req, tenantId, authoringPath!);
   if (!target) {
     next();
     return;
@@ -325,19 +342,8 @@ export async function authoringObjectAuthorization(
       action: target.action,
     });
 
-    if (decision.reason === 'object-not-found') {
-      return res.status(404).json({
-        error: { code: 'AUTHORING_OBJECT_NOT_FOUND', message: 'Authoring object not found.' },
-      });
-    }
-    if (decision.reason === 'document-immutable') {
-      return res.status(409).json({
-        error: {
-          code: 'AUTHORING_DOCUMENT_IMMUTABLE',
-          message: `Document status ${decision.scope?.documentStatus ?? 'unknown'} does not permit this action.`,
-        },
-      });
-    }
+    const refusal = unavailableObjectRefusal(res, decision);
+    if (refusal) return refusal;
     if (!decision.allowed) {
       logger.warn('Authoring object mutation denied', {
         tenantId,

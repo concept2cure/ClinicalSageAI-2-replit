@@ -48,7 +48,8 @@ export interface LibraryReportType {
   /** The records actually counted, which can differ from the run's filing scope. */
   computedScope?: string | null;
   availabilityReason?: string | null;
-  availabilityState?: 'available' | 'not-computed' | 'scope-required' | 'disabled' | 'unregistered';
+  reasonCode?: string | null;
+  availabilityState?: 'available' | 'not-computed' | 'scope-required' | 'disabled' | 'unregistered' | 'filing-context-required' | 'not-applicable' | 'context-unavailable';
   runScopeType?: string | null;
   runScopeId?: string | null;
 }

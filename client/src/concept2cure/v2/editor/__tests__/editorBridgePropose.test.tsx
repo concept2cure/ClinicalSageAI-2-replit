@@ -55,6 +55,7 @@ vi.mock('../RichSectionEditor', async (importOriginal) => {
         return { ok: true };
       },
       insertSuggestion: () => true,
+      canProposeReplacement: () => true,
       getContent: () => props.value ?? '',
     }));
     return <div className="tiptap" data-testid="editor-stub" />;
@@ -190,6 +191,7 @@ async function openBridge(): Promise<() => EditorBridge> {
   await vi.waitFor(
     () => {
       if (!latest || !document.querySelector('.dcv-workbench .tiptap')) throw new Error('no editor bridge yet');
+      if (latest.editable && !latest.canPropose?.()) throw new Error('editor not ready yet');
     },
     { timeout: 4000 },
   );
@@ -200,6 +202,7 @@ async function openBridge(): Promise<() => EditorBridge> {
 const PROPOSAL = { sectionId: 'S1', quote: '18 months', replacement: '24 months' };
 
 beforeEach(() => {
+  localStorage.clear();
   mockApi();
   clearEditorTarget();
   stub.on = false;
@@ -208,6 +211,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   clearEditorTarget();
 });
 
@@ -250,7 +254,14 @@ describe('EditorBridge.insert — AnA\u2019s answer goes in only under the gover
 describe('EditorBridge.propose — which section, and which version of it', () => {
   it('redlines the open section when the base hash is the section as loaded', async () => {
     const bridge = await openBridge();
-    await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({ ok: true });
+    const result = await bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS);
+    expect(result).toEqual(expect.objectContaining({ ok: true, receipt: {
+      docId: DOC, sectionId: 'S1', applicationId: expect.any(String), editorInstanceId: expect.any(String),
+    } }));
+    if (!result.ok || !result.receipt) throw new Error('No scoped proposal receipt');
+    expect(bridge().getProposalState?.(result.receipt)).toBe('pending');
+    expect(bridge().getProposalState?.({ ...result.receipt, sectionId: 'other-section' })).toBe('unavailable');
+    expect(bridge().getProposalState?.({ ...result.receipt, docId: 'other-document' })).toBe('unavailable');
     const del = document.querySelector('.dcv-workbench del[data-author-id="ana"]');
     const ins = document.querySelector('.dcv-workbench ins[data-author-id="ana"]');
     expect(del?.textContent).toBe('18 months');
@@ -263,7 +274,7 @@ describe('EditorBridge.propose — which section, and which version of it', () =
     // The same instant written with milliseconds is the same base.
     await expect(
       bridge().propose({ ...PROPOSAL, baseUpdatedAt: '2026-09-30T12:00:00.000Z' }, ANA, ADMITS),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toEqual(expect.objectContaining({ ok: true }));
     expect(document.querySelector('.dcv-workbench del[data-author-id="ana"]')?.textContent).toBe('18 months');
   });
 
@@ -335,7 +346,7 @@ describe('EditorBridge.propose — text the editor cannot strike', () => {
     // The plain words beside it still take a proposal.
     await expect(
       bridge().propose({ ...PROPOSAL, baseSha256: sha256(withCode) }, ANA, ADMITS),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toEqual(expect.objectContaining({ ok: true }));
   });
 });
 
@@ -343,7 +354,7 @@ describe('EditorBridge.propose — after a save', () => {
   it('a base read before the save is stale after it, through the old bridge and the new one', async () => {
     const bridge = await openBridge();
     const before = bridge();
-    await expect(before.propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({ ok: true });
+    await expect(before.propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual(expect.objectContaining({ ok: true }));
 
     // Save the redlined section the way the person does: a reason, then Save.
     fireEvent.change(await screen.findByTestId('change-reason'), {
@@ -374,7 +385,7 @@ describe('EditorBridge.propose — after a save', () => {
     // …and takes the bases of what was saved.
     await expect(
       bridge().propose({ ...proposal, baseSha256: sha256(patched!), baseUpdatedAt: SAVED_AGAIN_AT }, ANA, ADMITS),
-    ).resolves.toEqual({ ok: true });
+    ).resolves.toEqual(expect.objectContaining({ ok: true }));
   });
 });
 
@@ -394,7 +405,7 @@ describe('EditorBridge.propose — a sealed document', () => {
     stub.on = true;
     // The control: an open document reaches the (always-editable) editor.
     const open = await openBridge();
-    await expect(open().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({ ok: true });
+    await expect(open().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual(expect.objectContaining({ ok: true }));
     expect(stub.calls).toBe(1);
     cleanup();
 
@@ -441,7 +452,7 @@ type Act = (ed: Editor) => void;
 const ask = (ed: Editor, quote: string, replacement: string, ctx: { prefix?: string; suffix?: string } = {}) =>
   proposeReplacement(ed, { quote, replacement, author: ANA, ...ctx });
 const propose = (quote: string, replacement: string): Act => (ed) => {
-  expect(ask(ed, quote, replacement)).toEqual({ ok: true });
+  expect(ask(ed, quote, replacement)).toEqual(expect.objectContaining({ ok: true }));
 };
 /** The person selects `quote` and asks for `draft` over it. */
 const draftOver = (quote: string, draft: string): Act => (ed) => {
@@ -554,14 +565,14 @@ describe('round two, D4 — the person\u2019s selection does not grow over AnA\u
   it.each(['25 C', 'at 25 C', ' for use'])('a selection of %j keeps exactly its words', (words) => {
     const ed = makeEditor(STORE);
     ed.commands.setTextSelection(computeMatches(ed.state.doc, words, true)[0]);
-    expect(ask(ed, '25 C', '30 C')).toEqual({ ok: true });
+    expect(ask(ed, '25 C', '30 C')).toEqual(expect.objectContaining({ ok: true }));
     expect(ed.state.doc.textBetween(ed.state.selection.from, ed.state.selection.to)).toBe(words);
   });
 
   it('a caret at the end of the quote stays there, before AnA\u2019s words', () => {
     const ed = makeEditor(STORE);
     ed.commands.setTextSelection(computeMatches(ed.state.doc, '25 C', true)[0].to);
-    expect(ask(ed, '25 C', '30 C')).toEqual({ ok: true });
+    expect(ask(ed, '25 C', '30 C')).toEqual(expect.objectContaining({ ok: true }));
     expect(ed.state.doc.textBetween(1, ed.state.selection.from)).toBe('Store at 25 C');
   });
 });
@@ -572,7 +583,7 @@ describe('round two, D5 — real text that looks like a reader marker still anch
     ['a suffix line', '<p>Assay is</p><p>1. high</p><p>Assay is</p><p>low</p>', { suffix: '\n1. high' }, 0],
   ])('%s that is a paragraph\u2019s own text', (_case, content, ctx, struck) => {
     const ed = makeEditor(content);
-    expect(ask(ed, 'Assay is', 'X', ctx)).toEqual({ ok: true });
+    expect(ask(ed, 'Assay is', 'X', ctx)).toEqual(expect.objectContaining({ ok: true }));
     const paras = Array.from(ed.view.dom.querySelectorAll('p'));
     expect(paras.findIndex((p) => p.querySelector('del'))).toBe(struck);
     expect(ed.view.dom.querySelectorAll('del')).toHaveLength(1);
@@ -581,7 +592,7 @@ describe('round two, D5 — real text that looks like a reader marker still anch
   it('still reads a real marker past, and still refuses context that fits neither way', () => {
     const list = '<ul><li><p>Assay is 98.0%.</p></li><li><p>Assay is 99.1%.</p></li></ul>';
     expect(ask(makeEditor(list), 'Assay is', 'X', { prefix: '- Other.\n- ' })).toEqual({ ok: false, reason: 'not-found' });
-    expect(ask(makeEditor(list), 'Assay is', 'X', { prefix: '- Assay is 98.0%.\n- ' })).toEqual({ ok: true });
+    expect(ask(makeEditor(list), 'Assay is', 'X', { prefix: '- Assay is 98.0%.\n- ' })).toEqual(expect.objectContaining({ ok: true }));
   });
 });
 
@@ -590,7 +601,7 @@ describe('round two, D6 — the documented trailing-paragraph limit', () => {
     // StarterKit's TrailingNode, not suggestions.ts; documented there.
     const ed = makeEditor('<p>Intro.</p><ul><li><p>Assay is 98.0%.</p></li></ul>');
     expect(ed.getHTML()).not.toMatch(/<p><\/p>$/);
-    expect(ask(ed, 'Intro.', 'Opening.')).toEqual({ ok: true });
+    expect(ask(ed, 'Intro.', 'Opening.')).toEqual(expect.objectContaining({ ok: true }));
     expect(ed.getHTML()).toMatch(/<\/ul><p><\/p>$/);
   });
 });

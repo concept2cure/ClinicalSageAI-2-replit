@@ -33,22 +33,20 @@
  * earlier verdict keeps its own document_reviewed audit row. If that read
  * fails, no one can be chosen. A task is made only for a row that comes back
  * pending; a row that comes back with a verdict was not reopened, gets no
- * task, and the receipt and the toast say the verdict stands.
+ * task, and the receipt and toast preserve its actual saved-content standing.
  *
  * ── The reviewer identity ────────────────────────────────────────────────────
- * The board decides "awaiting my review" by comparing a row's reviewer_id or
- * reviewer_email with the signed-in user's id or email (makeIsMe; trimmed,
- * case-insensitive). The roster, GET /api/task-management/assignees, gives
- * each member's users.id as a string. That is the id the session carries
- * (review-board-routes.ts reads req.user.userId), so `id` is sent exactly as
- * the roster gives it. The roster carries no email, and none is invented.
- * `name` is the roster's name, which the board shows.
+ * The board decides "awaiting my review" from the assigned user id. The
+ * roster, GET /api/task-management/assignees, gives each member's users.id as
+ * a string, sent exactly as the roster gives it. The server resolves current
+ * membership and display names from authoritative users; supplied labels
+ * confer no queue ownership or document access.
  *
  * ── Who may review, and with what access (QA 2026-10-08, j4) ────────────────
  * The author could ask herself, and a reviewer was granted nothing on the
  * document, so could neither comment nor sign the review. The route refuses
- * the document's author (409 REVIEWER_IS_AUTHOR), and this dialog does not
- * offer her (useReviewerRoster, `authorId`). When the requester may manage
+ * original authors and historical human contributors, and this dialog does
+ * not offer the original author (useReviewerRoster, `authorId`). When the requester may manage
  * the document's access (its owner or an administrator), the route grants
  * each reviewer the Reviewer role in the same transaction and answers with
  * `grants`; the receipt and the toast say who was granted it, or, in the
@@ -82,6 +80,8 @@ import {
   type Priority,
 } from './AssignReviewDialog';
 import { reviewStatusLabel, useDocumentReviews } from './ReviewTasksPanel';
+import { reviewStandingOf } from './reviewTaskState';
+import type { AuthoringReviewStanding } from '@shared/authoring/peer-review';
 
 /** One review request as the server recorded it. */
 export interface ReviewRequestReceipt {
@@ -89,6 +89,8 @@ export interface ReviewRequestReceipt {
   reviewerId: string;
   reviewer: string;
   status: string;
+  standing: AuthoringReviewStanding;
+  comments: string | null;
   /** Whether the request gave this reviewer the Reviewer role on the document
    *  (the server's `grants`); absent when the answer did not say. */
   granted?: boolean;
@@ -171,7 +173,7 @@ export function askedReviews(reviews: ReviewRequestReceipt[]): ReviewRequestRece
   return reviews.filter(r => r.status === 'pending');
 }
 
-type ReviewRow = { id?: unknown; doc_id?: unknown; reviewer_id?: unknown; reviewer_name?: unknown; reviewer_email?: unknown; review_status?: unknown };
+type ReviewRow = { id?: unknown; doc_id?: unknown; reviewer_id?: unknown; reviewer_name?: unknown; reviewer_email?: unknown; review_status?: unknown; standing?: unknown; review_comments?: unknown };
 type GrantRow = { reviewerId?: unknown; granted?: unknown; reason?: unknown };
 
 /** What the server's `grants` say about one reviewer's access; nothing when they do not say. */
@@ -189,6 +191,8 @@ function toReceipt(r: ReviewRow, grants: GrantRow[]): ReviewRequestReceipt {
     reviewerId,
     reviewer: text(r?.reviewer_name) ?? text(r?.reviewer_email) ?? reviewerId,
     status: String(r?.review_status ?? ''),
+    standing: reviewStandingOf(String(r?.review_status ?? ''), r?.standing),
+    comments: text(r?.review_comments),
     ...grantFor(grants, reviewerId),
   };
 }
@@ -312,13 +316,20 @@ export function accessSentence(reviews: ReviewRequestReceipt[]): string | null {
 
 export function sentToast(r: SendForReviewResult): string {
   const asked = askedReviews(r.reviews).map(x => x.reviewer);
-  const kept = r.reviews.filter(x => x.status !== 'pending').map(x => `${x.reviewer} (${reviewStatusLabel(x.status)})`);
+  const kept = r.reviews.filter(x => x.status !== 'pending').map(x => `${x.reviewer} (${retainedVerdict(x)})`);
   return [
     asked.length ? `Review requested from ${asked.join(', ')}. It is listed on the Review board.` : null,
     accessSentence(r.reviews),
-    kept.length ? `Not reopened; the earlier verdict stands: ${kept.join(', ')}.` : null,
+    kept.length ? `Earlier verdict retained: ${kept.join(', ')}.` : null,
     tasksSentence(r.tasks),
   ].filter(Boolean).join(' ');
+}
+
+function retainedVerdict(r: ReviewRequestReceipt): string {
+  const standing = reviewStandingOf(r.status, r.standing);
+  const binding = standing === 'current' ? 'current saved-content review'
+    : standing === 'stale' ? 'saved document has changed' : 'saved-content binding unavailable';
+  return `${reviewStatusLabel(r.status)}; ${binding}`;
 }
 
 /** The reason field: required, recorded on the audit trail, described by its rule. */
@@ -388,7 +399,8 @@ function reviewStatusLine(r: ReviewRequestReceipt): string {
   const label = reviewStatusLabel(r.status);
   return r.status === 'pending'
     ? label
-    : `${label}: their earlier verdict stands. This request did not reopen their review, so no task was created`;
+    : `${retainedVerdict(r)}. This request did not reopen their review, so no task was created` +
+      (r.comments ? `. Recorded reason: ${r.comments}` : '');
 }
 
 type TaskFate = 'created' | 'refused' | 'unknown';
@@ -412,10 +424,10 @@ function receiptHeadline(reviews: ReviewRequestReceipt[]): string {
   const asked = askedReviews(reviews).length;
   const kept = reviews.length - asked;
   if (asked === 0) {
-    return 'No review was reopened. The server kept each reviewer’s earlier verdict, so nothing new awaits review and no task was created.';
+    return 'No review was reopened. The server retained each reviewer’s earlier verdict; no new review request or task was created.';
   }
   const recorded = `Review requested. The server recorded ${asked === 1 ? 'one request' : `${asked} requests`} on this document, listed on the Review board.`;
-  return kept ? `${recorded} ${kept === 1 ? 'One reviewer’s earlier verdict stands' : `${kept} reviewers’ earlier verdicts stand`}; it was not reopened.` : recorded;
+  return kept ? `${recorded} ${kept === 1 ? 'One reviewer’s earlier verdict was retained' : `${kept} reviewers’ earlier verdicts were retained`}; it was not reopened.` : recorded;
 }
 
 /** The server's answer: the requests it recorded, and what became of each task. */

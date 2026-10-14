@@ -1,0 +1,27 @@
+{
+  "count": 200,
+  "maxSections": 295,
+  "modules": [
+    {
+      "module": "M1",
+      "sections": 21
+    },
+    {
+      "module": "M2",
+      "sections": 58
+    },
+    {
+      "module": "M3",
+      "sections": 56
+    },
+    {
+      "module": "M4",
+      "sections": 140
+    },
+    {
+      "module": "M5",
+      "sections": 295
+    }
+  ],
+  "totalSections": 2725
+}

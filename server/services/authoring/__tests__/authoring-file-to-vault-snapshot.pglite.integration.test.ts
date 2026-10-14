@@ -40,18 +40,10 @@ beforeAll(async () => {
   harness = await createDispositionHarness();
   await harness.pg.exec(readFileSync(new URL('../../../../db/migrations/20260725_authoring_audit_trail.sql',import.meta.url),'utf8'));
   await harness.pg.exec(`
-    CREATE TABLE users(id integer PRIMARY KEY,status text);
-    CREATE TABLE organizations(id integer PRIMARY KEY,status text);
-    CREATE TABLE organization_users(user_id integer,organization_id integer,role text);
-    CREATE TABLE project_members(project_id integer,organization_id integer,user_id integer,role text,status text);
-    CREATE TABLE project_visibility_settings(project_id integer,organization_id integer,visibility text);
-    CREATE TABLE concept2cure_review_assignments(artifact_id integer,reviewer_id integer,organization_id integer,status text);
-    ALTER TABLE projects ADD COLUMN client_workspace_id integer, ADD COLUMN owner_id integer, ADD COLUMN created_by_id integer, ADD COLUMN settings jsonb DEFAULT '{}'::jsonb;
-    INSERT INTO users VALUES (42,'active');
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now();
     ALTER TABLE authoring_sections ADD COLUMN code text, ADD COLUMN title text,
-      ADD COLUMN content text, ADD COLUMN order_index integer;
+      ADD COLUMN content text, ADD COLUMN order_index integer, ADD COLUMN created_at timestamptz DEFAULT now();
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
@@ -91,10 +83,8 @@ type DocumentStatusRow = { status: string | null };
 
 async function workingDraft(): Promise<WorkingDraft> {
   const f = await harness.seed();
-  // Interactive source verification reads current membership and sharing.
-  await f.pg.query("INSERT INTO organizations VALUES ($1,'active')", [f.org]);
-  await f.pg.query("INSERT INTO organization_users VALUES (42,$1,'author')", [f.org]);
-  await f.pg.query('UPDATE projects SET owner_id=42,created_by_id=42 WHERE organization_id=$1', [f.org]);
+  // The shared fixture already records active actor 42, current organization
+  // membership, and this programme's unique project anchor and sharing.
   const docId = randomUUID();
   const sections = [
     { id: randomUUID(), code: '12', title: 'Efficacy', content: '<p>Original endpoint result.</p>' },
@@ -158,6 +148,17 @@ async function mutate(d: WorkingDraft, mutation: Mutation) {
 }
 
 describe('file-to-Vault records the same section snapshot it rendered', () => {
+  it('uses signing order for duplicate section indices in the rendered and retained full snapshot', async () => {
+    const d = await workingDraft();
+    await d.f.pg.query(`UPDATE authoring_sections SET order_index=1,
+      created_at=CASE WHEN id=$1 THEN '2026-10-14T12:00:00Z'::timestamptz ELSE '2026-10-14T11:00:00Z'::timestamptz END
+      WHERE doc_id=$2 AND tenant_id=$3`, [d.sections[0].id,d.docId,d.f.org]);
+    admit(d);
+    expect(await file(d)).toMatchObject({ kind:'filed' });
+    const rendered = String(h.pdf.mock.calls[0][0]);
+    expect(rendered.indexOf('Original safety result.')).toBeLessThan(rendered.indexOf('Original endpoint result.'));
+    expect((await facts(d)).history[0].doc_sha256).toBe(sectionsDigest([...d.sections].reverse()));
+  });
   it('records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data', async () => {
     const d = await workingDraft();
     const origin = { kind: 'vault', id: d.f.vault, programId: d.f.program, sha256: 'a'.repeat(64),

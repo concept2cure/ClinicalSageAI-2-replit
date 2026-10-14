@@ -1,0 +1,16 @@
+
+/workspace/ClinicalSageAI-2-replit/tests/golden-journeys/cer-eu-mdr.journey.test.ts
+  285:3   warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  292:66  warning  Arrow function has too many lines (456). Maximum allowed is 100                max-lines-per-function
+  293:39  warning  Async arrow function has too many lines (454). Maximum allowed is 100          max-lines-per-function
+  605:13  warning  'sha' is assigned a value but never used                                       @typescript-eslint/no-unused-vars
+  653:1   warning  File has too many lines (647). Maximum allowed is 500                          max-lines
+
+/workspace/ClinicalSageAI-2-replit/tests/golden-journeys/device-510k-estar.journey.test.ts
+  382:58   warning  Arrow function has too many lines (785). Maximum allowed is 100        max-lines-per-function
+  383:49   warning  Async arrow function has too many lines (783). Maximum allowed is 100  max-lines-per-function
+  740:1    warning  File has too many lines (1011). Maximum allowed is 500                 max-lines
+  997:115  warning  Async arrow function has too many lines (141). Maximum allowed is 100  max-lines-per-function
+
+✖ 9 problems (0 errors, 9 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.

@@ -1,0 +1,165 @@
+{
+  "status": "scoped-green; final native/compiler/publication gates owned by lead agent",
+  "observed_head": "567e86b37ba9e28f361b915384c36bb1c79cf804",
+  "branch": "concept2cure-v2",
+  "node": "v22.22.0",
+  "sources": [
+    {
+      "path": "server/routes/c2c/project-route-access.ts",
+      "bytes": 6142,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5589334258db59d3989e0d342aacb77671fee3b2bf99cc50301f5bc123c5913c"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "bytes": 8596,
+      "digestAlgorithm": "SHA-256",
+      "digest": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+      "bytes": 14250,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7df3683942f77694a1ee4ed25dfade798632680b309267463cde1d6cfe1d0d21"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts",
+      "bytes": 14171,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4b08adc3f2b245fb410b3afecd481313ea9f7d7bba769defae4b69d7c572bc83"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts",
+      "bytes": 5082,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6b046b919485567499fcdad87bbd5fa96d075fcb97cb15971098296e1f4096e1"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "bytes": 14987,
+      "digestAlgorithm": "SHA-256",
+      "digest": "eafd6efad5f8b131ba469c2d4adc164e01e09635a09b91361d400810f1152aff"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts",
+      "bytes": 13506,
+      "digestAlgorithm": "SHA-256",
+      "digest": "27320d5a910078c6db7df56ae79867eb41e91286ce27e7169bca9ed5131ea59f"
+    }
+  ],
+  "runs": [
+    {
+      "config": "vitest.config.ts",
+      "files": [
+        "server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts",
+        "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+        "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts"
+      ],
+      "exit_code": 0,
+      "passed": 31,
+      "skipped": 0,
+      "duration_seconds": 28.95,
+      "log": "green/source-admission-31-pass.txt"
+    },
+    {
+      "config": "vitest.config.ts",
+      "files": [
+        "server/routes/c2c/__tests__/projects-adoption-sql.test.ts",
+        "server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts"
+      ],
+      "exit_code": 0,
+      "passed": 54,
+      "skipped": 0,
+      "duration_seconds": 23.09,
+      "log": "green/project-adoption-54-pass.txt"
+    },
+    {
+      "command": "npx eslint",
+      "files": [
+        "server/routes/c2c/project-route-access.ts",
+        "server/services/clinical-regulatory-evidence/source-read-access.ts",
+        "server/routes/c2c/__tests__/projects-adoption-sql.test.ts"
+      ],
+      "exit_code": 0,
+      "log": "green/owned-source-fixture-eslint.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "changed_file_ownership": [
+    "server/routes/c2c/project-route-access.ts",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts",
+    "server/routes/c2c/__tests__/projects-adoption-sql.test.ts"
+  ],
+  "qualifications": [
+    "PGlite actual SQL and policy fixtures; scoped HTTP route tests",
+    "Adoption storage bytes, capture writer and audit sealing retain the pre-existing explicit seams",
+    "No native RLS, independent-connection concurrency, provider/storage performance or regulatory/scientific acceptance qualification",
+    "No SQL baseline expansion by this workstream; final whole gate checked separately by lead agent",
+    "Only these new SQL-gate evidence logs have trailing whitespace and extra EOF blank lines normalized; exact raw execution files remain unchanged in /tmp and are separately pinned. Source hashes and older sealed evidence are unchanged."
+  ],
+  "evidence": [
+    {
+      "path": "green/project-adoption-54-pass.txt",
+      "bytes": 22410,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f3bdb3de2b12459c7a08e359ebda29ab8a17735bfe467dd584ed05c30069da88",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-project-adoption-final.txt",
+        "bytes": 22411,
+        "digestAlgorithm": "SHA-256",
+        "digest": "0a8762c5a83adac0f04d0d83166627a1777f54172719092a20cf90a43e5f6c9a"
+      }
+    },
+    {
+      "path": "green/source-admission-31-pass.txt",
+      "bytes": 12126,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4006c0164e78b2f6135a3a53ee414337ffa8589665bb5f9db2d5ee792217d6ee",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-source-access-focused.txt",
+        "bytes": 12127,
+        "digestAlgorithm": "SHA-256",
+        "digest": "b40df23e6a6845345815556b4fb04f876a82db98bd9cac3e390778193df93669"
+      }
+    },
+    {
+      "path": "red/adoption-canonical-fields-18-pass-1-fail.txt",
+      "bytes": 13699,
+      "digestAlgorithm": "SHA-256",
+      "digest": "349578d0261391b767d7ab28f4d004ac6b3de44b52dd7c9c61d601f801de7d7d",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-adoption-fixture-repair.txt",
+        "bytes": 13700,
+        "digestAlgorithm": "SHA-256",
+        "digest": "2d03117782d465794844684b9c327abff68305f36706b53a09df07afb4227029"
+      }
+    },
+    {
+      "path": "red/project-adoption-19-failures.txt",
+      "bytes": 27971,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1a9ef64308619398aa5974c2251a1253325286ec3a58a417f418d9a383366a68",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-project-route-focused.txt",
+        "bytes": 27972,
+        "digestAlgorithm": "SHA-256",
+        "digest": "ba2b981cd227366efb8704b976860d65b1d9eeaf66dee1d7bce6ba1226120d19"
+      }
+    },
+    {
+      "path": "green/owned-source-fixture-eslint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-access-adoption-lint-final.txt",
+        "bytes": 0,
+        "digestAlgorithm": "SHA-256",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ]
+}

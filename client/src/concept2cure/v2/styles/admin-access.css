@@ -69,6 +69,19 @@
 .adm-access .section-head h2 { font-family: var(--font-serif); font-size: 17px; font-weight: 500; color: var(--text-100); margin: 0; }
 .adm-access .section-sub { font-size: 11px; color: var(--text-400); }
 .adm-access .section-head .seg { margin-left: auto; }
+.adm-access .adm-key-create { margin-left: auto; flex-shrink: 0; }
+.adm-access .adm-key-form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.adm-access .adm-key-scopes { border: none; padding: 0; min-width: 0; }
+.adm-access .adm-key-scope { display: flex; align-items: center; gap: var(--space-2); padding: calc(var(--space-1) + var(--space-px)) 0; color: var(--text-200); }
+.adm-access .adm-key-scope input { accent-color: var(--accent-strong); }
+.adm-access .adm-key-actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+.adm-access .adm-key-usage { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: calc(var(--space-3) + var(--space-0-5)); font-size: inherit; }
+.adm-access .adm-key-usage dt { color: var(--text-400); }
+.adm-access .adm-key-usage dd { margin: 0; overflow-wrap: anywhere; }
+.adm-access .adm-platform-grants { margin: 0 var(--space-8) var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); }
+.adm-access .adm-platform-grant { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: calc(var(--space-3) + var(--space-0-5)); border-bottom: 1px solid var(--border); }
+.adm-access .adm-platform-grant:last-child { border-bottom: 0; }
+@media(max-width: 720px) { .adm-access .adm-platform-grant { flex-wrap: wrap; } }
 .adm-access .adm-empty { margin: 0 32px 20px; padding: 20px; border: 1px dashed var(--border); border-radius: var(--radius-md); color: var(--text-400); font-size: 13px; }
 /* A facet whose read failed (meta.unavailable) — aligned with the tables it stands in for. */
 .adm-access .adm-facet-error { margin: 0 32px 20px; }

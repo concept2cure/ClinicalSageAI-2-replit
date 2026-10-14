@@ -14,6 +14,9 @@
 
 import { pool } from '../../db';
 import { sourceProcessingSummary } from './data-room-processing-read.js';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { requireCurrentProgramAccess } from '../c2c/current-program-access';
+import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent, visibleSourceOrgSql, SourceReadAccessError } from './source-read-access';
 import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 import { captureActor, recordCapture, recordSupersession } from './data-room-capture-audit';
 import {
@@ -35,6 +38,11 @@ export class EvidenceSpineError extends Error {}
  *  contract ended up with four different answers (see #1102). */
 export function visibleOrgClause(orgId: number, startIndex: number): { sql: string; param: number } {
   return { sql: `(organization_id IS NULL OR organization_id = $${startIndex})`, param: orgId };
+}
+
+/** Source rows explicitly recorded public; never use for relationships. */
+export function visibleSourceOrgClause(orgId: number, startIndex: number): {sql:string;param:number} {
+  return {sql:`(organization_id=$${startIndex} OR (organization_id IS NULL AND visibility_class='global_public'))`,param:orgId};
 }
 
 /** Resolve the organization_id a write is stamped with. A GLOBAL_PUBLIC write
@@ -266,44 +274,41 @@ exec: SourceExecutor,
  * have. Unscoped tenant documents are opt-in via `includeUnscoped`, so they can
  * be surfaced for adoption into a project without being implied to belong to it.
  */
-export async function listClientDocuments(orgId: number, opts: {
+export async function listClientDocuments(q: RequestSqlClient, orgId: number, opts: {
+  userId: number | undefined;
   programId?: string | null;
   workspaceId?: number | null;
   includeUnscoped?: boolean;
-  /** Exclude sources a re-upload has superseded (is_current = FALSE). */
   currentOnly?: boolean;
+  dataEligibleOnly?: boolean;
   limit?: number;
-} = {}): Promise<EvidenceSource[]> {
-  const c = visibleOrgClause(orgId, 1);
-  const args: unknown[] = [c.param];
-  let where = `${c.sql} AND deleted_at IS NULL AND source_type = 'client_document'`;
-  if (opts.currentOnly) where += ` AND is_current IS NOT FALSE`;
-
+}): Promise<EvidenceSource[]> {
+  const target = opts.programId ? await requireCurrentProgramAccess(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId}) : null;
+  if (opts.workspaceId!=null && target && opts.workspaceId!==target.clientWorkspaceId) {
+    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_SCOPE_MISMATCH','The selected program and workspace do not agree.');
+  }
+  if (opts.workspaceId!=null && !target) {
+    // A numeric coincidence is not workspace admission. A future caller must
+    // supply an authoritative parent before a workspace-only read can proceed.
+    throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_ACCESS_UNRESOLVED','Select the recorded program before reading this workspace source scope.');
+  }
+  const readable = await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId});
+  const args: unknown[] = [orgId,readable.sourceIds];
+  let where = `${visibleSourceOrgSql('s',1)} AND s.id=ANY($2::int[])
+    AND s.deleted_at IS NULL AND s.source_type='client_document'`;
+  if (opts.currentOnly) where+=' AND s.is_current IS NOT FALSE';
+  if (opts.dataEligibleOnly) where+=` AND ${capturedDataEligibleSql('s')}`;
   const scopes: string[] = [];
-  if (opts.programId) {
-    args.push(opts.programId);
-    scopes.push(`client_program_id = $${args.length}`);
-  }
-  if (opts.workspaceId != null && Number.isFinite(opts.workspaceId)) {
-    args.push(opts.workspaceId);
-    scopes.push(`client_workspace_id = $${args.length}`);
-  }
-  if (opts.includeUnscoped) {
-    scopes.push(`(client_program_id IS NULL AND client_workspace_id IS NULL)`);
-  }
-  if (scopes.length > 0) where += ` AND (${scopes.join(' OR ')})`;
-
-  args.push(Math.min(Math.max(opts.limit ?? 200, 1), 500));
-  const { rows } = await pool.query(
-    `SELECT s.*, clock_timestamp() AS processing_observed_at, ${capturedDataEligibleSql('s')} AS data_eligible,
-            ${capturedBinaryAvailableSql('s')} AS original_file_available,
-            ${capturedDispositionChoiceSql('s')} AS disposition
-       FROM cre_evidence_sources s
-      WHERE ${where}
-      ORDER BY created_at DESC
-      LIMIT $${args.length}`,
-    args,
-  );
+  if (target) {args.push(target.programId); scopes.push(`s.client_program_id=$${args.length}::uuid`);}
+  if (opts.includeUnscoped) scopes.push('(s.client_program_id IS NULL AND s.client_workspace_id IS NULL)');
+  if (scopes.length) where+=` AND (${scopes.join(' OR ')})`;
+  if (opts.workspaceId!=null) {args.push(opts.workspaceId); where+=` AND s.client_workspace_id=$${args.length}`;}
+  args.push(Math.min(Math.max(opts.limit ?? 200,1),500));
+  const {rows} = await q.query(`SELECT s.*, clock_timestamp() AS processing_observed_at, ${capturedDataEligibleSql('s')} AS data_eligible,
+    ${capturedBinaryAvailableSql('s')} AS original_file_available,
+    ${capturedDispositionChoiceSql('s')} AS disposition FROM cre_evidence_sources s
+    WHERE ${where} ORDER BY s.created_at DESC,s.id DESC LIMIT $${args.length}`,args);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},readable);
   return rows.map(adaptSource);
 }
 
@@ -368,7 +373,7 @@ export interface SourceUpload {
  */
 export async function readSourceUploads(orgId: number, ids: number[]): Promise<SourceUpload[]> {
   if (ids.length === 0) return [];
-  const c = visibleOrgClause(orgId, 2);
+  const c = visibleSourceOrgClause(orgId, 2);
   const { rows } = await pool.query(
     `SELECT id, organization_id, source_type, client_program_id, is_current, title, checksum,
             provenance->>'fileUploadId' AS file_upload_id
@@ -494,7 +499,7 @@ export async function findSupersededCandidate(
 }
 
 export async function getSource(orgId: number, id: number): Promise<EvidenceSource | null> {
-  const c = visibleOrgClause(orgId, 2);
+  const c = visibleSourceOrgClause(orgId, 2);
   const { rows } = await pool.query(
     `SELECT s.*, ${capturedDataEligibleSql('s')} AS data_eligible,
             ${capturedBinaryAvailableSql('s')} AS original_file_available,
@@ -508,7 +513,7 @@ export async function getSource(orgId: number, id: number): Promise<EvidenceSour
 export async function listSources(orgId: number, opts: {
   sourceType?: SourceType; applicationNumber?: string; indication?: string; limit?: number;
 } = {}): Promise<EvidenceSource[]> {
-  const c = visibleOrgClause(orgId, 1);
+  const c = visibleSourceOrgClause(orgId, 1);
   const args: unknown[] = [c.param];
   let where = `${c.sql} AND deleted_at IS NULL AND ${capturedDataEligibleSql('cre_evidence_sources')}`;
   if (opts.sourceType) { args.push(opts.sourceType); where += ` AND source_type = $${args.length}`; }

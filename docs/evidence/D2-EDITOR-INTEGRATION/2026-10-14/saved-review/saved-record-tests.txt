@@ -1,0 +1,95 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:43:23.811Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:43:23.812Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:43:23.812Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-document-critique.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:43:24.310Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > finds conflicting subject counts across actual saved sections in one pinned transaction 80ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > keeps frozen saved documents readable for oversight without edit permission or writes 28ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > excludes unaccepted insertion text while retaining the proposed deletion in the accepted record 41ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > the exact authorized saved document is the complete deterministic input > does not hide a cross-section conflict merely because the conflicting saved prose is marked for deletion 26ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses current project revocation after a successful review 31ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a revoked document grant even while current project access remains 34ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > resolves email-only document grants from the current user record 35ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > does not allow a section-only grant to authorize a whole-document read 23ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000042 24ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a saved document outside the selected program: 11111111-2222-4333-8444-000000000051 20ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":7,"projectRef":null} 12ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":7,"userId":null,"projectRef":"11111111-2222-4333-8444-000000000011"} 13ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses incomplete trusted conversation scope without checking out a database: {"organizationId":null,"userId":7,"projectRef":"11111111-2222-4333-8444-000000000011"} 13ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review authorization is read again on every actual connection > refuses a foreign program even if the prompt requests a document in this organization 16ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > walks every section and finding through bounded pages including escaped saved titles 100ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved content changes, even without a new timestamp 34ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > refuses continuation after the saved document title changes, even without a new timestamp 34ms
+stdout | server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review pre-enable workload measurement > records a realistic multi-section calculation without imposing a timing threshold
+saved-document-critique-benchmark {
+  sectionCount: 96,
+  textChars: 187392,
+  elapsedMs: 79.67,
+  serializedChars: 4926,
+  paginationTotal: 96
+}
+
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rechecks document permission before returning a continuation 35ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1} before a database checkout 12ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":-1} before a database checkout 13ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":"1"} before a database checkout 18ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":0.5} before a database checkout 11ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > complete versioned review pages do not omit or mix sections > rejects invalid or unversioned cursor {"offset":1,"expected_snapshot":"unverified"} before a database checkout 12ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved-review pre-enable workload measurement > records a realistic multi-section calculation without imposing a timing threshold 98ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > resolves the registered eligible source in the current section 39ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not lend a sibling section association to an unregistered pasted marker 34ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual remove_data withdrawal as a high record finding 32ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports an actual supersede withdrawal as a high record finding 31ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after source deleted 32ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not silently resolve a citation after association removed 40ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > refuses continuation of a formerly eligible source snapshot after data withdrawal 61ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > retains an eligible historical source already registered to this section 32ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > does not resolve a source that now belongs to another program 30ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved citations resolve only through the current exact-section association and data policy > reports a registered source without printable metadata as unresolved 29ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses a saved document with no sections 25ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section title rather than reviewing the remaining valid section 21ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses malformed saved section updated_at rather than reviewing the remaining valid section 21ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > refuses more than 512 saved sections before selecting their content 25ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > uses the eight MiB byte limit, including non-ASCII content, before selecting the body 182ms
+ ✓ server/services/ana/__tests__/saved-document-critique.pglite.test.ts > incomplete or oversized saved records cannot produce a document verdict > rejects mixing a saved document with caller-supplied replacement sections 12ms
+
+ Test Files  1 passed (1)
+      Tests  40 passed (40)
+   Start at  02:43:21
+   Duration  8.64s (transform 2.70s, setup 142ms, import 3.87s, tests 4.24s, environment 0ms)

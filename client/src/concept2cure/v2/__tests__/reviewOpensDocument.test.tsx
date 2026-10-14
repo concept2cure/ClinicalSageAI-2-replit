@@ -24,6 +24,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { displayName: 'Test Reviewer', email: 'rev@test.co' } }),
+  useAuthUser: () => ({ displayName: 'Test Reviewer', email: 'rev@test.co' }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));

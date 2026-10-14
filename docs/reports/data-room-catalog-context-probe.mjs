@@ -17,5 +17,5 @@ const gate = assertCatalogWriteAllowed(
   source
 );
 assert.equal(gate.allowed, true);
-console.log(JSON.stringify({source, findings, fullCoverageGateAllowsMislabeledValue: gate.allowed},null,2));
+console.info(JSON.stringify({source, findings, fullCoverageGateAllowsMislabeledValue: gate.allowed},null,2));
 

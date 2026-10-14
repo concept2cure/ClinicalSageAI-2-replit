@@ -30,77 +30,13 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { InsightsCanvas } from '../surfaces/Insights';
+import { RUNS, ok, route, renderCanvas, openTab, requestCalls } from './_insights-library-fixture';
 import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import { runsUrl } from '../surfaces/insightsLibraryModel';
 import { readFailureOf } from '../surfaces/insightsLibraryShared';
 import { RunsPanel } from '../surfaces/InsightsRunsPanel';
-import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
-const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as unknown as Response;
 const boom = (status: number) => ({ ok: false, status, json: async () => ({ error: 'nope' }) }) as unknown as Response;
-
-const OVERVIEW = {
-  data: {
-    organizationId: 1,
-    tier: 'enterprise',
-    segments: ['pharma'],
-    reportTypes: CANVAS_REPORT_TYPES,
-    leadProgram: {
-      projectId: 11, code: 'BX204', label: 'BX204', filing: 'NDA', indication: null,
-      readiness: 70, scope: 'project', scopeId: '11', agency: null, pdufa: null, criticalBlockerCount: 0,
-    },
-    portfolio: { programs: null },
-  },
-};
-
-/** Two real run rows, shaped as GET /api/report-os/runs enriches them. */
-const RUNS = [
-  {
-    id: 41, runUuid: 'aaaaaaaa-0000-4000-8000-000000000001', scopeType: 'project', scopeId: '11',
-    reportTypeId: 'readiness.executive_digest', reportTypeLabel: 'Executive Readiness Digest',
-    status: 'final', confidence: 82, createdAt: '2026-10-02T09:00:00.000Z',
-    completedAt: '2026-10-02T09:00:12.000Z', regionCode: 'US', agency: 'FDA',
-  },
-  {
-    id: 42, runUuid: 'aaaaaaaa-0000-4000-8000-000000000002', scopeType: 'project', scopeId: '11',
-    reportTypeId: 'etmf.completeness_pack', reportTypeLabel: 'eTMF Completeness & Gap Pack',
-    status: 'partial', confidence: null, createdAt: '2026-10-03T09:00:00.000Z', completedAt: null,
-  },
-];
-
-const SUBS = [
-  {
-    id: 7, reportTypeId: 'readiness.executive_digest', scopeType: 'project', scopeId: '11',
-    schedule: { cadence: 'weekly', hour: 8, minute: 0, dayOfWeek: 2 },
-    recipients: [], format: 'pdf', channel: 'platform', persona: null, enabled: true,
-    lastRunAt: '2026-10-06T08:00:00.000Z', nextRunAt: '2026-10-13T08:00:00.000Z',
-    createdAt: '2026-09-01T08:00:00.000Z',
-  },
-];
-
-const BUNDLES = [
-  {
-    bundleId: 'bbbbbbbb-0000-4000-8000-000000000001', name: 'Pre-approval inspection pack',
-    createdAt: '2026-10-04T10:00:00.000Z', createdBy: 3, projectIds: [11], runIds: [41],
-    items: [{
-      runId: 41, runUuid: 'aaaaaaaa-0000-4000-8000-000000000001',
-      reportTypeId: 'readiness.executive_digest', reportTypeLabel: 'Executive Readiness Digest',
-      scopeType: 'project', scopeId: '11', status: 'final', confidence: 82,
-      createdAt: '2026-10-02T09:00:00.000Z',
-    }],
-  },
-];
-
-/** Routes this suite serves. Anything else answers an empty object, so a call
- *  to an unexpected route shows up as a missing assertion rather than a pass. */
-function route(url: string): Response {
-  if (url.includes('/api/insights-canvas/overview')) return ok(OVERVIEW);
-  if (url.startsWith('/api/report-os/runs')) return ok({ data: RUNS });
-  if (url.startsWith('/api/insights/subscriptions')) return ok({ data: SUBS });
-  if (url.startsWith('/api/report-os/bundles')) return ok({ data: BUNDLES });
-  return ok({});
-}
 
 beforeEach(() => {
   apiRequest.mockReset();
@@ -108,24 +44,7 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
-async function renderCanvas() {
-  render(
-    <InsightsCanvas
-      surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']}
-      segment="pharma"
-      onNav={() => {}}
-    />,
-  );
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
-}
-
-/** Click one of the artifact pane's tabs by its visible name. */
-async function openTab(name: RegExp) {
-  fireEvent.click(await screen.findByRole('tab', { name }));
-}
-
-const calls = (method: string, prefix: string) =>
-  apiRequest.mock.calls.filter(([m, u]) => m === method && String(u).startsWith(prefix));
+const calls = (method: string, prefix: string) => requestCalls(apiRequest, method, prefix);
 
 describe('the reporting library', () => {
   it('lands on the Report pane, so the surface a reader already knew is unchanged', async () => {

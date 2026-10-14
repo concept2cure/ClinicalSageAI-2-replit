@@ -65,7 +65,7 @@ try {
       state.applierRole = { name: 'durable_fixture_applier', attributes: 'LOGIN NOSUPERUSER NOBYPASSRLS CREATEROLE', use: 'fixture-only schema installation; runtime uses app_service' };
       state.bootstrapRole = { name: 'durable_fixture_admin', use: 'isolated fixture setup only; not test runtime' };
       await first.connect(); await second.connect();
-      let identity = (await first.query(`SELECT version() AS version,current_database() AS database,
+      const identity = (await first.query(`SELECT version() AS version,current_database() AS database,
         current_user AS role,pg_backend_pid() AS pid,r.rolsuper,r.rolbypassrls
         FROM pg_roles r WHERE rolname=current_user`)).rows[0];
       const other = (await second.query('SELECT pg_backend_pid() AS pid')).rows[0];
@@ -78,7 +78,7 @@ try {
   }
   if (!ready || stopping) throw new Error('Fixture readiness failed.');
   state.phase = 'ready'; record();
-  console.log(JSON.stringify({ fixture: 'ready', name, port: state.port, version: state.server.version }));
+  console.info(JSON.stringify({ fixture: 'ready', name, port: state.port, version: state.server.version }));
   child = spawn(process.execPath, ['node_modules/vitest/vitest.mjs', 'run', '--config',
     path.relative(root, path.join(folder, 'durable-postgres.config.mts'))], {
     cwd: root, stdio: 'inherit', env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=4096' },
@@ -100,6 +100,6 @@ try {
   }
   if (state.phase !== 'failed') state.phase = 'cleaned';
   state.finishedAt = new Date().toISOString(); record();
-  console.log(JSON.stringify({ fixture: state.phase, name, testExitCode: state.testExitCode,
+  console.info(JSON.stringify({ fixture: state.phase, name, testExitCode: state.testExitCode,
     cleanup: state.cleanup, cleanupVerified: state.cleanupVerified, failure: state.failure }));
 }

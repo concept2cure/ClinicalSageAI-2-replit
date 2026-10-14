@@ -1,0 +1,26 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor 356ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list 104ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it 101ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row 417ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > an AI comment’s button is named for what it does: it opens the document, it applies nothing 121ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > shows the complete saved section and table before a decision 474ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > posts the captured request and saved snapshot binding 213ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > does not announce or refresh success from an unaudited success flag 182ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > prevents duplicate writes and ignores Escape and backdrop while a verdict is in flight 54ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > keeps a saved-content refusal open, disables retry, and clears the choice on explicit reload 60ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > shows the authoritative refusal alongside the full read without offering a verdict 13ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > rejects a same-tick account token swap before posting the displayed person’s choice 44ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > refuses AnA document selection while this governed dialog owns the canvas 117ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > preserves the confirmed receipt when the refreshed board no longer contains the document 191ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > does not publish a delayed previous-document read into its replacement 13ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > retires a late verdict after an actor replacement without reporting success 43ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=true) 57ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=false) 55ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  20:30:20
+   Duration  7.04s (transform 1.81s, setup 269ms, import 2.73s, tests 2.63s, environment 1.12s)

@@ -50,7 +50,7 @@ const FILE = 'file_adopt';
 const BYTES = Buffer.from('original controlled study bytes');
 const HASH = createHash('sha256').update(BYTES).digest('hex');
 type UploadRow = {
-  id: string; organization_id: number; original_name: string; mime_type: string;
+  id: string; organization_id: number; user_id: number; original_name: string; mime_type: string;
   file_size: number; storage_path: string; checksum_sha256: string | null;
 };
 type Write = { kind: 'source' | 'audit'; row: Record<string, unknown> };
@@ -64,6 +64,8 @@ let failWrite: 'source' | 'capture' | 'adopt' | null;
 let staged: Write[];
 let committed: Write[];
 let finalPatch: Partial<UploadRow>;
+let persistedRoles: Map<number, string>;
+let dispositionLocked: boolean;
 
 function appAs(userId: number | null = LEAD, role = 'member', orgId: number | null = ORG) {
   const app = express();
@@ -73,6 +75,7 @@ function appAs(userId: number | null = LEAD, role = 'member', orgId: number | nu
     if (orgId !== null) auth.organizationId = orgId;
     if (userId !== null) auth.userId = userId;
     auth.userRole = role;
+    Object.assign(req, { dbClient: { query: mocks.poolQuery } });
     next();
   });
   app.use('/api/c2c/projects', router);
@@ -81,11 +84,12 @@ function appAs(userId: number | null = LEAD, role = 'member', orgId: number | nu
 const adopt = (app = appAs(), program = PROGRAM, body: object = { fileUploadId: FILE }) =>
   request(app).post(`/api/c2c/projects/${program}/adopt`).send(body);
 const sqlCalls = () => mocks.txQuery.mock.calls.map(call => String(call[0]));
-const noCapture = () => {
+const noCapture = (beforeTransaction = false) => {
   expect(mocks.createSource).not.toHaveBeenCalled();
   expect(committed).toEqual([]);
   expect(sqlCalls()).not.toContain('COMMIT');
-  expect(sqlCalls()).toContain('ROLLBACK');
+  if (beforeTransaction) expect(sqlCalls()).toEqual([]);
+  else expect(sqlCalls()).toContain('ROLLBACK');
 };
 
 function stageSource(sql: string, params: unknown[]) {
@@ -102,17 +106,47 @@ function stageAudit(params: unknown[]) {
   return { rows: [] };
 }
 function programRows(sql: string) {
-  const locking = sql.includes('FOR UPDATE');
-  return { rows: (locking ? lockedProgramExists : programExists) ? [{ lead_user_id: locking ? lockedLead : LEAD }] : [] };
+  const locking = dispositionLocked || sql.includes('FOR UPDATE') || sql.includes('FOR SHARE');
+  return { rows: (locking ? lockedProgramExists : programExists) ? [{ id: PROGRAM, lead_user_id: locking ? lockedLead : LEAD }] : [] };
 }
 function uploadRows(sql: string, params: unknown[]) {
   const current = sql.includes('FOR SHARE') ? { ...upload, ...finalPatch } : upload;
   return { rows: eligible && current.organization_id === Number(params[1]) ? [{ ...current }] : [] };
 }
+/** Explicit persisted identity rows for the real canonical admission helpers.
+ * A request/token role never populates this fixture's persisted role map. Real
+ * admission SQL is independently executed in the PGlite adoption suite. */
+function accessRows(sql: string, params: unknown[]): { rows: Record<string, unknown>[] } | null {
+  if (sql.includes('FROM organization_users')) {
+    const userFirst = /WHERE ou\.user_id\s*=\s*\$1/.test(sql);
+    const userId = Number(params[userFirst ? 0 : 1]);
+    const orgId = Number(params[userFirst ? 1 : 0]);
+    const role = persistedRoles.get(userId);
+    return { rows: orgId === ORG && role ? [{ user_id: userId, role }] : [] };
+  }
+  if (sql.includes('FROM projects')) {
+    return { rows: programExists ? [{ id: 42, clientWorkspaceId: null,
+      owner_id: LEAD, created_by_id: LEAD, settings: {}, visibility: 'org_public', members: [], review_assigned: false }] : [] };
+  }
+  if (sql.includes('SELECT id, user_id FROM file_uploads')) {
+    return { rows: upload.organization_id === Number(params[0]) && Array.isArray(params[1]) && params[1].includes(FILE)
+      ? [{ id: FILE, user_id: upload.user_id }] : [] };
+  }
+  // This byte/durability fixture has no recorded source/artifact/legacy parent.
+  // Actual bound-parent and immutable-lineage cases run in the SQL route suite.
+  if (sql.includes("SELECT provenance->>'fileUploadId' AS file_id") ||
+      sql.includes('SELECT client_program_id::text AS program_id') || sql.includes('FROM authoring_audit_trail')) {
+    return { rows: [] };
+  }
+  return null;
+}
 async function transactionQuery(sql: string, params: unknown[] = []) {
-  if (sql === 'BEGIN') { staged = []; return { rows: [] }; }
-  if (sql === 'COMMIT') { committed.push(...staged); staged = []; return { rows: [] }; }
-  if (sql === 'ROLLBACK') { staged = []; return { rows: [] }; }
+  if (sql === 'BEGIN') { staged = []; dispositionLocked = false; return { rows: [] }; }
+  if (sql === 'COMMIT') { committed.push(...staged); staged = []; dispositionLocked = false; return { rows: [] }; }
+  if (sql === 'ROLLBACK') { staged = []; dispositionLocked = false; return { rows: [] }; }
+  if (sql.includes('pg_advisory_xact_lock')) { dispositionLocked = true; return { rows: [] }; }
+  const identity = accessRows(sql, params);
+  if (identity) return identity;
   // This unit fixture represents an ordinary upload with no recorded parent.
   // Actual audit/capture ancestry is exercised by the PGlite route suite.
   if (sql.startsWith('WITH rl_walk AS (WITH RECURSIVE rl_seed') && sql.includes('AS parent_files')) {
@@ -127,11 +161,16 @@ async function transactionQuery(sql: string, params: unknown[] = []) {
 }
 
 beforeEach(() => {
-  upload = { id: FILE, organization_id: ORG, original_name: 'study.txt', mime_type: 'text/plain', file_size: BYTES.length, storage_path: `uploads/org-${ORG}/${FILE}`, checksum_sha256: HASH };
+  upload = { id: FILE, organization_id: ORG, user_id: LEAD, original_name: 'study.txt', mime_type: 'text/plain', file_size: BYTES.length, storage_path: `uploads/org-${ORG}/${FILE}`, checksum_sha256: HASH };
   eligible = true; programExists = true; lockedProgramExists = true; lockedLead = LEAD;
   duplicate = null; failWrite = null; staged = []; committed = []; finalPatch = {};
+  persistedRoles = new Map([[LEAD, 'member'], [99, 'member']]);
+  dispositionLocked = false;
   mocks.txQuery.mockReset(); mocks.txQuery.mockImplementation(transactionQuery);
-  mocks.poolQuery.mockReset(); mocks.poolQuery.mockImplementation(async (sql: string) => {
+  mocks.poolQuery.mockReset(); mocks.poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    const identity = accessRows(sql, params);
+    if (identity) return identity;
+    if (sql.includes('FROM regulatory_programs')) return { rows: String(params[0]).toLowerCase() === PROGRAM ? programRows(sql).rows : [] };
     if (sql.includes('FROM file_uploads f')) return { rows: eligible ? [{ ...upload }] : [] };
     if (sql.includes('FROM cre_evidence_sources')) return { rows: duplicate ? [duplicate] : [] };
     return { rows: [] };
@@ -154,7 +193,7 @@ describe('adoption verifies current owned bytes before capture', () => {
     expect(mocks.processCapturedSource).toHaveBeenCalledWith(ORG, 41, expect.objectContaining({
       bytes: BYTES, fileName: 'current-study.txt', mimeType: 'text/markdown', programId: PROGRAM, expectedWorkspaceId: null,
     }));
-    expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG);
+    expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG, { userId: LEAD });
     expect(mocks.readFile).toHaveBeenCalledWith(path.resolve(process.cwd(), upload.storage_path));
     expect(mocks.createSource.mock.calls[0][2]).toBe(client);
     expect(committed.filter(write => write.kind === 'source')[0].row).toMatchObject({ checksum: HASH, extraction_status: 'pending', ingestion_status: 'ingested', created_by: LEAD });
@@ -170,13 +209,13 @@ describe('adoption verifies current owned bytes before capture', () => {
     ['altered bytes', 409, 'UPLOAD_INTEGRITY_FAILED', () => mocks.readFile.mockResolvedValue(Buffer.from('altered'))],
     ['missing bytes', 410, 'UPLOAD_BYTES_MISSING', () => mocks.readFile.mockRejectedValue(new Error('ENOENT /private/storage'))],
     ['foreign path', 404, 'UPLOAD_NOT_FOUND', () => { upload.storage_path = 'uploads/org-9/file_adopt'; }],
-    ['foreign organization', 404, 'FILE_NOT_FOUND', () => { upload.organization_id = 9; }],
+    ['foreign organization', 403, 'ANA_SOURCE_ACCESS_DENIED', () => { upload.organization_id = 9; }],
     ['withdrawn upload', 404, 'FILE_NOT_FOUND', () => { eligible = false; }],
   ] as const)('refuses %s without capture or unsafe storage details', async (_label, status, code, configure) => {
     configure();
     const res = await adopt();
     expect(res.status).toBe(status);
-    expect(res.body.code).toBe(code);
+    expect(status === 403 ? res.body.error : res.body.code).toBe(code);
     expect(JSON.stringify(res.body)).not.toMatch(/uploads\/|private\/storage|ENOENT|recordedSha256|actualSha256/);
     noCapture();
   });
@@ -210,7 +249,9 @@ describe('adoption protects the database handoff', () => {
     const lock = mocks.txQuery.mock.calls[advisory];
     expect(lock[1]).toEqual([`${ORG}:${PROGRAM}`]);
     expect(calls).toContain("SET LOCAL lock_timeout = '5s'");
-    expect(mocks.poolQuery.mock.calls.some(call => String(call[0]).includes('FROM cre_evidence_sources'))).toBe(false);
+    // Canonical source-parent admission may issue identity-only pool reads.
+    // Duplicate discovery and source writes remain on the reserved transaction.
+    expect(mocks.poolQuery.mock.calls.some(call => /SELECT \* FROM cre_evidence_sources/.test(String(call[0])))).toBe(false);
   });
 
   it.each([
@@ -247,7 +288,7 @@ describe('adoption preserves authorization and historical idempotency', () => {
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ adopted: false, sourceId: 16 });
     expect(res.body).toMatchObject({ processed: false, processing: { status: 'stale_source', reasonCode: 'SOURCE_NOT_CURRENT' } });
-    expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG);
+    expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG, { userId: LEAD });
     noCapture();
   });
 
@@ -262,7 +303,7 @@ describe('adoption preserves authorization and historical idempotency', () => {
   it('denies a non-lead member before bytes and refuses foreign program identity', async () => {
     expect((await adopt(appAs(99))).status).toBe(403);
     expect(mocks.loader).not.toHaveBeenCalled();
-    noCapture();
+    noCapture(true);
     programExists = false; lockedProgramExists = false;
     expect((await adopt()).status).toBe(404);
   });
@@ -277,7 +318,20 @@ describe('adoption preserves authorization and historical idempotency', () => {
   });
 
   it('allows an organization manager under the existing mutation policy', async () => {
+    persistedRoles.set(99, 'admin');
+    upload.user_id = 99;
     expect((await adopt(appAs(99, 'admin'))).status).toBe(201);
+  });
+
+  it('refuses a stale token manager role and another actor’s unbound bytes', async () => {
+    expect((await adopt(appAs(99, 'admin'))).status).toBe(403);
+    expect(mocks.loader).not.toHaveBeenCalled();
+    noCapture(true);
+    persistedRoles.set(99, 'admin');
+    const result = await adopt(appAs(99, 'admin'));
+    expect(result.status).toBe(403);
+    expect(result.body.error).toBe('ANA_SOURCE_ACCESS_DENIED');
+    noCapture();
   });
 
   it('rejects missing auth, malformed project and missing file identity before a transaction', async () => {

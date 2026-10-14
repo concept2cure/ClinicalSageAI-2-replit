@@ -1,0 +1,1240 @@
+{
+  "database": "platform_ci_sharing_review_20261014_1f6d6c8f",
+  "scope": "Actual full canonical two-file DDL/applier on one fresh retained synthetic SQL fixture; not complete application provisioning or runtime API qualification",
+  "sources": [
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "sha256": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5"
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "sha256": "7779c85dd10275568b0fb2116b94d981863ecbd50ea32a373e0889767b5b6fb0"
+    }
+  ],
+  "fixtureRows": "Fresh invented QA only; existing databases/history untouched",
+  "rolesGranted": false,
+  "historyDeleted": false,
+  "installerExecuted": false,
+  "compilerExecuted": false,
+  "cases": {
+    "malformedSharing": {
+      "refused": true,
+      "code": "P0001",
+      "before": {
+        "project_members": {
+          "count": 1,
+          "digest": "405a1c50d5b2c92f7d263afe758cfedd"
+        },
+        "project_visibility_settings": {
+          "count": 0,
+          "digest": "d751713988987e9331980363e24189ce"
+        }
+      },
+      "after": {
+        "project_members": {
+          "count": 1,
+          "digest": "405a1c50d5b2c92f7d263afe758cfedd"
+        },
+        "project_visibility_settings": {
+          "count": 0,
+          "digest": "d751713988987e9331980363e24189ce"
+        }
+      },
+      "retainedThroughRefusal": true,
+      "controlCleanup": "Whole never-committed synthetic negative fixture rolled back; no DELETE/DROP/history repair."
+    },
+    "duplicateReview": {
+      "refused": true,
+      "code": "23505",
+      "before": {
+        "concept2cure_review_assignments": {
+          "count": 2,
+          "digest": "9e5e8617aa56de4115fd7d2a26a1d0de"
+        },
+        "concept2cure_review_decisions": {
+          "count": 0,
+          "digest": "d751713988987e9331980363e24189ce"
+        }
+      },
+      "after": {
+        "concept2cure_review_assignments": {
+          "count": 2,
+          "digest": "9e5e8617aa56de4115fd7d2a26a1d0de"
+        },
+        "concept2cure_review_decisions": {
+          "count": 0,
+          "digest": "d751713988987e9331980363e24189ce"
+        }
+      },
+      "retainedThroughRefusal": true,
+      "controlCleanup": "Whole never-committed synthetic negative fixture rolled back; no DELETE/DROP/history repair."
+    },
+    "historicalNullAndFutureDefault": {
+      "prior": {
+        "priorContentSHA256": "aaa5a8803693d85ea5a14c5f34268f3fc4ec174b5bc61ecc97bf0ae62c45513d",
+        "unknownUpdateTime": true,
+        "createdAt": "2020-01-02T03:04:05+00:00"
+      },
+      "fresh": {
+        "known": true,
+        "actual_insertion_default": true
+      }
+    }
+  },
+  "replay": [
+    {
+      "pass": 1,
+      "outcome": {
+        "applied": [
+          "db/migrations/20260314_phase12_multi_user_review.sql",
+          "db/migrations/20260401_project_sharing_visibility.sql",
+          "db/migrations/20260801_tenant_isolation_sweep.sql"
+        ],
+        "failures": []
+      },
+      "priorDecision": {
+        "priorContentSHA256": "aaa5a8803693d85ea5a14c5f34268f3fc4ec174b5bc61ecc97bf0ae62c45513d",
+        "unknownUpdateTime": true,
+        "createdAt": "2020-01-02T03:04:05+00:00"
+      },
+      "metadata": {
+        "rls": [
+          {
+            "relname": "concept2cure_review_assignments",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          },
+          {
+            "relname": "concept2cure_review_decisions",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          },
+          {
+            "relname": "project_members",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          },
+          {
+            "relname": "project_visibility_settings",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          }
+        ],
+        "columns": [
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('concept2cure_review_assignments_id_seq'::regclass)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "assignment_id",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "artifact_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "reviewer_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "assigned_by_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "review_round",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "1"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "status",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'pending'::text"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "due_date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "notes",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('concept2cure_review_decisions_id_seq'::regclass)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "decision_id",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "assignment_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "artifact_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "reviewer_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "review_round",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "decision",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "comment",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "version_reviewed",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "updated_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('project_members_id_seq'::regclass)"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "project_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "user_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "role",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "status",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'active'::text"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "invited_by_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "accepted_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('project_visibility_settings_id_seq'::regclass)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "project_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "visibility",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'private'::text"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "updated_by_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          }
+        ],
+        "indexes": [
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_artifact_idx",
+            "indexdef": "CREATE INDEX c2c_review_assign_artifact_idx ON public.concept2cure_review_assignments USING btree (artifact_id)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_org_idx",
+            "indexdef": "CREATE INDEX c2c_review_assign_org_idx ON public.concept2cure_review_assignments USING btree (organization_id)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_reviewer_idx",
+            "indexdef": "CREATE INDEX c2c_review_assign_reviewer_idx ON public.concept2cure_review_assignments USING btree (reviewer_id, status)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_unique",
+            "indexdef": "CREATE UNIQUE INDEX c2c_review_assign_unique ON public.concept2cure_review_assignments USING btree (artifact_id, reviewer_id, review_round)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "concept2cure_review_assignments_assignment_id_key",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_assignments_assignment_id_key ON public.concept2cure_review_assignments USING btree (assignment_id)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "concept2cure_review_assignments_pkey",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_assignments_pkey ON public.concept2cure_review_assignments USING btree (id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_artifact_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_artifact_idx ON public.concept2cure_review_decisions USING btree (artifact_id, review_round)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_assignment_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_assignment_idx ON public.concept2cure_review_decisions USING btree (assignment_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_org_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_org_idx ON public.concept2cure_review_decisions USING btree (organization_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_reviewer_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_reviewer_idx ON public.concept2cure_review_decisions USING btree (reviewer_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "concept2cure_review_decisions_decision_id_key",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_decisions_decision_id_key ON public.concept2cure_review_decisions USING btree (decision_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "concept2cure_review_decisions_pkey",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_decisions_pkey ON public.concept2cure_review_decisions USING btree (id)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "idx_project_members_org_project",
+            "indexdef": "CREATE INDEX idx_project_members_org_project ON public.project_members USING btree (organization_id, project_id)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "idx_project_members_user",
+            "indexdef": "CREATE INDEX idx_project_members_user ON public.project_members USING btree (organization_id, user_id, status)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "project_members_pkey",
+            "indexdef": "CREATE UNIQUE INDEX project_members_pkey ON public.project_members USING btree (id)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "uq_project_member",
+            "indexdef": "CREATE UNIQUE INDEX uq_project_member ON public.project_members USING btree (project_id, user_id)"
+          },
+          {
+            "tablename": "project_visibility_settings",
+            "indexname": "idx_project_visibility_org",
+            "indexdef": "CREATE INDEX idx_project_visibility_org ON public.project_visibility_settings USING btree (organization_id, visibility)"
+          },
+          {
+            "tablename": "project_visibility_settings",
+            "indexname": "project_visibility_settings_pkey",
+            "indexdef": "CREATE UNIQUE INDEX project_visibility_settings_pkey ON public.project_visibility_settings USING btree (id)"
+          },
+          {
+            "tablename": "project_visibility_settings",
+            "indexname": "uq_project_visibility_settings",
+            "indexdef": "CREATE UNIQUE INDEX uq_project_visibility_settings ON public.project_visibility_settings USING btree (project_id)"
+          }
+        ],
+        "checks": [
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_artifact_id_fkey",
+            "definition": "FOREIGN KEY (artifact_id) REFERENCES concept2cure_artifacts(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_assigned_by_id_fkey",
+            "definition": "FOREIGN KEY (assigned_by_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_assignment_id_key",
+            "definition": "UNIQUE (assignment_id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_reviewer_id_fkey",
+            "definition": "FOREIGN KEY (reviewer_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_status_check",
+            "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'withdrawn'::text])))"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_artifact_id_fkey",
+            "definition": "FOREIGN KEY (artifact_id) REFERENCES concept2cure_artifacts(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_assignment_id_fkey",
+            "definition": "FOREIGN KEY (assignment_id) REFERENCES concept2cure_review_assignments(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_decision_check",
+            "definition": "CHECK ((decision = ANY (ARRAY['approve'::text, 'request_changes'::text, 'reject'::text])))"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_decision_id_key",
+            "definition": "UNIQUE (decision_id)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_reviewer_id_fkey",
+            "definition": "FOREIGN KEY (reviewer_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "chk_project_member_role",
+            "definition": "CHECK ((role = ANY (ARRAY['owner'::text, 'edit'::text, 'use'::text])))"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "chk_project_member_status",
+            "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'revoked'::text])))"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_invited_by_id_fkey",
+            "definition": "FOREIGN KEY (invited_by_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_project_id_fkey",
+            "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_user_id_fkey",
+            "definition": "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "uq_project_member",
+            "definition": "UNIQUE (project_id, user_id)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "chk_project_visibility_mode",
+            "definition": "CHECK ((visibility = ANY (ARRAY['private'::text, 'org_public'::text])))"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_project_id_fkey",
+            "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_updated_by_id_fkey",
+            "definition": "FOREIGN KEY (updated_by_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "uq_project_visibility_settings",
+            "definition": "UNIQUE (project_id)"
+          }
+        ]
+      }
+    },
+    {
+      "pass": 2,
+      "outcome": {
+        "applied": [
+          "db/migrations/20260314_phase12_multi_user_review.sql",
+          "db/migrations/20260401_project_sharing_visibility.sql",
+          "db/migrations/20260801_tenant_isolation_sweep.sql"
+        ],
+        "failures": []
+      },
+      "priorDecision": {
+        "priorContentSHA256": "aaa5a8803693d85ea5a14c5f34268f3fc4ec174b5bc61ecc97bf0ae62c45513d",
+        "unknownUpdateTime": true,
+        "createdAt": "2020-01-02T03:04:05+00:00"
+      },
+      "metadata": {
+        "rls": [
+          {
+            "relname": "concept2cure_review_assignments",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          },
+          {
+            "relname": "concept2cure_review_decisions",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          },
+          {
+            "relname": "project_members",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          },
+          {
+            "relname": "project_visibility_settings",
+            "relrowsecurity": true,
+            "relforcerowsecurity": true
+          }
+        ],
+        "columns": [
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('concept2cure_review_assignments_id_seq'::regclass)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "assignment_id",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "artifact_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "reviewer_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "assigned_by_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "review_round",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "1"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "status",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'pending'::text"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "due_date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "notes",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('concept2cure_review_decisions_id_seq'::regclass)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "decision_id",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "assignment_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "artifact_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "reviewer_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "review_round",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "decision",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "comment",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "version_reviewed",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "column_name": "updated_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('project_members_id_seq'::regclass)"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "project_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "user_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "role",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "status",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'active'::text"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "invited_by_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "accepted_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_members",
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('project_visibility_settings_id_seq'::regclass)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "project_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "organization_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "visibility",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'private'::text"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "updated_by_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": "now()"
+          }
+        ],
+        "indexes": [
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_artifact_idx",
+            "indexdef": "CREATE INDEX c2c_review_assign_artifact_idx ON public.concept2cure_review_assignments USING btree (artifact_id)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_org_idx",
+            "indexdef": "CREATE INDEX c2c_review_assign_org_idx ON public.concept2cure_review_assignments USING btree (organization_id)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_reviewer_idx",
+            "indexdef": "CREATE INDEX c2c_review_assign_reviewer_idx ON public.concept2cure_review_assignments USING btree (reviewer_id, status)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "c2c_review_assign_unique",
+            "indexdef": "CREATE UNIQUE INDEX c2c_review_assign_unique ON public.concept2cure_review_assignments USING btree (artifact_id, reviewer_id, review_round)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "concept2cure_review_assignments_assignment_id_key",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_assignments_assignment_id_key ON public.concept2cure_review_assignments USING btree (assignment_id)"
+          },
+          {
+            "tablename": "concept2cure_review_assignments",
+            "indexname": "concept2cure_review_assignments_pkey",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_assignments_pkey ON public.concept2cure_review_assignments USING btree (id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_artifact_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_artifact_idx ON public.concept2cure_review_decisions USING btree (artifact_id, review_round)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_assignment_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_assignment_idx ON public.concept2cure_review_decisions USING btree (assignment_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_org_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_org_idx ON public.concept2cure_review_decisions USING btree (organization_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "c2c_review_decision_reviewer_idx",
+            "indexdef": "CREATE INDEX c2c_review_decision_reviewer_idx ON public.concept2cure_review_decisions USING btree (reviewer_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "concept2cure_review_decisions_decision_id_key",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_decisions_decision_id_key ON public.concept2cure_review_decisions USING btree (decision_id)"
+          },
+          {
+            "tablename": "concept2cure_review_decisions",
+            "indexname": "concept2cure_review_decisions_pkey",
+            "indexdef": "CREATE UNIQUE INDEX concept2cure_review_decisions_pkey ON public.concept2cure_review_decisions USING btree (id)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "idx_project_members_org_project",
+            "indexdef": "CREATE INDEX idx_project_members_org_project ON public.project_members USING btree (organization_id, project_id)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "idx_project_members_user",
+            "indexdef": "CREATE INDEX idx_project_members_user ON public.project_members USING btree (organization_id, user_id, status)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "project_members_pkey",
+            "indexdef": "CREATE UNIQUE INDEX project_members_pkey ON public.project_members USING btree (id)"
+          },
+          {
+            "tablename": "project_members",
+            "indexname": "uq_project_member",
+            "indexdef": "CREATE UNIQUE INDEX uq_project_member ON public.project_members USING btree (project_id, user_id)"
+          },
+          {
+            "tablename": "project_visibility_settings",
+            "indexname": "idx_project_visibility_org",
+            "indexdef": "CREATE INDEX idx_project_visibility_org ON public.project_visibility_settings USING btree (organization_id, visibility)"
+          },
+          {
+            "tablename": "project_visibility_settings",
+            "indexname": "project_visibility_settings_pkey",
+            "indexdef": "CREATE UNIQUE INDEX project_visibility_settings_pkey ON public.project_visibility_settings USING btree (id)"
+          },
+          {
+            "tablename": "project_visibility_settings",
+            "indexname": "uq_project_visibility_settings",
+            "indexdef": "CREATE UNIQUE INDEX uq_project_visibility_settings ON public.project_visibility_settings USING btree (project_id)"
+          }
+        ],
+        "checks": [
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_artifact_id_fkey",
+            "definition": "FOREIGN KEY (artifact_id) REFERENCES concept2cure_artifacts(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_assigned_by_id_fkey",
+            "definition": "FOREIGN KEY (assigned_by_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_assignment_id_key",
+            "definition": "UNIQUE (assignment_id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_reviewer_id_fkey",
+            "definition": "FOREIGN KEY (reviewer_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "concept2cure_review_assignments",
+            "conname": "concept2cure_review_assignments_status_check",
+            "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'withdrawn'::text])))"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_artifact_id_fkey",
+            "definition": "FOREIGN KEY (artifact_id) REFERENCES concept2cure_artifacts(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_assignment_id_fkey",
+            "definition": "FOREIGN KEY (assignment_id) REFERENCES concept2cure_review_assignments(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_decision_check",
+            "definition": "CHECK ((decision = ANY (ARRAY['approve'::text, 'request_changes'::text, 'reject'::text])))"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_decision_id_key",
+            "definition": "UNIQUE (decision_id)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "concept2cure_review_decisions",
+            "conname": "concept2cure_review_decisions_reviewer_id_fkey",
+            "definition": "FOREIGN KEY (reviewer_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "chk_project_member_role",
+            "definition": "CHECK ((role = ANY (ARRAY['owner'::text, 'edit'::text, 'use'::text])))"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "chk_project_member_status",
+            "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'revoked'::text])))"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_invited_by_id_fkey",
+            "definition": "FOREIGN KEY (invited_by_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_project_id_fkey",
+            "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "project_members_user_id_fkey",
+            "definition": "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_members",
+            "conname": "uq_project_member",
+            "definition": "UNIQUE (project_id, user_id)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "chk_project_visibility_mode",
+            "definition": "CHECK ((visibility = ANY (ARRAY['private'::text, 'org_public'::text])))"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_organization_id_fkey",
+            "definition": "FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_pkey",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_project_id_fkey",
+            "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "project_visibility_settings_updated_by_id_fkey",
+            "definition": "FOREIGN KEY (updated_by_id) REFERENCES users(id)"
+          },
+          {
+            "table_name": "project_visibility_settings",
+            "conname": "uq_project_visibility_settings",
+            "definition": "UNIQUE (project_id)"
+          }
+        ]
+      }
+    }
+  ],
+  "journal": [
+    {
+      "file": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "sha256": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5",
+      "apply_count": 2
+    },
+    {
+      "file": "db/migrations/20260401_project_sharing_visibility.sql",
+      "sha256": "7779c85dd10275568b0fb2116b94d981863ecbd50ea32a373e0889767b5b6fb0",
+      "apply_count": 2
+    },
+    {
+      "file": "db/migrations/20260801_tenant_isolation_sweep.sql",
+      "sha256": "8bd0a6e2df8ce113d5b8aaa3201310a219702019776d09e5a509c75171aa1419",
+      "apply_count": 2
+    }
+  ],
+  "status": "qualified actual applier/full two-file DDL twice, legacy NULL/future default, malformed/duplicate refusal; blank app provisioning/runtime API pending"
+}

@@ -71,7 +71,7 @@ try {
   }
   if (!ready) throw new Error('Fixture readiness deadline exceeded.');
   state.phase = 'ready'; record();
-  console.log(JSON.stringify({ fixture: 'ready', ...state }));
+  console.info(JSON.stringify({ fixture: 'ready', ...state }));
   while (!stopping && !fs.existsSync(stopFile) && Date.now() < deadline) {
     await new Promise(resolve => setTimeout(resolve, 500));
   }
@@ -89,5 +89,5 @@ try {
   }
   if (state.phase !== 'failed') state.phase = 'cleaned';
   state.finishedAt = new Date().toISOString(); record();
-  console.log(JSON.stringify({ fixture: state.phase, name, cleanup: state.cleanup, cleanupVerified: state.cleanupVerified }));
+  console.info(JSON.stringify({ fixture: state.phase, name, cleanup: state.cleanup, cleanupVerified: state.cleanupVerified }));
 }

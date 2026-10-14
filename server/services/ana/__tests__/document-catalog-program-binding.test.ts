@@ -14,6 +14,9 @@ vi.mock('../../c2c/program-access.js', async original => ({
   resolveOpenProgram: async (_db: unknown, ctx: ToolContext) => ctx.projectRef ?? null,
   programInOrganization: async () => true,
 }));
+vi.mock('../../c2c/current-program-access.js', async original => (
+  (await import('./support/source-read-tool-fixture.js')).syntheticProgramAccessMock(await original<Record<string, unknown>>())
+));
 // Interactive actor preflight is synthetic here; completion and source loads are real.
 vi.mock('../../vault/document-catalog.service.js', async importOriginal => {
   const real = await importOriginal<typeof import('../../vault/document-catalog.service.js')>();
@@ -31,7 +34,8 @@ const A = '10000000-0000-4000-8000-000000000001';
 const B = '10000000-0000-4000-8000-000000000002';
 const id = '20000000-0000-4000-8000-000000000002';
 const text = 'Assay measured 99.2%.';
-const context: ToolContext = { organizationId: 42, userId: 7, projectRef: A, threadId: 'server-thread', model: 'served-model' };
+const executor = { query: h.query };
+const context: ToolContext = { organizationId: 42, userId: 7, sqlClient: executor, projectRef: A, threadId: 'server-thread', model: 'served-model' };
 const input = { document_id: id, document_kind: 'cert', purpose: 'Source assay', summary: 'Assay measured.', key_data: { value: '99.2' } };
 const call = async (body = input, ctx = context) => JSON.parse(await handlers.get('catalog_project_document')!(body, ctx));
 beforeEach(() => {
@@ -42,10 +46,21 @@ beforeEach(() => {
   // boundary must still hold before embedding and before writer invocation.
   h.write.mockResolvedValue({ ok: true, embeddingStatus: 'embedded' });
   h.query.mockImplementation(async (sql: string) => {
+    if (sql.includes('set_config')) return { rows: [] };
     if (sql.includes('SELECT d.id')) {
+      // The request-client source identity preflight is metadata only. Count
+      // actual document body loads separately so the movement barrier stays
+      // between the interactive preflight and completion's source load.
+      if (!sql.includes('d.document_code')) return { rows: [{ id, organization_id: 42, program_id: h.moveOnSecondLoad ? B : A }] };
       h.loads++;
       if (h.loads === 1 && h.missingPreflight) return { rows: [] };
-      return { rows: [{ id, organization_id: 42, program_id: h.loads > 1 && h.moveOnSecondLoad ? B : A, content_hash: 'a'.repeat(64), catalog_content_hash: 'a'.repeat(64), catalog_status: 'extracted', char_count: text.length, extracted_text: text, file_name: 'assay.txt', original_file_available: true }] };
+      return { rows: [{ id, organization_id: 42, program_id: h.loads > 1 && h.moveOnSecondLoad ? B : A,
+        document_code: null, document_title: null, document_type: null, mime_type: null,
+        folder_id: null, evidence_kind: null, ctd_section: null, placement_status: 'unfiled',
+        disposition: null, is_current: true, extraction_method: 'utf8', extraction_confidence: null, extraction_error: null,
+        word_count: null, page_count: null, document_kind: null, purpose: null, summary: null, key_data: null,
+        cataloged_at: null, catalog_state: null, proposed_model: null,
+        content_hash: 'a'.repeat(64), catalog_content_hash: 'a'.repeat(64), catalog_status: 'extracted', char_count: text.length, extracted_text: text, file_name: 'assay.txt', original_file_available: true }] };
     }
     if (sql.includes('SELECT char_start')) return { rows: [{ char_start: 0, char_end: text.length }] };
     throw new Error('Unexpected programme-binding fixture query');
@@ -55,9 +70,18 @@ beforeEach(() => {
 describe('serving programme binding across catalog source loads', () => {
   it.each([true, false])('a move between preflight and service load refuses even when both programmes are writable (project open: %s)', async open => {
     h.moveOnSecondLoad = true;
-    const result = await call(input, open ? context : { organizationId: 42, userId: 7 });
-    expect(result).toMatchObject({ ok: false, refused: true, code: 'SOURCE_PROGRAM_CHANGED' });
-    expect(h.loads).toBe(2); expect(h.embed).not.toHaveBeenCalled(); expect(h.write).not.toHaveBeenCalled();
+    const result = await call(input, open ? context : { organizationId: 42, userId: 7, sqlClient: executor });
+    expect(result).toMatchObject({ ok: false, refused: true });
+    if (open) {
+      // The upstream request loader refuses the new parent before fetching
+      // its body; the open conversation cannot observe another source.
+      expect(result.reason).toContain('Document not found');
+      expect(h.loads).toBe(1);
+    } else {
+      expect(result.code).toBe('SOURCE_PROGRAM_CHANGED');
+      expect(h.loads).toBe(2);
+    }
+    expect(h.embed).not.toHaveBeenCalled(); expect(h.write).not.toHaveBeenCalled();
   });
   it('a missing preflight cannot become an unadmitted document on a later load', async () => {
     h.missingPreflight = true; h.moveOnSecondLoad = true;

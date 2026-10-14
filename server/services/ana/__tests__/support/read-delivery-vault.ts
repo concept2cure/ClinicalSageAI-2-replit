@@ -108,6 +108,18 @@ const fixtureProgram = '90000000-0000-4000-8000-000000000001';
 const fixtureScope = (input: { organizationId: number; userId: number }) => ({ organizationId: input.organizationId, userId: input.userId,
   role: 'member', projectId: null, programId: null, accessibleProgramIds: [fixtureProgram], actorFiltered: true as const });
 
+/** A successful source admission is an explicit premise of budget/delivery
+ * fixtures. Both scope shapes are supplied consistently, never as DB proof. */
+export function catalogScopeMock(real: Record<string, unknown>) {
+  const q = { query: async () => ({ rows: [] }) };
+  return { ...real, catalogScope: async (ctx: { organizationId: number; userId: number; sqlClient?: typeof q }, orgId: number) => {
+    const admittedScope = fixtureScope({ organizationId: orgId, userId: ctx.userId });
+    return { programId: null, admittedScope, executor: ctx.sqlClient ?? q,
+      accessibleScope: { scope: 'verified-accessible-programs', actor: { userId: ctx.userId, role: admittedScope.role },
+        programIds: [fixtureProgram], reconciliationRequired: false } };
+  } };
+}
+
 export function serviceMock() {
   return {
     withAnaSourceReadScope: async (input: any, run: any) => run({}, fixtureScope(input)),

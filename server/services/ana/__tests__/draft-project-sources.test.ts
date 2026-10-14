@@ -2,14 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn() }));
 vi.mock('../catalog-scope', async () => ({ catalogScope: mocks.scope, sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
 vi.mock('../../vault/document-catalog.service', () => ({ revalidateActorSourceScope: async () => {}, loadDocumentForActor: mocks.load }));
+vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: async () => {} }));
 import { loadDraftProjectSources, draftSourcePrompt } from '../draft-project-sources';
 const id = '10000000-0000-4000-8000-000000000001';
 const program = '20000000-0000-4000-8000-000000000001';
-const ctx = { organizationId: 7, userId: 3, projectRef: program };
+const executor = { query: vi.fn() };
+const ctx = { organizationId: 7, userId: 3, projectRef: program, sqlClient: executor };
 const doc = () => ({ id, programId: program, contentHash: 'a'.repeat(64), documentTitle: 'Study A CSR',
   fileName: 'csr.pdf', extractedText: 'Prespecified primary endpoint: 12 of 30 subjects.',
   catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
-beforeEach(() => { vi.clearAllMocks(); mocks.scope.mockResolvedValue({ programId: program }); mocks.load.mockResolvedValue(doc()); });
+beforeEach(() => { vi.clearAllMocks(); mocks.scope.mockResolvedValue({ programId: program, executor, accessibleScope: { actor: { userId: 3, role: 'viewer' }, programIds: [program] } }); mocks.load.mockResolvedValue(doc()); });
 describe('processed project sources for regulatory drafting', () => {
   it('loads saved text, binds source identity/version/span, and deduplicates IDs', async () => {
     const result = await loadDraftProjectSources([id, id], ctx);

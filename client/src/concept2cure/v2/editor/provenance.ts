@@ -13,8 +13,9 @@
 
 import { isWorkflowImportOrigin, type AuthoringImportOrigin, type WorkflowImportOrigin, type WorkflowSectionOrigin } from '@shared/authoring/source-import';
 import { workflowOriginMatches } from '../authoringHandoff';
+import { parseRecordedTemplateSource, type RecordedTemplateSource } from '@shared/authoring/recorded-template-source';
 
-export type ProvenanceSource = 'ana' | 'seed' | 'import' | 'human';
+export type ProvenanceSource = 'ana' | 'seed' | 'import' | 'human' | 'template';
 
 export interface DocumentProvenance {
   source: ProvenanceSource;
@@ -26,6 +27,7 @@ export interface DocumentProvenance {
   authorName: string | null;
   note: string | null;
   importSource?: AuthoringImportOrigin & { warnings: string[]; reason: string };
+  templateSource?: RecordedTemplateSource;
 }
 
 const str = (v: unknown): string | null => {
@@ -73,7 +75,7 @@ function importedLine(original: DocumentProvenance['importSource'], note: string
  */
 export function describeProvenance(
   raw: unknown,
-  opts: { inThisConversation?: boolean } = {},
+  opts: { inThisConversation?: boolean; templateId?: string | null } = {},
 ): DocumentProvenance | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -83,6 +85,17 @@ export function describeProvenance(
   const turnId = str(r.turnId ?? r.turn_id);
   const authorName = str(r.authorName ?? r.author_name ?? r.author);
   const note = str(r.note);
+
+  if (source === 'template') {
+    try {
+      const raw = r.templateSource;
+      const id = opts.templateId === undefined && raw && typeof raw === 'object' && 'id' in raw ? raw.id : opts.templateId;
+      const templateSource = parseRecordedTemplateSource(raw, id);
+      if (!templateSource) return null;
+      return { source: 'template', line: `Created from an IND template · ${templateSource.kind === 'preparation' ? 'preparation worksheet' : 'working scaffold'}`,
+        model: null, conversationId: null, turnId: null, authorName, note, templateSource };
+    } catch { return null; }
+  }
 
   if (source === 'ana') {
     const where = opts.inThisConversation

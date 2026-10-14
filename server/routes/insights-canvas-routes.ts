@@ -26,11 +26,10 @@
  *
  * HONESTY (regulated product): this route originates no metric. Readiness
  * figures trace to computeInitialRun; tier/entitlement verdicts to the
- * entitlement matrix. Fields with no truthful server source — a program's
- * submission `filing`, target `agency`, and `pdufa` action date are not on the
- * `projects` / readiness model and are not joined in this pass — are returned as
- * an explicit `null`, never a fabricated value. The surface already renders a
- * null metric as "--" / "missing".
+ * entitlement matrix. The selected lead's filing and agency come only
+ * from its authorized recorded registry context. Missing or unverifiable filing
+ * context stays unavailable; no title or UI filter supplies it. PDUFA remains
+ * null because this read model has no recorded action-date source.
  *
  * Org id is bound from the verified JWT (authedOrgId); the mount adds
  * authenticateToken. Every handler is try/caught and never throws out of the
@@ -49,7 +48,12 @@ import { requestDb, requestPgClient, MissingRequestDbContextError } from '../db/
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 import { looksLikeProgramUuid } from '../lib/project-id';
-import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { VerificationUnavailableError } from '../lib/verification-outcome';
+import { programInOrganization } from '../services/c2c/program-access';
+import { resolveProgramProjectAnchor, readProgramAnchorRow } from '../services/c2c/program-project-anchor';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, ProgramReadAccessError } from '../services/c2c/current-program-access';
+import { readRecordedRegionalFiling, regionalFilingApplicability, unavailableRegionalFilingContext, type RegionalFilingContext, type RegionalFilingApplicability } from '../services/report-os/regional/filing-applicability';
+import { REGIONAL_FILING_TYPES } from '../services/report-os/regional/filing-types';
 import { REPORT_TYPE_SEED, type ReportTypeDefinition } from '../services/report-os/taxonomy';
 import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
 import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report-types';
@@ -146,7 +150,8 @@ interface CanvasReportType {
   region: string | null;
   computedScope: 'organization' | 'project' | 'document' | null;
   availabilityReason: string | null;
-  availabilityState: 'available' | 'not-computed' | 'scope-required' | 'disabled' | 'unregistered';
+  availabilityState: 'available' | 'not-computed' | 'scope-required' | 'disabled' | 'unregistered' | 'filing-context-required' | 'not-applicable' | 'context-unavailable';
+  reasonCode: string | null;
   runScopeType: 'project' | 'account' | null;
   runScopeId: string | null;
   /** The real seed truthfulness rules, passed through untouched. */
@@ -179,11 +184,10 @@ interface CanvasLeadProgram {
   riskLevel: RiskLevel;
   criticalBlockerCount: number;
   /**
-   * HONESTY: submission filing type, target agency and PDUFA / action date are
-   * NOT on the `projects` / readiness model and are not joined in this pass, so
-   * they are returned as an explicit null rather than a fabricated value.
-   * Populating them truthfully requires a submission-table join (follow-up pass).
+   * Recorded filing/agency are supplied after canonical current-project
+   * admission and metadata validation. PDUFA has no recorded source here.
    */
+  registryId: string | null;
   filing: string | null;
   agency: string | null;
   pdufa: string | null;
@@ -285,7 +289,7 @@ const LOCKED_PORTFOLIO_DECISION: ReportEntitlementDecision = {
   tierResolved: false,
 };
 
-/** PURE: single-program lead context. filing/agency/pdufa are unsourced → null. */
+/** PURE: readiness fields; recorded filing is added only after admission. */
 function toLeadProgram(insight: ProgramMemberInsight): CanvasLeadProgram {
   /* L189 (reporting review 2026-10-01). This said 'program' with a PROJECT id,
      and the canvas runs every report over the scope it is given: POST /runs
@@ -307,6 +311,7 @@ function toLeadProgram(insight: ProgramMemberInsight): CanvasLeadProgram {
     status: insight.status,
     riskLevel: insight.riskLevel,
     criticalBlockerCount: insight.criticalBlockerCount,
+    registryId: null,
     filing: null,
     agency: null,
     pdufa: null,
@@ -400,6 +405,7 @@ async function pickLead(
 ): Promise<{ leadProgram: CanvasLeadProgram | null; openProgram: CanvasOpenProgram | null }> {
   const members = summary?.attentionRanked ?? [];
   if (!programId) return { leadProgram: null, openProgram: null };
+  await requireSelectedProgram(req, organizationId, programId);
   const anchored = await resolveProgramProjectAnchor(requestDb(req), {
     programId,
     orgId: organizationId,
@@ -412,6 +418,18 @@ async function pickLead(
     leadProgram: member ? toLeadProgram(member) : null,
     openProgram: { programId, state: anchored == null ? 'unanchored' : member ? 'lead' : 'not-in-portfolio' },
   };
+}
+
+/** A missing anchor is a repair state only for a verified own-org program. */
+async function requireSelectedProgram(req: Request, organizationId: number, programId: string): Promise<void> {
+  const q = requestPgClient(req);
+  try {
+    if (await programInOrganization(q, programId, organizationId)) return;
+  } catch (error) {
+    if (error instanceof VerificationUnavailableError) throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    throw error;
+  }
+  throw new OpenProgramUnavailableError('Program not found');
 }
 
 /**
@@ -429,19 +447,41 @@ function catalogAvailabilityState(type: CatalogDefinition, runnable: boolean, co
   return computedScopes.length ? 'scope-required' : 'not-computed';
 }
 
-function catalogFor(types: CatalogDefinition[], segments: ReportSegment[], persona: string | null, tier: Tier, context: { organizationId: number; lead: CanvasLeadProgram | null }): CanvasReportType[] {
+function declaredRegion(type: CatalogDefinition): string | null {
+  return typeof type.governanceRequirements.region === 'string' ? type.governanceRequirements.region : null;
+}
+function registryUnavailableReason(type: CatalogDefinition): string | null {
+  if (!type.registered) return 'This report is not in the deployed registry and cannot run yet.';
+  return type.enabled ? null : 'This report is disabled in the report registry.';
+}
+function catalogRunScope(lead: CanvasLeadProgram | null, project: { runnable: boolean }, account: { runnable: boolean }): 'project' | 'account' | null {
+  if (lead && project.runnable) return 'project';
+  return account.runnable ? 'account' : null;
+}
+function regionalCatalogAdmission(type: CatalogDefinition, baseRunnable: boolean, filing: RegionalFilingContext | null): RegionalFilingApplicability | null {
+  if (!baseRunnable || !REGIONAL_FILING_TYPES[type.typeId] || !filing) return null;
+  return regionalFilingApplicability(type.typeId, { label: type.label, region: declaredRegion(type) }, filing);
+}
+function catalogReason(regional: RegionalFilingApplicability | null, registryReason: string | null, runnable: boolean, projectRunnable: boolean, baseReason: string | null): string | null {
+  if (regional && !regional.runnable) return regional.availabilityReason;
+  if (registryReason) return registryReason;
+  return !runnable && projectRunnable ? 'Open a program to run this project report.' : baseReason;
+}
+
+function catalogFor(types: CatalogDefinition[], segments: ReportSegment[], persona: string | null, tier: Tier, context: { organizationId: number; lead: CanvasLeadProgram | null; filing: RegionalFilingContext | null; tierResolved: boolean }): CanvasReportType[] {
   const { organizationId, lead } = context;
   return filterTypesForSegment(types, segments, persona).map((t) => {
-    const decision = decideReportEntitlement(t.typeId, t.family, tier);
+    const decision = decideReportEntitlement(t.typeId, t.family, tier, context.tierResolved);
     const project = reportAvailability(t.typeId, 'project', t.allowedScopes);
     const account = reportAvailability(t.typeId, 'account', t.allowedScopes);
-    const runScopeType = lead && project.runnable ? 'project' : account.runnable ? 'account' : null;
+    const runScopeType = catalogRunScope(lead, project, account);
     const availability = runScopeType === 'account' ? account : project;
-    const registryReason = !t.registered ? 'This report is not in the deployed registry and cannot run yet.'
-      : !t.enabled ? 'This report is disabled in the report registry.' : null;
-    const runnable = registryReason == null && runScopeType != null && availability.runnable;
+    const registryReason = registryUnavailableReason(t);
+    const baseRunnable = registryReason == null && runScopeType != null && availability.runnable;
     const computedScopes = t.allowedScopes.filter((s) => reportAvailability(t.typeId, s, t.allowedScopes).runnable);
-    const availabilityState = catalogAvailabilityState(t, runnable, computedScopes);
+    const regional = regionalCatalogAdmission(t, baseRunnable, context.filing);
+    const runnable = baseRunnable && (regional?.runnable ?? true);
+    const availabilityState = regional?.availabilityState ?? catalogAvailabilityState(t, baseRunnable, computedScopes);
     return {
       typeId: t.typeId,
       label: t.label,
@@ -450,9 +490,10 @@ function catalogFor(types: CatalogDefinition[], segments: ReportSegment[], perso
       computedScopes,
       allowedClientSegments: t.allowedClientSegments,
       allowedPersonas: t.allowedPersonas,
-      region: typeof t.governanceRequirements.region === 'string' ? t.governanceRequirements.region : null,
+      region: declaredRegion(t),
       computedScope: availability.computedScope,
-      availabilityReason: registryReason ?? (!runnable && project.runnable ? 'Open a program to run this project report.' : availability.availabilityReason),
+      reasonCode: regional?.reasonCode ?? null,
+      availabilityReason: catalogReason(regional, registryReason, runnable, project.runnable, availability.availabilityReason),
       availabilityState,
       runScopeType,
       runScopeId: runScopeType === 'account' ? String(organizationId) : runScopeType === 'project' ? lead!.scopeId : null,
@@ -481,6 +522,34 @@ function programChoices(summary: { attentionRanked: ProgramMemberInsight[] } | n
     .filter((m): m is ProgramMemberInsight & { programId: string } => typeof m.programId === 'string' && m.programId !== '')
     .map((m) => ({ programId: m.programId, code: m.code ?? null, label: m.name }))
     .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+/** Actual selected lead only. Canonical scope errors remain typed refusals;
+ * an admitted project's metadata storage fault is a generic unavailable state. */
+function leadWithRecordedFiling(lead: CanvasLeadProgram, context: RegionalFilingContext): CanvasLeadProgram {
+  if (context.state !== 'recorded') return { ...lead, registryId: null, filing: null, agency: null };
+  const filing = context.filing;
+  return { ...lead, registryId: filing.registryId, filing: filing.entryLabel, agency: filing.agency };
+}
+
+async function readLeadFiling(req: Request, organizationId: number, programId: string | null, lead: CanvasLeadProgram | null) {
+  if (!programId || !lead) return { lead, filing: null, recheck: async () => undefined };
+  const q = requestPgClient(req);
+  const identity = { organizationId, userId: authedUserId(req) ?? undefined, programId };
+  const scope = await getCurrentAccessibleProgramScope(q, identity);
+  const anchor = await readProgramAnchorRow(q, { programId, orgId: organizationId, context: 'insights-canvas-filing', requireUnique: true, eligibility: 'non-deleted' });
+  if (!anchor || anchor.id !== lead.projectId) throw new ProgramReadAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This program needs one verified project relationship before its reporting context can be supplied.');
+  let filing: RegionalFilingContext;
+  try {
+    const { rows } = await q.query('SELECT metadata FROM projects WHERE id=$1 AND organization_id=$2 AND regulatory_program_id=$3', [lead.projectId, organizationId, programId]);
+    if (rows.length !== 1) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    filing = readRecordedRegionalFiling(rows[0].metadata);
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError || error instanceof MissingRequestDbContextError) throw error;
+    filing = unavailableRegionalFilingContext();
+  }
+  return { lead: leadWithRecordedFiling(lead, filing), filing,
+    recheck: () => requireProgramScopeStillCurrent(q, identity, scope) };
 }
 
 export default function createInsightsCanvasRoutes(): Router {
@@ -557,10 +626,12 @@ export default function createInsightsCanvasRoutes(): Router {
       // Lead program — a single program's OWN governed readiness, a base
       // capability shown on every tier (not the enterprise rollup): the open
       // program when one is named; none otherwise (pickLead).
-      const { leadProgram, openProgram } = await pickLead(req, organizationId, programId, summary, accessibleProjectIds);
+      const { leadProgram: selectedLead, openProgram } = await pickLead(req, organizationId, programId, summary, accessibleProjectIds);
 
+      const filingRead = await readLeadFiling(req, organizationId, programId, selectedLead);
+      const leadProgram = filingRead.lead;
       const catalogSegments = await leadSegments(organizationId, leadProgram, segments);
-      const reportTypes = catalogFor(types, catalogSegments, persona, tier, { organizationId, lead: leadProgram });
+      const reportTypes = catalogFor(types, catalogSegments, persona, tier, { organizationId, lead: leadProgram, filing: filingRead.filing, tierResolved: gate.tierResolved === true });
       const programs = programChoices(summary);
 
       // Cross-program board rollup — the ENTERPRISE portfolio_rollup capability.
@@ -571,7 +642,7 @@ export default function createInsightsCanvasRoutes(): Router {
       const data: CanvasOverview = {
         organizationId,
         tier,
-        tierResolved: gate.tierResolved,
+        tierResolved: gate.tierResolved === true,
         segments: catalogSegments,
         reportTypes,
         leadProgram,
@@ -581,8 +652,11 @@ export default function createInsightsCanvasRoutes(): Router {
         dataScope: 'accessible_projects',
       };
 
+      await filingRead.recheck();
       return res.json({ success: true, data });
     } catch (error) {
+      if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+      if (error instanceof MissingRequestDbContextError) return res.status(error.statusCode).json({ success: false, error: { code: error.code, message: error.message } });
       if (error instanceof OpenProgramUnavailableError) return res.status(404).json({ success: false, error: 'Program not found' });
       if (error instanceof CatalogUnavailableError) {
         return res.status(503).json({ success: false, error: { code: 'REPORT_CATALOG_UNAVAILABLE', message: 'The report catalog could not be read. Try again in a moment.' } });

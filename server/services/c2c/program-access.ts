@@ -19,13 +19,10 @@
  * and what the caller's org role is. That is deliberately coarser than
  * project-sharing-access.ts, which has a real member roster to consult.
  *
- * READ ROUTES ARE NOT GATED, on purpose. There is no membership store for
- * uuid-keyed programs, so "private unless you are a member" would evaluate to
- * "private to the lead" for every program that exists today and lock every
- * other user out of projects they legitimately work in. Read-side privacy needs
- * the id-space convergence (regulatory_programs ↔ projects) and a real member
- * table first; until then reads stay org-scoped and only MUTATIONS are
- * authorized here.
+ * This module retains the existing mutation-role policy. Current read access
+ * is now evaluated by current-program-access.ts through the programme's
+ * canonical integer project anchor and the existing durable sharing roster.
+ * Neither the lead nor a stale request role substitutes for that admission.
  *
  * @module server/services/c2c/program-access
  */

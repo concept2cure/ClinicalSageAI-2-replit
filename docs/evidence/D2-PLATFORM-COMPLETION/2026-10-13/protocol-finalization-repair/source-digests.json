@@ -1,0 +1,14 @@
+{
+  "server/services/protocol-development/protocol-development-service.ts": "20aaa76622f857405ad6bcd591c2c7a5b6a8e9095f6c63fe5d8df7c4f2c6fbbd",
+  "server/services/protocol-soa/protocol-soa-service.ts": "b2d7efc13e2dd2082162bc053fffa58b43abdaafd748654e078eb09fc3184df2",
+  "server/services/protocol-development/protocol-signature-manifestation.ts": "1fbb5c5fc8f3ebc9cd3ec4c8884438222fe996f1ff88ac7860a59f3316c68b9b",
+  "server/services/protocol-export/protocol-export-service.ts": "52c955bcd7bc0e5e6c842ea0ed6385edeb9b8ddc4fd0f33271a15527e7677e02",
+  "server/services/protocol-export/protocol-export-logic.ts": "1f9b0859ea68453b3ace2c259077687e5072fb26798233dce18150a6488420b9",
+  "server/routes/protocol-export.ts": "df7ee2fd21e848c2b8528fcc6dea50578b29efd8791e5402891c5dd6919235a9",
+  "client/src/concept2cure/v2/fixtures/protocol-data.ts": "ce1c6528d45bf744a0d032535f11dd2ce7dcdd0e61b14822e933b702e6f05753",
+  "client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx": "14107c6c9921b50b4293c88af4e22a00e49aa14ba3ec9397877025795ea5c5bc",
+  "tests/db/protocol-finalization-concurrency.dbtest.ts": "4fca47dbc7636d48602b9023fa637fcaaadf0486ba2acc196847d2bc533caf11",
+  "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts": "fa0a229aa2b37b86749b4fe805a3387b4fd9783ff9b33568e32ea805b05c35f4",
+  "server/services/protocol-export/__tests__/protocol-export-signature.test.ts": "976dc78f83daa3930ed930251025fb3fa55d7fecf6f2234f2ac767396a0d9250",
+  "server/routes/__tests__/protocol-export-binding.http.test.ts": "a63f1909d122314701736262f84a4712e2ed66f034e8c89ba153c14658373567"
+}

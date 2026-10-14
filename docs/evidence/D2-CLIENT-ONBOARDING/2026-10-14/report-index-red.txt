@@ -1,0 +1,85 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > reproduces the inherited exact required-object failure when the leading tenant index is missing 2339ms
+ × tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > applies the actual repair twice, satisfies that verifier and preserves stored rows, columns and RLS 1786ms
+   → ENOENT: no such file or directory, open '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql'
+ × tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > fails closed if the canonical base table was never provisioned 1687ms
+   → ENOENT: no such file or directory, open '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql'
+ × tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > reaches fresh install and deployment exactly once before the unchanged isolation tail 6ms
+   → expected [] to have a length of 1 but got +0
+ × tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > repairs the existing canonical model index without changing table or column definitions 2ms
+   → ENOENT: no such file or directory, open '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > applies the actual repair twice, satisfies that verifier and preserves stored rows, columns and RLS
+Error: ENOENT: no such file or directory, open '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql'
+ ❯ repairSQL tests/schema-contract/immutable-report-tenant-index.pglite.test.ts:16:28
+     14| const repairPath = 'migrations/20261014_immutable_report_tenant_index.…
+     15| const installer = fs.readFileSync(path.join(root, 'scripts/db/install-…
+     16| const repairSQL = () => fs.readFileSync(path.join(root, repairPath), '…
+       |                            ^
+     17|
+     18| type Verdict = { shortfalls: string[]; lines: string[] };
+ ❯ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts:83:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > fails closed if the canonical base table was never provisioned
+Error: ENOENT: no such file or directory, open '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql'
+ ❯ repairSQL tests/schema-contract/immutable-report-tenant-index.pglite.test.ts:16:28
+     14| const repairPath = 'migrations/20261014_immutable_report_tenant_index.…
+     15| const installer = fs.readFileSync(path.join(root, 'scripts/db/install-…
+     16| const repairSQL = () => fs.readFileSync(path.join(root, repairPath), '…
+       |                            ^
+     17|
+     18| type Verdict = { shortfalls: string[]; lines: string[] };
+ ❯ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts:105:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > reaches fresh install and deployment exactly once before the unchanged isolation tail
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts:110:69
+    108|
+    109|   it('reaches fresh install and deployment exactly once before the unc…
+    110|     expect(C2C_MIGRATION_FILES.filter(file => file === repairPath)).to…
+       |                                                                     ^
+    111|     expect(C2C_MIGRATION_FILES.indexOf(repairPath)).toBeLessThan(C2C_M…
+    112|     expect(C2C_MIGRATION_FILES.slice(-3)).toEqual([UUID_TENANT_ISOLATI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/schema-contract/immutable-report-tenant-index.pglite.test.ts > immutable report tenant index repair > repairs the existing canonical model index without changing table or column definitions
+Error: ENOENT: no such file or directory, open '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql'
+ ❯ repairSQL tests/schema-contract/immutable-report-tenant-index.pglite.test.ts:16:28
+     14| const repairPath = 'migrations/20261014_immutable_report_tenant_index.…
+     15| const installer = fs.readFileSync(path.join(root, 'scripts/db/install-…
+     16| const repairSQL = () => fs.readFileSync(path.join(root, repairPath), '…
+       |                            ^
+     17|
+     18| type Verdict = { shortfalls: string[]; lines: string[] };
+ ❯ tests/schema-contract/immutable-report-tenant-index.pglite.test.ts:120:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/workspace/concept2cure/migrations/20261014_immutable_report_tenant_index.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  03:45:17
+   Duration  7.49s (transform 671ms, setup 92ms, import 1.28s, tests 5.82s, environment 0ms)
+

@@ -1,0 +1,104 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/qms/__tests__/training.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T08:21:45.466Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T08:21:45.468Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/training.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T08:21:45.469Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/training.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > personal acknowledgement on canonical QMS SQL > allows an active viewer to acknowledge only their own exact released revision with its declaration and snapshot 54ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > personal acknowledgement on canonical QMS SQL > reads the same current receipt and released section text through the shared context schema 38ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > personal acknowledgement on canonical QMS SQL > returns an existing current receipt without another training or audit insertion 33ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > personal acknowledgement on canonical QMS SQL > permits refresh after expiry, preserves history, and returns only the new current receipt 43ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > personal acknowledgement on canonical QMS SQL > refuses a stale submitted version without recording an acknowledgement 26ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > personal acknowledgement on canonical QMS SQL > refuses a stale submitted digest without recording an acknowledgement 15ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > refuses text changed after approval even when the caller submits the changed text digest 27ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > retains the acknowledged content after an in-place revision and refuses the old reader submission 68ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > rechecks document status retired inside the acknowledgement transaction 23ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > rechecks document status superseded inside the acknowledgement transaction 25ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > rechecks document status draft inside the acknowledgement transaction 25ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > refuses a future-effective release and a deleted release 28ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > does not mistake a digest-only effective row for a released document: missing approver 20ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > does not mistake a digest-only effective row for a released document: missing approval timestamp 26ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > does not mistake a digest-only effective row for a released document: future approval timestamp 32ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > does not mistake a digest-only effective row for a released document: missing approval meaning 32ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > does not mistake a digest-only effective row for a released document: missing approval basis 22ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > does not mistake a digest-only effective row for a released document: wrong approval meaning 19ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > rolls back the receipt and the already-inserted audit proof if the audit transaction aborts 28ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > released revision binding and acknowledgement transaction integrity > reports a lost COMMIT reply as unconfirmed and permits readback instead of claiming rollback 46ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > derives controlled-text editing capability from the current membership, document state, and payment posture 32ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > retains a previously acknowledged receipt and released text when payment standing becomes read-only 29ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses foreign membership without a training or audit record 20ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses inactive account without a training or audit record 19ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses suspended account without a training or audit record 19ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses unverified account without a training or audit record 19ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses departed membership without a training or audit record 20ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses missing identity without a training or audit record 18ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > cannot acknowledge a foreign document using a valid membership in the requesting tenant 33ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses organization status inactive 31ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses organization status suspended 19ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses organization status pending_deletion 20ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current trainee standing and tenant boundaries > refuses an organization whose payment standing prevents training writes 19ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current roster coverage from real training history > counts distinct active current members and excludes stale, departed, expired, foreign, and legacy receipts 79ms
+ ✓ server/services/qms/__tests__/training.pglite.integration.test.ts > current roster coverage from real training history > does not credit an old acknowledgement after the controlled version changes 31ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > persists exact words, preserves unrelated metadata, removes stale approval, and records audit on the same transaction 55ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > returns a document under review to draft when its controlled text changes 25ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a stale version without overwriting the draft 26ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a stale content digest without overwriting the draft 22ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > does not edit controlled words in status effective 25ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > does not edit controlled words in status retired 21ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > does not edit controlled words in status superseded 23ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a current viewer instead of accepting session-provided writing authority 19ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a current foreign membership instead of accepting session-provided writing authority 20ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a current inactive account instead of accepting session-provided writing authority 19ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a current missing identity instead of accepting session-provided writing authority 21ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a valid member of a different tenant targeting this document 18ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses an organization with status inactive 22ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses an organization with status suspended 20ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses an organization whose payment standing prevents writing 19ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > controlled QMS text on canonical migration SQL > refuses a deleted draft 24ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > draft concurrency and controlled-text transaction integrity > does not overwrite a more recent edit read after the editor opened 25ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > draft concurrency and controlled-text transaction integrity > allows incomplete controlled words to remain a draft without creating training 25ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > draft concurrency and controlled-text transaction integrity > requires a reason and rejects another metadata/status payload alongside controlled text 18ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > draft concurrency and controlled-text transaction integrity > rolls back both the controlled text and its audit proof when auditing aborts 25ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > draft concurrency and controlled-text transaction integrity > reports a lost COMMIT reply as unconfirmed while the saved text remains discoverable 23ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > recorded section provenance across native controlled-text edits > preserves unknown per-section provenance while replacing only the submitted controlled words 29ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > recorded section provenance across native controlled-text edits > refuses malformed stored section maps ('not an array') instead of dropping unrepresented attributes 22ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > recorded section provenance across native controlled-text edits > refuses malformed stored section maps ('missing key') instead of dropping unrepresented attributes 22ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > recorded section provenance across native controlled-text edits > refuses malformed stored section maps ('duplicate keys') instead of dropping unrepresented attributes 22ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > refuses the actual text contributor as approver without a document update, governed act, signature, or approval audit 31ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > allows an uninvolved signer through the canonical gate and binds the real digest including contributor history 36ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > retains multiple actual editors, preserves the original creator, and carries protected contributors in the audit details 29ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > refuses malformed stored protected authorship before editing or recording an audit 21ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > refuses malformed stored protected authorship before editing or recording an audit 21ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > refuses malformed stored protected authorship before editing or recording an audit 23ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > refuses malformed stored protected authorship before editing or recording an audit 24ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > refuses malformed stored protected authorship before editing or recording an audit 18ms
+ ✓ server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts > actual controlled-text contributors and the canonical approval gate > does not accept contributor identities supplied through the strict controlled-text input 17ms
+
+ Test Files  2 passed (2)
+      Tests  69 passed (69)
+   Start at  08:21:42
+   Duration  15.92s (transform 2.27s, setup 191ms, import 4.03s, tests 11.06s, environment 0ms)

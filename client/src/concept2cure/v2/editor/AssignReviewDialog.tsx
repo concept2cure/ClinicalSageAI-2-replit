@@ -267,7 +267,11 @@ export function alreadyAsked(r: StandingReview | null | undefined): boolean {
 /** What a member's earlier request on this document means for asking them now. */
 export function priorRequestNote(r: StandingReview): string {
   if (alreadyAsked(r)) return `Already asked${onDate(r.requestedAt)}; their review is pending.`;
-  return `${reviewStatusLabel(r.status)}${onDate(r.reviewedAt)}. That verdict stays in the record; choosing them requests a new review.`;
+  const binding = r.standing === 'current' ? 'It covers the current saved document.'
+    : r.standing === 'stale' ? 'The saved document has changed since that decision.'
+      : 'Its saved-content binding is unavailable.';
+  return `${reviewStatusLabel(r.status)}${onDate(r.reviewedAt)}. ${binding} That verdict stays in the record; choosing them requests a new review.` +
+    (r.comments ? ` Recorded reason: ${r.comments}` : '');
 }
 
 /**

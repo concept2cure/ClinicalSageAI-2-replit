@@ -62,6 +62,11 @@ export interface ReviewDueRow {
 }
 
 export interface TrainingRow {
+  /** Canonical document id from the live coverage route; fixtures have none. */
+  documentId?: number;
+  documentVersion?: string;
+  eligible?: boolean;
+  unavailableReason?: string | null;
   doc: string;
   current: number;
   of: number;

@@ -118,6 +118,12 @@ export const C2C_MIGRATION_FILES = [
   // and is one chain per tenant. Depends on sha256_chain/occurred_at from
   // mutation_primitives, so it follows the seal file; additive and idempotent.
   'migrations/20260921_audit_logs_chain_seq.sql',
+  // Sole existing creators for the sharing/reviewer admission stores that
+  // the golden journeys provision. Parent projects/users/organizations/artifacts
+  // come from the declared Drizzle base. Review owns BEGIN/COMMIT; the canonical
+  // applier detects that. Both entries precede the unchanged isolation tail.
+  'db/migrations/20260314_phase12_multi_user_review.sql',
+  'db/migrations/20260401_project_sharing_visibility.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
   // ── The canonical submission core ───────────────────────────────────────────
@@ -2156,10 +2162,10 @@ export const C2C_MIGRATION_FILES = [
   // creates it; 20260821 reconciles its columns; 20260823 adds the placement
   // columns) and after regulatory_programs exists to backfill from.
   //
-  // Purely additive: no policy, no FORCE, no NOT NULL. Neither isolation sweep
-  // will pick it up — the integer sweep is public-only and the non-public one is
-  // an explicit uuid-keyed list — which is stated in the migration's own header
-  // so nobody reads the column as isolation it does not provide.
+  // Also converges FORCE on the existing program policies after the canonical
+  // resolver is installed. No policy/grant/owner/NOT NULL replacement; nullable
+  // unattributable rows stay quarantined. Neither tenant sweep covers this
+  // integer-keyed Vault table, so the creator and durable amendment both do it.
   'migrations/20260905_vault_documents_organization_id.sql',
 
   // Full-text index over vault.documents, plus the one named definition of "the
@@ -3194,6 +3200,12 @@ export const C2C_MIGRATION_FILES = [
   // ledger and controlled legal-hold-aware purge door; no legacy backfill.
   // Public integer tenant key, created before the final isolation sweeps.
   'migrations/20261014_ana_source_read_receipts.sql',
+  // The fresh install's required-object check already requires this model
+  // index. Drizzle push can finish its table stage without landing all indexes;
+  // the root overlay and deploy share the additive canonical repair. No rows,
+  // columns or policies change. D2 onboarding browser validation evidence:
+  // docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/report-index-repair.md.
+  'migrations/20261014_immutable_report_tenant_index.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

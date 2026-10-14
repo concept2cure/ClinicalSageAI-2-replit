@@ -1,0 +1,24 @@
+{
+  "errors": 0,
+  "warnings": 1,
+  "files": [
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "tests/routes/ana-ri-health.test.ts",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "line": 5
+        }
+      ]
+    }
+  ]
+}

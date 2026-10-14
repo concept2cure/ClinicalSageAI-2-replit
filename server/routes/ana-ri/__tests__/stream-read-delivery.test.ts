@@ -20,6 +20,18 @@ const model = vi.hoisted(() => ({ requests: [] as Array<Array<{ role: string; co
 
 const harnessModule = vi.hoisted(() => () => import('./support/stream-route-harness.js'));
 const vaultModule = vi.hoisted(() => () => import('../../../services/ana/__tests__/support/read-delivery-vault.js'));
+// Delivery/receipt cases begin after actor admission; native and current-access
+// suites prove that admission. Preserve the real conversation boundary.
+vi.mock('../../../services/ana/catalog-scope.js', async importOriginal => ({
+  ...(await vaultModule()).catalogScopeMock(await importOriginal<Record<string, unknown>>()),
+}));
+// This mounted fixture begins after current project admission. Native access
+// and PostgreSQL controls verify actual admission; this seam keeps both scope
+// checkpoints explicit while exercising the real budget and receipt handoff.
+vi.mock('../../../services/c2c/current-program-access.js', async importOriginal =>
+  (await import('../../../services/ana/__tests__/support/source-read-tool-fixture.js'))
+    .syntheticProgramAccessMock(await importOriginal<Record<string, unknown>>()),
+);
 vi.mock('../../../db.js', async () => (await harnessModule()).mocks.db());
 // The harness's gateway plays a fixed script; this one reads the results it is sent.
 vi.mock('../shared.js', async importOriginal => ({

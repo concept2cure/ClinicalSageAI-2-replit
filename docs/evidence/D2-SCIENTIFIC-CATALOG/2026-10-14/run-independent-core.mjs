@@ -28,7 +28,7 @@ const child = spawn(process.execPath, command, { cwd: repo, stdio: ['ignore', fd
 const result = await new Promise(resolve => { child.once('error', e => resolve({ exitCode: 1, error: e.code ?? 'RUNNER_ERROR' })); child.once('exit', (exitCode, signal) => resolve({ exitCode, signal })); });
 closeSync(fd);
 const after = snapshot(); const changedSources = files.filter(f => before[f] !== after[f]);
-const raw = readFileSync(log, 'utf8').replace(/\u001b\[[0-9;]*m/g, '');
+const raw = readFileSync(log, 'utf8').replace(new RegExp(String.fromCharCode(27)+'\\[[0-9;]*m','g'), '');
 const counts = raw.split('\n').find(l => /^\s*Tests\s/.test(l))?.trim() ?? 'No completed test count';
 const qualified = result.exitCode === 0 && changedSources.length === 0 && /^Tests\s+37 passed \(37\)$/.test(counts);
 const manifest = { runtime: process.version, baselineHEAD: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(), command: ['node', ...command], startedAt, finishedAt: new Date().toISOString(), ...result, counts, qualified, proofScope: 'Pure held-out source/shape/written-value/context adversaries; canonical clinical extractor supplies transport frames in dedicated clinical adapter probes. No expert, scientific truth, provider, database or regulatory qualification.', before, after, sourcesUnchangedDuringRun: changedSources.length === 0, changedSources, logSha256: hash(readFileSync(log)) };

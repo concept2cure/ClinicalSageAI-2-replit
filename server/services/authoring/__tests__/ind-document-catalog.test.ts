@@ -4,6 +4,19 @@ import { buildIndPyramid } from '../../../../services/regulatory/pyramids/ind-py
 import { getAllINDSections } from '../../../../services/regulatory/ind-ectd-sections';
 
 describe('the editor catalogue derives the entire canonical IND work pyramid', () => {
+  it('gives every module section and pyramid deliverable an editor-loadable template identity', () => {
+    const catalogue = buildIndDocumentCatalog();
+    const entries = [...catalogue.sections, ...catalogue.deliverables];
+    for (const entry of entries) expect(entry, entry.id).toHaveProperty('template.id', expect.stringMatching(/^[0-9a-f-]{36}$/));
+    expect(new Set(entries.map(entry => (entry as typeof entry & { template: { id: string } }).template.id)).size).toBe(entries.length);
+  });
+
+  it('offers tabulated summaries and recorded certificates only as preparation', () => {
+    const catalogue = buildIndDocumentCatalog();
+    expect(catalogue.deliverables.find(d => d.title === 'Nonclinical Tabulated Summary')).toMatchObject({ aiDraftable: false });
+    expect(catalogue.deliverables.find(d => d.title === 'Batch analysis certificates')).toMatchObject({ aiDraftable: false });
+    expect(catalogue.deliverables.find(d => d.title === 'GLP compliance statements')).toMatchObject({ aiDraftable: false });
+  });
   it('includes every phase and every task deliverable, including pre-IND work', () => {
     const canonical = buildIndPyramid();
     const catalogue = buildIndDocumentCatalog();

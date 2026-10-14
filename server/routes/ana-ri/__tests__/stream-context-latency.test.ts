@@ -141,6 +141,7 @@ describe('direct intelligence answers avoid unused model-turn reads', () => {
     }));
     const events = await direct();
     expect(io.answer).toHaveBeenCalledExactlyOnceWith(payload, {
+      sqlClient: expect.objectContaining({ query: expect.any(Function) }),
       organizationId: 7, userId: 3, projectId: 42, projectRef: '11111111-2222-4333-8444-555555555555',
     });
     expect(events.find(e => e.type === 'intelligence_question')).toMatchObject({ sessionId: 'interview-1', flowState: { node: 2 } });

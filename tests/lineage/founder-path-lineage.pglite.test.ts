@@ -207,6 +207,8 @@ const MIGRATIONS = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
   'migrations/20260814_projects_regulatory_program_anchor.sql',
+  'db/migrations/20260401_project_sharing_visibility.sql',
+  'db/migrations/20260314_phase12_multi_user_review.sql',
   // projects.therapeutic_area and .retrieval_mode: the legacy project routes select the whole row (PF-08).
   'db/migrations/20260508_project_therapeutic_area.sql',
   'migrations/20260603_project_retrieval_mode.sql',

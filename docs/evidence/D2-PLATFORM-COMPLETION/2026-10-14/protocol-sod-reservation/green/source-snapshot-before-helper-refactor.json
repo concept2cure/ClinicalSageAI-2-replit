@@ -1,0 +1,92 @@
+{
+  "capturedAtUtc": "2026-10-14T04:48:52.031715+00:00",
+  "branch": "concept2cure-v2",
+  "headAtCapture": "0ff04f90f64982e353ac84c9ba83535e04064d35",
+  "qualification": "Source snapshot preceding the lint-budget helper refactors. The original three-case raw run passed 3/3; its test source is retained privately as /tmp/protocol-sod-native-test-before-helper-refactor.ts. This snapshot does not claim final helper source.",
+  "sources": [
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 12918,
+      "digestAlgorithm": "sha256",
+      "digest": "a27aefe8eedc6da6e66f7024ea36c7270c83b87686bc8b3d2426cce0a5b32e44"
+    },
+    {
+      "path": "server/routes/protocol-development.ts",
+      "bytes": 31317,
+      "digestAlgorithm": "sha256",
+      "digest": "3ced310b3394a23bd49177939284fb89490d80341c192cd9ca7ddd58ac2b49b0"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-development-service.ts",
+      "bytes": 29725,
+      "digestAlgorithm": "sha256",
+      "digest": "f949d70cd92c6878af3ee63de5aff88741c972598e82e9cdfe0712d20bf82313"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-signature.ts",
+      "bytes": 1648,
+      "digestAlgorithm": "sha256",
+      "digest": "703a4b65871e4158a9eb236e50a90c55ddfc552d0122ccd4dbbfa45e7c869392"
+    },
+    {
+      "path": "server/services/governance/separation-of-duties.ts",
+      "bytes": 23176,
+      "digestAlgorithm": "sha256",
+      "digest": "105544380fb9de141784d356f5f2f53dd19e81d83d351fd7e42c3fbbb4559c9d"
+    },
+    {
+      "path": "server/services/part11/signature-persistence.ts",
+      "bytes": 48363,
+      "digestAlgorithm": "sha256",
+      "digest": "e82d1454f80bf541fdb90a6dd1a215ef024cbe56de0f9e89e96f76698d90f5e2"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/span-lineage.service.ts",
+      "bytes": 57213,
+      "digestAlgorithm": "sha256",
+      "digest": "66e5e89837cca8184fc0022f3904dd6e3090247155ac077830439ece92389863"
+    },
+    {
+      "path": "tests/db/protocol-approval-independence.dbtest.ts",
+      "bytes": 29090,
+      "digestAlgorithm": "sha256",
+      "digest": "691217fc36ee507a81d18927c93e3e7749b59241a2d6f9c9eb2168cb5e59caf5"
+    },
+    {
+      "path": "tests/db/protocol-finalization-concurrency.dbtest.ts",
+      "bytes": 42617,
+      "digestAlgorithm": "sha256",
+      "digest": "4fca47dbc7636d48602b9023fa637fcaaadf0486ba2acc196847d2bc533caf11"
+    },
+    {
+      "path": "tests/db/project-vault-parent-access.dbtest.ts",
+      "bytes": 38259,
+      "digestAlgorithm": "sha256",
+      "digest": "026e0299b255631135c8a9c2301dd05ebf660b5f554958593885a704851773fb"
+    },
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "bytes": 25473,
+      "digestAlgorithm": "sha256",
+      "digest": "be03f5cf21c2e7158f626bc79773bcf768e4425ddaac24aa9875f52d5e07efd8"
+    },
+    {
+      "path": "tests/db/report-tenant-index.dbtest.ts",
+      "bytes": 4525,
+      "digestAlgorithm": "sha256",
+      "digest": "d78fb716f4a5f5abd9de3d3c076a73891f218a0571c03260daa7e4e3071eba95"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "bytes": 4073,
+      "digestAlgorithm": "sha256",
+      "digest": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+    },
+    {
+      "path": "tests/setup.db.ts",
+      "bytes": 8777,
+      "digestAlgorithm": "sha256",
+      "digest": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3"
+    }
+  ]
+}

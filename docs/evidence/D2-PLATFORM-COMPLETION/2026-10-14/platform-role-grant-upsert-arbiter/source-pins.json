@@ -1,0 +1,41 @@
+{
+  "phase": "final static contract; native mutation/replay pending",
+  "sources": [
+    {
+      "path": "migrations/20260928_platform_role_grants_platform_writes.sql",
+      "sha256": "e55d4c0ed08368020687f728837468611e34cc00cc5ddebf53998c9e51af255e",
+      "bytes": 5965,
+      "ownedChange": true
+    },
+    {
+      "path": "docs/design/PLATFORM_ROLE_GRANT_UPSERT_ARBITER.md",
+      "sha256": "60249a474af8462dc142fa948528ea99d9ada4cd70c152cf1e57c675c4b6d1a8",
+      "bytes": 3077,
+      "ownedChange": true
+    },
+    {
+      "path": "tests/schema-contract/platform-role-grant-upsert-arbiter.contract.test.ts",
+      "sha256": "b1fde1f7ccfcf9e4fcf5517f7e0c4521c9f8d8def55c0a19e538fdfe49fe3686",
+      "bytes": 3870,
+      "ownedChange": true
+    },
+    {
+      "path": "shared/schema.ts",
+      "sha256": "f4de0a6872d01edec764a6f75bf61f16306aa8d9e122ea507136d87e41f7c2b9",
+      "bytes": 862248,
+      "ownedChange": false
+    },
+    {
+      "path": "server/routes/admin/access-management.ts",
+      "sha256": "78f2ee285be7377eacd2848435485a7104100995147bc0a2346cd3e278f8ef23",
+      "bytes": 10393,
+      "ownedChange": false
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "sha256": "4cb6f1ec23eb5a0a63be3df60ac80aac3b0de8ce1331a06f1c1b9918bb3fe99f",
+      "bytes": 229280,
+      "ownedChange": false
+    }
+  ]
+}

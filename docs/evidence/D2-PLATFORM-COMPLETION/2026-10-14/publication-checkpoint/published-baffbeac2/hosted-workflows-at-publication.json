@@ -1,0 +1,44 @@
+[
+  {
+    "conclusion": "",
+    "databaseId": 38535578465,
+    "name": "CI",
+    "status": "queued",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38535578465"
+  },
+  {
+    "conclusion": "",
+    "databaseId": 38535578420,
+    "name": "Semgrep",
+    "status": "in_progress",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38535578420"
+  },
+  {
+    "conclusion": "",
+    "databaseId": 38535578370,
+    "name": "CodeQL",
+    "status": "in_progress",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38535578370"
+  },
+  {
+    "conclusion": "",
+    "databaseId": 38535578501,
+    "name": "Tier 5 Browser Smoke",
+    "status": "in_progress",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38535578501"
+  },
+  {
+    "conclusion": "",
+    "databaseId": 38535578480,
+    "name": "C2C Agent \u2014 Validate & Audit",
+    "status": "in_progress",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38535578480"
+  },
+  {
+    "conclusion": "success",
+    "databaseId": 38535578361,
+    "name": "Repo Health Baseline Refresh",
+    "status": "completed",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38535578361"
+  }
+]

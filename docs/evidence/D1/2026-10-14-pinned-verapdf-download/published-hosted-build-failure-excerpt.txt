@@ -1,0 +1,46 @@
+2446: 2026-10-14T06:56:17.4106412Z
+2447: 2026-10-14T06:56:17.4109755Z #15 [production  6/22] RUN set -eu;     mkdir -p /opt/verapdf;     curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300       -o /opt/verapdf/verapdf-cli.jar       "[URL withheld]";     echo "287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -;     printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n'       > /usr/local/bin/verapdf;     chmod 0755 /usr/local/bin/verapdf
+2448: 2026-10-14T06:56:17.4458454Z #15 0.186 curl: (22) The requested URL returned error: 404
+2449: 2026-10-14T06:56:18.4592191Z #15 1.199 curl: (22) The requested URL returned error: 404
+2450: 2026-10-14T06:56:20.4773271Z #15 3.217 curl: (22) The requested URL returned error: 404
+2451: 2026-10-14T06:56:24.4920977Z #15 7.232 curl: (22) The requested URL returned error: 404
+2452: 2026-10-14T06:56:32.5117505Z #15 15.25 curl: (22) The requested URL returned error: 404
+2453: 2026-10-14T06:56:48.5445378Z #15 31.28 curl: (22) The requested URL returned error: 404
+2454: 2026-10-14T06:57:20.5882380Z #15 63.33 curl: (22) The requested URL returned error: 404
+2455: 2026-10-14T06:58:24.6607897Z #15 127.4 curl: (22) The requested URL returned error: 404
+2456: 2026-10-14T07:00:32.7945963Z #15 255.5 curl: (22) The requested URL returned error: 404
+2457: 2026-10-14T07:00:32.8284362Z #15 ERROR: process "/bin/sh -c set -eu;     mkdir -p /opt/verapdf;     curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300       -o /opt/verapdf/verapdf-cli.jar       \"[URL withheld]";     echo \"${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar\" | sha256sum -c -;     printf '#!/bin/sh\\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar \"$@\"\\n'       > /usr/local/bin/verapdf;     chmod 0755 /usr/local/bin/verapdf" did not complete successfully: exit code: 22
+2458: 2026-10-14T07:00:32.8286203Z ------
+2459: 2026-10-14T07:00:32.8295676Z  > [production  6/22] RUN set -eu;     mkdir -p /opt/verapdf;     curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300       -o /opt/verapdf/verapdf-cli.jar       "[URL withheld]";     echo "287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -;     printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n'       > /usr/local/bin/verapdf;     chmod 0755 /usr/local/bin/verapdf:
+2460: 2026-10-14T07:00:32.8298954Z 0.186 curl: (22) The requested URL returned error: 404
+2461: 2026-10-14T07:00:32.8300369Z 1.199 curl: (22) The requested URL returned error: 404
+2462: 2026-10-14T07:00:32.8301065Z 3.217 curl: (22) The requested URL returned error: 404
+2463: 2026-10-14T07:00:32.8301369Z 7.232 curl: (22) The requested URL returned error: 404
+2464: 2026-10-14T07:00:32.8301673Z 15.25 curl: (22) The requested URL returned error: 404
+2465: 2026-10-14T07:00:32.8301971Z 31.28 curl: (22) The requested URL returned error: 404
+2466: 2026-10-14T07:00:32.8302273Z 63.33 curl: (22) The requested URL returned error: 404
+2467: 2026-10-14T07:00:32.8302576Z 127.4 curl: (22) The requested URL returned error: 404
+2468: 2026-10-14T07:00:32.8302877Z 255.5 curl: (22) The requested URL returned error: 404
+2469: 2026-10-14T07:00:32.8303451Z ------
+2470: 2026-10-14T07:00:32.8331146Z Dockerfile.optimized:142
+2471: 2026-10-14T07:00:32.8331532Z --------------------
+2472: 2026-10-14T07:00:32.8332227Z  141 |     ARG VERAPDF_SHA256=287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+2473: 2026-10-14T07:00:32.8332718Z  142 | >>> RUN set -eu; \
+2474: 2026-10-14T07:00:32.8332999Z  143 | >>>     mkdir -p /opt/verapdf; \
+2475: 2026-10-14T07:00:32.8333401Z  144 | >>>     curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300 \
+2476: 2026-10-14T07:00:32.8333827Z  145 | >>>       -o /opt/verapdf/verapdf-cli.jar \
+2477: 2026-10-14T07:00:32.8334366Z  146 | >>>       "[URL withheld]"; \
+2478: 2026-10-14T07:00:32.8334984Z  147 | >>>     echo "${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -; \
+2479: 2026-10-14T07:00:32.8335652Z  148 | >>>     printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n' \
+2480: 2026-10-14T07:00:32.8336072Z  149 | >>>       > /usr/local/bin/verapdf; \
+2481: 2026-10-14T07:00:32.8336404Z  150 | >>>     chmod 0755 /usr/local/bin/verapdf
+2482: 2026-10-14T07:00:32.8336676Z  151 |
+2483: 2026-10-14T07:00:32.8336997Z --------------------
+2484: 2026-10-14T07:00:32.8340551Z ERROR: failed to build: failed to solve: process "/bin/sh -c set -eu;     mkdir -p /opt/verapdf;     curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300       -o /opt/verapdf/verapdf-cli.jar       \"[URL withheld]";     echo \"${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar\" | sha256sum -c -;     printf '#!/bin/sh\\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar \"$@\"\\n'       > /usr/local/bin/verapdf;     chmod 0755 /usr/local/bin/verapdf" did not complete successfully: exit code: 22
+2485: 2026-10-14T07:00:32.8401747Z ##[error]Process completed with exit code 1.
+2486: 2026-10-14T07:00:32.8454100Z ##[group]Run docker logs --tail 200 c2c-app || true
+2487: 2026-10-14T07:00:32.8454339Z docker logs --tail 200 c2c-app || true
+2488: 2026-10-14T07:00:32.8509855Z shell: /usr/bin/bash -e {0}
+2489: 2026-10-14T07:00:32.8509997Z env:
+2490: 2026-10-14T07:00:32.8510272Z   APP_SERVICE_PASSWORD: [credential value withheld]
+2491: 2026-10-14T07:00:32.8510464Z ##[endgroup]

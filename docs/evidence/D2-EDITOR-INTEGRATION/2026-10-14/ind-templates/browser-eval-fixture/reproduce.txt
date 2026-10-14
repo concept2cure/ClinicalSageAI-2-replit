@@ -1,0 +1,73 @@
+IND existing-editor browser reproduction
+
+This tracked bundle is directly executable from its committed directory. The
+probe and generator use valid six-level relative imports to tracked repository
+sources. The server derives the Vite repository root from its own file URL. The
+generator writes api-contract.json next to itself; the runner reads that same
+local contract and opens this bundle's index.html. The ignored historical fixture
+and scratch runner/server are only launch wrappers for this canonical bundle.
+No copy into .visual-qa is required.
+
+From the repository root in this workspace:
+
+1. Use the installed Node 22 toolchain:
+   export PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH
+2. Regenerate the current provider/catalog snapshot:
+   node node_modules/tsx/dist/cli.mjs docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts
+3. Start the isolated Vite host on strict port 5175:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/server.mjs
+4. In a second process, run the exact tracked browser runner:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/browser.mjs
+5. Stop only the known server PID printed by step 3.
+
+The generator was also verified from this bundle's own working directory. It
+writes the same local API snapshot independently of the caller's working directory.
+The browser runner uses /usr/bin/chromium, the installed Playwright core module at
+/opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs, and axe-core at
+/workspace/scratch/editor-ui-tools/node_modules/axe-core/axe.min.js. These existing
+evaluation tools are outside the production dependency graph. On another machine,
+provide the equivalent evaluation tooling and update those environment paths.
+
+The fixture renders actual IndDocumentLibrary → DocumentCanvas → DocumentWorkbench
+→ RichSectionEditor/TipTap with existing styles and the native canvas pane portal.
+All /api/** requests are intercepted. Unknown paths fail the run. No live AnA,
+model provider, API, or database is called. Mock native documents are exact-ID,
+project-scoped, unbound DRAFTs with empty authored sections. Guidance is resolved
+from the saved template and selected section code, separate from authored facts.
+The attribution mock uses the actual {summary} response envelope.
+
+The complete current provider snapshot contains 200 templates: 102 canonical CTD
+sections, 93 pyramid deliverables and five module outlines, with 2,725 empty working
+sections. It is an evaluation snapshot, not another production registry or source
+of authored evidence. Full server authorization, persistence, and all-template
+creation are covered by separate server/database evidence.
+
+The final direct-bundle run completed 2026-10-14 05:06 UTC. Four contexts passed:
+1440x1000 desktop and 390x844 touch, light/dark. Representative templates are FDA
+1571, Clinical Overview, Module 3 General Information, Single-Dose Toxicity, and
+Controlled Clinical Study Reports. All five module-outline refs and the GLP
+original-record limitation are inspected in every context.
+
+Checks include 20 exact native POSTs/receipts, one empty editor, saved source
+guidance and original-form limits, selected-section identity, single module-label
+prefixes, the merged Access action, 20 exact-template-UUID AnA callback handoffs
+with complete source-page instructions, held callbacks/reopens without duplicate
+creates, and real unsaved-section cancel preservation. The AnA handoffs are
+recorded callbacks, not live model turns.
+
+Final results: zero axe A/AA violations, console/page errors, attribution warnings,
+unknown API paths or page horizontal overflow. Visible editing viewport is
+1104x320 desktop and 298x242 touch. Axe tags are wcag2a, wcag2aa, wcag21a, wcag21aa
+and wcag22aa; incomplete rules remain recorded for manual review. This automated
+scan is not a complete WCAG audit. The exact tested HEAD, production source hashes
+and API snapshot hash are in browser-summary.json; all executable fixture hashes
+and final gate results are in browser-final-checks.json.
+
+44 final screenshots and four detailed context JSON reports accompany the summary.
+The original target-size accessibility failure is retained in
+browser-before-accessibility/. Earlier passing pre-sync reports remain in
+browser-before-canonical-sync/ and are superseded by this final direct-bundle run.
+All four executable snapshots pass ESLint CLI --max-warnings 0, and the normal
+ci:untracked-imports gate passes. No ignores, suppressions, baseline, production,
+test, dependency or tsconfig changes were made by this evaluation session.
+Final known Vite PID 65827 was stopped; port 5175 no longer listens.

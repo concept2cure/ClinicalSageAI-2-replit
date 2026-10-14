@@ -1,0 +1,158 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:32:15.032Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:32:15.033Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:32:15.034Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:32:15.248Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses legacy unbound approval before explicit adoption 89ms
+   → promise resolved "{ …(7) }" instead of rejecting
+ × server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a verdict on earlier prose before explicit adoption of an edited copy 39ms
+   → promise resolved "{ …(7) }" instead of rejecting
+ × server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a verdict on an earlier title before explicit adoption 18ms
+   → promise resolved "{ …(7) }" instead of rejecting
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a copy when a current fingerprint and unknown/template metadata are its only evidence
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a review verdict and an unchecked REVIEWER signature are not explicit adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows unknown source after a current full-hash signed assigned adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows template source after a current full-hash signed assigned adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a signature and editable audit-shaped metadata without the chained act do not release
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > rejects the author adopting their own copy and an unassigned reviewer
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model null even after explicit adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model a-model-name even after explicit adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > immutable genesis and current source facts win over relabeling the displayed origin
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > moving copied machine prose to another section cannot launder it as a local human save
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > formatting and whitespace changes are not replacement by human words
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > punctuation-only edits do not clear a positive machine source hold
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > a genuine governed human rewrite clears qualification hold but requires a fresh full-document adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > fails closed when source access or fingerprint verification fails, including a previously adopted copy
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a title change invalidates adoption even when signature prose hash is unchanged
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a reopened review assignment invalidates its earlier signed adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a signature with an invalid recomputable digest is not adoption
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > refuses a write whose present text no longer matches its live lineage
+ ↓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > uncontrolled review copies retain the real qualification hold > renders a working DOCX with NOT FINAL and qualification disclosure while controlled rendition refuses
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses legacy unbound approval before explicit adoption
+AssertionError: promise resolved "{ …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "contentHash": "f6a7282c7b3595d8c40cec1ee2acac49e4f41aeb6659fba7f6a6ca3ab106edaf",
++   "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++   "originalAuthorshipDisclosed": true,
++   "reviewId": "b20220eb-b0d9-4cd5-a0f2-aa90a08fb0dc",
++   "reviewerId": "8",
++   "scope": "full-document",
++   "snapshotHash": "c63d9a2732522f27bec7b8bd6120247d568ef0de84e3e2870c1389370165ccdf",
+  }
+
+ ❯ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts:108:80
+    106|   it('refuses legacy unbound approval before explicit adoption', async…
+    107|     await approvedReview();
+    108|     await expect(prepareWorkflowImportAdoption(q, { ...input, explicit…
+       |                                                                                ^
+    109|       .rejects.toMatchObject({ code: 'WORKFLOW_REVIEW_ASSIGNMENT_REQUI…
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a verdict on earlier prose before explicit adoption of an edited copy
+AssertionError: promise resolved "{ …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "contentHash": "bff9856d6c7c1bfda893548b56bdd9fa949960ef1a6d8b7b852fa4a58a9a55b0",
++   "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++   "originalAuthorshipDisclosed": true,
++   "reviewId": "3eee1feb-15d6-48c6-b5ba-4bdb5cf74c5a",
++   "reviewerId": "8",
++   "scope": "full-document",
++   "snapshotHash": "bf0f3354be232765d678bcf6f6813460dcc4c78a5f6b012c4c3cc8ea8f61e19f",
+  }
+
+ ❯ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts:114:80
+    112|     await approvedReview();
+    113|     await rewrite();
+    114|     await expect(prepareWorkflowImportAdoption(q, { ...input, explicit…
+       |                                                                                ^
+    115|       .rejects.toMatchObject({ code: 'WORKFLOW_REVIEW_ASSIGNMENT_REQUI…
+    116|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a verdict on an earlier title before explicit adoption
+AssertionError: promise resolved "{ …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "contentHash": "f6a7282c7b3595d8c40cec1ee2acac49e4f41aeb6659fba7f6a6ca3ab106edaf",
++   "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++   "originalAuthorshipDisclosed": true,
++   "reviewId": "3e23c2b7-eac7-4583-a896-300d8f9c3fce",
++   "reviewerId": "8",
++   "scope": "full-document",
++   "snapshotHash": "8538bacf5dc3e08d12dfb4de3271c25aadfe65184441ad9d67909c516f33f329",
+  }
+
+ ❯ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts:120:80
+    118|     await approvedReview();
+    119|     input.doc.title = 'Changed after the recorded human verdict';
+    120|     await expect(prepareWorkflowImportAdoption(q, { ...input, explicit…
+       |                                                                                ^
+    121|       .rejects.toMatchObject({ code: 'WORKFLOW_REVIEW_ASSIGNMENT_REQUI…
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 19 skipped (22)
+   Start at  19:32:12
+   Duration  8.42s (transform 1.97s, setup 108ms, import 4.84s, tests 2.97s, environment 0ms)

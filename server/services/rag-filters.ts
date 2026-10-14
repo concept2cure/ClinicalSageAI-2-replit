@@ -50,10 +50,19 @@ export interface DocFilterColumns {
 export function buildDocFilterClause(
   filters: QueryFilters | undefined,
   params: unknown[],
-  cols: DocFilterColumns
+  cols: DocFilterColumns,
+  /** Server-only restriction, verified by the caller; never extracted from a query. */
+  programIds?: readonly string[]
 ): string {
-  if (!filters) return '';
   let clause = '';
+  if (programIds !== undefined) {
+    if (!cols.program || !Array.isArray(programIds)) {
+      throw new Error('This corpus cannot honor the verified project scope. Nothing was searched.');
+    }
+    params.push(programIds);
+    clause += `\n          AND ${cols.program} = ANY($${params.length}::uuid[])`;
+  }
+  if (!filters) return clause;
   if (filters.atomType && cols.documentType) {
     params.push(filters.atomType);
     clause += `\n          AND ${cols.documentType} ILIKE $${params.length}`;

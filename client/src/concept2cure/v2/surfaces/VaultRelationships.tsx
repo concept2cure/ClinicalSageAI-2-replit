@@ -9,7 +9,7 @@
  * POST /api/c2c/project-vault/:id/relationships/:relationshipId/remove
  *
  * A document to relate is found with the library search, so it can be in any
- * of the organisation's projects. The list is only ever what the server last
+ * project the viewer can currently access. The list is only ever what the server last
  * returned: a list that could not be read says so and is never shown as empty,
  * and a change is claimed only once the server has recorded it. Removing a
  * relationship needs a reason, which is recorded with it.
@@ -40,6 +40,22 @@ export interface RelationshipShape {
 }
 
 interface Candidate { id: string; title: string; version: string | null; program: { id: string; name: string | null } }
+const nullableText = (v: unknown): v is string | null => v === null || typeof v === 'string';
+function isCandidate(v: unknown): v is Candidate {
+  if (!v || typeof v !== 'object') return false;
+  const c = v as Candidate;
+  return typeof c.id === 'string' && c.id.length > 0 && typeof c.title === 'string' && nullableText(c.version) &&
+    !!c.program && typeof c.program.id === 'string' && c.program.id.length > 0 && nullableText(c.program.name);
+}
+function isRelationship(v: unknown): v is RelationshipShape {
+  if (!v || typeof v !== 'object') return false;
+  const r = v as RelationshipShape;
+  return typeof r.id === 'string' && r.id.length > 0 && ['supporting', 'references', 'based_on'].includes(r.type) &&
+    ['outgoing', 'incoming'].includes(r.direction) && typeof r.label === 'string' && nullableText(r.note) &&
+    !!r.other && typeof r.other.documentId === 'string' && typeof r.other.programId === 'string' &&
+    nullableText(r.other.title) && nullableText(r.other.version) && nullableText(r.other.programName) &&
+    typeof r.other.superseded === 'boolean';
+}
 
 /** The three kinds, as a person choosing one reads them. */
 const KINDS: Array<{ value: RelationshipType; label: string }> = [
@@ -78,11 +94,12 @@ function useRelationships(projectId: string, documentId: string) {
   const [readError, setReadError] = useState<string | null>(null);
   const load = useCallback(async () => {
     setReadError(null);
+    setItems(null);
     try {
       const d = await call<{ relationships?: RelationshipShape[] }>(
         'GET', `${base(projectId)}/documents/${encodeURIComponent(documentId)}/relationships`, undefined,
         'Related documents could not be read; none are shown rather than an incomplete list.');
-      if (!Array.isArray(d.relationships)) throw new Error('Related documents could not be read; none are shown rather than an incomplete list.');
+      if (!Array.isArray(d.relationships) || !d.relationships.every(isRelationship)) throw new Error('Related documents could not be read; none are shown rather than an incomplete list.');
       setItems(d.relationships);
     } catch (e) {
       setItems(null);
@@ -107,10 +124,14 @@ function AddForm({ projectId, documentId, onAdded }: { projectId: string; docume
     setBusy(true);
     setError(null);
     setTarget(null);
+    setFound(null);
     try {
-      const d = await call<{ results?: Candidate[] }>(
+      const d = await call<{ scope?: string; results?: Candidate[] }>(
         'GET', `/api/c2c/project-vault/search?q=${encodeURIComponent(q.trim())}&limit=10`, undefined, 'The library could not be searched.');
-      setFound((d.results ?? []).filter((c) => c.id !== documentId));
+      if (d.scope !== 'verified-accessible-programs' || !Array.isArray(d.results) || !d.results.every(isCandidate)) {
+        throw new Error('The library could not be searched. No confirmed accessible result list was returned.');
+      }
+      setFound(d.results.filter((c) => c.id !== documentId));
     } catch (e) {
       setFound(null);
       setError(e instanceof Error ? e.message : String(e));
@@ -137,14 +158,14 @@ function AddForm({ projectId, documentId, onAdded }: { projectId: string; docume
     <div className="vd-d-filing" data-testid="vault-relationships-add">
       <label className="vd-d-filing-row">
         <span className="k">Find a document</span>
-        <input className="vd-d-filing-reason" value={q} disabled={busy} placeholder="Title or text, across every project"
+        <input className="vd-d-filing-reason" value={q} disabled={busy} placeholder="Title or text, in projects you can access"
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void find(); }}
           data-testid="vault-relationships-query" />
       </label>
       <div className="vd-d-filing-acts">
         <button className="sp-ask" disabled={busy || !q.trim()} onClick={() => void find()}>Find</button>
       </div>
-      {found && found.length === 0 ? <div className="vd-d-idx" role="status">No document in the library matches that.</div> : null}
+      {found && found.length === 0 ? <div className="vd-d-idx" role="status">No other accessible document matches this search.</div> : null}
       {found && found.length > 0 ? (
         <div role="list" aria-label="Documents found">
           {found.map((c) => (
@@ -246,11 +267,14 @@ export function VaultRelationships({ projectId, documentId, onChanged }: { proje
     <div data-testid="vault-relationships">
       <div className="vd-d-seclbl">Related documents</div>
       {readError ? <div className="vd-dr-err" role="alert">{readError}</div> : null}
-      {items && items.length === 0 ? <div className="vd-d-idx">No related documents are recorded for this version.</div> : null}
+      {items && items.length === 0 ? <div className="vd-d-idx">No related documents are available to you for this version.</div> : null}
       {items && items.length > 0 ? (
-        <div className="vd-d-filing" role="list" aria-label="Related documents">
-          {items.map((r) => <RelationshipRow key={r.id} r={r} projectId={projectId} onRemoved={changed} />)}
-        </div>
+        <>
+          <div className="vd-d-idx">Only related documents you can currently access are shown.</div>
+          <div className="vd-d-filing" role="list" aria-label="Related documents">
+            {items.map((r) => <RelationshipRow key={r.id} r={r} projectId={projectId} onRemoved={changed} />)}
+          </div>
+        </>
       ) : null}
       {done ? <div className="vd-d-idx" role="status">{done}</div> : null}
       {adding

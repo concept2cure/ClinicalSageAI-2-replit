@@ -179,6 +179,7 @@ const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
     maxRounds: 5,
     signal,
     toolContext: {
+      sqlClient: getPool(),
       organizationId: input.organizationId,
       userId: input.userId,
       projectId: input.projectId ?? null,

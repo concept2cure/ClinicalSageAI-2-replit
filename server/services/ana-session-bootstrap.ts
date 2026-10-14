@@ -15,6 +15,9 @@
  */
 
 import { db } from '../db';
+import type { RequestSqlClient } from '../db/requestDb.js';
+import { readCurrentProgramActor, requireProgramScopeStillCurrent } from './c2c/current-program-access.js';
+import { catalogScope } from './ana/catalog-scope.js';
 import { anaOutcomeLog } from 'shared/schema/ana-intelligence';
 import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import {
@@ -89,9 +92,10 @@ export async function loadRecentOutcomeLessons(
  * degraded turn; failing the turn over it would be a worse one.
  */
 export async function sessionBootstrapBlockFor(opts: {
+  db: RequestSqlClient;
+  userId: number | null | undefined;
   priorMessageCount: number;
   organizationId?: number | null;
-  userId?: number | null;
   projectId?: number;
   projectRef?: string | null;
   threadId?: string;
@@ -106,10 +110,12 @@ export async function sessionBootstrapBlockFor(opts: {
   ) {
     return '';
   }
+  if (typeof opts.userId !== 'number') return '';
   try {
     return await buildSessionBootstrapContext({
-      organizationId: opts.organizationId as number,
+      db: opts.db,
       userId: opts.userId,
+      organizationId: opts.organizationId as number,
       projectId: opts.projectId,
       projectRef: opts.projectRef,
       threadId: opts.threadId,
@@ -121,42 +127,121 @@ export async function sessionBootstrapBlockFor(opts: {
 }
 
 export interface SessionBootstrapInput {
+  db: RequestSqlClient;
+  userId: number;
   organizationId: number;
-  userId?: number | null;
   projectId?: number;
   projectRef?: string | null;
   threadId?: string;
   atomLimit?: number;
 }
 
+/** One turn's catalog scope, shared by Vault and upload recall. Each consumer
+ * checks its own deadline before a late feature/actor lookup starts more SQL. */
+function scopedSessionCatalogLoader(input: SessionBootstrapInput, actor: ReturnType<typeof readCurrentProgramActor>) {
+  const { db: sqlClient, organizationId, userId, projectId, projectRef } = input;
+  const catalog = import('./vault/document-catalog.service.js').then(async svc =>
+    (await svc.isDocumentCatalogEnabled(organizationId)) ? svc : null,
+  );
+  let catalogScopeRead: ReturnType<typeof catalogScope> | undefined;
+  const load = async (signal: AbortSignal) => {
+    const svc = await catalog;
+    signal.throwIfAborted();
+    if (!svc) return null;
+    await actor;
+    signal.throwIfAborted();
+    catalogScopeRead ??= catalogScope({
+      userId, projectId, projectRef, sqlClient,
+    }, organizationId, null, 'read', sqlClient);
+    const scope = await catalogScopeRead;
+    signal.throwIfAborted();
+    if ('error' in scope) throw new Error(scope.error);
+    return { svc, scope };
+  };
+  const verify = async (signal: AbortSignal): Promise<boolean> => {
+    if (!catalogScopeRead) throw new Error('Catalog access was not verified for this recall.');
+    const scope = await catalogScopeRead;
+    signal.throwIfAborted();
+    if ('error' in scope) throw new Error(scope.error);
+    await requireProgramScopeStillCurrent(sqlClient, { organizationId, userId, programId: scope.programId }, scope.accessibleScope);
+    signal.throwIfAborted();
+    return true;
+  };
+  return async (safe: ReturnType<typeof boundedSessionRecall>) => {
+    const [vaultFiles, chatUploads] = await Promise.all([
+      safe('vault file recall', async signal => {
+        const catalogSource = await load(signal);
+        signal.throwIfAborted();
+        return catalogSource ? catalogSource.svc.getCatalogBootstrapDigest(sqlClient, organizationId, {
+          userId, programId: catalogSource.scope.programId, limit: 12,
+        }, catalogSource.scope.accessibleScope) : undefined;
+      }, undefined),
+      safe('chat upload recall', async signal => {
+        const catalogSource = await load(signal);
+        signal.throwIfAborted();
+        if (!catalogSource) return undefined;
+        const page = await catalogSource.svc.listChatUploads(sqlClient, organizationId, {
+          userId, programId: catalogSource.scope.programId, limit: 8,
+        }, catalogSource.scope.accessibleScope);
+        return {
+          uploads: page.uploads.map(u => ({
+            fileName: u.fileName,
+            fileId: u.fileId,
+            uploadedAt: u.uploadedAt,
+          })),
+          hasMore: page.hasMore,
+          actorFiltered: page.actorFiltered,
+          // The canonical spine page measures one extra row, not a total.
+          // Only an exhausted page proves the scope count for this read.
+          total: page.hasMore ? undefined : page.uploads.length,
+          withheld: page.hasMore ? undefined : 0,
+          sourceAccessNotice: page.sourceAccessNotice,
+        };
+      }, undefined),
+    ]);
+    if (vaultFiles || chatUploads) {
+      const current = await safe('catalog access verification', signal => verify(signal), false);
+      if (!current) return { vaultFiles: undefined, chatUploads: undefined };
+    }
+    return { vaultFiles, chatUploads };
+  };
+}
+
 /** Optional recall must not hold the first reply behind a stalled source. */
 export const SESSION_RECALL_TIMEOUT_MS = 1500;
 
-async function recallWithinBudget<T>(
-  source: string,
-  load: (signal: AbortSignal) => Promise<T>,
-  fallback: T,
-  unavailable: Set<string>,
-): Promise<T> {
-  const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      Promise.resolve().then(() => load(controller.signal)),
-      new Promise<T>(resolve => {
-        timer = setTimeout(() => {
-          unavailable.add(source);
-          controller.abort();
-          resolve(fallback);
-        }, SESSION_RECALL_TIMEOUT_MS);
-      }),
-    ]);
-  } catch {
-    unavailable.add(source);
-    return fallback;
-  } finally {
-    clearTimeout(timer);
-  }
+/** The existing per-source deadline and unavailable marker, shared by recall loaders. */
+function boundedSessionRecall(unavailable: Set<string>, deadline: number) {
+  return async <T>(
+    source: string,
+    load: (signal: AbortSignal) => Promise<T>,
+    fallback: T,
+  ): Promise<T> => {
+    const remainingMs = Math.max(0, deadline - Date.now());
+    if (remainingMs === 0) {
+      unavailable.add(source);
+      return fallback;
+    }
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        Promise.resolve().then(() => load(controller.signal)),
+        new Promise<T>(resolve => {
+          timer = setTimeout(() => {
+            unavailable.add(source);
+            controller.abort();
+            resolve(fallback);
+          }, remainingMs);
+        }),
+      ]);
+    } catch {
+      unavailable.add(source);
+      return fallback;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 }
 
 /**
@@ -167,34 +252,31 @@ async function recallWithinBudget<T>(
  * prevents a late profile/feature lookup from starting a follow-up query.
  */
 export async function buildSessionBootstrapContext(input: SessionBootstrapInput): Promise<string> {
-  const { organizationId, userId, projectId, projectRef, threadId } = input;
+  const { db: sqlClient, organizationId, userId, projectId, threadId } = input;
   const atomLimit = input.atomLimit ?? 6;
   const unavailable = new Set<string>();
-  const sourceScope = Object.freeze({ organizationId, userId: userId as number, projectId, projectRef });
-  const requireSourceActor = () => {
-    if (!Number.isSafeInteger(userId) || (userId ?? 0) <= 0 || (userId ?? 0) > 2_147_483_647) {
-      throw new Error('Current source actor is required.');
-    }
-  };
 
-  const safe = <T>(source: string, load: (signal: AbortSignal) => Promise<T>, fallback: T) =>
-    recallWithinBudget(source, load, fallback, unavailable);
+  const safe = boundedSessionRecall(unavailable, Date.now() + SESSION_RECALL_TIMEOUT_MS);
 
   // Shared imports/feature lookup, with each consumer bounded below. No org-
   // spanning cache: the feature decision and all reads belong to this turn.
+  // All recall sources retain the current actor boundary. Awaited inside each
+  // source budget so an unavailable access read cannot stall the first reply
+  // or masquerade as a genuinely empty memory/catalog.
+  const actor = readCurrentProgramActor(sqlClient, { organizationId, userId });
   const memory = import('./client-intelligence-memory.js');
-  const catalog = import('./vault/document-catalog.service.js').then(async svc =>
-    (await svc.isDocumentCatalogEnabled(organizationId)) ? svc : null,
-  );
+  const catalogRecall = scopedSessionCatalogLoader(input, actor);
 
-  const [workingMemorySummary, projectAtoms, clientAtoms, outcomeLessons, vaultFiles, chatUploads] =
+  const [workingMemorySummary, projectAtoms, clientAtoms, outcomeLessons, { vaultFiles, chatUploads }] =
     await Promise.all([
       threadId ? safe('working memory', async signal => {
+        await actor;
         const { getLatestWorkingMemoryByThread } = await import('./working-memory.js');
         signal.throwIfAborted();
         return getLatestWorkingMemoryByThread(threadId, organizationId);
       }, null) : Promise.resolve(null),
       projectId ? safe('project memory', async signal => {
+        await actor;
         const { getProjectIntelligence, getProjectMemoryEntries } = await memory;
         signal.throwIfAborted();
         const profile = await getProjectIntelligence(projectId, organizationId);
@@ -204,6 +286,7 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
         return entries as unknown as BootstrapAtom[];
       }, [] as BootstrapAtom[]) : Promise.resolve([] as BootstrapAtom[]),
       safe('client memory', async signal => {
+        await actor;
         const { getClientProfile, getMemoryEntries } = await memory;
         signal.throwIfAborted();
         const profile = await getClientProfile(organizationId);
@@ -212,33 +295,12 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
         const { entries } = await getMemoryEntries(profile.id, organizationId, { limit: 40 });
         return entries as unknown as BootstrapAtom[];
       }, [] as BootstrapAtom[]),
-      safe('outcome lessons', () => loadRecentOutcomeLessons(organizationId, projectId, 5), []),
-      safe('vault file recall', async signal => {
-        const svc = await catalog;
+      safe('outcome lessons', async signal => {
+        await actor;
         signal.throwIfAborted();
-        if (!svc) return undefined;
-        requireSourceActor();
-        return svc.getCatalogBootstrapDigestForActor(sourceScope, 12);
-      }, undefined),
-      safe('chat upload recall', async signal => {
-        const svc = await catalog;
-        signal.throwIfAborted();
-        if (!svc) return undefined;
-        requireSourceActor();
-        const page = await svc.listChatUploadsForActor(sourceScope, { limit: 8 });
-        return {
-          uploads: page.uploads.map(u => ({
-            fileName: u.fileName,
-            fileId: u.fileId,
-            uploadedAt: u.uploadedAt,
-          })),
-          hasMore: page.hasMore,
-          actorFiltered: page.actorFiltered,
-          total: page.total,
-          withheld: page.withheld,
-          sourceAccessNotice: page.sourceAccessNotice,
-        };
-      }, undefined),
+        return loadRecentOutcomeLessons(organizationId, projectId, 5);
+      }, []),
+      catalogRecall(safe),
     ]);
 
   const recall = formatSessionBootstrap({

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { DocumentDispositionPreview, DocumentDispositionRecord } from '../../../shared/document-data-disposition';
 import { DOCUMENT_DISPOSITION_REASON_MIN, DOCUMENT_DISPOSITION_REASON_MAX } from '../../../shared/document-data-disposition';
-import { programInOrganization, canMutateProgram } from '../c2c/program-access';
+import { canCreateProgram, canMutateProgram } from '../c2c/program-access';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { DispositionError, DISPOSITION_UUID as UUID, DISPOSITION_HASH as HASH, type DispositionPreviewInput, type DispositionApplyInput, type DispositionQueryable, type DispositionServiceDependencies, type Snapshot } from './types';
 import { createDispositionTokenCodec, hashSnapshot } from './tokens';
@@ -31,6 +32,11 @@ function assertInput(input: DispositionPreviewInput): void {
       || (input.replacementId !== undefined && (input.targetType === 'captured_source' ? !/^[1-9][0-9]*$/.test(String(input.replacementId)) || !Number.isSafeInteger(Number(input.replacementId)) : !UUID.test(String(input.replacementId))))) {
     throw new DispositionError(400, 'INVALID_TARGET', 'Choose a typed captured source or Vault version identity.');
   }
+}
+function currentProgramRefusal(error: ProgramReadAccessError, write: boolean): DispositionError {
+  const hidden = (!write && error.status === 403) || error.status === 404;
+  return new DispositionError(hidden ? 404 : error.status, hidden ? 'PROJECT_NOT_FOUND' : error.code,
+    hidden ? 'Project or source not found.' : error.message);
 }
 async function persistDisposition(q: DispositionQueryable, input: DispositionApplyInput, state: Snapshot, context: {previewHash: string; createdAt: string; deps: DispositionServiceDependencies}) {
   const {previewHash,createdAt,deps}=context;
@@ -66,11 +72,19 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
   }
   async function scoped(q: DispositionQueryable, input: DispositionPreviewInput, write: boolean, holdProgram = false) {
     await setTenantContextTx(q, input.organizationId, input.orgRole);
-    if (!holdProgram && !await programInOrganization(q, input.programId, input.organizationId)) throw new DispositionError(404, 'NOT_FOUND', 'Project or source not found.');
+    let access;
+    try { access = await requireCurrentProgramAccess(q, { organizationId: input.organizationId, userId: input.actorId, programId: input.programId, forShare: write && holdProgram }); }
+    catch (error) {
+      if (error instanceof ProgramReadAccessError) {
+        throw currentProgramRefusal(error, write);
+      }
+      throw error;
+    }
+    await setTenantContextTx(q, input.organizationId, access.actor.role);
     if (write) {
       const program = await q.query(`SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${holdProgram ? ' AND deleted_at IS NULL FOR SHARE' : ''}`, [input.programId,input.organizationId]);
       if (!program.rows[0]) throw new DispositionError(404, 'NOT_FOUND', 'Project or source not found.');
-      if (!canMutateProgram({ actor: { userId: input.actorId, orgRole: input.orgRole }, program: { leadUserId: program.rows[0]?.lead_user_id ?? null } })) {
+      if (!canCreateProgram({ orgRole: access.actor.role }) || !canMutateProgram({ actor: { userId: input.actorId, orgRole: access.actor.role }, program: { leadUserId: program.rows[0]?.lead_user_id ?? null } })) {
         throw new DispositionError(403, 'FORBIDDEN', 'Only a project lead or organization manager can withdraw this source.');
       }
     }

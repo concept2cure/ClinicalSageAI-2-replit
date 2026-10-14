@@ -16,6 +16,9 @@ vi.mock('../../c2c/program-access.js', async original => ({
   resolveOpenProgram: async (_db: unknown, ctx: ToolContext) => ctx.projectRef ?? null,
   programInOrganization: async () => true,
 }));
+vi.mock('../../c2c/current-program-access.js', async original => (
+  (await import('./support/source-read-tool-fixture.js')).syntheticProgramAccessMock(await original<Record<string, unknown>>(), () => h.role)
+));
 vi.mock('../../vault/document-catalog.service.js', async () => {
   const { syntheticReadWrapper, syntheticActorDocument } = await import('./support/source-read-tool-fixture.js');
   return ({
@@ -35,7 +38,8 @@ const handlers = new Map<string, (input: Record<string, unknown>, ctx?: ToolCont
 registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
 const program = '10000000-0000-4000-8000-000000000001';
 const docId = '20000000-0000-4000-8000-000000000002';
-const ctx: ToolContext = { organizationId: 42, userId: 7, projectRef: program, model: 'server-model', threadId: 'server-thread', turnId: 'server-turn' };
+const executor = { query: async () => ({ rows: [] }) };
+const ctx: ToolContext = { organizationId: 42, userId: 7, sqlClient: executor, projectRef: program, model: 'server-model', threadId: 'server-thread', turnId: 'server-turn' };
 const description = { document_id: docId, document_kind: 'csr', purpose: 'Review source', summary: 'Source summary', key_data: { stated: '99.2' } };
 const preview = { document_id: docId, record_type: 'verification_preview', fact_candidates: [{ schemaVersion: 1 }] };
 const call = async (input: Record<string, unknown>, context = ctx) => JSON.parse(await handlers.get('catalog_project_document')!(input, context));
@@ -71,8 +75,8 @@ describe('registered catalog verification preview branch', () => {
   });
   it('requires an identified actor and open project', async () => {
     h.previewEnabled = true;
-    expect(await call(preview, { organizationId: 42, projectRef: program })).toMatchObject({ ok: false, code: 'CATALOG_ACTOR_REQUIRED' });
-    expect(await call(preview, { organizationId: 42, userId: 7 })).toMatchObject({ ok: false, code: 'NO_PROJECT' });
+    expect(await call(preview, { organizationId: 42, sqlClient: executor, projectRef: program })).toMatchObject({ ok: false, code: 'SOURCE_ACTOR_REQUIRED' });
+    expect(await call(preview, { organizationId: 42, userId: 7, sqlClient: executor })).toMatchObject({ ok: false, code: 'NO_PROJECT' });
     expect(h.preview).not.toHaveBeenCalled();
   });
   it('uses serving actor/project context and reports diagnostic checks without scientific approval', async () => {

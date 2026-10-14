@@ -1,6 +1,15 @@
 /** Adapter fences; canonical sharing/role admission is exercised separately. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ query: vi.fn(), embed: vi.fn(), retrieve: vi.fn(), uploads: vi.fn(), revoked: false, sourceChanged: false }));
+vi.mock('../../c2c/current-program-access.js', () => ({
+  getCurrentAccessibleProgramScope: async (_q: unknown, identity: any) => {
+    if (!Number.isSafeInteger(identity.userId) || identity.userId <= 0) throw new Error('current actor required');
+    return { scope: 'verified-accessible-programs', actor: { userId: identity.userId, role: 'viewer' }, programIds: [PROGRAM], reconciliationRequired: false };
+  },
+  assertVerifiedProgramScope: vi.fn(),
+  requireProgramScopeStillCurrent: vi.fn(),
+  ProgramReadAccessError: class extends Error {},
+}));
 vi.mock('../../../db.js', () => ({ pool: { query: h.query } }));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: h.embed }) }));
 vi.mock('../../ana/source-read-scope.js', () => ({
@@ -45,7 +54,7 @@ beforeEach(() => {
   });
 });
 const assistant = (catalogEnabled = false, scope = SCOPE) => searchVaultForAssistant({ query: h.query }, {
-  organizationId: 7, programId: null, query: 'stability', limit: 1, catalogEnabled, sourceReadScope: scope,
+  organizationId: 7, userId: 12, programId: null, query: 'stability', limit: 1, catalogEnabled, sourceReadScope: scope,
 });
 
 describe('actor-scoped assistant retrieval', () => {
@@ -110,7 +119,7 @@ describe('actor-scoped assistant retrieval', () => {
 
 describe('actor-scoped passage adapter', () => {
   it('uses actor-filtered outside-index captures and current permitted programmes', async () => {
-    const result = await searchDocumentPassages({ organizationId: 7, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE });
+    const result = await searchDocumentPassages({ query: h.query }, { organizationId: 7, userId: 12, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE });
     expect(result.coverage?.unfiledUploads).toBe(1);
     expect(h.uploads).toHaveBeenCalledWith(expect.objectContaining({ query: h.query }), expect.objectContaining({ userId: 12 }), { limit: 20 });
     expect(h.retrieve.mock.calls[0][0]).toMatchObject({ filters: { allowedProgramIds: [PROGRAM] }, sourceReadScope: SCOPE });
@@ -118,17 +127,17 @@ describe('actor-scoped passage adapter', () => {
 
   it('refuses UUID/integer tenant mismatch before retrieval', async () => {
     h.query.mockResolvedValue({ rows: [] });
-    await expect(searchDocumentPassages({ organizationId: 7, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE })).rejects.toThrow('organization identity');
+    await expect(searchDocumentPassages({ query: h.query }, { organizationId: 7, userId: 12, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE })).rejects.toThrow('organization identity');
     expect(h.retrieve).not.toHaveBeenCalled();
   });
 
   it('withholds passage content and coverage when actor scope changes during retrieval', async () => {
     h.retrieve.mockImplementation(async () => { h.revoked = true; return { documents: [{ documentId: DOCUMENT, content: 'private stale content' }] }; });
-    await expect(searchDocumentPassages({ organizationId: 7, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE })).rejects.toThrow('ANA_SOURCE_SCOPE_CHANGED');
+    await expect(searchDocumentPassages({ query: h.query }, { organizationId: 7, userId: 12, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE })).rejects.toThrow('ANA_SOURCE_SCOPE_CHANGED');
   });
 
   it('refuses a returned passage whose recorded programme is outside the allowed set', async () => {
     h.retrieve.mockResolvedValue({ documents: [{ documentId: DOCUMENT, programId: PRIVATE, contentHash: HASH, content: 'private' }] });
-    await expect(searchDocumentPassages({ organizationId: 7, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE })).rejects.toThrow('ANA_SOURCE_ACCESS_DENIED');
+    await expect(searchDocumentPassages({ query: h.query }, { organizationId: 7, userId: 12, organizationUuid: ORG_UUID, query: 'stability' }, { sourceReadScope: SCOPE })).rejects.toThrow('ANA_SOURCE_ACCESS_DENIED');
   });
 });

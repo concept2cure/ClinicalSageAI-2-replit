@@ -69,9 +69,11 @@ const REVIEWS = {
   queue: [
     { id: 'd1', doc: 'Protocol amendment 3', state: 'pending', docStatus: 'IN_REVIEW', comments: 0 },
     { id: 'd2', doc: 'Investigator brochure', state: 'pending', docStatus: 'IN_REVIEW', comments: 1 },
-    { id: 'd3', doc: 'Cover letter', state: 'changes-requested', docStatus: 'DRAFT', comments: 2 },
+    { id: 'd3', doc: 'Cover letter', state: 'changes-requested', docStatus: 'DRAFT', comments: 2,
+      reviews: [{ status: 'changes_requested', standing: 'current' }] },
     { id: 'd4', doc: 'Form FDA 1571', state: 'approved', docStatus: 'APPROVED', comments: 0 },
-    { id: 'd5', doc: 'Pharmacology summary', state: 'approved', docStatus: 'IN_REVIEW', comments: 0 },
+    { id: 'd5', doc: 'Pharmacology summary', state: 'approved', docStatus: 'IN_REVIEW', comments: 0,
+      reviews: [{ status: 'approved', standing: 'current' }] },
   ],
 };
 const ALL_APPROVED = {

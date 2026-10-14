@@ -60,7 +60,7 @@ const HERE: Record<QualityTab, string> = {
 const ASK_STARTER: Record<QualityTab, string> = {
   sop:
     'Give me a read-out on the quality system — what is overdue for review, what is awaiting approval, ' +
-    'and where read-and-understood training is short.',
+    'and where current-release personal acknowledgements are missing.',
   change:
     'Give me a read-out on change control — what is awaiting approval, what is overdue for implementation, ' +
     'and which linked deviations or CAPAs are still open.',
@@ -117,9 +117,9 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
      state the panes' own controls drive (setTab / setSopFilter / setStage /
      setOpenId) — no second path; misses are honest refusals, never guesses.
      Approving, revising or retiring a document, raising or advancing a
-     change, and recording training are governed acts with no handlers here —
-     structurally excluded; they stay in conversation, where AnA proposes and
-     the Part 11 ceremony runs. */
+     change, and acknowledging a released revision are governed acts with no
+     handlers here. People personally acknowledge in the register reader;
+     approval and retirement use the native signature ceremony. */
   useSurfaceActionHandlers('quality', {
     'quality.open-tab': (params) => {
       const target: QualityTab = params.tab === 'change' ? 'change' : 'sop';
@@ -265,7 +265,8 @@ export function QualityApp({ onAskAna, initialTab = 'sop' }: QualityAppProps) {
         'Filter the controlled-document register by status',
         'Filter the change log by lifecycle stage',
         'Expand a change to its linked deviations, CAPAs and validation records',
-        'Approving, revising or retiring documents, raising or advancing changes, and recording training are governed — AnA proposes them in conversation, never through screen controls',
+        'People read controlled text and record their own personal acknowledgement in the SOP register; AnA cannot acknowledge for them',
+        'Document approval and retirement use native electronic signatures; other governed changes require their authorized workflow',
       ],
     };
   }, [tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, showingSampleChanges]);

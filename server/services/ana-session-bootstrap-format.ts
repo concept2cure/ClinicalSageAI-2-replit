@@ -275,7 +275,9 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
       );
     }
     if (parts.chatUploads?.actorFiltered) {
-      lines.push(`_${parts.chatUploads.total ?? uploads.length} chat file(s) in your accessible source scope at this recall check._`);
+      lines.push(parts.chatUploads.total === undefined
+        ? `_Showing ${uploads.length} chat file(s) from your accessible source scope; the scope total was not measured at this recall check._`
+        : `_${parts.chatUploads.total} chat file(s) in your accessible source scope at this recall check._`);
       if (parts.chatUploads.sourceAccessNotice) lines.push(`_${parts.chatUploads.sourceAccessNotice}_`);
     }
     /* The retrieval corpus holds ONE bounded-prefix atom per chat upload, so

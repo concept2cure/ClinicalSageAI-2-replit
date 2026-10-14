@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-14",
+  "branch": "concept2cure-v2",
+  "qualification": "Local PGlite canonical-DDL and native HTTP verification; no production/RLS/multi-session scheduling claim.",
+  "red": {
+    "log": "/workspace/scratch/authoring-peer-review-validation/native-before-private.log",
+    "failed": 4,
+    "skipped": 9,
+    "cases": [
+      {
+        "case": "unassigned direct verdict",
+        "observed": 200,
+        "required": 403
+      },
+      {
+        "case": "original author direct verdict",
+        "observed": 200,
+        "required": 403
+      },
+      {
+        "case": "complete bound read and legacy approval honesty",
+        "observed": "GET200; strict shared read parse failed",
+        "required": "complete context; legacy approval unbound"
+      },
+      {
+        "case": "canonical reviewer identity",
+        "observed": "caller labels stored",
+        "required": "actual current member name/email"
+      }
+    ]
+  },
+  "green": [
+    {
+      "log": "/workspace/scratch/authoring-peer-review-validation/both-final-private.log",
+      "files": 2,
+      "passed": 73,
+      "failed": 0,
+      "paths": [
+        "server/services/authoring/__tests__/peer-review.pglite.integration.test.ts",
+        "server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts"
+      ]
+    },
+    {
+      "log": "/workspace/scratch/authoring-peer-review-object-gates-private.log",
+      "files": 2,
+      "passed": 52,
+      "failed": 0,
+      "paths": [
+        "server/middleware/__tests__/authoringObjectAuthorization.test.ts",
+        "server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts"
+      ]
+    },
+    {
+      "log": "/workspace/scratch/authoring-peer-review-migrations-private.log",
+      "files": 1,
+      "passed": 4,
+      "failed": 0,
+      "paths": [
+        "server/services/authoring/__tests__/peer-review-migrations.pglite.test.ts"
+      ]
+    }
+  ],
+  "total": {
+    "files": 5,
+    "passed": 129,
+    "failed": 0
+  },
+  "guardrails": {
+    "serverErrorLeaks": "passed",
+    "tenantEntryPoints": "passed",
+    "sqlInterpolation": "passed; native interpolation allowance tightened4 to3 by control tower"
+  },
+  "lint": {
+    "productionMiddlewareMigrationTest": "zero errors/warnings",
+    "serviceNativeTests": "zero errors/warnings",
+    "existingObjectMiddlewareTest": "existing describe max-lines warning retained; no new warning"
+  },
+  "atomicity": {
+    "realSqlAuditFailureRollback": true,
+    "realSqlTaskRecordFailureRollback": true,
+    "finalAuthorityMutationHooks": 11,
+    "commitTransportUncertaintyRecovery": "actual COMMIT then transport error; safe503, no notifications, recoveryGET shows persisted state",
+    "missingRequestContext": "healthy global pool; native503, no mutation, no fallback",
+    "finalReadReviewRoleDowngrade": "Actual REVIEWER toVIEWER preserves fulltext while canReviewfalse"
+  },
+  "migration": {
+    "creators": 2,
+    "freshAndUpgradeReplay": true,
+    "legacyBindingBackfill": false
+  },
+  "requestRoundPrecision": {
+    "redLog": "/tmp/c2c-peer-round-adversarial/result.txt",
+    "redFailed": 1,
+    "greenLog": "/workspace/scratch/authoring-peer-review-round-green-private.log",
+    "greenPassed": 1,
+    "proof": "Different PostgreSQL microseconds collapse to the same JS timestamp; re-request rotates the existing review ID, stale expected refuses before writes; old IDs retained in immutable audit.",
+    "permanentCase": "Included in73-case canonicalSQL/native final run"
+  },
+  "headingContributorRed": {
+    "log": "/workspace/scratch/authoring-peer-review-validation/heading-writer-before-private.log",
+    "failed": 1,
+    "skipped": 16,
+    "proof": "Actual secondary writer HTTP title PATCH200 creates immutable RENAME actor fact; creator/body revision actors unchanged; request200 instead of409 before canonical authorship extension.",
+    "greenNativeCase": true
+  },
+  "authorship": "Original creator, immutable body revisions, immutable qualifying structure/title/order audit actor facts; real heading-only native writer request409/verdict403."
+}

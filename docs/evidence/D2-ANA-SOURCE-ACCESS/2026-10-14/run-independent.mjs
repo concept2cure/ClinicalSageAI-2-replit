@@ -45,7 +45,7 @@ const result = await new Promise(resolve => { child.once('error', e => resolve({
 closeSync(fd);
 const after = snapshot();
 const changedSources = sourceFiles.filter(f => before[f] !== after[f]);
-const counts = readFileSync(log, 'utf8').replace(/\u001b\[[0-9;]*m/g, '').split('\n').find(l => /^\s*Tests\s/.test(l))?.trim() ?? 'No completed test count';
+const counts = readFileSync(log, 'utf8').replace(new RegExp(String.fromCharCode(27)+'\\[[0-9;]*m','g'), '').split('\n').find(l => /^\s*Tests\s/.test(l))?.trim() ?? 'No completed test count';
 const qualified = result.exitCode === 0 && changedSources.length === 0 && /^Tests\s+\d+ passed \(\d+\)$/.test(counts);
 writeFileSync(path.join(folder, `independent-${label}-manifest.json`), JSON.stringify({ runtime: process.version,
   baselineHEAD: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(), command: ['node', ...command],

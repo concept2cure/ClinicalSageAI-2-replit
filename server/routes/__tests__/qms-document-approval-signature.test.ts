@@ -99,11 +99,12 @@ const DRAFT = {
 /** The approvable state: a draft that was sent for review. */
 const IN_REVIEW = { ...DRAFT, status: 'in_review' };
 
-function app(userId = SIGNER) {
+function app(userId = SIGNER, pinned = true) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId };
+    if (pinned) Object.assign(req, { dbClient: { query: (...args: unknown[]) => H.txQuery(...args) } });
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);
@@ -126,6 +127,36 @@ function scriptTransaction(row: Record<string, unknown> | null) {
 }
 
 const txStatements = () => H.txQuery.mock.calls.map((c) => String(c[0]).split(/\s+/)[0]);
+
+describe('QMS approval rechecks on the reserved request connection', () => {
+  it('refuses an actor now demoted after an earlier allowed authority read without writing or signing', async () => {
+    H.role.mockResolvedValueOnce('admin').mockResolvedValue('viewer');
+    const response = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(response.status).toBe(403);
+    expect(response.body.details.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(H.txQuery.mock.calls.some(call => String(call[0]).includes('FOR UPDATE'))).toBe(true);
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(H.release).not.toHaveBeenCalled();
+  });
+
+  it('returns safe unavailable when current authority cannot be read on the actual signing client', async () => {
+    H.role.mockResolvedValueOnce('admin').mockRejectedValueOnce(new Error('Private database diagnostic for this fixture'));
+    const response = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(response.status).toBe(503);
+    expect(response.body.details.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(JSON.stringify(response.body)).not.toContain('Private database diagnostic');
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(txStatements().at(-1)).toBe('ROLLBACK');
+  });
+
+  it('has no pooled fallback when the request-owned database context is missing', async () => {
+    const response = await request(app(SIGNER, false)).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(response.status).toBe(500);
+    expect(H.txQuery).not.toHaveBeenCalled(); expect(H.query).not.toHaveBeenCalled();
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+});
 
 beforeEach(() => {
   H.query.mockReset();
@@ -221,7 +252,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () 
     expect(res.body.details.code).toBe('QMS_SELF_APPROVAL');
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
     expect(H.persistSignature).not.toHaveBeenCalled();
-    expect(H.release).toHaveBeenCalledTimes(1);
+    expect(H.release).not.toHaveBeenCalled();
   });
 
   it('refuses a document that is not in_review with 409', async () => {
@@ -257,7 +288,35 @@ describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () 
 
 });
 
+describe('POST /api/mdx/qms/documents/:id/approve — controlled-text authorship', () => {
+  it.each([AUTHOR, null])('refuses a protected controlled-text contributor regardless of original author %s', async authorId => {
+    scriptTransaction({ ...IN_REVIEW, author_id: authorId,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [SIGNER] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(403); expect(res.body.details.code).toBe('QMS_SELF_APPROVAL');
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on malformed protected authorship without signing or mutation', async () => {
+    scriptTransaction({ ...IN_REVIEW,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [String(SIGNER)] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(409); expect(res.body.details.code).toBe('QMS_INVALID_AUTHORSHIP');
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+});
+
 describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', () => {
+  it('permits an uninvolved signer and records enforced two-person attribution when contributors exist without an original author', async () => {
+    scriptTransaction({ ...IN_REVIEW, author_id: null,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [8] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(200);
+    expect(H.persistSignature).toHaveBeenCalledTimes(1);
+    expect(H.persistSignature.mock.calls[0][1].extraManifest).toMatchObject({ twoPersonRule: 'enforced' });
+  });
   it('signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT', async () => {
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(200);
@@ -312,6 +371,6 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(500);
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'ROLLBACK']);
-    expect(H.release).toHaveBeenCalledTimes(1);
+    expect(H.release).not.toHaveBeenCalled();
   });
 });

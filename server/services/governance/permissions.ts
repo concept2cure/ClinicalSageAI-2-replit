@@ -60,6 +60,24 @@ export interface PermissionQuery {
   classification?: string | null;
 }
 
+/** A caller-owned signing transaction may resolve the same canonical grants. */
+export interface GrantExecutor {
+  query(sql: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
+}
+
+export interface GrantResolutionOptions {
+  executor?: GrantExecutor;
+  /** Refuse an unreadable/unverified store instead of using code defaults. */
+  strict?: boolean;
+}
+
+export class GovernanceGrantStoreUnavailableError extends Error {
+  constructor(readonly cause: unknown) {
+    super('Current governance grants could not be verified.');
+    this.name = 'GovernanceGrantStoreUnavailableError';
+  }
+}
+
 const ALL: GovAction[] = [
   'view', 'author', 'review', 'approve', 'sign', 'lock', 'submit', 'assign', 'manage_permissions',
 ];
@@ -141,25 +159,38 @@ export function evaluate(grants: Grant[], role: string, q: PermissionQuery): boo
   return allowed;
 }
 
-/** Effective grants for a role: code defaults ∪ per-org DB overrides. */
-export async function resolveGrants(orgId: number, role: string): Promise<Grant[]> {
+function validStrictGrant(row: Record<string, unknown>, role: string): boolean {
+  if (row.role !== role || typeof row.action !== 'string' || row.action.trim().length === 0) return false;
+  if (row.effect !== 'allow' && row.effect !== 'deny') return false;
+  return [row.resource_type, row.ctd_module, row.classification]
+    .every(value => value === null || typeof value === 'string');
+}
+
+/** Effective grants for a role: code defaults ∪ per-org DB overrides.
+ * Ordinary callers retain the legacy defaults-only fallback. Strict callers
+ * must verify the actual store through their supplied transaction executor. */
+export async function resolveGrants(orgId: number, role: string, options: GrantResolutionOptions = {}): Promise<Grant[]> {
   const defaults = DEFAULT_POLICY.filter(g => g.role === role);
   let dbGrants: Grant[] = [];
   try {
-    const r = await pool.query(
+    const r = await (options.executor ?? pool).query(
       `SELECT role, action, resource_type, ctd_module, classification, effect
          FROM c2c_governance_grants WHERE org_id = $1 AND role = $2`,
       [orgId, role],
     );
-    dbGrants = r.rows.map((row: any) => ({
-      role: row.role,
-      action: row.action,
-      resourceType: row.resource_type ?? null,
-      ctdModule: row.ctd_module ?? null,
-      classification: row.classification ?? null,
-      effect: row.effect === 'deny' ? 'deny' : 'allow',
-    }));
+    dbGrants = r.rows.map((row: any) => {
+      if (options.strict && !validStrictGrant(row, role)) throw new Error('Invalid governance grant row.');
+      return {
+        role: row.role,
+        action: row.action,
+        resourceType: row.resource_type ?? null,
+        ctdModule: row.ctd_module ?? null,
+        classification: row.classification ?? null,
+        effect: row.effect === 'deny' ? 'deny' : 'allow',
+      };
+    });
   } catch (err: any) {
+    if (options.strict) throw new GovernanceGrantStoreUnavailableError(err);
     // Atom store not migrated yet → defaults only (additive, non-breaking).
     if (err?.code !== '42P01') {
       console.warn('[governance/permissions] grant load failed (defaults only):', err?.message);
@@ -169,8 +200,8 @@ export async function resolveGrants(orgId: number, role: string): Promise<Grant[
 }
 
 /** Can this role perform the action? Evaluated over (defaults ∪ DB), deny-by-default. */
-export async function can(orgId: number, role: string, q: PermissionQuery): Promise<boolean> {
-  return evaluate(await resolveGrants(orgId, role), role, q);
+export async function can(orgId: number, role: string, q: PermissionQuery, options?: GrantResolutionOptions): Promise<boolean> {
+  return evaluate(await resolveGrants(orgId, role, options), role, q);
 }
 
 /**

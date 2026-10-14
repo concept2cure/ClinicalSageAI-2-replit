@@ -1,0 +1,178 @@
+{
+  "baseCommit": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "sourceSnapshotKind": "working-tree-after-final-31-case-green-and-zero-focused-lint",
+  "sourceFiles": [
+    {
+      "path": "server/services/report-os/pdf/run-pdf.ts",
+      "bytes": 12507,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7f0453a4c0eee7639a5911db01281f5a8dd7e1d919150b32d617acb7db9280fe"
+    },
+    {
+      "path": "server/services/report-os/pdf/bundle-pdf.ts",
+      "bytes": 10715,
+      "digestAlgorithm": "SHA-256",
+      "digest": "494a9281da5f313f349495d22628806df310a9feb49171eabb52b8bf9515fc39"
+    },
+    {
+      "path": "server/services/report-os/pdf/writer.ts",
+      "bytes": 12620,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e0f5359fe4b15697e1e882007c42790de9213ad859afbb41a94780ef179be099"
+    },
+    {
+      "path": "server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts",
+      "bytes": 9430,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ed51a253b9efd73628b32f6fc97427295a7967b3fee17a6c7000e3668ed639af"
+    },
+    {
+      "path": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+      "bytes": 13574,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ac39e29b819d816090ce92a12b602ec797320032036acd1c02163e380de19c6f"
+    },
+    {
+      "path": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
+      "bytes": 3458,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6ec934675661be5706239d56625c57c78b37aed35f737316fc30318bb01eaa99"
+    },
+    {
+      "path": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
+      "bytes": 4203,
+      "digestAlgorithm": "SHA-256",
+      "digest": "8a7258bda1612007731674e0b9d21a808e6531335bb258d3590f6f4cf92815b5"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "README.md",
+      "bytes": 4953,
+      "digestAlgorithm": "SHA-256",
+      "digest": "769e1838400989b6903bfbd89f7f8710ad1a2365b7a65c244219851e631be5de"
+    },
+    {
+      "path": "green-final.log",
+      "bytes": 6102,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d455487a36d5ca00671f252abb5878c53c162426a2442067e77861cc2f558ad1"
+    },
+    {
+      "path": "green-initial.log",
+      "bytes": 6104,
+      "digestAlgorithm": "SHA-256",
+      "digest": "469f629a3c76e7c59ebb0f3fc9d6dbb02f267426ff4a9566ec9cd35a839320d5"
+    },
+    {
+      "path": "lint-final.log",
+      "bytes": 0,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lint-initial.log",
+      "bytes": 227,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3b4c7a1fb17820dec9daeaa157e6e576104d506517b2ab2d22d0925d7c2277e2"
+    },
+    {
+      "path": "red-output.log",
+      "bytes": 5869,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6c1f83a95e9573d4d5c6614ddb751a0c8754b03b65876a6669de2ba56ec13a37"
+    },
+    {
+      "path": "red-report.json",
+      "bytes": 8540,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6fb87df08299a7bf8e74cf7458b807b76038e9363138d6df079d336a06ee3923"
+    },
+    {
+      "path": "red-source-manifest.json",
+      "bytes": 1392,
+      "digestAlgorithm": "SHA-256",
+      "digest": "41f7ed52d47ca3b1d306922a90838713462fb88ff90e54fb25e5354c7e36af65"
+    },
+    {
+      "path": "red-test-copy.ts",
+      "bytes": 10401,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1be14eb8e54282f1747e96013d5e810bc4372d575752c0f82a10a821f3cda8ba"
+    }
+  ],
+  "rawLogDispositions": [
+    {
+      "rawPath": "/tmp/retained-report-pack-red/red-output.log",
+      "filedPath": "red-output.log",
+      "rawBytes": 5869,
+      "rawDigest": "6c1f83a95e9573d4d5c6614ddb751a0c8754b03b65876a6669de2ba56ec13a37",
+      "filedBytes": 5869,
+      "filedDigest": "6c1f83a95e9573d4d5c6614ddb751a0c8754b03b65876a6669de2ba56ec13a37",
+      "digestAlgorithm": "SHA-256",
+      "normalization": "none"
+    },
+    {
+      "rawPath": "/tmp/retained-report-pack-pdf-green-initial.log",
+      "filedPath": "green-initial.log",
+      "rawBytes": 6105,
+      "rawDigest": "91cc649189930c68b15435a1cf4f19683545620d40427e3b0ea1b6f7821f3f75",
+      "filedBytes": 6104,
+      "filedDigest": "469f629a3c76e7c59ebb0f3fc9d6dbb02f267426ff4a9566ec9cd35a839320d5",
+      "digestAlgorithm": "SHA-256",
+      "normalization": "trailing-whitespace-and-single-terminal-newline"
+    },
+    {
+      "rawPath": "/tmp/retained-report-pack-pdf-green-final.log",
+      "filedPath": "green-final.log",
+      "rawBytes": 6103,
+      "rawDigest": "b32a6c6f187d70a1e4d8bd049c71714822789e5769a98551d4d9dca0c496ff27",
+      "filedBytes": 6102,
+      "filedDigest": "d455487a36d5ca00671f252abb5878c53c162426a2442067e77861cc2f558ad1",
+      "digestAlgorithm": "SHA-256",
+      "normalization": "trailing-whitespace-and-single-terminal-newline"
+    },
+    {
+      "rawPath": "/tmp/retained-report-pack-pdf-lint-initial.log",
+      "filedPath": "lint-initial.log",
+      "rawBytes": 228,
+      "rawDigest": "d28bc85496ab0e439328767c2ce6d750fa68e8a7faaf846cb0a05c0bc569f223",
+      "filedBytes": 227,
+      "filedDigest": "3b4c7a1fb17820dec9daeaa157e6e576104d506517b2ab2d22d0925d7c2277e2",
+      "digestAlgorithm": "SHA-256",
+      "normalization": "trailing-whitespace-and-single-terminal-newline"
+    },
+    {
+      "rawPath": "/tmp/retained-report-pack-pdf-lint-final.log",
+      "filedPath": "lint-final.log",
+      "rawBytes": 0,
+      "rawDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "filedBytes": 0,
+      "filedDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "digestAlgorithm": "SHA-256",
+      "normalization": "none"
+    }
+  ],
+  "testObservations": {
+    "red": {
+      "physicalFiles": 1,
+      "failed": 6,
+      "passed": 0,
+      "skipped": 0,
+      "durationSeconds": 1.48,
+      "featureAbsentCases": 5,
+      "actualIndividualPdfSignatureCases": 1
+    },
+    "greenFinal": {
+      "physicalFiles": 4,
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 13.38
+    },
+    "lintFinal": {
+      "errors": 0,
+      "warnings": 0
+    }
+  }
+}

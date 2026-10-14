@@ -1,0 +1,78 @@
+{
+  "qualification": "Actual extracted fixture selector only; no SQL, native runtime or access-policy mock",
+  "cases": [
+    {
+      "name": "local",
+      "expected": true,
+      "admitted": true,
+      "passed": true
+    },
+    {
+      "name": "declared_ci",
+      "expected": true,
+      "admitted": true,
+      "passed": true
+    },
+    {
+      "name": "missing_runtime",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "ci_name_without_ci",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "ci_name_wrong_mode",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "production_name",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "original_database",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "database_mismatch",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "host_mismatch",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "port_mismatch",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "wrong_runtime",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    },
+    {
+      "name": "malformed_runtime",
+      "expected": false,
+      "admitted": false,
+      "passed": true
+    }
+  ],
+  "failures": 0
+}

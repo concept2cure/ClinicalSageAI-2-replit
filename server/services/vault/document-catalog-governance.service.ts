@@ -24,6 +24,8 @@
  * (filingVocabularyRefusal): a value outside it is refused, never stored.
  */
 import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import { requireGovernedReason } from '../../routes/governed-reason.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
@@ -101,7 +103,7 @@ export interface CatalogSuggestion {
   expectedExtractedTextSha256: string;
   organizationId: number;
   programId: string;
-  documentTitle: string;
+  documentTitle: string | null;
   documentKind: string;
   purpose: string;
   summary: string;
@@ -199,8 +201,6 @@ function validSuggestionDescription(s: CatalogSuggestion): boolean {
 }
 
 function suggestionPreflight(s: CatalogSuggestion): string | null {
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal.message;
   if (!validSuggestionIdentity(s) || !validSuggestionDescription(s)) {
     return 'A valid source version, extraction digest and bounded description are required. Nothing was saved.';
   }
@@ -227,10 +227,12 @@ export async function writeCatalogSuggestion(input: CatalogSuggestion): Promise<
     }
     const found = await client.query(
       `SELECT c.catalog_state, c.document_kind, c.purpose, c.summary, c.confirmed_at
-         FROM vault.document_catalog c
-        WHERE c.document_id = $1 AND c.content_hash = $2
-        FOR UPDATE`,
-      [s.documentId, s.contentHash],
+         FROM vault.document_catalog c JOIN vault.documents d ON d.id = c.document_id
+        WHERE c.document_id = $1 AND c.content_hash = $2 AND d.content_hash = $2
+          AND d.program_id = $3::uuid AND d.organization_id = $4 AND d.deleted_at IS NULL
+          AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $4 AND rp.deleted_at IS NULL)
+        FOR UPDATE OF c, d`,
+      [s.documentId, s.contentHash, s.programId, s.organizationId],
     );
     const before = found.rows[0] ? { ...found.rows[0], state: catalogStateOf(found.rows[0]) } : undefined;
     const refusal = !before ? VERSION_CHANGED : personDecided(before);
@@ -247,11 +249,12 @@ export async function writeCatalogSuggestion(input: CatalogSuggestion): Promise<
       resourceId: s.documentId,
       details: suggestionAuditDetails(s, before),
     });
+    await admitCatalogActor(client, s, { write: true, hold: true });
     await client.query('COMMIT');
     return { ok: true, embeddingStatus };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
-    if (err instanceof CatalogAdmissionError) return { ok: false, refusal: err.message };
+    if (err instanceof CatalogAdmissionError || err instanceof ProgramReadAccessError) return { ok: false, refusal: err.message };
     throw err;
   } finally {
     client.release();
@@ -323,8 +326,6 @@ function correctionFields(args: ReviewCatalogArgs): Partial<CatalogFields> | Rev
 
 /** The checks that need no database: role, ids, reason and fields. */
 function reviewPreflight(args: ReviewCatalogArgs): { reason: string | null; fields: Partial<CatalogFields> } | ReviewCatalogResult {
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal;
   if (!UUID_RE.test(args.programId) || !UUID_RE.test(args.documentId)) {
     return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
   }
@@ -478,11 +479,12 @@ export async function reviewCatalogRecord(input: ReviewCatalogArgs): Promise<Rev
         description: describeReview(state, changes),
       },
     });
+    await admitCatalogActor(client, args, { write: true, hold: true });
     await client.query('COMMIT');
     return { ok: true, state, changes };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
-    if (err instanceof CatalogAdmissionError) return refuse(err.status, err.code, err.message);
+    if (err instanceof CatalogAdmissionError || err instanceof ProgramReadAccessError) return refuse(err.status, err.code, err.message);
     throw err;
   } finally {
     client.release();
@@ -538,7 +540,7 @@ function toRecordView(r: Record<string, any>, organizationId: number, role: stri
     checkScope: LEGACY_CATALOG_VERIFICATION_SCOPE,
     currentUse: { eligible: problem === null, reasonCode: problem ?? (!originalFileAvailable ? 'SOURCE_ORIGINAL_UNAVAILABLE' : null), originalFileAvailable },
     revision: r.revision ?? null,
-    canWrite: vaultWriteRefusal() === null && GOVERNED_WRITE_ROLES.has(role) && problem === null && originalFileAvailable,
+    canWrite: vaultWriteRefusal(role) === null && GOVERNED_WRITE_ROLES.has(role) && problem === null && originalFileAvailable,
     state: catalogStateOf(r),
     documentKind: r.document_kind ?? null,
     documentKindLabel: r.document_kind ? vaultDocKindLabel(r.document_kind) : null,
@@ -552,16 +554,20 @@ function toRecordView(r: Record<string, any>, organizationId: number, role: stri
 
 /** The current version's record, for a document of this project; null when it is not one. */
 export async function readCatalogRecord(args: {
+  executor?: RequestSqlClient;
   programId: string;
   documentId: string;
   organizationId: number;
   userId?: number | null;
 }): Promise<CatalogRecordView | null> {
+  args = Object.freeze({ executor: args.executor, programId: args.programId, documentId: args.documentId, organizationId: args.organizationId, userId: args.userId });
   if (!UUID_RE.test(args.programId) || !UUID_RE.test(args.documentId)) return null;
-  const client = await pool.connect();
+  const actorArgs = { ...args, userId: args.userId ?? null };
+  const owned = !args.executor || args.executor === pool;
+  const client = owned ? await pool.connect() : args.executor!;
   try {
-    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
-    const { role } = await admitCatalogActor(client, { ...args, userId: args.userId ?? null });
+    if (owned) await client.query('BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY');
+    await admitCatalogActor(client, actorArgs);
     const { rows } = await client.query(
     `SELECT d.organization_id, d.content_hash, d.extracted_text, c.content_hash AS catalog_content_hash,
             ${vaultDataEligibleSql('d')} AS data_eligible, ${vaultBinaryAvailableSql('d')} AS original_file_available,
@@ -577,12 +583,13 @@ export async function readCatalogRecord(args: {
                      WHERE rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL)`,
     [args.documentId, args.programId, args.organizationId],
   );
-    const view = rows[0]?.organization_id === args.organizationId ? toRecordView(rows[0], args.organizationId, role) : null;
-    await client.query('COMMIT');
+    const current = await admitCatalogActor(client, actorArgs);
+    const view = rows[0]?.organization_id === args.organizationId ? toRecordView(rows[0], args.organizationId, current.role) : null;
+    if (owned) await client.query('COMMIT');
     return view;
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    if (owned) await client.query('ROLLBACK').catch(() => undefined);
     if (err instanceof CatalogAdmissionError && [401, 403, 404].includes(err.status)) return null;
     throw err;
-  } finally { client.release(); }
+  } finally { if (owned) (client as import('pg').PoolClient).release(); }
 }

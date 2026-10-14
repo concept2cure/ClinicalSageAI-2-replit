@@ -1,0 +1,113 @@
+{
+  "branch": "concept2cure-v2",
+  "baseCommit": "71444466ba9826575ebe127dad609c6f0a815a0b",
+  "combinedRegression": {
+    "files": 39,
+    "passed": 726,
+    "failed": 0
+  },
+  "fixtureTypeRecheck": {
+    "files": 2,
+    "passed": 21,
+    "failed": 0,
+    "includedInCombinedUniqueCount": true
+  },
+  "typecheck": {
+    "command": "npm run ci:typecheck:no-regression -- --incremental",
+    "baseline": 0,
+    "errors": 0
+  },
+  "build": {
+    "command": "npm run build",
+    "passed": true,
+    "existingChunkSizeAdvisory": true
+  },
+  "browser": {
+    "scenarios": 4,
+    "actualClient": true,
+    "syntheticApi": true,
+    "pageErrors": 0
+  },
+  "guards": {
+    "sqlInterpolation": {
+      "passed": true,
+      "nativeRouterAllowanceBefore": 4,
+      "nativeRouterAllowanceAfter": 3
+    },
+    "migrationDropSafety": true,
+    "serverErrorLeaks": true,
+    "tenantEntryPoints": true,
+    "surfaceTextRamp": true,
+    "tokenContrast": true,
+    "phantomTokensNoRegression": true,
+    "frozenThemeAliases": true,
+    "eslintWarningRatchetWorkingTrackedFiles": {
+      "net": -2,
+      "passed": true
+    }
+  },
+  "publication": {
+    "state": "verified; awaiting canonical push and hosted results"
+  },
+  "productionQualification": "Not performed; see human and production boundary in README.",
+  "featureCommit": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
+  "integratedEditorCommit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "verifiedMergedSourceCommit": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
+  "postMergeVerification": {
+    "tests": {
+      "files": 4,
+      "passed": 74,
+      "failed": 0,
+      "overlapsCombinedUniqueCount": true
+    },
+    "typecheckErrors": 0,
+    "buildPassed": true
+  },
+  "security": {
+    "scanner": "Gitleaks 8.28.0",
+    "fullHistoryThroughFeature": {
+      "commits": 10236,
+      "findings": 0,
+      "passed": true
+    },
+    "incomingInitialRange": {
+      "findings": 3,
+      "verifiedFixtureChecksumFingerprints": 3
+    },
+    "exactExceptions": "security/README.md",
+    "newRangeAfterExactDispositions": {
+      "baseExclusive": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
+      "headInclusive": "0d6243ab32551acc89bc90b53424a8c37daf756d",
+      "commits": 3,
+      "findings": 0,
+      "passed": true
+    },
+    "stagedReleaseMetadata": {
+      "findings": 0,
+      "passed": true
+    }
+  },
+  "publicationRepairs": {
+    "firstPushGateRefusal": {
+      "gate": "ci:undefined-css-classes",
+      "published": false,
+      "repair": "Removed undefined ed-prose; retained defined native ed-full-sec-body.",
+      "gateRecheckPassed": true
+    },
+    "dialogReplay": {
+      "files": 2,
+      "passed": 18,
+      "failed": 0,
+      "includedInCombinedUniqueCount": true
+    },
+    "buildPassed": true,
+    "incomingSemgrep": {
+      "run": 38628716225,
+      "finding": "javascript.express.security.injection.raw-html-format.raw-html-format",
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
+      "repair": "Reuse shared/authoring/plain-text-html plainTextToHtml. No suppression.",
+      "generatedContractIdentical": true,
+      "fixedHostedScan": "pending"
+    }
+  }
+}

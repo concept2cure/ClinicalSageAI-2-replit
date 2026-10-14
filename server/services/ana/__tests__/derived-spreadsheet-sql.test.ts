@@ -43,16 +43,8 @@ beforeAll(async () => {
   await harness.pg.exec(`ALTER TABLE file_uploads ADD COLUMN user_id integer,
     ADD COLUMN original_name text, ADD COLUMN mime_type text, ADD COLUMN file_size bigint,
     ADD COLUMN created_at timestamptz DEFAULT now()`);
-  await harness.pg.exec(`CREATE TABLE organizations(id int PRIMARY KEY,status text);
-    CREATE TABLE users(id int PRIMARY KEY,status text);
-    CREATE TABLE organization_users(organization_id int,user_id int,role text);
-    CREATE TABLE project_visibility_settings(project_id int,organization_id int,visibility text);
-    CREATE TABLE project_members(project_id int,organization_id int,user_id int,role text,status text);
-    CREATE TABLE concept2cure_review_assignments(artifact_id int,organization_id int,reviewer_id int,status text);
-    ALTER TABLE projects ADD COLUMN client_workspace_id int,ADD COLUMN owner_id int,
-      ADD COLUMN created_by_id int,ADD COLUMN settings jsonb DEFAULT '{}';
-    ALTER TABLE cre_evidence_sources ADD COLUMN created_by int, ADD COLUMN client_workspace_id int;
-    INSERT INTO users VALUES (42,'active')`);
+  // Actor and project precursors come from the shared disposition harness.
+  await harness.pg.exec(`ALTER TABLE cre_evidence_sources ADD COLUMN created_by int, ADD COLUMN client_workspace_id int`);
 });
 afterAll(async () => { await harness.close(); });
 beforeEach(async () => {
@@ -62,8 +54,7 @@ beforeEach(async () => {
   h.readBytes = h.original;
   h.writeFile.mockResolvedValue(undefined); h.unlink.mockResolvedValue(undefined);
   f = await harness.seed();
-  await f.pg.query("INSERT INTO organizations VALUES ($1,'active')", [f.org]);
-  await f.pg.query("INSERT INTO organization_users VALUES ($1,42,'member')", [f.org]);
+  await f.pg.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=42", [f.org]);
   await f.pg.query('UPDATE projects SET owner_id=42,created_by_id=42 WHERE organization_id=$1', [f.org]);
   await f.pg.query('UPDATE file_uploads SET user_id=42 WHERE id=$1', [f.upload]);
   await f.pg.query(`UPDATE file_uploads SET checksum_sha256=$1, original_name='source.xlsx',

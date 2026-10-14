@@ -21,7 +21,7 @@ const command = ['node_modules/vitest/vitest.mjs', 'run', '--config', config];
 const child = spawn(process.execPath, command, { cwd: repo, stdio: ['ignore', fd, fd] });
 const result = await new Promise(resolve => { child.once('error', e => resolve({ exitCode: 1, error: e.code ?? 'RUNNER_ERROR' })); child.once('exit', (exitCode, signal) => resolve({ exitCode, signal })); });
 closeSync(fd); const after = snapshot(); const changedSources = files.filter(f => before[f] !== after[f]);
-const counts = readFileSync(log, 'utf8').replace(/\u001b\[[0-9;]*m/g, '').split('\n').find(l => /^\s*Tests\s/.test(l))?.trim() ?? 'No completed test count';
+const counts = readFileSync(log, 'utf8').replace(new RegExp(String.fromCharCode(27)+'\\[[0-9;]*m','g'), '').split('\n').find(l => /^\s*Tests\s/.test(l))?.trim() ?? 'No completed test count';
 const qualified = result.exitCode === 0 && changedSources.length === 0 && /^Tests\s+3 passed \(3\)$/.test(counts);
 writeFileSync(path.join(folder, `independent-program-snapshot-${label}-manifest.json`), JSON.stringify({ runtime: process.version,
   baselineHEAD: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(), command: ['node', ...command], startedAt,

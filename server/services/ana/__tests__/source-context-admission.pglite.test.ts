@@ -29,20 +29,14 @@ async function share() {
 beforeAll(async () => {
   harness = await createDispositionHarness(); h.db = harness.db;
   await harness.pg.exec(`
-    CREATE TABLE users(id int PRIMARY KEY,status text);
-    CREATE TABLE organizations(id int PRIMARY KEY,status text);
-    CREATE TABLE organization_users(organization_id int,user_id int,role text);
-    CREATE TABLE project_visibility_settings(project_id int,organization_id int,visibility text);
-    CREATE TABLE project_members(project_id int,organization_id int,user_id int,role text,status text);
-    CREATE TABLE concept2cure_review_assignments(artifact_id int,organization_id int,reviewer_id int,status text);
-    ALTER TABLE projects ADD COLUMN client_workspace_id int, ADD COLUMN owner_id int,
-      ADD COLUMN created_by_id int, ADD COLUMN settings jsonb DEFAULT '{}';
+    -- The canonical disposition harness already supplies actor and project
+    -- tables; add only the upload/capture columns this reader needs.
     ALTER TABLE cre_evidence_sources ADD COLUMN created_by int, ADD COLUMN client_workspace_id int,
       ADD COLUMN visibility_class text DEFAULT 'project_private';
     ALTER TABLE cre_evidence_sources ALTER COLUMN organization_id DROP NOT NULL;
     ALTER TABLE file_uploads ADD COLUMN user_id int, ADD COLUMN original_name text,
       ADD COLUMN mime_type text, ADD COLUMN file_size bigint;
-    INSERT INTO users VALUES (42,'active'),(43,'active');
+    INSERT INTO users VALUES (43,'active');
   `);
 }, 90_000);
 afterAll(async () => { await harness?.close(); });
@@ -51,10 +45,10 @@ beforeEach(async () => {
   h.writeFile.mockReset().mockResolvedValue(undefined); h.unlink.mockReset().mockResolvedValue(undefined);
   await harness.pg.exec("UPDATE users SET status='active'");
   f = await harness.seed();
-  await f.pg.query("INSERT INTO organizations VALUES ($1,'active')", [f.org]);
-  await f.pg.query("INSERT INTO organization_users VALUES ($1,42,'member'),($1,43,'member')", [f.org]);
+  await f.pg.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=42", [f.org]);
+  await f.pg.query("INSERT INTO organization_users VALUES ($1,43,'member')", [f.org]);
   await f.pg.query('UPDATE projects SET owner_id=42,created_by_id=42 WHERE organization_id=$1', [f.org]);
-  await f.pg.query("INSERT INTO project_visibility_settings SELECT id,$1,'private' FROM projects WHERE organization_id=$1", [f.org]);
+  await f.pg.query("UPDATE project_visibility_settings SET visibility='private' WHERE organization_id=$1", [f.org]);
   await f.pg.query("UPDATE file_uploads SET user_id=43,original_name='private-study.txt',mime_type='text/plain',checksum_sha256=$1 WHERE id=$2", [sha256Hex(bytes), f.upload]);
 });
 
@@ -84,7 +78,7 @@ describe('spreadsheet copies recheck access on their canonical write transaction
 
 describe('selected source identity keeps its recorded private project', () => {
   it('refuses an unassigned organization member before source text or bytes', async () => {
-    await expect(sources()).rejects.toMatchObject({ status: 403, code: 'ANA_PROJECT_ACCESS_DENIED' });
+    await expect(sources()).rejects.toMatchObject({ status: 403, code: 'ANA_SOURCE_ACCESS_DENIED' });
     expect(h.readFile).not.toHaveBeenCalled();
   });
   it('allows an explicitly shared project and honors revocation on the next read', async () => {
@@ -155,6 +149,43 @@ describe('direct upload IDs cannot bypass private-source admission', () => {
     await share(); await f.pg.query("UPDATE users SET status='suspended' WHERE id=43");
     await expect(loadUploadedFile(f.upload, f.org, { userId: 43 })).rejects.toMatchObject({ status: 403 });
     await expect(assertAnaUploadAccess({ query: async () => { throw new Error('connection unavailable'); } }, { ...actor(), fileIds: [f.upload] })).rejects.toMatchObject({ status: 503, code: 'ANA_SOURCE_ACCESS_UNAVAILABLE' });
+    expect(h.readFile).not.toHaveBeenCalled();
+  });
+});
+
+describe('conversation captures retain creator and recorded ancestry checks', () => {
+  async function unbindCapture(creator = 43) {
+    await f.pg.query('DELETE FROM concept2cure_artifacts WHERE organization_id=$1', [f.org]);
+    await f.pg.query(`UPDATE cre_evidence_sources SET client_program_id=NULL,client_workspace_id=NULL,
+      created_by=$1,provenance=$2 WHERE id=$3`,
+    [creator, JSON.stringify({ origin: 'chat_upload', fileUploadId: f.upload }), f.capture]);
+  }
+
+  it('allows a genuinely unbound capture only to its active creator and upload owner', async () => {
+    await unbindCapture();
+    await expect(sources()).resolves.toBeUndefined();
+    await expect(uploads()).resolves.toBeUndefined();
+    await expect(admitAnaSelectedSources(h.db, { organizationId: f.org, userId: 42, sourceIds: [f.capture] }))
+      .rejects.toMatchObject({ status: 403 });
+  });
+
+  it('upload ownership cannot substitute for capture creator identity', async () => {
+    await unbindCapture(42);
+    await expect(sources()).rejects.toMatchObject({ status: 403, code: 'ANA_SOURCE_ACCESS_DENIED' });
+    await expect(uploads()).rejects.toMatchObject({ status: 403, code: 'ANA_SOURCE_ACCESS_DENIED' });
+    expect(h.readFile).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('an unbound capture cannot erase a same-checksum recorded private parent (deleted=%s)', async deleted => {
+    await unbindCapture();
+    // This other upload ID is intentionally distinct: the relation must be
+    // found through exact byte identity, including retained deleted ancestry.
+    await f.pg.query(`INSERT INTO cre_evidence_sources
+      (organization_id,client_program_id,source_type,checksum,provenance,created_by,deleted_at)
+      VALUES ($1,$2,'client_document',$3,$4,42,$5)`,
+    [f.org, f.program, sha256Hex(bytes), JSON.stringify({ fileUploadId: 'different-recorded-upload' }), deleted ? new Date() : null]);
+    await expect(sources()).rejects.toMatchObject({ status: 409, code: 'ANA_SOURCE_SCOPE_UNRESOLVED' });
+    await expect(uploads()).rejects.toMatchObject({ status: 409, code: 'ANA_SOURCE_SCOPE_UNRESOLVED' });
     expect(h.readFile).not.toHaveBeenCalled();
   });
 });

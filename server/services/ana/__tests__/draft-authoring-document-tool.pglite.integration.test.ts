@@ -66,6 +66,7 @@ vi.mock('../../../db.js', () => ({
 
 const T = 240_000;
 let jdb: JourneyDb;
+const requestExecutor = { query: (text: string, values?: unknown[]) => jdb.pglite.query<Record<string, unknown>>(text, values) };
 let handler: (input: Record<string, unknown>, ctx?: Record<string, unknown>) => Promise<string>;
 
 beforeAll(async () => {
@@ -98,6 +99,9 @@ beforeAll(async () => {
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
+  // Withdrawal scenarios act as the programme's actual current lead; a
+  // test context claiming manager does not substitute for live membership.
+  await jdb.pool.query('UPDATE regulatory_programs SET lead_user_id=$1 WHERE organization_id=$2', [Number(AUTHOR.id), ORG]);
   // Current-source admission requires the recorded tenant to agree with the
   // programme; keep the foreign fixture owned by its actual other tenant.
   for (const [id, program, organizationId, hash] of [[SOURCE_ID, PROGRAM, ORG, 'a'],
@@ -138,7 +142,7 @@ const sourcedInput = (reference = sourceRef()) => ({ ...input,
 
 describe('draft_authoring_document — durable project source references', () => {
   it('retains current, project-verified source references in saved provenance and CREATE audit metadata', async () => {
-    const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+    const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
     expect(out.saved).toBe(true);
     const saved = await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
     const savedRow = saved.rows[0] as { provenance: { projectSourceReferences: unknown } };
@@ -167,7 +171,7 @@ describe('draft_authoring_document — durable project source references', () =>
   it('checks each figure of the section against the cited source: found with where, or unverified and said (S5a)', async () => {
     const figuresInput = { ...input, sections: [{ ...M25_SECTIONS[0],
       content: '<p>The endpoint was observed in 30 subjects. The response rate was 55%.</p>', sourceReferences: [sourceRef()] }] };
-    const out = JSON.parse(await handler(figuresInput, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+    const out = JSON.parse(await handler(figuresInput, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
     expect(out.saved, JSON.stringify(out)).toBe(true);
     const figures = out.projectSourceReferences[0].figures;
     expect(figures).toMatchObject({ checked: 2, found: 1, unverified: 1 });
@@ -185,7 +189,7 @@ describe('draft_authoring_document — durable project source references', () =>
     await jdb.pool.query('UPDATE vault.documents SET organization_id=NULL WHERE id=$1', [SOURCE_ID]);
     const before = await authoringCounts();
     try {
-      const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+      const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
       expect(out.error).toMatch(/source references.*could not be verified/i);
       expect(out.saved).toBeUndefined();
       expect(out.authoringDocId).toBeUndefined();
@@ -197,7 +201,7 @@ describe('draft_authoring_document — durable project source references', () =>
 
   it.each([[OTHER_SOURCE_ID, 'b'], [FOREIGN_SOURCE_ID, 'c'], [SOURCE_ID, 'd']])('refuses wrong-project, foreign-tenant or stale-version source %s before creating anything', async (id, hash) => {
     const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
-    const out = JSON.parse(await handler(sourcedInput(sourceRef(id, hash)), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+    const out = JSON.parse(await handler(sourcedInput(sourceRef(id, hash)), { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
     expect(out.error).toMatch(/source references.*could not be verified/i);
     expect(out.saved).toBeUndefined();
     const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
@@ -209,7 +213,7 @@ describe('draft_authoring_document — durable project source references', () =>
     await jdb.pool.query('UPDATE vault.document_catalog SET catalog_status=$1,content_hash=$2 WHERE document_id=$3',
       [kind === 'failed-extraction' ? 'extraction_failed' : 'extracted', (kind === 'stale-extraction' ? 'd' : 'a').repeat(64), SOURCE_ID]);
     try {
-      const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true }));
+      const out = JSON.parse(await handler(sourcedInput(), { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
       expect(out.error).toMatch(/source references.*could not be verified/i);
       const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
       expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
@@ -225,20 +229,20 @@ describe('project catalog — source-version truth', () => {
     const { loadDocumentForOrg, listProjectDocuments, completeCatalog } = await import('../../vault/document-catalog.service');
     await jdb.pool.query("UPDATE vault.document_catalog SET content_hash=$1,catalog_status='cataloged',char_count=4,summary='stale endpoint 9 of 10',key_data='{\"n\":999}' WHERE document_id=$2", ['d'.repeat(64), SOURCE_ID]);
     try {
-      const loaded = await loadDocumentForOrg(SOURCE_ID, ORG);
+      const loaded = await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) });
       expect(loaded?.catalog?.contentHash).toBe('d'.repeat(64)); // Mismatch is NOT disguised as no catalog.
       const { getToolHandler } = await import('../AnaToolExecutor');
-      const read = JSON.parse(await getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM }));
+      const read = JSON.parse(await getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM }));
       expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
       expect(JSON.stringify(read)).not.toContain('9 of 10');
       const receipts = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.document_read_receipts WHERE document_id=$1', [SOURCE_ID]);
       expect((receipts.rows[0] as { n: number }).n).toBe(0);
-      const listing = await listProjectDocuments(ORG, { programId: PROGRAM });
+      const listing = await listProjectDocuments(requestExecutor, ORG, { userId: Number(AUTHOR.id), programId: PROGRAM });
       expect(listing).toMatchObject({ total: 1, notYetStudied: 1 });
       expect(listing.documents[0].catalogStatus).toBe('uncataloged');
-      const completed = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'csr', purpose: 'Review', summary: 'New summary' });
+      const completed = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, executor: requestExecutor, userId: Number(AUTHOR.id), documentKind: 'csr', purpose: 'Review', summary: 'New summary' });
       expect(completed).toMatchObject({ ok: false, refusal: expect.stringContaining('another source version') });
-      const unchanged = await loadDocumentForOrg(SOURCE_ID, ORG);
+      const unchanged = await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) });
       expect(unchanged?.catalog?.contentHash).toBe('d'.repeat(64));
       expect(unchanged?.catalog?.summary).toBe('stale endpoint 9 of 10');
     } finally {
@@ -251,9 +255,9 @@ describe('project catalog — source-version truth', () => {
     await recordReadReceipt({ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 0, end: SOURCE_TEXT.length }, readBy: Number(AUTHOR.id) });
     h.beforeEmbedding = async () => { await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['d'.repeat(64), SOURCE_ID]); };
     try {
-      const outcome = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, documentKind: 'csr', purpose: 'Review', summary: 'Must not report saved' });
+      const outcome = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, executor: requestExecutor, userId: Number(AUTHOR.id), documentKind: 'csr', purpose: 'Review', summary: 'Must not report saved' });
       expect(outcome).toMatchObject({ ok: false, refusal: expect.stringContaining('has a newer version than the one you read') });
-      expect((await loadDocumentForOrg(SOURCE_ID, ORG))?.catalog?.summary).toBeNull();
+      expect((await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) }))?.catalog?.summary).toBeNull();
     } finally {
       h.beforeEmbedding = null;
       await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['a'.repeat(64), SOURCE_ID]);
@@ -271,20 +275,20 @@ describe('draft_authoring_document', () => {
 
   it('refuses verbatim without an open project, and writes nothing', async () => {
     const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
-    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true }));
+    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true }));
     expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
     const after = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM authoring_documents');
     expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
   it('refuses a project another organization owns as "no project" — never a cross-tenant write', async () => {
-    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: OTHER_PROGRAM }));
+    const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectRef: OTHER_PROGRAM }));
     expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
   });
 
   it('with the open program (uuid projectRef): the document, its sections and its provenance exist', async () => {
     const out = JSON.parse(
-      await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM, projectId: null, threadId: 'thread_42' }),
+      await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectRef: PROGRAM, projectId: null, threadId: 'thread_42' }),
     );
     expect(out.error, JSON.stringify(out)).toBeUndefined();
     expect(out).toMatchObject({ status: 'generated', saved: true, documentStatus: 'draft', programId: PROGRAM, title: input.title, sectionCount: 3, documentType: 'clinical_overview' });
@@ -313,7 +317,7 @@ describe('draft_authoring_document', () => {
   });
 
   it('resolves a legacy integer project through its regulatory_program_id anchor', async () => {
-    const out = JSON.parse(await handler({ ...input, title: 'Legacy anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectId: 42 }));
+    const out = JSON.parse(await handler({ ...input, title: 'Legacy anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectId: 42 }));
     expect(out.error, JSON.stringify(out)).toBeUndefined();
     expect(out.programId).toBe(PROGRAM);
   });
@@ -327,7 +331,7 @@ describe('draft_authoring_document', () => {
       [ORG, OTHER_PROGRAM],
     );
     const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
-    const out = JSON.parse(await handler({ ...input, title: 'Foreign anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectId: 44 }));
+    const out = JSON.parse(await handler({ ...input, title: 'Foreign anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectId: 44 }));
     expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
     const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
     expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
@@ -338,7 +342,7 @@ describe('draft_authoring_document', () => {
     // constraints. Break the write by hiding a table it needs, then restore it.
     await jdb.pool.query(`ALTER TABLE authoring_sections RENAME TO authoring_sections_hidden`);
     try {
-      const out = JSON.parse(await handler({ ...input, title: 'Write fails' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM }));
+      const out = JSON.parse(await handler({ ...input, title: 'Write fails' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectRef: PROGRAM }));
       expect(out.error, JSON.stringify(out)).toBe('draft_authoring_document failed: the document could not be written. Nothing was saved.');
     } finally {
       await jdb.pool.query(`ALTER TABLE authoring_sections_hidden RENAME TO authoring_sections`);
@@ -346,7 +350,7 @@ describe('draft_authoring_document', () => {
   });
 
   it('a second document in the same program is created too (many documents per program)', async () => {
-    const out = JSON.parse(await handler({ ...input, title: 'Protocol synopsis draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM }));
+    const out = JSON.parse(await handler({ ...input, title: 'Protocol synopsis draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectRef: PROGRAM }));
     expect(out.error, JSON.stringify(out)).toBeUndefined();
     const inProgram = await jdb.pool.query(
       'SELECT COUNT(*)::int AS n FROM authoring_documents WHERE client_program_id = $1 AND tenant_id = $2',
@@ -356,12 +360,12 @@ describe('draft_authoring_document', () => {
   });
 
   it('refuses malformed input as an error the model can read, not a crash', async () => {
-    const out = JSON.parse(await handler({ title: 'No sections', sections: [] }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectRef: PROGRAM }));
+    const out = JSON.parse(await handler({ title: 'No sections', sections: [] }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectRef: PROGRAM }));
     expect(String(out.error)).toMatch(/sections/);
   });
 });
 
-const withdrawalContext = { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, humanConfirmed: true };
+const withdrawalContext = { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true };
 
 async function seedWithdrawalSource(hashCharacter: string) {
   const documentId = randomUUID();
@@ -414,7 +418,7 @@ async function expectWithdrawalCommitted(documentId: string) {
   const audit = await jdb.pool.query('SELECT id FROM test_disposition_audit WHERE id=$1 AND organization_id=$2', [record.audit_receipt.id, ORG]);
   expect(audit.rows).toHaveLength(1);
   const { loadDocumentForOrg } = await import('../../vault/document-catalog.service');
-  expect(await loadDocumentForOrg(documentId, ORG, { includeText: true })).toBeNull();
+  expect(await loadDocumentForOrg(documentId, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id), includeText: true })).toBeNull();
 }
 
 describe('draft_authoring_document — governed source withdrawal before save', () => {

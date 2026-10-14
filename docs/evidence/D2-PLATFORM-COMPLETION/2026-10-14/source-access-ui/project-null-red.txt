@@ -1,0 +1,10 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null 5301ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:205:18
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 30 skipped (33)
+   Start at  01:06:46
+   Duration  10.38s (transform 2.48s, setup 350ms, import 2.97s, tests 5.59s, environment 1.01s)

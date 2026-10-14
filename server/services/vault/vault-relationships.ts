@@ -23,9 +23,9 @@
 import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { programInOrganization } from '../c2c/program-access';
+import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requireProgramScopeStillCurrent,ProgramReadAccessError } from '../c2c/current-program-access';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { requireGovernedReason } from '../../routes/governed-reason';
-import { vaultWriteRefusal } from './vault-write-authority.js';
 import { readVersionFamily, supersededSql } from './vault-version-family.js';
 import { type Refusal, refuse, inRefusableTransaction } from './vault-refusal.js';
 
@@ -79,17 +79,34 @@ interface Actor {
 interface VersionRow { id: string; title: string | null; version: string | null; program_id: string }
 
 /** A live version in this organisation, locked for the transaction; null when there is none. */
-async function lockVersion(client: PoolClient, documentId: string, organizationId: number, programId?: string): Promise<VersionRow | null> {
-  const { rows } = await client.query(
-    `SELECT d.id::text AS id, d.document_title AS title, d.version, d.program_id::text AS program_id
-       FROM vault.documents d
-      WHERE d.id = $1 AND d.deleted_at IS NULL AND ($3::uuid IS NULL OR d.program_id = $3::uuid)
-        AND EXISTS (SELECT 1 FROM regulatory_programs rp
-                     WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
-      FOR SHARE OF d`,
-    [documentId, organizationId, programId ?? null],
-  );
+async function lockVersion(client: PoolClient, documentId: string, organizationId: number,
+  userId: number | null, programId?: string): Promise<VersionRow | null> {
+  const identity=await client.query(`SELECT d.id::text AS id,d.organization_id,d.program_id::text AS program_id
+    FROM vault.documents d WHERE d.id=$1 AND d.deleted_at IS NULL
+      AND ($3::uuid IS NULL OR d.program_id=$3::uuid)
+      AND EXISTS(SELECT 1 FROM regulatory_programs rp WHERE rp.id=d.program_id AND rp.organization_id=$2 AND rp.deleted_at IS NULL)
+    FOR SHARE OF d`,[documentId,organizationId,programId ?? null]);
+  if (identity.rows.length!==1) return null;
+  const parent=await requireCurrentProgramAccess(client,{organizationId,userId:userId ?? undefined,
+    programId:identity.rows[0].program_id,forShare:true});
+  if (identity.rows[0].organization_id==null) throw new ProgramReadAccessError(409,'VAULT_TENANT_RECONCILIATION_REQUIRED','This Vault record needs a verified organization relationship.');
+  if (Number(identity.rows[0].organization_id)!==organizationId) return null;
+  const {rows}=await client.query(`SELECT d.id::text AS id,d.document_title AS title,d.version,d.program_id::text AS program_id
+    FROM vault.documents d JOIN regulatory_programs rp ON rp.id=d.program_id AND rp.organization_id=$2 AND rp.deleted_at IS NULL
+    WHERE d.id=$1 AND d.program_id=$3 AND d.organization_id=$2 AND d.deleted_at IS NULL FOR SHARE OF d`,[documentId,organizationId,parent.programId]);
   return (rows[0] as VersionRow | undefined) ?? null;
+}
+async function relationshipWriteAccess(client: PoolClient,a: Actor): Promise<Refusal | null> {
+  const parent=await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,
+    programId:a.programId,forShare:true});
+  return GOVERNED_WRITE_ROLES.has(parent.actor.role.toLowerCase()) ? null :
+    refuse(403,'VAULT_WRITE_ROLE_REQUIRED','Your current organization role can read the Vault but cannot change it. Nothing was changed.');
+}
+async function programRefusable<T>(work:()=>Promise<T | Refusal>): Promise<T | Refusal> {
+  try {return await work();} catch(error) {
+    if (error instanceof ProgramReadAccessError) return refuse(error.status,error.code,error.message);
+    throw error;
+  }
 }
 
 const named = (v: VersionRow) => `${v.title ?? 'Untitled'} v${v.version ?? '?'}`;
@@ -150,25 +167,25 @@ function addRefusal(p: { documentId: string; toDocumentId: unknown; type: unknow
 export async function addRelationship(
   a: Actor & { documentId: string; toDocumentId: unknown; type: unknown; note?: unknown },
 ): Promise<{ ok: true; id: string } | Refusal> {
-  const role = vaultWriteRefusal();
-  if (role) return role;
   if (!UUID_RE.test(a.documentId)) return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
   const early = addRefusal({ documentId: a.documentId, toDocumentId: a.toDocumentId, type: a.type, note: a.note });
   if (early) return early;
-  if (!(await programInOrganization(pool, a.programId, a.organizationId))) return refuse(404, 'NOT_FOUND', 'No such project.');
   const type = a.type as RelationshipType;
   const toId = a.toDocumentId as string;
   const note = typeof a.note === 'string' && a.note.trim() ? a.note.trim() : null;
 
-  return inRefusableTransaction(async (client) => {
-    const from = await lockVersion(client, a.documentId, a.organizationId, a.programId);
+  return programRefusable(()=>inRefusableTransaction(async (client) => {
+    const role=await relationshipWriteAccess(client,a); if (role) return role;
+    const from = await lockVersion(client, a.documentId, a.organizationId, a.userId, a.programId);
     if (!from) return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
-    const to = await lockVersion(client, toId, a.organizationId);
+    const to = await lockVersion(client, toId, a.organizationId, a.userId);
     if (!to) return refuse(404, 'TARGET_NOT_FOUND', 'The document to relate it to was not found in this organization.');
     const family = await readVersionFamily(client, { programId: a.programId, organizationId: a.organizationId, documentId: from.id });
     if (family?.some((v) => v.id === to.id)) {
       return refuse(409, 'SAME_DOCUMENT', 'These are versions of one document; their order is already recorded in its version history.');
     }
+    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:from.program_id,forShare:true});
+    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:to.program_id,forShare:true});
     const ins = await client.query(
       `INSERT INTO public.vault_document_relationships
          (organization_id, program_id, from_document_id, to_document_id, relationship_type, note, created_by)
@@ -183,21 +200,19 @@ export async function addRelationship(
     const id = String(ins.rows[0].id);
     await recordBothEnds(client, a, 'vault.document.relate', { id, type, from, to, note });
     return { ok: true as const, id };
-  });
+  }));
 }
 
 /** Remove a relationship, with the person's reason. The row stays, marked removed. */
 export async function removeRelationship(
   a: Actor & { relationshipId: string; reason: unknown },
 ): Promise<{ ok: true } | Refusal> {
-  const role = vaultWriteRefusal();
-  if (role) return role;
   const reason = requireGovernedReason(a.reason);
   if (!reason.ok) return refuse(422, 'REASON_REQUIRED', reason.error);
   if (!UUID_RE.test(a.relationshipId)) return refuse(404, 'RELATIONSHIP_NOT_FOUND', 'No such relationship.');
-  if (!(await programInOrganization(pool, a.programId, a.organizationId))) return refuse(404, 'NOT_FOUND', 'No such project.');
 
-  return inRefusableTransaction(async (client) => {
+  return programRefusable(()=>inRefusableTransaction(async (client) => {
+    const role=await relationshipWriteAccess(client,a); if (role) return role;
     const { rows } = await client.query(
       `SELECT id::text AS id, relationship_type, from_document_id::text AS from_id, to_document_id::text AS to_id,
               removed_at
@@ -209,9 +224,11 @@ export async function removeRelationship(
     const rel = rows[0];
     if (!rel) return refuse(404, 'RELATIONSHIP_NOT_FOUND', 'No such relationship in this project.');
     if (rel.removed_at) return refuse(409, 'ALREADY_REMOVED', 'That relationship was already removed.');
-    const from = await lockVersion(client, rel.from_id, a.organizationId);
-    const to = await lockVersion(client, rel.to_id, a.organizationId);
+    const from = await lockVersion(client, rel.from_id, a.organizationId, a.userId);
+    const to = await lockVersion(client, rel.to_id, a.organizationId, a.userId);
     if (!from || !to) return refuse(409, 'DOCUMENT_GONE', 'One of its documents is no longer in the Vault, so nothing was changed.');
+    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:from.program_id,forShare:true});
+    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:to.program_id,forShare:true});
     await client.query(
       `UPDATE public.vault_document_relationships
           SET removed_at = now(), removed_by = $2, removal_reason = $3
@@ -220,23 +237,28 @@ export async function removeRelationship(
     );
     await recordBothEnds(client, a, 'vault.document.unrelate', { id: rel.id, type: rel.relationship_type, from, to, reason: reason.reason });
     return { ok: true as const };
-  });
+  }));
 }
 
 /** Every live relationship of a version, both directions, oldest first. */
 export async function listRelationships(
   q: { query: PoolClient['query'] } | typeof pool,
-  p: { programId: string; organizationId: number; documentId: string },
-): Promise<{ ok: true; relationships: Relationship[] } | Refusal> {
+  p: { programId: string; organizationId: number; documentId: string; userId:number | undefined },
+): Promise<{ ok: true; relationships: Relationship[]; scope:'verified-accessible-related-programs' } | Refusal> {
   if (!UUID_RE.test(p.documentId)) return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
+  await requireCurrentProgramAccess(q,{organizationId:p.organizationId,userId:p.userId,programId:p.programId});
+  const identity={organizationId:p.organizationId,userId:p.userId};
+  const scope=await getCurrentAccessibleProgramScope(q,identity);
   const owned = await q.query(
-    `SELECT 1 FROM vault.documents d
-      WHERE d.id = $1 AND d.program_id = $2
+    `SELECT d.organization_id FROM vault.documents d
+      WHERE d.id = $1 AND d.program_id = $2 AND d.deleted_at IS NULL
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
                      WHERE rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL)`,
     [p.documentId, p.programId, p.organizationId],
   );
   if (owned.rows.length === 0) return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
+  if (owned.rows[0].organization_id==null) return refuse(409,'VAULT_TENANT_RECONCILIATION_REQUIRED','This Vault record needs a verified organization relationship.');
+  if (Number(owned.rows[0].organization_id)!==p.organizationId) return refuse(404,'DOCUMENT_NOT_FOUND','Document not found.');
   const { rows } = await q.query(
     `SELECT r.id::text AS id, r.relationship_type AS type, r.note, r.created_at,
             CASE WHEN r.from_document_id = $1 THEN 'outgoing' ELSE 'incoming' END AS direction,
@@ -247,16 +269,18 @@ export async function listRelationships(
        FROM public.vault_document_relationships r
        JOIN vault.documents o
          ON o.id = CASE WHEN r.from_document_id = $1 THEN r.to_document_id ELSE r.from_document_id END
-       JOIN regulatory_programs rp ON rp.id = o.program_id AND rp.organization_id = $2
+       JOIN regulatory_programs rp ON rp.id = o.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL
        LEFT JOIN LATERAL public.actor_name(r.created_by) u ON TRUE
       WHERE r.organization_id = $2 AND r.removed_at IS NULL
         AND (r.from_document_id = $1 OR r.to_document_id = $1)
-        AND o.deleted_at IS NULL
+        AND o.deleted_at IS NULL AND o.organization_id=$2 AND o.program_id=ANY($3::uuid[])
       ORDER BY r.created_at, r.id`,
-    [p.documentId, p.organizationId],
+    [p.documentId, p.organizationId, scope.programIds],
   );
+  await requireProgramScopeStillCurrent(q,identity,scope);
   return {
     ok: true,
+    scope:'verified-accessible-related-programs',
     relationships: rows.map((r) => {
       const type = r.type as RelationshipType;
       const direction = r.direction as Relationship['direction'];

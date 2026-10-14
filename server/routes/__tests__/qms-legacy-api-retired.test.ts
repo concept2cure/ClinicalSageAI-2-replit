@@ -24,7 +24,9 @@
  * the test asks the mount table. The pool fake is SQL-aware over one row per
  * table, so a route that writes really does change the row.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { computeQmsDocumentContentDigest, type QmsDocumentRow } from '../../services/qms/document-approval-signature';
+import { qmsApprovalFixture } from '../../services/qms/__tests__/_release-approval-fixture';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
@@ -32,6 +34,7 @@ type Row = Record<string, unknown>;
 
 const H = vi.hoisted(() => ({
   doc: null as Record<string, unknown> | null,
+  signature: null as Record<string, unknown> | null,
   supplier: null as Record<string, unknown> | null,
   nc: null as Record<string, unknown> | null,
   audit_: null as Record<string, unknown> | null,
@@ -40,16 +43,24 @@ const H = vi.hoisted(() => ({
   session: { id: 7, organizationId: 9, role: 'viewer' } as { id: number; organizationId: number; role: string },
 }));
 
-const TABLES: Array<[RegExp, 'doc' | 'supplier' | 'nc' | 'audit']> = [
+const TABLES: Array<[RegExp, 'doc' | 'supplier' | 'nc' | 'audit' | 'signature']> = [
   [/qms_documents/i, 'doc'],
   [/qms_suppliers/i, 'supplier'],
   [/qms_nonconforming_products/i, 'nc'],
   [/qms_internal_audits/i, 'audit'],
+  [/electronic_signatures/i, 'signature'],
 ];
 
 /** One row per QMS table, read and written the way Postgres would. */
 async function fakeQuery(sql: string, params: unknown[] = []) {
   const s = String(sql);
+  if (/FROM organization_users/i.test(s)) return { rows: [{ account_status: 'active', organization_status: 'active', payment_status: 'active', membership_role: H.session.role }], rowCount: 1 };
+  if (/SELECT.*FROM qms_training_records/is.test(s)) return { rows: [], rowCount: 0 };
+  if (/INSERT INTO qms_training_records/i.test(s)) {
+    H.writes.push(s);
+    return { rows: [{ id: 99, organization_id: params[0], user_id: params[1], document_id: params[2], document_version: params[3],
+      acknowledgment_method: 'attestation', acknowledged_at: params[4], expires_at: params[5], metadata: JSON.parse(String(params[6])) }], rowCount: 1 };
+  }
   if (/^\s*INSERT/i.test(s)) {
     H.writes.push(s);
     return { rows: [{ id: 99 }], rowCount: 1 };
@@ -89,6 +100,7 @@ vi.mock('../../middleware/auth', async (importOriginal) => ({
 }));
 vi.mock('../../services/auditService', () => ({
   default: { logAction: async (e: Record<string, unknown>) => { H.audit.push(e); return { persisted: true, chained: true }; } },
+  writeChainedAuditRow: async (_client: unknown, e: Record<string, unknown>) => { H.audit.push(e); },
 }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: async (e: Record<string, unknown>) => { H.audit.push(e); return { persisted: true, chained: true }; },
@@ -108,6 +120,7 @@ async function productionApp(): Promise<express.Express> {
     (req as unknown as { user: unknown }).user = { ...H.session };
     (req as unknown as { userRole: string }).userRole = H.session.role;
     (req as unknown as { tenantContext: unknown }).tenantContext = { organizationId: H.session.organizationId };
+    Object.assign(req, { dbClient: { query: fakeQuery } });
     next();
   });
   await registerDocumentRoutes({
@@ -125,9 +138,16 @@ async function productionApp(): Promise<express.Express> {
 }
 
 const as = (role: string) => { H.session = { id: 7, organizationId: 9, role }; };
+beforeAll(async () => { await productionApp(); }, 60_000);
 
 beforeEach(() => {
-  H.doc = { id: 11, organization_id: 9, doc_number: 'SOP-001', title: 'Design control', version: '1.0', status: 'effective', author_id: 3 };
+  H.doc = { id: 11, organization_id: 9, doc_number: 'SOP-001', title: 'Design control', doc_type: 'sop', category: null,
+    version: '1.0', status: 'effective', author_id: 3, approver_id: 5, approved_at: '2020-01-01T00:00:00.000Z',
+    effective_date: '2020-01-01', next_review_date: null, superseded_by_id: null, artifact_id: null,
+    metadata: { sections: [{ key: 'purpose', body: 'Controls design inputs.' }] } };
+  H.doc.metadata = { ...(H.doc.metadata as Row), approval: { contentDigest: computeQmsDocumentContentDigest(H.doc as QmsDocumentRow),
+    meaning: 'APPROVED', bindingBasis: 'qms-document-version-content-sha256', by: 5, at: H.doc.approved_at } };
+  H.signature = { id: 501, ...qmsApprovalFixture(H.doc as QmsDocumentRow) };
   H.supplier = { id: 12, organization_id: 9, supplier_name: 'Acme Resins', criticality: 'critical', approval_status: 'approved' };
   H.nc = { id: 13, organization_id: 9, nc_number: 'NC-001', description: 'Out of spec', disposition: 'pending' };
   H.audit_ = { id: 14, organization_id: 9, audit_number: 'IA-0', status: 'in_progress' };
@@ -234,7 +254,10 @@ describe('the canonical twins on /api/mdx/qms refuse a viewer and still serve an
   });
 
   it('a viewer still acknowledges training on a procedure: that is their own record, not a governed change', async () => {
-    const res = await request(await productionApp()).post('/api/mdx/qms/documents/11/training-ack').send({ method: 'attestation' });
+    const res = await request(await productionApp()).post('/api/mdx/qms/documents/11/training-ack').send({
+      documentVersion: H.doc!.version, contentDigest: computeQmsDocumentContentDigest(H.doc as QmsDocumentRow),
+      understood: true, method: 'attestation',
+    });
     expect(res.status).toBe(201);
     expect(H.audit).toEqual([expect.objectContaining({ action: 'mdx.qms.training.acknowledge', userId: 7 })]);
   });

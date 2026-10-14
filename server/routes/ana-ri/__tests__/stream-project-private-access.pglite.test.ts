@@ -51,7 +51,14 @@ vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule
 import { mountStreamRoute } from '../stream.js';
 import { harness as h, resetHarness, streamApp } from './support/stream-route-harness.js';
 
-const app = streamApp(mountStreamRoute);
+const app = streamApp(router => {
+  // Source admission must use this suite's actual SQL, as project admission does.
+  router.use((req, _res, next) => {
+    (req as typeof req & { dbClient: { query: typeof io.query } }).dbClient = { query: io.query };
+    next();
+  });
+  mountStreamRoute(router);
+});
 const PROGRAM = '11111111-2222-4333-8444-555555555555';
 const PUBLIC_PROGRAM = '22222222-2222-4333-8444-555555555555';
 let database: PGlite;
@@ -62,7 +69,7 @@ beforeAll(async () => {
   await database.exec(`
     CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer, deleted_at timestamp);
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, regulatory_program_id uuid,
-      client_workspace_id integer, owner_id integer, created_by_id integer, settings jsonb);
+      client_workspace_id integer, owner_id integer, created_by_id integer, settings jsonb, status text DEFAULT 'active');
     CREATE TABLE organization_users (user_id integer, organization_id integer, role text);
     CREATE TABLE users (id integer PRIMARY KEY, status text);
     CREATE TABLE organizations (id integer PRIMARY KEY, status text);
@@ -71,21 +78,25 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_review_assignments (reviewer_id integer, organization_id integer, artifact_id uuid, status text);
     CREATE TABLE concept2cure_artifacts (id uuid PRIMARY KEY, project_id integer, organization_id integer, metadata jsonb);
     CREATE TABLE cre_evidence_sources (id integer PRIMARY KEY, organization_id integer, visibility_class text,
-      client_program_id uuid, client_workspace_id integer, deleted_at timestamp, provenance jsonb);
+      client_program_id uuid, client_workspace_id integer, deleted_at timestamp, provenance jsonb,
+      source_type text, created_by integer, metadata jsonb NOT NULL DEFAULT '{}');
     CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer, user_id integer);
-    ALTER TABLE cre_evidence_sources ADD COLUMN source_type text, ADD COLUMN created_by int;
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}',7,NULL);
-    INSERT INTO projects VALUES (42,7,'${PROGRAM}',NULL,5,5,'{}');
+    INSERT INTO projects (id,organization_id,regulatory_program_id,client_workspace_id,owner_id,created_by_id,settings)
+      VALUES (42,7,'${PROGRAM}',NULL,5,5,'{}');
     INSERT INTO users VALUES (3,'active'),(5,'active');
     INSERT INTO organizations VALUES (7,'active');
     INSERT INTO organization_users VALUES (3,7,'member'),(5,7,'member');
     INSERT INTO project_visibility_settings VALUES (42,7,'private');
     INSERT INTO regulatory_programs VALUES ('${PUBLIC_PROGRAM}',7,NULL);
-    INSERT INTO projects VALUES (84,7,'${PUBLIC_PROGRAM}',NULL,5,5,'{}');
+    INSERT INTO projects (id,organization_id,regulatory_program_id,client_workspace_id,owner_id,created_by_id,settings)
+      VALUES (84,7,'${PUBLIC_PROGRAM}',NULL,5,5,'{}');
     INSERT INTO project_visibility_settings VALUES (84,7,'org_public');
     INSERT INTO file_uploads VALUES ('private-source-upload',7,3);
-    INSERT INTO cre_evidence_sources (id,organization_id,visibility_class,client_program_id,client_workspace_id,deleted_at,provenance) VALUES (321,7,'project_private','${PROGRAM}',42,NULL,
-      '{"fileUploadId":"private-source-upload"}');
+    INSERT INTO cre_evidence_sources
+      (id,organization_id,visibility_class,client_program_id,client_workspace_id,deleted_at,provenance,source_type)
+      VALUES (321,7,'project_private','${PROGRAM}',NULL,NULL,
+        '{"origin":"chat_upload","fileUploadId":"private-source-upload"}','client_document');
   `);
   uploadReaders = await import('../../../services/ana/uploaded-file-access');
   vi.spyOn(uploadReaders, 'loadUploadedFileMetadata');
@@ -163,7 +174,7 @@ describe('AnA admits a private project before its context, run or tools', () => 
       message: 'Read the selected source', project_id: PUBLIC_PROGRAM, source_ids: [321], user_role: 'admin',
     });
     expect(response.status).toBe(403);
-    expect(response.body.error.code).toBe('ANA_PROJECT_ACCESS_DENIED');
+    expect(response.body.error.code).toBe('ANA_SOURCE_ACCESS_DENIED');
     noPrivateWork();
     expect(uploadReaders.loadUploadedFileMetadata).not.toHaveBeenCalled();
     expect(uploadReaders.loadUploadedFile).not.toHaveBeenCalled();
@@ -175,9 +186,35 @@ describe('AnA admits a private project before its context, run or tools', () => 
       message: 'Read this attachment', project_id: PUBLIC_PROGRAM, file_ids: ['private-source-upload'],
     });
     expect(response.status).toBe(403);
-    expect(response.body.error.code).toBe('ANA_PROJECT_ACCESS_DENIED');
+    expect(response.body.error.code).toBe('ANA_SOURCE_ACCESS_DENIED');
     noPrivateWork();
     expect(uploadReaders.loadUploadedFileMetadata).not.toHaveBeenCalled();
     expect(uploadReaders.loadUploadedFile).not.toHaveBeenCalled();
+  });
+  it('admits a direct handler with current private source membership, then refuses it after revocation', async () => {
+    await database.exec("INSERT INTO project_members VALUES (42,7,3,'use','active')");
+    // This positive control isolates source admission before a direct handler;
+    // it does not qualify subsequent byte delivery or model grounding.
+    const handler = vi.fn().mockResolvedValue(JSON.stringify({ status: 'intelligence_flow_complete',
+      session_id: 'source-admission', completion: { summary: 'Recorded answer.' } }));
+    h.handlers.answer_intelligence_question = handler;
+    const body = { message: '[INTELLIGENCE_ANSWER]{"answer":"yes"}', project_id: PUBLIC_PROGRAM, source_ids: [321] };
+    try {
+      expect((await httpRequest(app).post('/api/ana-ri/stream').send(body)).status).toBe(200);
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(h.state.beginRunInputs).toHaveLength(1);
+      await database.exec("UPDATE project_members SET status='revoked'");
+      resetHarness();
+      for (const reader of [io.memory, io.enrich, io.prefetch, io.bootstrap, io.lumen]) reader.mockClear();
+      const refused = await httpRequest(app).post('/api/ana-ri/stream').send(body);
+      expect(refused.status).toBe(403);
+      expect(refused.body.error.code).toBe('ANA_SOURCE_ACCESS_DENIED');
+      expect(handler).toHaveBeenCalledTimes(1);
+      noPrivateWork();
+      expect(uploadReaders.loadUploadedFileMetadata).not.toHaveBeenCalled();
+      expect(uploadReaders.loadUploadedFile).not.toHaveBeenCalled();
+    } finally {
+      delete h.handlers.answer_intelligence_question;
+    }
   });
 });

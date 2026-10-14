@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 const h = vi.hoisted(() => ({ text: 'Source measured 99.2%.', history: false, legacy: false, denied: false, onCoverage: null as (() => void) | null, repair: vi.fn() }));
 vi.mock('../../../db.js', () => ({ pool: {}, getPool: () => ({}), db: {} }));
+vi.mock('../../c2c/current-program-access.js', async original => (
+  (await import('./support/source-read-tool-fixture.js')).syntheticProgramAccessMock(await original<Record<string, unknown>>(), () => 'viewer')
+));
 vi.mock('../../vault/document-catalog-actor-access.js', async () => {
   const { AnaProjectScopeError } = await import('../project-scope-admission.js');
   return { withAnaSourceReadScope: async (input: any, run: any) => {
@@ -16,6 +19,7 @@ vi.mock('../../vault/document-catalog.service.js', async () => {
   const { runLoadDocumentForActor } = await import('../../vault/document-catalog-actor-reads.js');
   const { buildExtractionOutcome, computeCoverage } = await import('../../vault/document-catalog-core.js');
   return {
+    withAnaSourceReadScope: (await import('../../vault/document-catalog-actor-access.js')).withAnaSourceReadScope,
     loadDocumentForActor: (input: any, opts = {}) => runLoadDocumentForActor(input, opts, { load: async () => ({
       id: '20000000-0000-4000-8000-000000000001', organizationId: 42, programId: '10000000-0000-4000-8000-000000000001',
       contentHash: 'a'.repeat(64), extractedText: h.text, isCurrent: !h.history, disposition: null, originalFileAvailable: true,
@@ -27,7 +31,8 @@ vi.mock('../../vault/document-catalog.service.js', async () => {
 });
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 const id = '20000000-0000-4000-8000-000000000001';
-const ctx = { organizationId: 42, userId: 7, projectRef: '10000000-0000-4000-8000-000000000001', threadId: 'server-thread' };
+const ctx = { organizationId: 42, userId: 7, sqlClient: { query: async () => ({ rows: [] }) },
+  projectRef: '10000000-0000-4000-8000-000000000001', threadId: 'server-thread' };
 const handlers = new Map<string, (input: Record<string, unknown>, ctx?: any) => Promise<string>>();
 registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
 const read = async (context = ctx as any) => JSON.parse(await handlers.get('read_project_document')!({ document_id: id }, context));

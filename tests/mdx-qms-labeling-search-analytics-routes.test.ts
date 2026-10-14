@@ -68,12 +68,13 @@ import labelingRouter from '../server/routes/mdx-labeling';
 import searchRouter from '../server/routes/mdx-search';
 import analyticsRouter from '../server/routes/mdx-analytics';
 
-function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
+function makeApp(opts: { withAuth?: boolean; requestDb?: boolean } = { withAuth: true }) {
   const app = express();
   app.use(express.json());
   if (opts.withAuth) {
     app.use((req, _res, next) => {
       (req as any).user = { id: 777, organizationId: 99 };
+      if (opts.requestDb) (req as any).dbClient = { query: (...args: unknown[]) => queryFn(...args) };
       next();
     });
   }
@@ -200,11 +201,20 @@ describe('QMS routes', () => {
   });
 
   it('training-ack requires document in tenant', async () => {
-    queryFn.mockResolvedValueOnce({ rows: [] }); // tenant gate empty
-    const res = await request(makeApp())
+    queryFn.mockImplementation(async (sql: string) => {
+      if (/^(BEGIN|ROLLBACK)/.test(sql)) return { rows: [], rowCount: 0 };
+      if (sql.includes('FROM organization_users ou')) return { rows: [{
+        account_status: 'active', organization_status: 'active', payment_status: 'paid', membership_role: 'member',
+      }], rowCount: 1 };
+      if (sql.includes('FROM qms_documents')) return { rows: [], rowCount: 0 };
+      throw new Error('Unexpected query in foreign-document acknowledgement test');
+    });
+    const res = await request(makeApp({ withAuth: true, requestDb: true }))
       .post('/api/mdx/qms/documents/999/training-ack')
-      .send({});
+      .send({ documentVersion: '1.0', contentDigest: 'a'.repeat(64), understood: true, method: 'attestation' });
     expect(res.status).toBe(404);
+    expect(queryFn.mock.calls.find(([sql]) => String(sql).includes('FROM qms_documents'))?.[1]).toEqual([999, 99]);
+    expect(queryFn.mock.calls.some(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/.test(String(sql)))).toBe(false);
   });
 
   it('supplier criticality required', async () => {

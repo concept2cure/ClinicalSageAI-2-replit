@@ -59,8 +59,10 @@ import {
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
 import { RetentionPeriodCard } from './RetentionPeriodCard';
+import { LegalHoldsCard } from './LegalHoldsCard';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
 import { PdfARequirementSetting } from './PdfARequirementSetting';
+import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
@@ -744,6 +746,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         {/* -- Agency gateway accounts: platform or the organisation's own, per
             gateway and environment (D7, founder decision 2026-10-01). -- */}
         <GatewayAccountsSetting />
+        <SessionPolicySetting />
         {/* PDF/A only where this organisation's procedures require it (D7, decided 2026-10-01). */}
         <PdfARequirementSetting />
 
@@ -923,6 +926,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             own governed save, because the period has its own route and its own
             chained audit row; see RetentionPeriodCard.tsx. */}
         <RetentionPeriodCard describeFailure={saveFailure} />
+        <LegalHoldsCard describeFailure={saveFailure} />
       </div>
     </div>
   );
@@ -3560,6 +3564,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
 
             {sec === 'security' && (
               <>
+                <SessionPolicySetting />
                 {/* ── These describe controls; they never read this org's config ──
                     Two of the tags used to assert a posture: "IP allowlist —
                     Off" and "Session policy — 7-day refresh". Both were string

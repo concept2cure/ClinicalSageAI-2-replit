@@ -475,7 +475,7 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
 
     const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
     await vi.waitFor(() =>
-      expect(box.value).toMatch(/^Draft the text for section 2\.5\.2 Overview of Biopharmaceutics of “Module 2\.5 Clinical Overview — C2C-101”/),
+      expect(box.value).toBe('Draft the text for the saved section attached to this question here in the conversation, so I can insert it into the existing document.'),
     );
     await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
     await screen.findByRole('button', { name: 'Insert into 2.5.2 as tracked suggestion' }, { timeout: 4000 });
@@ -484,6 +484,7 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
     expect(chatSend).not.toHaveBeenCalled();
     fireEvent.keyDown(box, { key: 'Enter' });
     expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ projectId: PID, artifactId: DOC, sectionId: requestedSection, sectionCode: '2.5.2' });
+    expect(chatSend.mock.calls[0]?.[2]?.moduleContext).toMatchObject({ documentTitle: 'Module 2.5 Clinical Overview — C2C-101', sectionTitle: 'Overview of Biopharmaceutics' });
   });
 });
 

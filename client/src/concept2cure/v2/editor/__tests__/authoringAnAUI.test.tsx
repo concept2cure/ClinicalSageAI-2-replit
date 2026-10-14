@@ -94,7 +94,7 @@ describe('AnA remedy reading and action disclosure', () => {
     await userEvent.click(apply);
     expect(propose).toHaveBeenCalledWith(remedy, { id: 'ana', name: 'AnA (proposed fix)', sourceRecord: TURN }, record, false);
     expect(await screen.findByRole('button', { name: 'Added as tracked suggestion' })).toBeDisabled();
-    expect(screen.getByText(/This fix has not been saved or approved/)).toBeVisible();
+    expect(screen.getByText(/Adding the suggestion did not save or approve the document/)).toBeVisible();
   });
 
   it('does not hide a frozen-document refusal inside the passage disclosure', async () => {

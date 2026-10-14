@@ -12,6 +12,7 @@
  */
 
 import { AnaProjectScopeError } from './project-scope-admission.js';
+import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { CommandContext } from '../ana-ri/command-executor.js';
 import { agentAuditDetails, type PolicyCheck } from '../ana-ri/mdx-tool-policy.js';
@@ -140,6 +141,9 @@ export function withCaughtErrors(
     try {
       return await handler(input, ctx);
     } catch (err) {
+      if (err instanceof ProgramReadAccessError) {
+        return JSON.stringify({ ok: false, status: err.status, code: err.code, error: err.message });
+      }
       if (opts.safeOutcome && err instanceof AnaProjectScopeError) {
         return JSON.stringify({ ok: false, code: err.code, unavailable: err.status === 503, error: err.message });
       }

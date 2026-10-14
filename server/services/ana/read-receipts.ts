@@ -3,9 +3,9 @@
  * docs/design/ANA_AGENT_WORK_VIEW_2026-10-08.md §5; P-24 in
  * docs/LAUNCH_DEFINITION_OF_DONE.md).
  *
- * A persisted receipt records an original-byte-bound span admitted unchanged
- * by the host budget. It does not persist extraction/actor/turn coverage or
- * prove that a provider served the next request.
+ * Default legacy history records an original-byte-bound span admitted unchanged
+ * by the host budget. The opt-in V2 ledger also pins extraction, actor and
+ * exact payload identity. Neither history proves provider delivery.
  * read_project_document wrote its receipt as it returned — before the loop
  * host budgeted the round, and the budget cut a result (head and tail kept,
  * middle gone) whenever it ran over 8,000 characters, or the round over
@@ -26,6 +26,7 @@
  * @module server/services/ana/read-receipts
  */
 
+import type { RequestSqlClient } from '../../db/requestDb.js';
 import { RESULT_BUDGET, CANCELLED_TOOL_RESULT, notDeliveredResult, type ToolResultEntry } from './agentic-loop.js';
 import { computeCoverage, type Span, type SpanCoverageReport } from '../vault/document-catalog-core.js';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -37,6 +38,8 @@ export type { AnaSourceReadSnapshot } from './source-read-receipt.js';
 const logger = createScopedLogger('read-receipts');
 
 export interface DeferredReadReceipt {
+  /** Request read context only; guarded settlement owns its short transaction. */
+  executor?: RequestSqlClient;
   documentId: string;
   contentHash: string;
   span: Span;

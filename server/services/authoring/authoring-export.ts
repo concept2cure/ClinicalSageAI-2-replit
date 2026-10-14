@@ -19,14 +19,10 @@ import { describeSignatureMethod } from '../../../shared/part11/signature-method
 import { verifySavedDraftSourceReferences } from './draft-source-references';
 import type { AuthoringActor } from './authoring-documents';
 import { assertWorkflowImportRelease, verifyWorkflowImportWorkingCopy } from './workflow-import-governance';
-
-/** §11.70: one recomputable digest for both signature writes and release reads. */
-export function computeAuthoringSignatureDigest(input: {
-  signerEmail: string; meaning: string; contentHash: string; coveredContentHash: string | null;
-}): string {
-  return crypto.createHash('sha256').update(['authoring-sig-v1', input.signerEmail, input.meaning,
-    input.contentHash, input.coveredContentHash ?? ''].join('|')).digest('hex');
-}
+import { sectionsDigest } from './authoring-content-digests';
+// Preserve this service's public API while keeping workflow release checks
+// independent of the renderer's async initialization (production boot).
+export { computeAuthoringSignatureDigest, sectionsDigest } from './authoring-content-digests';
 
 export type ExportFormat = 'docx' | 'pdf' | 'xml';
 export const EXPORT_FORMATS: readonly ExportFormat[] = ['docx', 'pdf', 'xml'];
@@ -274,7 +270,7 @@ async function prepareShared(args: RenderExportArgs) {
   const citationSourcesBySection = new Map<string, Awaited<ReturnType<typeof listCitationSources>>>();
   for (const { section, blocks } of parsedSections) {
     citationSourcesBySection.set(String(section.id), await listCitationSources(tenantId, collectCitedSourceIds(blocks),
-      { documentId: String(doc.id), sectionId: String(section.id) }, executor));
+      { documentId: String(doc.id), sectionId: String(section.id), userId: args.actor ? Number(args.actor.id) : undefined }, executor));
   }
   const citationSources = [...citationSourcesBySection.values()].flat();
   const citations = makeCitationRegistry(citationLookupFor(citationSources));
@@ -628,18 +624,6 @@ export async function computeDocHash(
     [docId, tenantId],
   );
   return sectionsDigest(sections.rows);
-}
-
-/**
- * The digest itself, over rows already in hand and already in `order_index`
- * order. computeDocHash is this plus a read; the export manifest calls it on
- * the rows it is rendering so its verdict describes those exact bytes. ONE
- * implementation — the signing routes store its output as `content_hash`, so a
- * second copy that drifted would turn every verdict into a false mismatch.
- */
-export function sectionsDigest(rows: ReadonlyArray<{ code: string; content: string | null }>): string {
-  const content = rows.map((s) => `${s.code}:${s.content}`).join('|||');
-  return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

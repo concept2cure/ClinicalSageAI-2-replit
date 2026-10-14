@@ -63,6 +63,8 @@
 --
 -- Rollback: DROP TABLE IF EXISTS authoring_reviews;
 
+-- AMENDED 2026-10-14: full saved-content peer-review bindings. Nullable for
+-- retained legacy verdicts; never infer an old review from today's content.
 DO $$
 BEGIN
   IF to_regclass('public.authoring_documents') IS NULL THEN
@@ -84,6 +86,9 @@ BEGIN
                       CHECK (review_status IN
                              ('pending', 'approved', 'rejected', 'changes_requested')),
     review_comments text,
+    reviewed_snapshot jsonb,
+    reviewed_snapshot_hash text,
+    review_binding_basis text,
     reviewed_at     timestamptz,
     requested_at    timestamptz NOT NULL DEFAULT now(),
     requested_by    text,
@@ -91,6 +96,10 @@ BEGIN
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now()
   );
+
+  ALTER TABLE public.authoring_reviews ADD COLUMN IF NOT EXISTS reviewed_snapshot jsonb;
+  ALTER TABLE public.authoring_reviews ADD COLUMN IF NOT EXISTS reviewed_snapshot_hash text;
+  ALTER TABLE public.authoring_reviews ADD COLUMN IF NOT EXISTS review_binding_basis text;
 
   -- Tenant-scoped, for the reason set out above.
   CREATE UNIQUE INDEX IF NOT EXISTS authoring_reviews_doc_reviewer_tenant_key

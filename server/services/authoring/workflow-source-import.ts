@@ -13,6 +13,7 @@ import { protocolAuthoringSections } from '../protocol-export/protocol-export-lo
 import { validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { listLiveMachineSpans, hashSpanText } from '../clinical-regulatory-evidence/span-lineage.service';
 import { WORKFLOW_IMPORT_AUTHOR_ID } from './revision-ledger';
+import { verifyRetainedProtocolMatrixEndpoints } from './protocol-import-matrix';
 
 export class WorkflowSourceImportError extends Error {
   constructor(readonly status: 400 | 403 | 404 | 409 | 503, readonly code: string, message: string) {
@@ -87,9 +88,7 @@ function validateProtocolStructure(snapshot: ProtocolCompositionSnapshot): void 
   for (const rows of [sourceRows.sections, sourceRows.objectives, sourceRows.eligibility, sourceRows.visits, sourceRows.assessments, sourceRows.cells]) {
     if (!rows.every(row => positive(row.id))) fail(409, 'WORKFLOW_SOURCE_INVALID', 'The saved protocol contains an invalid structured row identity.');
   }
-  const assessmentIds = new Set(sourceRows.assessments.map(row => row.id));
-  const visitIds = new Set(sourceRows.visits.map(row => row.id));
-  if (!sourceRows.cells.every(row => assessmentIds.has(row.assessment_id) && visitIds.has(row.visit_id) && typeof row.required === 'boolean')) fail(409, 'WORKFLOW_SOURCE_INVALID', 'The saved assessment matrix contains a cell outside this protocol.');
+  if (!sourceRows.cells.every(row => positive(row.assessment_id) && positive(row.visit_id) && typeof row.required === 'boolean')) fail(409, 'WORKFLOW_SOURCE_INVALID', 'The saved assessment matrix contains an invalid endpoint identity.');
 }
 
 async function composeProtocol(input: WorkflowMaterializationInput, q: Queryable): Promise<Composition> {
@@ -97,6 +96,8 @@ async function composeProtocol(input: WorkflowMaterializationInput, q: Queryable
   const id = input.source.kind === 'protocol' ? input.source.documentId : 0;
   const snapshot = await loadProtocolExportSnapshot(input.organizationId, id, q, {contentOnly:true});
   validateProtocolStructure(snapshot);
+  const retired = await verifyRetainedProtocolMatrixEndpoints(q, input.organizationId, id, snapshot.sourceRows);
+  if (!retired) return fail(409, 'WORKFLOW_SOURCE_INVALID', 'The saved assessment matrix contains a cell outside this protocol.');
   const sections = protocolAuthoringSections(snapshot.document);
   const structuredRows: Record<string, string> = {
     'protocol.header':`protocol_documents:${id}`, 'protocol.synopsis':`protocol_documents:${id}`,
@@ -121,7 +122,8 @@ async function composeProtocol(input: WorkflowMaterializationInput, q: Queryable
     // machine authorship; actual machine span proof remains unqualified here.
     return sourceOrigin(section.code, sourceRowId, section.content,spans.some(span=>span.machineAuthorId !== WORKFLOW_IMPORT_AUTHOR_ID) ? 'machine' : 'unknown');
   }));
-  return {title:snapshot.document.title,version:snapshot.document.header.version,scope,sections,sectionOrigins,gaps:protocolGaps(snapshot),facts:{...snapshot.sourceRows,machineLineage}};
+  const retiredFacts = retired.visits.length || retired.assessments.length ? { retiredMatrixEndpoints: retired } : {};
+  return {title:snapshot.document.title,version:snapshot.document.header.version,scope,sections,sectionOrigins,gaps:protocolGaps(snapshot),facts:{...snapshot.sourceRows,machineLineage,...retiredFacts}};
 }
 
 const CSR_CATALOG = flattenICHE3Sections(ICH_E3_STRUCTURE);

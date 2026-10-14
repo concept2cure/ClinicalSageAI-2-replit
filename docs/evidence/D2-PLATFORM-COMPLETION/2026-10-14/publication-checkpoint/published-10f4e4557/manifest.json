@@ -1,0 +1,30 @@
+{
+  "publishedCommit": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "verifiedRemoteHeadAt": "2026-10-14T06:28:31Z",
+  "branch": "concept2cure-v2",
+  "normalHooks": true,
+  "historyScan": {
+    "command": "gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts='--full-history --diff-filter=tuxdb HEAD' --report-path PRIVATE.json .",
+    "commits": 10221,
+    "bytesScannedApprox": 630955841,
+    "leaks": 0
+  },
+  "artifacts": [
+    {
+      "rawPath": "/tmp/project-vault-publication-final-history-gitleaks.txt",
+      "rawSha256": "07da54b26ed1c9d2b70fcfee82fa441c116a6aadb27192d56a039bbfc488636f",
+      "rawBytes": 117,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-10f4e4557/project-vault-publication-final-history-gitleaks.txt",
+      "filedSha256": "07da54b26ed1c9d2b70fcfee82fa441c116a6aadb27192d56a039bbfc488636f",
+      "filedBytes": 117
+    },
+    {
+      "rawPath": "/tmp/project-vault-publication-final-push.txt",
+      "rawSha256": "46fd46a196d0ea38fd156fbcf2950b98bb7cf465ad0cf3955fcdb33d928a39d0",
+      "rawBytes": 9263,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/published-10f4e4557/project-vault-publication-final-push.txt",
+      "filedSha256": "46fd46a196d0ea38fd156fbcf2950b98bb7cf465ad0cf3955fcdb33d928a39d0",
+      "filedBytes": 9263
+    }
+  ]
+}

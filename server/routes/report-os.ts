@@ -38,8 +38,8 @@ import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import { readRunSeal, readSealForExport, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
 import { ReportTypeNotComputed, computeRunForType } from '../services/report-os/compute-run';
-import { buildRunPdf } from '../services/report-os/pdf/run-pdf';
-import { buildBundlePdf } from '../services/report-os/pdf/bundle-pdf';
+import { buildRunPdf, type RunPdfContent } from '../services/report-os/pdf/run-pdf';
+import { buildBundlePdf, buildReportPackPdf, type ReportPackPdfItem } from '../services/report-os/pdf/bundle-pdf';
 import { ReportingPdfError } from '../services/report-os/pdf/writer';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
@@ -83,10 +83,11 @@ import { listReportRunHistory } from '../services/report-os/run-history';
 import { ReportRegistryError, explicitReportRegistry } from '../services/report-os/registry-context';
 import { UnsupportedReportClientScope } from '../services/report-os/client-scope';
 import { resolveOwnedReportScope, ReportScopeOwnershipError, type OwnedReportScopeInput } from '../services/report-os/scope-ownership';
-import { requestPgClient } from '../db/requestDb';
+import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { getAccessibleReportProjectIds, canAccessReportScope, recordedReportProjectIds, type ReportProjectActor, type ReportAccessScope } from '../services/report-os/project-access';
 import { hasOrganizationProjectManagementRole } from '../services/project-sharing-access';
 import { persistReportRun, ReportRunRecordingError } from '../services/report-os/persistence';
+import { readCurrentProgramActor, ProgramReadAccessError } from '../services/c2c/current-program-access';
 
 const router = Router();
 
@@ -696,18 +697,23 @@ async function finalizeOnChain(
  */
 async function bundleExportRefusal(
   organizationId: number,
-  bundle: ReportBundleRecord
+  bundle: ReportBundleRecord,
+  executor: ReportDb = db,
+  entitlementExecutor?: RequestSqlClient
 ): Promise<ReportEntitlementDecision | null> {
   const typeIds = [...new Set(bundle.items.map(item => item.reportTypeId))];
   if (typeIds.length === 0) return null;
-  const rows = await db
+  const rows = await executor
     .select({ typeId: reportTypeRegistry.typeId, family: reportTypeRegistry.family })
     .from(reportTypeRegistry)
     .where(inArray(reportTypeRegistry.typeId, typeIds));
   const families = new Map(rows.map(row => [row.typeId, row.family]));
-  const { tier } = await requireReportEntitlement(organizationId, typeIds[0], families.get(typeIds[0]));
+  const { tier, tierResolved } = entitlementExecutor
+    ? await requireReportEntitlement(organizationId, typeIds[0], families.get(typeIds[0]), entitlementExecutor)
+    : await requireReportEntitlement(organizationId, typeIds[0], families.get(typeIds[0]));
+  if (tierResolved === false) throw new ReportBundleError('The current export plan could not be verified. Nothing was exported.', 'REPORT_EXPORT_ENTITLEMENT_UNAVAILABLE');
   for (const typeId of typeIds) {
-    const decision = decideReportEntitlement(typeId, families.get(typeId), tier);
+    const decision = decideReportEntitlement(typeId, families.get(typeId), tier, tierResolved);
     if (!decision.entitled) return decision;
   }
   return null;
@@ -884,8 +890,8 @@ async function persistBundleRecord(req: Request, bundle: ReportBundleRecord) {
   }
 }
 
-async function loadBundlesForOrg(organizationId: number, bundleId?: string): Promise<ReportBundleRecord[]> {
-  const rows = await db
+async function loadBundlesForOrg(organizationId: number, bundleId?: string, executor: ReportDb = db): Promise<ReportBundleRecord[]> {
+  const rows = await executor
     .select({
       title: projectMemoryEntries.title,
       content: projectMemoryEntries.content,
@@ -918,9 +924,10 @@ async function loadBundlesForOrg(organizationId: number, bundleId?: string): Pro
 
 async function loadBundleById(
   organizationId: number,
-  bundleId: string
+  bundleId: string,
+  executor: ReportDb = db
 ): Promise<ReportBundleRecord | undefined> {
-  const bundles = await loadBundlesForOrg(organizationId, bundleId);
+  const bundles = await loadBundlesForOrg(organizationId, bundleId, executor);
   return bundles.find(bundle => bundle.bundleId === bundleId);
 }
 
@@ -1106,11 +1113,13 @@ router.get('/taxonomy', async (req: Request, res: Response) => {
 
     // Annotate each row with its entitlement verdict for the org's tier so the
     // client can render an honest Locked state without a second round trip.
-    let tier: Tier = 'standard';
-    let tierResolved = true;
+    let tier: Tier;
+    let tierResolved: boolean;
     try {
-      tier = (await resolveCapabilities(organizationId)).tier;
-    } catch { tierResolved = false; /* default standard — never unlocks paid features */ }
+      const caps = await resolveCapabilities(organizationId);
+      tier = caps.tier;
+      tierResolved = caps.tierResolved === true;
+    } catch { tier = 'standard'; tierResolved = false; }
     const annotated = filtered.map((row) => {
       const r = row as SegmentFilterableType & { typeId: string; family?: string };
       const d = decideReportEntitlement(r.typeId, r.family, tier, tierResolved);
@@ -1749,26 +1758,36 @@ router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
  * tenant-stamped transaction (run-seal.ts reads the status again there). The
  * export's id and time are printed on every page and recorded on the chain.
  */
+/** Canonical retained source boundary shared by individual and packet exports. */
+async function readRetainedRunPdfSource(client: PoolClient, run: typeof reportRuns.$inferSelect) {
+  return { ...(await readSealForExport(client, run)), runBy: await actorName(client, run.requestedBy) };
+}
+
+function retainedRunPdfContent(
+  run: typeof reportRuns.$inferSelect,
+  reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
+  source: Awaited<ReturnType<typeof readRetainedRunPdfSource>>,
+): RunPdfContent {
+  return { run: { ...run, status: source.view.sealed ? 'final' : run.status },
+    typeLabel: reportType?.label || run.reportTypeId,
+    report: source.document ?? buildRenderedFromRun(run, reportType).rendered,
+    seal: source.view.sealed ? source.view : null, runBy: source.runBy };
+}
+
 async function sendRunPdf(
   req: Request,
   res: Response,
   run: typeof reportRuns.$inferSelect,
   reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
 ) {
-  const { view, document, runBy } = await inTenantTransaction(run.organizationId, async (client) => ({
-    ...(await readSealForExport(client, run)),
-    runBy: await actorName(client, run.requestedBy),
-  }));
+  const source = await inTenantTransaction(run.organizationId, client => readRetainedRunPdfSource(client, run));
+  const { view } = source;
   if (view.verification.verdict === 'mismatch') return refuseSealMismatch(res, run.id, 'exported');
   const status = view.sealed ? 'final' : run.status;
   const exportId = randomUUID();
   const exportedAt = new Date().toISOString();
   const pdf = await buildRunPdf({
-    run: { ...run, status },
-    typeLabel: reportType?.label || run.reportTypeId,
-    report: document ?? buildRenderedFromRun(run, reportType).rendered,
-    seal: view.sealed ? view : null,
-    runBy,
+    ...retainedRunPdfContent(run, reportType, source),
     exportId,
     exportedAt,
   });
@@ -2301,7 +2320,7 @@ async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRe
       resourceType: 'report_bundle',
       resourceId: bundle.bundleId,
       details: {
-        bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map((i) => i.reportTypeId))],
+        content: 'manifest', bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map((i) => i.reportTypeId))],
         exportId, exportedAt, pages: pdf.pages, finalAtExport: items.filter((i) => i.currentStatus === 'final').length,
       },
     },
@@ -2309,8 +2328,220 @@ async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRe
   );
 }
 
+/** A complete packet never repairs duplicates or silently drops an item. Saved
+ * runIds preserve the saved caller selection order; items may be SQL ordered. */
+function requireCompleteReportPack(bundle: ReportBundleRecord): void {
+  const itemIds = bundle.items.map(item => item.runId);
+  const recordedIds = new Set(bundle.runIds);
+  if (itemIds.length === 0 || recordedIds.size !== bundle.runIds.length ||
+      new Set(itemIds).size !== itemIds.length || itemIds.length !== recordedIds.size ||
+      itemIds.some(id => !recordedIds.has(id)) ||
+      bundle.runIds.some(id => !Number.isSafeInteger(id) || id < 1) ||
+      itemIds.some(id => !Number.isSafeInteger(id) || id < 1) ||
+      new Set(bundle.items.map(item => item.runUuid)).size !== itemIds.length ||
+      bundle.items.some(item => !z.string().uuid().safeParse(item.runUuid).success ||
+        !item.reportTypeId.trim() || !reportScopeEnum.includes(item.scopeType as ReportScope) || !item.scopeId.trim())) {
+    throw new ReportBundleError('The saved report pack has inconsistent report identities. Nothing was exported.', 'REPORT_BUNDLE_CORRUPT');
+  }
+}
+
+function reportPackNotFound(): never {
+  // The same outcome for missing, foreign, inaccessible and rebound reports.
+  // Never identify the constituent which prevented a complete packet.
+  throw new ReportBundleError('Bundle not found.', 'REPORT_BUNDLE_NOT_FOUND', 404);
+}
+
+async function requireCurrentReportPackAccess(
+  client: PoolClient, req: Request, bundle: ReportBundleRecord,
+  runs: Array<typeof reportRuns.$inferSelect> = [],
+): Promise<void> {
+  const actor = await readCurrentProgramActor(client, { organizationId: bundle.organizationId, userId: getUserId(req) });
+  const allowed = await getAccessibleReportProjectIds(bundle.organizationId, actor, client);
+  if (!(bundle.projectIds ?? []).every(id => allowed.includes(id))) reportPackNotFound();
+  for (const scope of [...bundle.items, ...runs]) {
+    if (!await canAccessReportScope(bundle.organizationId, actor, { ...scope, recorded: true }, client, allowed)) reportPackNotFound();
+  }
+}
+
+/** All values which feed a packet body or its manifestation. This is a bounded
+ * observed-change check, not a replacement for seal verification or row locks. */
+function reportPackReadFingerprint(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+class ReportPackEntitlementRefusal extends Error {
+  constructor(readonly decision: ReportEntitlementDecision) { super('The current plan does not cover every report in this packet.'); }
+}
+
+type RetainedReportRun = typeof reportRuns.$inferSelect;
+type ReportPackIdentity = ReportAccessScope & { id: number; runUuid: string; reportTypeId: string };
+type ReportPackType = typeof reportTypeRegistry.$inferSelect;
+
+function decodeReportPackIdentity(row: Record<string, unknown>, organizationId: number): ReportPackIdentity {
+  if (typeof row.id !== 'number' || !Number.isSafeInteger(row.id) || row.id < 1 || row.organization_id !== organizationId ||
+      typeof row.run_uuid !== 'string' || typeof row.report_type_id !== 'string' ||
+      typeof row.scope_type !== 'string' || typeof row.scope_id !== 'string') reportPackNotFound();
+  const ids = row.access_project_ids;
+  if (ids != null && (!Array.isArray(ids) || !ids.every(id => typeof id === 'number' && Number.isSafeInteger(id) && id > 0))) {
+    throw new ReportBundleError('A retained report has invalid historical scope evidence. Nothing was exported.', 'REPORT_PACK_SCOPE_CORRUPT');
+  }
+  return { id: row.id, runUuid: row.run_uuid, reportTypeId: row.report_type_id, organizationId,
+    scopeType: row.scope_type, scopeId: row.scope_id, recorded: true,
+    ...(Array.isArray(ids) ? { accessProjectIds: ids } : {}) };
+}
+
+function requireReportPackIdentityMatches(item: ReportBundleItem, identity: ReportPackIdentity | undefined): void {
+  if (!identity || identity.runUuid !== item.runUuid || identity.reportTypeId !== item.reportTypeId ||
+      identity.scopeType !== item.scopeType || identity.scopeId !== item.scopeId) reportPackNotFound();
+}
+
+/** Only IDs are reserved; only identity and canonical historical parent IDs
+ * are read before admitting actual current scopes. dependencySummary can
+ * itself contain the retained lineage body, so it is never loaded here. */
+async function reserveAndAdmitReportPackRuns(client: PoolClient, req: Request, bundle: ReportBundleRecord): Promise<void> {
+  const reserved = await client.query(
+    'SELECT id FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[]) ORDER BY id FOR SHARE',
+    [bundle.organizationId, bundle.runIds],
+  );
+  if (reserved.rows.length !== bundle.items.length) reportPackNotFound();
+  const { rows } = await client.query(
+    `SELECT id, run_uuid, organization_id, report_type_id, scope_type, scope_id,
+      dependency_summary #> '{summary,accessProjectIds}' AS access_project_ids
+     FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[])`,
+    [bundle.organizationId, bundle.runIds],
+  );
+  const identities = rows.map(row => decodeReportPackIdentity(row, bundle.organizationId));
+  const byId = new Map(identities.map(row => [row.id, row]));
+  if (identities.length !== bundle.runIds.length || byId.size !== bundle.runIds.length) reportPackNotFound();
+  const actor = await readCurrentProgramActor(client, { organizationId: bundle.organizationId, userId: getUserId(req) });
+  const allowed = await getAccessibleReportProjectIds(bundle.organizationId, actor, client);
+  for (const item of bundle.items) {
+    const identity = byId.get(item.runId);
+    requireReportPackIdentityMatches(item, identity);
+    if (!await canAccessReportScope(bundle.organizationId, actor, identity!, client, allowed)) reportPackNotFound();
+  }
+}
+
+/** Full metadata is only read after all current constituent scopes hold. */
+async function readReportPackRuns(client: PoolClient, bundle: ReportBundleRecord): Promise<RetainedReportRun[]> {
+  const rows = await onTransaction(client).select().from(reportRuns)
+    .where(and(eq(reportRuns.organizationId, bundle.organizationId), inArray(reportRuns.id, bundle.runIds)));
+  const byId = new Map(rows.map(run => [run.id, run]));
+  if (rows.length !== bundle.items.length || byId.size !== bundle.items.length) reportPackNotFound();
+  for (const item of bundle.items) {
+    const run = byId.get(item.runId);
+    if (!run || run.organizationId !== bundle.organizationId) reportPackNotFound();
+    requireReportPackIdentityMatches(item, run);
+  }
+  return bundle.runIds.map(id => byId.get(id)!);
+}
+
+function requireConsistentReportPackSource(run: RetainedReportRun, source: Awaited<ReturnType<typeof readRetainedRunPdfSource>>): void {
+  if (source.view.verification.verdict === 'mismatch') throw new ReportBundleError('A retained report does not verify against its recorded seal. Nothing was exported.', 'SEALED_DOCUMENT_MISMATCH', 409);
+  if (source.view.sealed !== (run.status === 'final')) throw new ReportBundleError('A retained report changed during the read. Nothing was exported.', 'REPORT_PACK_CONTENT_CHANGED', 409);
+}
+
+async function readReportPackSources(client: PoolClient, bundle: ReportBundleRecord, runs: RetainedReportRun[], types: ReportPackType[]) {
+  const byType = new Map(types.map(type => [type.typeId, type]));
+  const byItem = new Map(bundle.items.map(item => [item.runId, item]));
+  const items: ReportPackPdfItem[] = [];
+  const fingerprints = new Map<number, string>();
+  for (const run of runs) {
+    const source = await readRetainedRunPdfSource(client, run);
+    requireConsistentReportPackSource(run, source);
+    fingerprints.set(run.id, reportPackReadFingerprint({ run, source }));
+    items.push({ content: retainedRunPdfContent(run, byType.get(run.reportTypeId), source),
+      bundledStatus: byItem.get(run.id)!.status,
+      sourceDocument: source.document ? 'verified-sealed' : 'retained-run-render' });
+  }
+  return { items, fingerprints };
+}
+
+async function requireReportPackSourcesStillCurrent(client: PoolClient, bundle: ReportBundleRecord, fingerprints: Map<number, string>) {
+  const runs = await readReportPackRuns(client, bundle);
+  for (const run of runs) {
+    const source = await readRetainedRunPdfSource(client, run);
+    requireConsistentReportPackSource(run, source);
+    if (reportPackReadFingerprint({ run, source }) !== fingerprints.get(run.id)) throw new ReportBundleError('A retained report changed during export. Nothing was exported.', 'REPORT_PACK_CONTENT_CHANGED', 409);
+  }
+}
+
+async function requireReportPackInputsStillCurrent(client: PoolClient, bundle: ReportBundleRecord, types: ReportPackType[], bundledBy: string | null) {
+  const currentBundle = await loadBundleById(bundle.organizationId, bundle.bundleId, onTransaction(client));
+  if (!currentBundle) reportPackNotFound();
+  const currentTypes = await onTransaction(client).select().from(reportTypeRegistry).where(inArray(reportTypeRegistry.typeId, types.map(type => type.typeId)));
+  const ordered = (rows: ReportPackType[]) => [...rows].sort((a, b) => a.typeId.localeCompare(b.typeId));
+  if (reportPackReadFingerprint(currentBundle) !== reportPackReadFingerprint(bundle) ||
+      reportPackReadFingerprint(ordered(currentTypes)) !== reportPackReadFingerprint(ordered(types)) ||
+      await actorName(client, bundle.createdBy ?? null) !== bundledBy) throw new ReportBundleError('The retained packet changed during export. Nothing was exported.', 'REPORT_PACK_CONTENT_CHANGED', 409);
+}
+
+async function requireReportPackEntitlement(client: PoolClient, bundle: ReportBundleRecord): Promise<void> {
+  const refusal = await bundleExportRefusal(bundle.organizationId, bundle, onTransaction(client), client);
+  if (refusal) throw new ReportPackEntitlementRefusal(refusal);
+}
+
+/** Reservations conflict with canonical finalization and stay held through
+ * rendering and fresh source/access checks. The checked interval ends before
+ * durable audit/send; independent sharing writers are not COMMIT serialized. */
+async function sendReportPackPdf(req: Request, res: Response, organizationId: number, bundleId: string) {
+  const exportId = randomUUID();
+  const exportedAt = new Date().toISOString();
+  const { bundle, pdf } = await inTenantTransaction(organizationId, async client => {
+    const bundle = await loadBundleById(organizationId, bundleId, onTransaction(client));
+    if (!bundle || bundle.organizationId !== organizationId) reportPackNotFound();
+    requireCompleteReportPack(bundle);
+    await requireCurrentReportPackAccess(client, req, bundle);
+    const typeIds = [...new Set(bundle.items.map(item => item.reportTypeId))];
+    const types = await onTransaction(client).select().from(reportTypeRegistry).where(inArray(reportTypeRegistry.typeId, typeIds));
+    if (new Set(types.map(type => type.typeId)).size !== typeIds.length) throw new ReportBundleError('The report types could not be verified. Nothing was exported.', 'REPORT_PACK_TYPES_UNAVAILABLE');
+    await requireReportPackEntitlement(client, bundle);
+    await reserveAndAdmitReportPackRuns(client, req, bundle);
+    const runs = await readReportPackRuns(client, bundle);
+    const { items, fingerprints } = await readReportPackSources(client, bundle, runs, types);
+    const bundledBy = await actorName(client, bundle.createdBy ?? null);
+    const pdf = await buildReportPackPdf({ bundle, bundledBy, items, exportId, exportedAt });
+    await requireCurrentReportPackAccess(client, req, bundle, runs);
+    await requireReportPackEntitlement(client, bundle);
+    await requireReportPackSourcesStillCurrent(client, bundle, fingerprints);
+    await requireReportPackInputsStillCurrent(client, bundle, types, bundledBy);
+    return { bundle, pdf };
+  });
+  return sendRecordedPdf(req, res, {
+    organizationId, action: 'report_os.bundle_exported', resourceType: 'report_bundle', resourceId: bundleId,
+    details: { content: 'reports', bundleId, runIds: bundle.runIds,
+      reportTypeIds: [...new Set(pdf.constituents.map(item => item.reportTypeId))], exportId, exportedAt, pages: pdf.pages,
+      finalAtExport: pdf.constituents.filter(item => item.statusAtRead === 'final').length,
+      constituents: pdf.constituents },
+  }, { filename: `report-pack-${bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes });
+}
+
+/** Read raw keys too: Express 5's simple parser retains bracket keys verbatim. */
+function bundlePdfContent(req: Request): 'manifest' | 'reports' {
+  const query = new URL(req.originalUrl, 'http://report-os.local').searchParams;
+  const structuredContent = [...query.keys()].some(key => key.startsWith('content['));
+  const selectors = query.getAll('content');
+  const content = selectors.length === 0 ? 'manifest' : selectors[0];
+  if (structuredContent || selectors.length > 1 || (content !== 'manifest' && content !== 'reports')) {
+    throw new ReportBundleError('content must be the single value manifest or reports.', 'INVALID_REPORT_EXPORT_CONTENT', 400);
+  }
+  return content;
+}
+
+function sendBundlePdfError(res: Response, error: unknown) {
+  if (error instanceof ReportPackEntitlementRefusal) {
+    const refusal = error.decision;
+    return res.status(403).json({ error: `Exporting this bundle requires the ${refusal.requiredTier} plan.`, feature: refusal.feature, requiredTier: refusal.requiredTier, tier: refusal.tier });
+  }
+  if (error instanceof ProgramReadAccessError || error instanceof ReportingPdfError || error instanceof ReportBundleError) {
+    return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+  }
+  return serverError(res, logger, 'loading export.pdf', error);
+}
+
 router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) => {
   try {
+    const content = bundlePdfContent(req);
     // SECURITY: JWT-bound; the legacy ?organizationId= query param is
     // ignored to prevent cross-tenant report enumeration.
     const organizationId = authedOrgId(req) ?? NaN;
@@ -2322,6 +2553,7 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
     }
     const bundleId = Array.isArray(req.params.bundleId) ? req.params.bundleId[0] : req.params.bundleId;
     if (!bundleId) return res.status(400).json({ error: 'bundleId route parameter is required' });
+    if (content === 'reports') return await sendReportPackPdf(req, res, organizationId, bundleId);
     const bundle = await loadBundleById(organizationId, bundleId);
     if (!bundle || bundle.organizationId !== organizationId || !(await canReadBundle(req, bundle))) {
       return res.status(404).json({ error: 'Bundle not found' });
@@ -2338,10 +2570,8 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
       });
     }
     return await sendBundlePdf(req, res, bundle);
-  } catch (error: any) {
-    if (error instanceof ReportingPdfError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
-    if (error instanceof ReportBundleError) return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
-    return serverError(res, logger, 'loading export.pdf', error);
+  } catch (error: unknown) {
+    return sendBundlePdfError(res, error);
   }
 });
 

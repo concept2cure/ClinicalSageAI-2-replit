@@ -58,7 +58,8 @@ import {
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
-import { catalogScope, sourceReadInput } from './catalog-scope.js';
+import { catalogScope, catalogDocumentBoundary, sourceReadInput } from './catalog-scope.js';
+import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 import { sourceAvailabilityPresentation, catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 import { RESULT_BUDGET } from './agentic-loop.js';
 import { canDeferReadReceipt, coverageAfter, deferReadReceipt, fitReadWindow } from './read-receipts.js';
@@ -79,7 +80,7 @@ import { parseCatalogInput, handleCatalogPreview } from './document-catalog-inpu
  * "not yet studied", a figure that is wrong in both directions at once.
  */
 function listMessage(page: ProjectDocumentPage): string {
-  if (page.total === 0) return 'No documents in the vault for this scope.';
+  if (page.total === 0) return 'No Vault documents with verified access in this scope.';
   const shown =
     page.withheld > 0
       ? `${page.total} document(s); ${page.documents.length} listed here, ${page.withheld} not ` +
@@ -143,7 +144,7 @@ async function handleListProjectDocuments(
   const scope = await catalogScope(
     ctx,
     orgId,
-    typeof input.program_id === 'string' && input.program_id ? input.program_id : null,
+    input.program_id == null ? null : typeof input.program_id === 'string' ? input.program_id : '',
     'read',
   );
   if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
@@ -153,6 +154,7 @@ async function handleListProjectDocuments(
   const page = await svc.listProjectDocumentsForActor(actor, { limit });
   const chat = await chatUploadsFor(svc, actor, limit);
   await svc.revalidateActorSourceScope(actor, scope.admittedScope);
+  await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId }, scope.accessibleScope);
 
   return JSON.stringify({
     ok: true,
@@ -175,7 +177,7 @@ async function handleListProjectDocuments(
 }
 
 /** The honest refusal for a document with nothing readable behind it. */
-function unreadableResponse(doc: { id: string; fileName: string }, reason: string | null): string {
+function unreadableResponse(doc: { id: string; fileName: string | null }, reason: string | null): string {
   return JSON.stringify({
     ok: false,
     documentId: doc.id,
@@ -204,8 +206,8 @@ function readWindowBounds(input: Record<string, unknown>, charCount: number) {
 }
 
 /**
- * Ensure the document has a readable extraction tier (backfilling a legacy
- * row); returns the honest refusal payload when there is nothing to read.
+ * Present an existing extraction tier, or label unrecorded legacy metadata
+ * without writing it; return an honest refusal when there is nothing to read.
  */
 async function ensureReadable(
   svc: CatalogService,
@@ -374,11 +376,15 @@ async function handleReadProjectDocument(
     return JSON.stringify({ error: 'read_project_document requires document_id (string).' });
   }
   if (CHAT_UPLOAD_ID.test(documentId)) return unknownDocumentRefusal(documentId, 'read_project_document');
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
   const actor = sourceReadInput(ctx, orgId);
   const doc = await svc.loadDocumentForActor({ ...actor, documentId }, { includeText: true });
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
   }
+  const boundary = catalogDocumentBoundary(scope, doc.programId);
+  if (boundary) return boundary;
 
   const sourceCatalogStatus = storedCatalogStatus(doc);
   const text = doc.extractedText ?? '';
@@ -400,7 +406,7 @@ async function handleReadProjectDocument(
      coverage is prospective until host admission and a source-snapshot-checked
      write. No result attests to provider delivery or extraction-specific durable
      coverage; historical reads earn no new current-source receipt. */
-  const before = await svc.getReadCoverage(doc.id, doc.contentHash, charCount);
+  const before = await svc.getReadCoverage(doc.id, doc.contentHash, charCount, scope.executor);
   const recorded = doc.sourceAccess.receiptEligible && canDeferReadReceipt(ctx);
   const window = (size: number, comprehension: ReadWindow['comprehension']): string => {
     const span = { start: offset, end: offset + size };
@@ -413,6 +419,7 @@ async function handleReadProjectDocument(
     return JSON.stringify({ ok: false, code: 'SOURCE_CHANGED_DURING_READ', error: 'The source changed during this read. No source text or new receipt was returned; read its current version again.' });
   }
   await svc.revalidateActorSourceScope(actor, doc.admittedScope);
+  await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId: scope.programId }, scope.accessibleScope);
   if (recorded) deferDocumentWindow(ctx, doc, { extractedTextSha256, charCount, offset, ...fit });
   return fit.result;
 }
@@ -454,7 +461,9 @@ async function handleCatalogProjectDocument(
      scopes by program, not role). Checked here because this handler is
      completeCatalog's only caller; the Vault write services check the same way
      (server/services/vault/vault-write-authority.ts). */
-  const roleRefusal = vaultWriteRefusal();
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
+  const roleRefusal = vaultWriteRefusal(scope.accessibleScope.actor.role);
   if (roleRefusal) return JSON.stringify({ ok: false, refused: true, reason: roleRefusal.message });
 
   const parsed = parseCatalogInput(input);
@@ -468,13 +477,17 @@ async function handleCatalogProjectDocument(
   // The open project's documents only (PF-10 S7), before the shared record is written.
   const target = await svc.loadDocumentForActor({ ...sourceReadInput(ctx, orgId), documentId: parsed.documentId });
   if (!target) return unknownDocumentRefusal(parsed.documentId, 'catalog_project_document');
+  const boundary = catalogDocumentBoundary(scope, target.programId);
+  if (boundary) return boundary;
   const expectedProgramId = target.programId;
   const result = await svc.completeCatalog({
     ...parsed,
     organizationId: orgId,
     expectedProgramId,
     // The person on whose behalf she acts; `proposer` says who wrote it (S4).
-    userId: ctx?.userId ?? null,
+    userId: scope.accessibleScope.actor.userId,
+    executor: scope.executor,
+    programId: scope.programId ?? undefined,
     proposer: catalogProposer(ctx, orgId, parsed.purpose),
   });
   if (!result.ok) return catalogRefusal(result);
@@ -506,15 +519,14 @@ async function handleSearchProjectDocuments(
     return JSON.stringify({ error: 'search_project_documents requires a query of at least 3 characters.' });
   }
   const limit = Math.min(Math.max(typeof input.limit === 'number' ? Math.floor(input.limit) : 8, 1), 25);
-  // The open project's documents only (PF-10 S7); the organization's with no project open.
+  // The open project only; with none open, the actor’s accessible library.
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
 
   // Text always (no key, no flag); meaning when the catalog and an embedding provider allow.
-  const { pool } = await import('../../db.js');
   const { searchVaultForAssistant } = await import('../vault/vault-assistant-search.js');
-  const result = await searchVaultForAssistant(pool, {
-    organizationId: orgId,
+  const result = await searchVaultForAssistant(scope.executor, {
+    organizationId: orgId, userId: scope.accessibleScope.actor.userId,
     programId: scope.programId,
     query,
     limit,

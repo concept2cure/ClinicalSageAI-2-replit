@@ -1,0 +1,65 @@
+{
+  "phase": "final actual native10 after unchanged assertions rerun",
+  "files": [
+    {
+      "path": "tests/db/insights-regional-filing.dbtest.ts",
+      "sha256": "1b1cc614d46d92887a25bf14a9b4f2680355fb43d590f78fa8e3ac560180481c",
+      "bytes": 20020
+    },
+    {
+      "path": "server/routes/insights-canvas-routes.ts",
+      "sha256": "427eb63e2746d9580e9de61925006f39d8cd9f7cb650ee0a33f49e1c61ba021d",
+      "bytes": 33165
+    },
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "sha256": "e3866ba824cfeb9707b42d2fc00d40a3127b1efc0de226d4ae8c8f6eca4b49c1",
+      "bytes": 11158
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+      "bytes": 8717
+    },
+    {
+      "path": "server/services/c2c/program-project-anchor.ts",
+      "sha256": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496",
+      "bytes": 23066
+    },
+    {
+      "path": "server/services/report-os/regional/filing-applicability.ts",
+      "sha256": "9ca395e53f099aeeb676c618bec1e5c156653f7da8f92f191a45e56003f25b58",
+      "bytes": 7491
+    },
+    {
+      "path": "server/services/report-os/regional/filing-readiness.ts",
+      "sha256": "6bc47b14fb8a1a317429a024dd6a20c15e3336e256510a299b3540c91ff90a63",
+      "bytes": 24753
+    },
+    {
+      "path": "server/middleware/auth.ts",
+      "sha256": "55aa1172aa3e88c71782539fb138b1365e8ed52bdf392a7737827647badcf83e",
+      "bytes": 29491
+    },
+    {
+      "path": "server/middleware/lazyRequestDbClient.ts",
+      "sha256": "257ce09f03442c9288bd43362a89f36b1b0d4ec5c3fc6b281f6dec92a1153cef",
+      "bytes": 5789
+    },
+    {
+      "path": "server/middleware/establishRequestTenantScope.ts",
+      "sha256": "a959727d4205befbbef23b24d4332bb103624da40ef485eaa10b77037a255535",
+      "bytes": 13848
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "sha256": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d",
+      "bytes": 5959
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "sha256": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d",
+      "bytes": 4073
+    }
+  ]
+}

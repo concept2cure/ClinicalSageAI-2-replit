@@ -268,7 +268,7 @@ async function recordFiling(
     await client.query('LOCK TABLE authoring_sections IN SHARE MODE');
     const currentSections = await client.query(
       `SELECT id, code, title, content FROM authoring_sections
-        WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index`,
+        WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
       [docId, tenantId],
     );
     if (sectionRenderState(currentSections.rows) !== sectionRenderState(sections)) {
@@ -480,7 +480,7 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
 
   const sectionsRes = await pool.query(
     `SELECT id, code, title, content FROM authoring_sections
-      WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index`,
+      WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
     [docId, tenantId],
   );
   const rendered = await renderForVaultFiling(args, doc, sectionsRes.rows);

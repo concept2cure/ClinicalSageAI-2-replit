@@ -1,0 +1,21 @@
+{
+  "actorId": 25,
+  "organizationId": 2,
+  "attempts": [
+    {
+      "path": "/api/auth/refresh",
+      "status": 401,
+      "errorCode": "SESSION_IDLE"
+    },
+    {
+      "path": "/api/auth/dev-login",
+      "status": 200,
+      "errorCode": null
+    }
+  ],
+  "verification": {
+    "path": "/api/v1/auth/session",
+    "status": 200
+  },
+  "renewedAtUtc": "2026-10-14T03:11:11.482169+00:00"
+}

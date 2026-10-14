@@ -1,0 +1,94 @@
+[
+  {
+    "path": "tests/golden-journeys/cer-eu-mdr.journey.test.ts",
+    "base": {
+      "errors": 0,
+      "warnings": 5,
+      "warningRules": [
+        {
+          "rule": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "count": 1
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "count": 1
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "count": 2
+        },
+        {
+          "rule": null,
+          "severity": 1,
+          "count": 1
+        }
+      ]
+    },
+    "current": {
+      "errors": 0,
+      "warnings": 5,
+      "warningRules": [
+        {
+          "rule": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "count": 1
+        },
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "count": 1
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "count": 2
+        },
+        {
+          "rule": null,
+          "severity": 1,
+          "count": 1
+        }
+      ]
+    },
+    "sameRuleSeverityCounts": true
+  },
+  {
+    "path": "tests/golden-journeys/device-510k-estar.journey.test.ts",
+    "base": {
+      "errors": 0,
+      "warnings": 4,
+      "warningRules": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "count": 1
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "count": 3
+        }
+      ]
+    },
+    "current": {
+      "errors": 0,
+      "warnings": 4,
+      "warningRules": [
+        {
+          "rule": "max-lines",
+          "severity": 1,
+          "count": 1
+        },
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "count": 3
+        }
+      ]
+    },
+    "sameRuleSeverityCounts": true
+  }
+]

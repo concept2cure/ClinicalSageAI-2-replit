@@ -16,7 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), orgSegments: vi.fn(), projectSegments: vi.fn(), anchor: vi.fn(), registry: vi.fn() }));
+const h = vi.hoisted(() => ({ summary: vi.fn(), gate: vi.fn(), orgSegments: vi.fn(), projectSegments: vi.fn(), anchor: vi.fn(), scope: vi.fn(), scopeRecheck: vi.fn(), actualAnchor: vi.fn(), registry: vi.fn() }));
 
 
 // These suites isolate audit/compute contracts; sharing itself is exercised
@@ -44,7 +44,10 @@ vi.mock('../../services/report-os/portfolio/fetch', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/report-os/portfolio/fetch')>()),
   fetchOrgPortfolioSummary: h.summary,
 }));
-vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor }));
+vi.mock('../../services/c2c/program-project-anchor', () => ({ resolveProgramProjectAnchor: h.anchor, readProgramAnchorRow: h.actualAnchor }));
+// Consumer fixtures retain their original auth/portfolio assumptions; canonical
+// sharing and RLS are qualified separately by native current-program tests.
+vi.mock('../../services/c2c/current-program-access', async importOriginal => ({ ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()), getCurrentAccessibleProgramScope: h.scope, requireProgramScopeStillCurrent: h.scopeRecheck }));
 
 import createInsightsCanvasRoutes from '../insights-canvas-routes';
 import { REPORT_TYPE_SEED } from '../../services/report-os/taxonomy';
@@ -61,7 +64,7 @@ const app = express();
 // (establishRequestTenantScope); the open program's anchor is read on it.
 app.use((req, _res, next) => {
   (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = { id: 5, role: 'manager', organizationId: 7 };
-  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async () => ({ rows: await h.registry() })) };
+  (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async (sql: string, values?: unknown[]) => ({ rows: /SELECT id FROM regulatory_programs/.test(sql) ? [{ id: values?.[0] }] : /SELECT metadata FROM projects/.test(sql) ? [{ metadata: { registryId: values?.[0] === 14 ? 'US_510K' : 'US_NDA' } }] : await h.registry() })) };
   next();
 });
 app.use('/api/insights-canvas', createInsightsCanvasRoutes());
@@ -81,8 +84,13 @@ const SUMMARY = {
 };
 
 beforeEach(() => {
+  // The title deliberately says IND while the recorded filing is NDA: titles
+  // cannot supply applicability, and the pre-existing NDA assertion remains.
+  h.scope.mockReset().mockImplementation(async (_q, input) => ({ scope: 'verified-accessible-programs', actor: { userId: 5, role: 'manager' }, programIds: [input.programId], reconciliationRequired: false }));
+  h.scopeRecheck.mockReset().mockResolvedValue(undefined);
+  h.actualAnchor.mockReset().mockImplementation(async (_q, input) => ({ id: input.programId === CV ? 14 : 11 }));
   h.registry.mockReset().mockResolvedValue(deployedTypes());
-  h.gate.mockReset().mockResolvedValue({ entitled: true, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'enterprise' });
+  h.gate.mockReset().mockResolvedValue({ entitled: true, feature: 'portfolio_rollup', requiredTier: 'enterprise', tier: 'enterprise', tierResolved: true });
   h.orgSegments.mockReset().mockResolvedValue(['pharma', 'biotech', 'device', 'ivd']);
   h.projectSegments.mockReset().mockImplementation(async (_org: number, projectId: number) => (projectId === 11 ? ['biotech'] : projectId === 14 ? ['device'] : null));
   h.summary.mockReset().mockResolvedValue(SUMMARY);
@@ -178,5 +186,38 @@ describe('each type says whether an engine computes it over a program', () => {
       runnable: true, computedScopes: ['project'], computedScope: 'project', runScopeType: 'project', runScopeId: '11', region: 'USA_FDA',
     });
     expect(reports.find(t => t.typeId === 'provenance.evidence_trace_report')).toMatchObject({ computedScopes: ['document'], computedScope: 'document', availabilityState: 'scope-required' });
+  });
+});
+
+/** Real resolver/gate control flow over controlled SQL, rather than an outer
+ * gate exception; sharing/registry edges remain this suite's existing doubles. */
+async function useRecordedTier(tier: string | null) {
+  const actual = await vi.importActual<typeof import('../../services/report-os/entitlement-map')>('../../services/report-os/entitlement-map');
+  const executor = { query: vi.fn(async (sql: string) => ({
+    rows: sql.includes('FROM organizations') ? [{ tier }] : [],
+  })) };
+  h.gate.mockImplementation(() => actual.requireReportEntitlement(7, 'portfolio.board_pack', 'portfolio', executor));
+  return executor;
+}
+
+describe('canvas catalog preserves the actual recorded-plan verdict', () => {
+  it.each([null, 'platinum'])('locks every report when the real resolver returns an unread %s tier without throwing', async tier => {
+    const executor = await useRecordedTier(tier);
+    const res = await overview(`?programId=${HLV}`);
+    expect(res.status).toBe(200);
+    expect(executor.query).toHaveBeenCalledWith('SELECT tier FROM organizations WHERE id = $1', [7]);
+    expect(res.body.data).toMatchObject({ tier: 'standard', tierResolved: false });
+    expect(res.body.data.reportTypes.find((t: { typeId: string }) => t.typeId === 'readiness.executive_digest'))
+      .toMatchObject({ entitled: false, runnable: true });
+    expect(res.body.data.reportTypes.every((t: { entitled: boolean }) => t.entitled === false)).toBe(true);
+  });
+
+  it.each(['free', 'standard', 'professional', 'enterprise'])('retains a positively recorded %s plan', async tier => {
+    await useRecordedTier(tier);
+    const res = await overview(`?programId=${HLV}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ tier, tierResolved: true });
+    expect(res.body.data.reportTypes.find((t: { typeId: string }) => t.typeId === 'readiness.executive_digest'))
+      .toMatchObject({ entitled: tier !== 'free', runnable: true });
   });
 });

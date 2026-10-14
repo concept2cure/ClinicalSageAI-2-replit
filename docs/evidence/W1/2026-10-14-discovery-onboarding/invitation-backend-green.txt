@@ -1,0 +1,38 @@
+Observed GREEN — 2026-10-14 03:08:40 UTC
+Production invitation handoff implementation was present.
+Command: npx vitest run --config vitest.config.ts server/routes/__tests__/tenant-user-invitation-handoff.test.ts
+
+Actual observed summary:
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  03:08:40
+   Duration  488ms (transform 160ms, setup 61ms, import 116ms, tests 160ms, environment 0ms)
+Exit code: 0
+
+The initial RED execution had 19 cases (9 failed, 10 passed). A twentieth case
+was then added for direct service actor/context spoof protection. This GREEN
+execution ran all 20 cases.
+
+Passing coverage observed:
+- Session caller wins over query/body target identifiers; only their inviting
+  organization's name is read in that organization's verified member scope.
+- Empty/nonself listing does not enrich another person's organization.
+- Missing organization name is null; failed name lookup returns 500.
+- Authentication and nonself accept/decline guards.
+- Accept writes membership/status and chained audit on the same client, before
+  COMMIT; audit refusal ROLLBACK preserves pending status and no membership.
+- Accept replay409 writes no audit/grant; existing membership role is preserved.
+- Decline uses a conditional user/org/pending update, chained audit on its
+  transaction client before COMMIT; audit refusal ROLLBACK preserves pending.
+- Concurrent decline returns409 without an audit/success claim.
+- Direct atomic accept binds actor to callerUserId even if context.userId
+  names another account, forwards IP/userAgent, and returns committed auditTrail.
+- Direct nonself refusal, direct audit failure DATABASE_ERROR, and quota refusal.
+
+Command: npx eslint --max-warnings=0 server/routes/__tests__/tenant-user-invitation-handoff.test.ts
+Exit code: 0
+Output: none (zero errors/warnings).
+
+These are concise excerpts of actual observed executions. The SQL/client
+recorder uses the real route, atomicQuotaService and AsyncLocalStorage scope;
+it does not claim live PostgreSQL RLS coverage.

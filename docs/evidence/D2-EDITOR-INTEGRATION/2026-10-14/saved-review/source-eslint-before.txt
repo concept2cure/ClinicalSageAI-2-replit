@@ -1,0 +1,5 @@
+
+/workspace/ClinicalSageAI/client/src/concept2cure/v2/authoringHandoff.ts
+  70:8  warning  Async function 'saveToAuthoring' has a complexity of 17. Maximum allowed is 15  complexity
+
+✖ 1 problem (0 errors, 1 warning)

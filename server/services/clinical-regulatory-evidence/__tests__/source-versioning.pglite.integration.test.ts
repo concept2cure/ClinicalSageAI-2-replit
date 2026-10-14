@@ -19,6 +19,7 @@
  * deploy creates. The chain proved here is the whole point: cite a source,
  * ingest a revision, and the citation must stop reporting itself current.
  */
+import { seedSourceReadParents } from './source-read-fixture';
 import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -61,7 +62,7 @@ import { searchFindings } from '../index';
 
 const ORG = 711;
 const PROGRAM = '55555555-5555-4555-8555-555555555555';
-const ACTOR = 'user-1';
+const ACTOR = '1';
 
 function migration(rel: string): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -98,6 +99,7 @@ async function makeSection(code: string): Promise<string> {
 beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
+  await seedSourceReadParents(pglite, [ORG, 712], [PROGRAM, '66666666-6666-4666-8666-666666666666']);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));

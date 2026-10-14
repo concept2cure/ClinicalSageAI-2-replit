@@ -6,6 +6,12 @@ vi.mock('../vault/retrieval-source-access.js', async original => ({ ...(await or
     return run({ query: h.query });
   },
 }));
+vi.mock('../ana/source-read-scope.js', async original => ({ ...(await original() as object),
+  revalidateAnaSourceReadScope: async (_q: unknown, scope: unknown) => {
+    if (h.revoked) throw new Error('ANA_SOURCE_SCOPE_CHANGED');
+    return scope;
+  },
+}));
 import { AdvancedRAGPipeline } from '../advancedRAGPipeline';
 import { optionsForIntent } from '../ragRouter';
 const UUID = '20000000-0000-4000-8000-000000000001';
@@ -42,7 +48,7 @@ describe('existing RAG actor programme filtering', () => {
   it('re-admits actor access after the query embedding resolves', async () => {
     const p = pipeline();
     p.embeddingService.embed.mockImplementation(async () => { h.revoked = true; return { embedding: [1, 2, 3] }; });
-    await expect(p.searchVaultSimilar('stability', 1, 0.5, UUID, false, true, { allowedProgramIds: [PROGRAM] }, SCOPE)).rejects.toThrow('ANA_SOURCE_SCOPE_CHANGED');
+    await expect(p.searchVaultSimilar('stability', 1, 0.5, UUID, false, true, { allowedProgramIds: [PROGRAM] }, undefined, SCOPE)).rejects.toThrow('ANA_SOURCE_SCOPE_CHANGED');
     expect(h.query.mock.calls.some(([sql]) => /FROM vault\.document_chunks/.test(sql))).toBe(false);
   });
   it.each([
@@ -76,7 +82,7 @@ describe('existing RAG actor programme filtering', () => {
     expect(sql).toContain('vault.documents succ');
   });
   it('actor-scoped retrieval refuses a selected source when its byte identity changes', async () => {
-    h.query.mockImplementation(async (sql: string) => ({ rows: /SELECT id FROM organizations/.test(sql) ? [{ id: 7 }] : /SELECT c.id::text AS id/.test(sql) ? [{ id: 'chunk', document_id: DOCUMENT, program_id: PROGRAM, content_hash: 'b'.repeat(64) }] : [] }));
+    h.query.mockImplementation(async (sql: string) => ({ rows: /SELECT id FROM organizations/.test(sql) ? [{ id: 7 }] : /SELECT c.id::text AS id/.test(sql) ? [{ id: 'chunk', document_id: DOCUMENT, program_id: PROGRAM, content_hash: 'b'.repeat(64), title: 'Current source', original_file_available: true }] : [] }));
     await expect(pipeline().revalidateCandidates([{ id: 'chunk', chunkId: 'chunk', documentId: DOCUMENT, programId: PROGRAM, contentHash: HASH, atomType: 'vault_chunk' }], { strategy: 'basic', organizationUuid: UUID, sourceReadScope: SCOPE, filters: { allowedProgramIds: [PROGRAM] } })).rejects.toThrow('source identity changed');
   });
   it('refuses source actor authority on a corpus that cannot apply its programme constraint', async () => {

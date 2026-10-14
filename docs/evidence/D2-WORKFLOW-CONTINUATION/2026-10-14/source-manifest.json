@@ -1,0 +1,231 @@
+{
+  "branch": "concept2cure-v2",
+  "initialAuditCommit": "269d2c18c",
+  "baseCommit": "71444466ba9826575ebe127dad609c6f0a815a0b",
+  "files": [
+    {
+      "path": "client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts",
+      "sha256": "0d7699339059a94dbd746211cc801c098b20b17e8c25d4bdae69a77e819eaa8e"
+    },
+    {
+      "path": "client/src/concept2cure/quality/qmsPersonalTraining.ts",
+      "sha256": "9ca11fdf6fe514b62efa5e7868a2a9180f41a342c89366e93d9c7c93412d23bd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts",
+      "sha256": "019cc85e3eb620880a89607ba69f7057f568ae2675aff77c5308c9343faf93b9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/humanReviewStanding.test.tsx",
+      "sha256": "42475d8b4d28f482b956a62048d23cebb532b48793fd3060349d29349112bb02"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/peerReviewFixtures.ts",
+      "sha256": "6208ef008ee5e1326f6a003173569eebd84818fda62a4205f46ca05e19331b31"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeReviewStage.test.tsx",
+      "sha256": "682368eb194728cc607853fa093479caf3b75eda7e8952cb98ce4b67d4c2b99c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx",
+      "sha256": "1242d9fb87749eda81130266cbea2b244291347a07fd75649a991f45d4e7a594"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx",
+      "sha256": "04a0144686dda789e564c24f5acebed7af39a11068217d987b1289dc63f6c403"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx",
+      "sha256": "26c1e0648fa439c05801f1a7f274fdbf0b970ab7148f4b95ebb287beb5e08791"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx",
+      "sha256": "376982f6dcc7cf931bff013bf655561c7e87071b2e5b4675015d614b67ab08fc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx",
+      "sha256": "dd194ecb37f17648887183cdea4ba474313555d19a1ca4cb1f579e9250754eb5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/sendForReview.test.tsx",
+      "sha256": "e09c87ec51c0930f8cbf51c22f7f3b3127eeea8acdfdb9dfbfea8cb3d61494aa"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AssignReviewDialog.tsx",
+      "sha256": "f27068c99d8f90080469ef353f16b0b84c645bd7230a98ca6a7abd5368a0f941"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "14bbbd12d8795a456c0c52744516785d0011d9cc775a92af0c3cc5ee0daf102c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx",
+      "sha256": "a7ad7ab0f1a8f6e138e75d96a405489694a2253157122fee8d49c30828860685"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SendForReviewDialog.tsx",
+      "sha256": "d8b2e3485cb9e526ea88cec0ca39415cee8f02398cd2328190c7553fd118cc77"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/reviewTaskState.ts",
+      "sha256": "d8e1d679b65b04af80f148f617243c64667b1807ab99abf219c96424e4cfda1d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/review-data.ts",
+      "sha256": "83ea008753cb3fef8a8ceca8277327f27c545757ff7602b172b2b4e36ed7b468"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/review-decision.css",
+      "sha256": "783a8c58eab8df4949aaba25a0cd2d0c3c03413333e6ddad5ef358da8de18692"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Review.tsx",
+      "sha256": "89750055621d6a0ae6843d760774ad9fc055be1826a5dec5db784580ee4a5638"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx",
+      "sha256": "677464c73de5098d2eeb84b33df3176ff16ca3b22f24d55d14ddcd363236c447"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts",
+      "sha256": "21b99a4b1085b71dfe7648ff7c2cb147fdb15654c061aa3172e9f8e5df9704d3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/reviewStanding.ts",
+      "sha256": "7718d8bf03572f12d965a30476402f31bb7159f2524c3daa74993291a828363e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts",
+      "sha256": "a0b60e4967b1a6cd43c6001314ca70877205bf84a01d3eeeccda581de3f6a5c9"
+    },
+    {
+      "path": "client/src/utils/__tests__/authToken.test.ts",
+      "sha256": "df7a37bd59e41d186ae93506be96d04ad277ae160b2c4acb1993fbdfe4f9cbda"
+    },
+    {
+      "path": "client/src/utils/authToken.ts",
+      "sha256": "e746b191be2a1fd639effc62086aa1ac4b9724d81ab2446fe885ec6aec8a17fc"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "sha256": "a61e11c34b719dc18e3868825eca3d81ea72bf3f71d56185ab6c5f2c81ffcd4d"
+    },
+    {
+      "path": "migrations/20260728_authoring_reviews.sql",
+      "sha256": "8514465d058ad27a11d18e6a97c806143e73c0f6583e622377c6f80374e9868a"
+    },
+    {
+      "path": "scripts/ci/sql-interpolation-baseline.json",
+      "sha256": "7e00c90cdd76558de35529fe4ffe5386fd37d19891c6187c8d760ca7ce294658"
+    },
+    {
+      "path": "server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts",
+      "sha256": "c2d9d066f20442f347b45ca7d70d64f09232abdc92a9dcff2e1f4c2d72fbd07f"
+    },
+    {
+      "path": "server/middleware/__tests__/authoringObjectAuthorization.test.ts",
+      "sha256": "9f90767c66903634b6b922aba12930f22e6254c53b5b02fb6f18fa5144709a3b"
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "sha256": "4a16d02c7bdcf0271974eef88b3c7daef397763e6b0359ae27861c8bcb5a95bb"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts",
+      "sha256": "bd55ce765d6ce1e7c1cb5144da6309aee0399406569f2ee84b136cfcd180001c"
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "137c5035c8243f7f0ec17cff6493e6c8fc60b0e6a7222cdbf272c1bed87d2492"
+    },
+    {
+      "path": "server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts",
+      "sha256": "9ed86e617ee522b5cfb5231abce07c73e08dff27f60655a429dfed8c23f7873b"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "3ba318c09047fa184598e0d2c970dfac723417c9a6db0744c61840e045f5aa5e"
+    },
+    {
+      "path": "server/routes/review-board-routes.ts",
+      "sha256": "d4e2df9f1a3fd40ab872121fadec6473cbb0276d7d69dfe30118c7fc0b05c940"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "sha256": "8992408c5453a8189f7ba50a59c65e7c49ddb1cdba9b6bbc37c216d56325cbcb"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-snapshot-digest.test.ts",
+      "sha256": "d3e0677d984be6abbaae9cf0bb7c1daa7cec919cb91fb3631c82019c982d765f"
+    },
+    {
+      "path": "server/services/authoring/__tests__/peer-review-migrations.pglite.test.ts",
+      "sha256": "a6b3cfe33a0efe178b783de35ea96aff4f3bf52e5a38fbc6099964834da54f0b"
+    },
+    {
+      "path": "server/services/authoring/__tests__/peer-review.pglite.integration.test.ts",
+      "sha256": "8010a630179748189e18a663577399aa5893fb25b63e60486ee588b2c34fe7ef"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "sha256": "d570c0059fa5916e648f9981220db22ae82a577c790609f848ab1470d7085ccb"
+    },
+    {
+      "path": "server/services/authoring/authoring-content-digests.ts",
+      "sha256": "75c4b9a8328faa34a10c88948d12a0887072ff5ec9d0196822de0fc8a8ff31ac"
+    },
+    {
+      "path": "server/services/authoring/authoring-file-to-vault.ts",
+      "sha256": "2d0a9a3421d341901e0209364814b264cbe9230016925e09007f749bdcf4a2d7"
+    },
+    {
+      "path": "server/services/authoring/authoring-read-scope.ts",
+      "sha256": "f5fd1a89637726bbcbb58c0eb593ab7aeffcf4fa971aba73b75a4cecd02ca7a5"
+    },
+    {
+      "path": "server/services/authoring/peer-review.ts",
+      "sha256": "42794294319fddf4b147251c7744c0a91c7d9560a627bbf3cae49a22a3ebf994"
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "sha256": "71778c18814d818190eb11e7c8dfe514510928ab6217fea8001e8f62dc70dc01"
+    },
+    {
+      "path": "server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts",
+      "sha256": "f5929b3f1c30517f4c4530043d7a9491a69cf241ac47113e7bf66ce23d950f75"
+    },
+    {
+      "path": "server/services/governance/separation-of-duties.ts",
+      "sha256": "8a45cf9282214c371fe3f9337ce30e5add7dfd8636d2117029a0e7c4d2cbbc7c"
+    },
+    {
+      "path": "server/services/review/__tests__/authoring-review-board-access.pglite.test.ts",
+      "sha256": "35ef075a8d83174a476dc828c735dfd07ee05eee875ca0678d6f675cf87e706e"
+    },
+    {
+      "path": "server/services/review/authoring-review-board-formatting.ts",
+      "sha256": "45100b9ee63b0c0e218a1c134dc2bc9831fb91875fe9e571d7d7fcf76306e291"
+    },
+    {
+      "path": "server/services/review/authoring-review-board-standing.ts",
+      "sha256": "4c6370331618cda55db8f4ec97b6ca0185f55a9826f1f3bc9d5a44f5c88e45a5"
+    },
+    {
+      "path": "server/services/review/authoring-review-board.ts",
+      "sha256": "962f79eea5944fec466e9670bb04929c0c4a28d20d38483cbc04157a38006585"
+    },
+    {
+      "path": "shared/authoring/peer-review.ts",
+      "sha256": "e617464e75bbd54571d39b43934fcade659ee9592195e1a9e8ee04dc30157204"
+    },
+    {
+      "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
+      "sha256": "fd3d631674f7c6cfef88848277f781d75c0ef8985c148afd3005321703c9ea87"
+    }
+  ],
+  "featureCommit": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
+  "integratedEditorCommit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "verifiedMergedSourceCommit": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
+  "publicationRepairs": "Removed unused dialog CSS class; existing canonical plainTextToHtml replaces raw fixture interpolation, with byte-identical generated contract."
+}

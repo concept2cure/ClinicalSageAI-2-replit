@@ -1,0 +1,13 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 6 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 6 exceeds baseline 0 (+6).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx(250,41): error TS2352: Conversion of type '{ ok: true; status: number; blob: Mock<() => Promise<Blob>>; }' to type 'Response' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+    client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx(263,22): error TS2352: Conversion of type '{ ok: false; status: number; json: Mock<() => Promise<{ error: string; }>>; }' to type 'Response' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+    client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx(286,41): error TS2352: Conversion of type '{ ok: true; status: number; blob: Mock<() => Promise<Blob>>; }' to type 'Response' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+    server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts(630,121): error TS2345: Argument of type '{ query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number; }>; }' is not assignable to parameter of type 'Queryable'.
+    server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts(68,96): error TS2339: Property 'relation' does not exist on type '{}'.
+    server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts(99,104): error TS2339: Property 'relation' does not exist on type '{}'.

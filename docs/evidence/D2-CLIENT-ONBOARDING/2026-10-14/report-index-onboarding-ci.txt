@@ -1,0 +1,3 @@
+Authenticated app smoke (real browser + DB)	Provision the application schema from scratch	2026-10-14T03:43:21.0509087Z     ✗ immutable_report_records — missing index on organization_id
+Authenticated app smoke (real browser + DB)	Provision the application schema from scratch	2026-10-14T03:43:21.0513768Z ❌ Install failed: required object contract not met: immutable_report_records incomplete — missing index on organization_id (Report OS sealed records (Part 11 immutable report spine))
+Authenticated app smoke (real browser + DB)	Provision the application schema from scratch	2026-10-14T03:43:21.0597042Z ##[error]Process completed with exit code 1.

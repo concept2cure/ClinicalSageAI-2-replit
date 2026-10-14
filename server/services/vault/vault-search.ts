@@ -1,6 +1,6 @@
 /**
- * Search the Vault by content and metadata: one program's, or every program
- * the organisation holds (the library search of plan critique 15, row D2).
+ * Search the Vault by content and metadata: one permitted program's, or the
+ * current actor's verified accessible library (the library search of plan critique 15, row D2).
  *
  * The one search query. `GET /:id/search` asks within a program; `GET /search`
  * asks across the organisation's library, which Veeva offers and the Vault
@@ -13,18 +13,21 @@
  * Paginated with a real `total`. Current versions only unless asked (VR-09).
  * An empty query is not "match everything": it answers no results and says why.
  *
- * Every statement checks the recorded source organization and its live owned
- * parent. Actor programme constraints, when supplied by the server, precede
- * count, rank and page limit.
+ * Every count and page binds the verified accessible programs and checks their
+ * organization through regulatory_programs. The document's recorded parent
+ * stays authoritative; a separate earlier check cannot widen these reads.
  */
 import { supersededSql } from './vault-version-family.js';
+import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
 export interface VaultSearchParams {
   organizationId: number;
-  /** One program, or null for every program the organisation holds. */
+  /** Current authenticated actor; caller-supplied roles never establish access. */
+  userId: number;
+  /** One program, or null for the actor's verified accessible library. */
   programId: string | null;
   q: string;
   limit: number;
@@ -38,7 +41,7 @@ export interface VaultSearchParams {
    * answers nothing (D2, docs/evidence/D2/2026-10-01-vault-search-no-key/).
    */
   match?: 'all' | 'any';
-  /** Server-admitted actor scope, applied before count/rank/LIMIT. */
+  /** Additional server-admitted source restriction; never establishes access. */
   allowedProgramIds?: readonly string[];
 }
 
@@ -56,7 +59,7 @@ export interface VaultSearchHit {
   originalFileAvailable?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   id: string;
-  /** Internal retrieval identity; actor adapters recheck this before returning. */
+  /** Exact original identity used by actor adapters after asynchronous retrieval. */
   contentHash?: string;
   title: string;
   fileName: string | null;
@@ -75,13 +78,21 @@ export interface VaultSearchHit {
 const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
                @@ websearch_to_tsquery('english', $2)`;
 
-export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams): Promise<{ total: number; results: VaultSearchHit[] }> {
-  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q];
-  const inProgram = p.programId ? `AND d.program_id = $${params.push(p.programId)}::uuid` : '';
-  const allowed = p.allowedProgramIds === undefined ? '' : `AND d.program_id = ANY($${params.push([...p.allowedProgramIds])}::uuid[])`;
+export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[] }> {
+  p = Object.freeze({ ...p, allowedProgramIds: p.allowedProgramIds ? Object.freeze([...p.allowedProgramIds]) : undefined });
+  // Verify on the same executor before counting, ranking or returning prose.
+  // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
+  const identity = {organizationId:p.organizationId,userId:p.userId,programId:p.programId};
+  if (verifiedScope) assertVerifiedProgramScope(db,identity,verifiedScope);
+  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
+  const permitted = p.allowedProgramIds === undefined ? scope.programIds
+    : scope.programIds.filter(id => p.allowedProgramIds!.includes(id));
+  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q, permitted];
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
-  const where = `d.deleted_at IS NULL AND d.organization_id = $1 AND ${vaultDataEligibleSql('d')} ${inProgram} ${allowed}
+  const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+          AND d.organization_id = $1
+          AND d.program_id = ANY($3::uuid[])
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
@@ -117,6 +128,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams):
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
+  await requireProgramScopeStillCurrent(db, identity, scope);
   return {
     total: counted.rows[0]?.total ?? 0,
     results: rows.rows.map((r) => ({

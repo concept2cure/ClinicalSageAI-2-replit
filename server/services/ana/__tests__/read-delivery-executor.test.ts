@@ -41,6 +41,18 @@ vi.mock('../../ai-gateway/gateway', () => ({
 }));
 
 const vaultModule = vi.hoisted(() => () => import('./support/read-delivery-vault.js'));
+// Delivery/receipt cases begin after actor admission; native and current-access
+// suites prove that admission. Preserve the real conversation boundary.
+vi.mock('../catalog-scope.js', async importOriginal => ({
+  ...(await vaultModule()).catalogScopeMock(await importOriginal<Record<string, unknown>>()),
+}));
+// These delivery cases begin after source access admission, independently
+// qualified by native private-source controls. Keep re-admission explicit in
+// the fixture rather than weakening a production scope check.
+vi.mock('../../c2c/current-program-access.js', async importOriginal =>
+  (await import('./support/source-read-tool-fixture.js'))
+    .syntheticProgramAccessMock(await importOriginal<Record<string, unknown>>()),
+);
 vi.mock('../../vault/document-catalog.service.js', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ...(await vaultModule()).serviceMock(),
@@ -56,7 +68,7 @@ import { executeAgenticLoop } from '../AnaToolExecutor';
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 import { addDocument, parsed, plant, prose, receiptsFor, resetVault, resultsSentIn } from './support/read-delivery-vault.js';
 
-const ORG: ToolContext = { organizationId: 42, userId: 7 };
+const ORG: ToolContext = { organizationId: 42, userId: 7, sqlClient: { query: async () => ({ rows: [] }) } };
 const RESULT_BUDGET = 5000;
 const NOT_DELIVERED = (readAgainFrom: number) =>
   JSON.stringify({ delivered: false, reason: 'This round returned more than can be read at once.', readAgainFrom });

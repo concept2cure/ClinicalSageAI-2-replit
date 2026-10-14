@@ -34,6 +34,6 @@ const all = ts.getPreEmitDiagnostics(program);
 const relevant = all.filter(d => !d.file || fileSet.has(d.file.fileName));
 const unchanged = targets.every(file => sourceHashes[file] === createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex'));
 fs.writeFileSync(path.join(root,'docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/tools-type-source-manifest.json'),JSON.stringify({sourceHashes,unchanged},null,2)+'\n');
-console.log(JSON.stringify({ sourceUnchangedDuringCheck: unchanged, check: 'target-file diagnostics, imports inspected but excluded from pass count', targets, targetDiagnostics: relevant.length, importedDiagnostics: all.length-relevant.length }, null, 2));
-console.log(ts.formatDiagnosticsWithColorAndContext(relevant,{getCanonicalFileName:f=>f,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));
+console.info(JSON.stringify({ sourceUnchangedDuringCheck: unchanged, check: 'target-file diagnostics, imports inspected but excluded from pass count', targets, targetDiagnostics: relevant.length, importedDiagnostics: all.length-relevant.length }, null, 2));
+console.info(ts.formatDiagnosticsWithColorAndContext(relevant,{getCanonicalFileName:f=>f,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));
 process.exitCode = relevant.length || !unchanged ? 1 : 0;

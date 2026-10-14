@@ -1,0 +1,226 @@
+{
+  "qualification": "Bounded selected-input comparison, not an exhaustive runtime dependency closure. Concurrent canonical DDL work lies outside these unchanged runtime input pins.",
+  "sources": [
+    {
+      "path": "tests/routes/ana-ri-health.test.ts",
+      "changed": true,
+      "classification": "approved health helper repair",
+      "red": {
+        "path": "tests/routes/ana-ri-health.test.ts",
+        "bytes": 15183,
+        "digestAlgorithm": "sha256",
+        "digest": "2850ac9ddcff980a7e7616f2003310459600e3659b3372b980ede26c1e8606f4"
+      },
+      "green": {
+        "path": "tests/routes/ana-ri-health.test.ts",
+        "bytes": 15439,
+        "digestAlgorithm": "sha256",
+        "digest": "0aab1eb38f42d86bff1cf897393e659d6b04c7f77234d6c228057f150224be0d"
+      }
+    },
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+        "bytes": 25932,
+        "digestAlgorithm": "sha256",
+        "digest": "84b4a5a27e0dffd5d5b901e4dfa4122d1dccc9a391051f8bbbb1349f079d07e2"
+      },
+      "green": {
+        "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+        "bytes": 25932,
+        "digestAlgorithm": "sha256",
+        "digest": "84b4a5a27e0dffd5d5b901e4dfa4122d1dccc9a391051f8bbbb1349f079d07e2"
+      }
+    },
+    {
+      "path": "docs/design/CI_CURRENT_REQUEST_CONTEXT_FIXTURES.md",
+      "changed": true,
+      "classification": "post-verification contract text",
+      "red": {
+        "path": "docs/design/CI_CURRENT_REQUEST_CONTEXT_FIXTURES.md",
+        "bytes": 5693,
+        "digestAlgorithm": "sha256",
+        "digest": "08ad8c5fcf8bbf2a93d66a46ea2b56124fb3f53424b70c5781722034b648a0dc"
+      },
+      "green": {
+        "path": "docs/design/CI_CURRENT_REQUEST_CONTEXT_FIXTURES.md",
+        "bytes": 6505,
+        "digestAlgorithm": "sha256",
+        "digest": "4c20cb9508c0aa524b79caf70920441c27e0d80e18c73f8799f21d504f0ff682"
+      }
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "server/db/requestDb.ts",
+        "bytes": 5959,
+        "digestAlgorithm": "sha256",
+        "digest": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d"
+      },
+      "green": {
+        "path": "server/db/requestDb.ts",
+        "bytes": 5959,
+        "digestAlgorithm": "sha256",
+        "digest": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d"
+      }
+    },
+    {
+      "path": "server/middleware/tenantContext.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "server/middleware/tenantContext.ts",
+        "bytes": 17106,
+        "digestAlgorithm": "sha256",
+        "digest": "bfe6a2b5188021194449ad1ccfad71b0009c468d7293d1953259a039d7d8169e"
+      },
+      "green": {
+        "path": "server/middleware/tenantContext.ts",
+        "bytes": 17106,
+        "digestAlgorithm": "sha256",
+        "digest": "bfe6a2b5188021194449ad1ccfad71b0009c468d7293d1953259a039d7d8169e"
+      }
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "server/routes/ana-ri/stream.ts",
+        "bytes": 195159,
+        "digestAlgorithm": "sha256",
+        "digest": "6f9c923288d86f935ee7c392b052988e09c3f7ea9fc934cf102333546f618d84"
+      },
+      "green": {
+        "path": "server/routes/ana-ri/stream.ts",
+        "bytes": 195159,
+        "digestAlgorithm": "sha256",
+        "digest": "6f9c923288d86f935ee7c392b052988e09c3f7ea9fc934cf102333546f618d84"
+      }
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "server/routes/authoring.router.ts",
+        "bytes": 402665,
+        "digestAlgorithm": "sha256",
+        "digest": "18ed2f0b503a27cae5596665a5bfde7b0f8166041809d37c2849d7421bb148d1"
+      },
+      "green": {
+        "path": "server/routes/authoring.router.ts",
+        "bytes": 402665,
+        "digestAlgorithm": "sha256",
+        "digest": "18ed2f0b503a27cae5596665a5bfde7b0f8166041809d37c2849d7421bb148d1"
+      }
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+        "bytes": 8596,
+        "digestAlgorithm": "sha256",
+        "digest": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+      },
+      "green": {
+        "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+        "bytes": 8596,
+        "digestAlgorithm": "sha256",
+        "digest": "418e129df67cfa775a20a6f04464b82f460512026fcea1018dca54861953ab5c"
+      }
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/citation-source-read.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "server/services/clinical-regulatory-evidence/citation-source-read.ts",
+        "bytes": 3008,
+        "digestAlgorithm": "sha256",
+        "digest": "fce0d49e5dade1d7602c719dbc3033c170529f97972aefac00ebcee19f386530"
+      },
+      "green": {
+        "path": "server/services/clinical-regulatory-evidence/citation-source-read.ts",
+        "bytes": 3008,
+        "digestAlgorithm": "sha256",
+        "digest": "fce0d49e5dade1d7602c719dbc3033c170529f97972aefac00ebcee19f386530"
+      }
+    },
+    {
+      "path": "package.json",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "package.json",
+        "bytes": 49201,
+        "digestAlgorithm": "sha256",
+        "digest": "2af3c3089bbe1de45af981e29b0e96b4c5050031aa6feea07d20299a1d152372"
+      },
+      "green": {
+        "path": "package.json",
+        "bytes": 49201,
+        "digestAlgorithm": "sha256",
+        "digest": "2af3c3089bbe1de45af981e29b0e96b4c5050031aa6feea07d20299a1d152372"
+      }
+    },
+    {
+      "path": "vitest.config.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "vitest.config.ts",
+        "bytes": 3983,
+        "digestAlgorithm": "sha256",
+        "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+      },
+      "green": {
+        "path": "vitest.config.ts",
+        "bytes": 3983,
+        "digestAlgorithm": "sha256",
+        "digest": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+      }
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": "vitest.db.config.ts",
+        "bytes": 4073,
+        "digestAlgorithm": "sha256",
+        "digest": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+      },
+      "green": {
+        "path": "vitest.db.config.ts",
+        "bytes": 4073,
+        "digestAlgorithm": "sha256",
+        "digest": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+      }
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "changed": false,
+      "classification": "unchanged tested input",
+      "red": {
+        "path": ".github/workflows/ci.yml",
+        "bytes": 142643,
+        "digestAlgorithm": "sha256",
+        "digest": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+      },
+      "green": {
+        "path": ".github/workflows/ci.yml",
+        "bytes": 142643,
+        "digestAlgorithm": "sha256",
+        "digest": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+      }
+    }
+  ]
+}

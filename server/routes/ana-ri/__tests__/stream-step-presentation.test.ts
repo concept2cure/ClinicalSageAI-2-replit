@@ -17,7 +17,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 
 const harnessModule = vi.hoisted(() => () => import('./support/stream-route-harness.js'));
-const scope = vi.hoisted(() => ({ value: { programId: 'aaaaaaaa-0000-4000-8000-00000000000a', admittedScope: { organizationId: 7, userId: 3, role: 'member', projectId: 42, programId: 'aaaaaaaa-0000-4000-8000-00000000000a', accessibleProgramIds: ['aaaaaaaa-0000-4000-8000-00000000000a'], actorFiltered: true } } as import('../../../services/ana/catalog-scope.js').CatalogScope }));
+type CatalogScope = import('../../../services/ana/catalog-scope.js').CatalogScope;
+type TitleFixtureScope = Pick<Exclude<CatalogScope, { error: string }>, 'programId' | 'admittedScope'>
+  | Extract<CatalogScope, { error: string }>;
+const scope = vi.hoisted(() => ({ value: { programId: 'aaaaaaaa-0000-4000-8000-00000000000a', admittedScope: { organizationId: 7, userId: 3, role: 'member', projectId: 42, programId: 'aaaaaaaa-0000-4000-8000-00000000000a', accessibleProgramIds: ['aaaaaaaa-0000-4000-8000-00000000000a'], actorFiltered: true } } as TitleFixtureScope }));
 vi.mock('../../../db.js', async () => (await harnessModule()).mocks.db());
 vi.mock('../shared.js', async importOriginal =>
   (await harnessModule()).mocks.shared(await importOriginal<Record<string, unknown>>()),
@@ -48,7 +51,18 @@ vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule
 // The open project's scope, as catalogScope decides it for the read handler.
 vi.mock('../../../services/ana/catalog-scope.js', async importOriginal => ({
   ...await importOriginal<typeof import('../../../services/ana/catalog-scope.js')>(),
-  catalogScope: async () => scope.value,
+  catalogScope: async (ctx: { sqlClient?: import('../../../db/requestDb').RequestSqlClient; userId?: number }, organizationId: number) => {
+    if ('error' in scope.value) return scope.value;
+    if (!ctx.sqlClient) return { error: 'Request SQL context is required.' };
+    const { getCurrentAccessibleProgramScope } = await import('../../../services/c2c/current-program-access.js');
+    return {
+      ...scope.value,
+      executor: ctx.sqlClient,
+      accessibleScope: await getCurrentAccessibleProgramScope(ctx.sqlClient, {
+        organizationId, userId: ctx.userId, programId: scope.value.programId,
+      }),
+    };
+  },
   documentScopeRefusal: async () => null,
 }));
 
@@ -91,6 +105,7 @@ const shown = (e: SseEvent | undefined) => JSON.stringify({ label: e?.label, pre
 
 /** The title query's SQL and parameters, and the rows the Vault holds for this organisation and project. */
 const titleQueries: Array<{ sql: string; params: unknown[] }> = [];
+const fixtureQuery = pool.query.bind(pool);
 const VAULT_TITLES: Record<string, { title: string; program: string }> = {
   [IN_PROJECT]: { title: 'Stability report 2025', program: PROGRAM },
   [OTHER_PROJECT]: { title: 'Other project protocol', program: 'bbbbbbbb-0000-4000-8000-00000000000b' },
@@ -112,7 +127,7 @@ beforeEach(() => {
   // Stands in for Postgres on the one title query: rows of the organisation, in
   // the admitted program array ($3) and open program ($4) when it binds one. The SQL's own scoping is
   // proven against a real schema in step-document-titles.pglite.test.ts.
-  const baselineQuery = pool.query.bind(pool);
+  // The upstream current-access check also runs on the request executor.
   vi.spyOn(pool as { query: (...a: unknown[]) => unknown }, 'query').mockImplementation(async (...args: unknown[]) => {
     const [sql, params = []] = args as [string, unknown[]];
     if (typeof sql === 'string' && sql.includes('FROM vault.documents d')) {
@@ -123,7 +138,7 @@ beforeEach(() => {
         .map(id => ({ id, document_title: VAULT_TITLES[id].title, organization_id: 7, program_id: VAULT_TITLES[id].program }));
       return { rows, rowCount: rows.length };
     }
-    return baselineQuery(sql, params);
+    return fixtureQuery(sql, params);
   });
   h.handlers.search_project_documents = async () => JSON.stringify({ ok: true, totalMatches: 3, results: [{}, {}, {}] });
   h.handlers.read_project_document = async () =>

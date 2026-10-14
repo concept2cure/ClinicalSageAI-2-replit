@@ -2,7 +2,10 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const h = vi.hoisted(() => ({ raw: vi.fn(), actor: vi.fn(), list: vi.fn(), uploads: vi.fn(), scope: vi.fn(), search: vi.fn(), passages: vi.fn(), complete: vi.fn() }));
-vi.mock('../catalog-scope.js', () => ({ catalogScope: h.scope, sourceReadInput: (ctx: any, organizationId: number, requestedProgramId: string | null = null) => ({ organizationId, userId: ctx?.userId ?? 0, projectId: ctx?.projectId ?? null, projectRef: ctx?.projectRef ?? null, requestedProgramId }), documentScopeRefusal: async () => null }));
+vi.mock('../catalog-scope.js', async original => ({ ...await original<Record<string, unknown>>(), catalogScope: h.scope }));
+vi.mock('../../c2c/current-program-access.js', async original => (
+  (await import('./support/source-read-tool-fixture.js')).syntheticProgramAccessMock(await original<Record<string, unknown>>(), () => 'viewer')
+));
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn() }, getPool: () => ({ query: vi.fn() }), db: {} }));
 vi.mock('../../vault/vault-write-authority.js', () => ({ vaultWriteRefusal: () => null }));
 vi.mock('../../vault/document-catalog.service.js', () => ({
@@ -18,7 +21,8 @@ vi.mock('../../vault/document-passage-search.js', () => ({ searchDocumentPassage
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 import { loadDraftProjectSources } from '../draft-project-sources.js';
 const programId = '10000000-0000-4000-8000-000000000001', documentId = '20000000-0000-4000-8000-000000000001';
-const ctx = { organizationId: 42, userId: 7, projectRef: programId };
+const executor = { query: async () => ({ rows: [] }) };
+const ctx = { organizationId: 42, userId: 7, sqlClient: executor, projectRef: programId };
 const admittedScope = { organizationId: 42, userId: 7, role: 'viewer', projectId: 1, programId, accessibleProgramIds: [programId], actorFiltered: true as const };
 const sourceAccess = { actorFiltered: true, currentVersion: true, retainedTextOnly: false, currentUseEligible: true, receiptEligible: true, scope: 'open_project', notice: 'Current actor-accessible source.' };
 const doc = () => ({ id: documentId, programId, fileName: 'allowed.txt', contentHash: 'a'.repeat(64), extractedText: 'Allowed source evidence.', originalFileAvailable: true,
@@ -28,7 +32,9 @@ registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
 const call = async (tool: string, input: Record<string, unknown>, context: any = ctx) => JSON.parse(await handlers.get(tool)!(input, context));
 beforeEach(() => {
   vi.clearAllMocks();
-  h.scope.mockResolvedValue({ programId, admittedScope });
+  h.scope.mockResolvedValue({ programId, admittedScope, executor, accessibleScope: {
+    scope: 'verified-accessible-programs', actor: { userId: 7, role: 'viewer' }, programIds: [programId], reconciliationRequired: false,
+  } });
   h.raw.mockResolvedValue({ ...doc(), fileName: 'PRIVATE-SECRET.txt', extractedText: 'PRIVATE-SECRET source.' });
   h.actor.mockResolvedValue(doc());
   h.list.mockResolvedValue({ documents: [], total: 0, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0, admittedScope, actorFiltered: true });
@@ -74,7 +80,8 @@ describe('actor-aware registered source tools', () => {
   it.each(['search_project_documents', 'search_document_passages'])('pins actor scope in %s ranking and counts', async tool => {
     const result = await call(tool, { query: 'evidence', allowedProgramIds: ['private'] });
     expect(result.ok).toBe(true);
-    const params = tool === 'search_project_documents' ? h.search.mock.calls[0][1] : h.passages.mock.calls[0][1];
+    const params = tool === 'search_project_documents' ? h.search.mock.calls[0][1] : h.passages.mock.calls[0][2];
+    expect((tool === 'search_project_documents' ? h.search : h.passages).mock.calls[0][0]).toBe(executor);
     expect(params.sourceReadScope).toEqual(admittedScope);
     expect(params.allowedProgramIds).not.toEqual(['private']);
   });

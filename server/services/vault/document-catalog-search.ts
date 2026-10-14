@@ -17,6 +17,7 @@
  */
 
 import { pool } from '../../db.js';
+import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { queryCatalogMeaningIndex } from './document-catalog-search-query.js';
 import { missingVectorIndex } from './vector-index-availability.js';
 import type { AdmittedAnaSourceReadScope } from '../ana/source-read-scope.js';
@@ -75,10 +76,10 @@ export interface CatalogSearchResult {
 }
 
 /** The query as a pgvector literal; a provider failure is the search being unavailable. */
-async function embedQuery(query: string): Promise<string> {
+async function embedQuery(db: CatalogSearchQueryable, query: string): Promise<string> {
   try {
     const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
-    const { embedding } = await getEmbeddingService(pool as any).embed(query, 'text-embedding-3-small');
+    const { embedding } = await getEmbeddingService(db as any).embed(query, 'text-embedding-3-small');
     return `[${embedding.join(',')}]`;
   } catch (err) {
     throw new CatalogSearchUnavailableError(
@@ -91,12 +92,37 @@ async function embedQuery(query: string): Promise<string> {
  * Cosine search over vault.document_catalog.embedding, org-checked through
  * regulatory_programs like every other vault read.
  */
-export async function searchCatalog(
+export interface CurrentActorCatalogSearchOptions extends Omit<CatalogSearchOptions, 'db'> { userId: number | undefined }
+export function searchCatalog(organizationId: number, query: string, opts?: CatalogSearchOptions): Promise<CatalogSearchResult>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
+export function searchCatalog(db: CatalogSearchQueryable, organizationId: number, query: string, opts: CurrentActorCatalogSearchOptions, verifiedScope?: CurrentAccessibleProgramScope): Promise<CatalogSearchResult>;
+// eslint-disable-next-line no-redeclare -- TypeScript overload declarations share one implementation.
+export async function searchCatalog(dbOrOrganizationId: CatalogSearchQueryable | number, orgOrQuery: number | string,
+  queryOrOpts: string | CatalogSearchOptions = {}, actorOpts?: CurrentActorCatalogSearchOptions,
+  verifiedScope?: CurrentAccessibleProgramScope): Promise<CatalogSearchResult> {
+  if (typeof dbOrOrganizationId === 'number') return searchCatalogInSourceScope(dbOrOrganizationId, orgOrQuery as string, queryOrOpts as CatalogSearchOptions);
+  const db = dbOrOrganizationId;
+  const organizationId = orgOrQuery as number;
+  const opts = { ...actorOpts!, allowedProgramIds: actorOpts?.allowedProgramIds?.slice() };
+  const identity = { organizationId, userId: opts.userId, programId: opts.programId ?? null };
+  if (verifiedScope) assertVerifiedProgramScope(db, identity, verifiedScope);
+  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db, identity);
+  if (scope.programIds.length === 0) {
+    await requireProgramScopeStillCurrent(db, identity, scope);
+    return { hits: [], searchedCount: 0, unsearchableCount: 0 };
+  }
+  const found = await searchCatalogInSourceScope(organizationId, queryOrOpts as string, { ...opts, db, allowedProgramIds: opts.allowedProgramIds === undefined ? scope.programIds : scope.programIds.filter(id => opts.allowedProgramIds!.includes(id)) });
+  await requireProgramScopeStillCurrent(db, identity, scope);
+  return found;
+}
+
+async function searchCatalogInSourceScope(
   organizationId: number,
   query: string,
   /** programId: one program's documents only (the open project, PF-10 S7); absent or null = the organization's. */
   opts: CatalogSearchOptions = {},
 ): Promise<CatalogSearchResult> {
+  opts = { ...opts, allowedProgramIds: opts.allowedProgramIds?.slice() };
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
   const minSimilarity = opts.minSimilarity ?? 0.15;
   const programId = opts.programId ?? null;
@@ -105,9 +131,9 @@ export async function searchCatalog(
     assertRetrievalScope(scope, organizationId, programId);
     await withRetrievalReadScope(scope, async () => undefined);
   }
-  const vectorLiteral = await embedQuery(query);
   const db = opts.db ?? pool;
-  const run = (executor: CatalogSearchQueryable) => queryCatalogMeaningIndex(executor, { organizationId, programId, vectorLiteral, limit, minSimilarity, allowedProgramIds: scope?.accessibleProgramIds ?? opts.allowedProgramIds });
+  const vectorLiteral = await embedQuery(db, query);
+  const run = (executor: CatalogSearchQueryable) => queryCatalogMeaningIndex(executor, { organizationId, programId, vectorLiteral, limit, minSimilarity, allowedProgramIds: scope ? (opts.allowedProgramIds === undefined ? scope.accessibleProgramIds : scope.accessibleProgramIds.filter(id => opts.allowedProgramIds!.includes(id))) : opts.allowedProgramIds });
   try {
     if (!scope) return await run(db);
     const result = await withRetrievalReadScope(scope, async executor => {

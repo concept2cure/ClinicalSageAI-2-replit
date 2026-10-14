@@ -1,0 +1,7 @@
+▶ grant audit on platform_ci_fresh_verify_20261014_beb73055 as postgres; auditing role app_service (from --role)
+  role app_service: superuser=false bypassrls=false login=true; 1299 application relations audited
+  denied: 0
+  excess beyond the audit ceiling (non-owned relations): 0
+  written: /tmp/project-vault-fresh-schema-grant-audit.json
+
+✓ runtime role app_service holds the recipe posture on all 1299 relations.

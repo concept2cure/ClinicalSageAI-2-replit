@@ -60,6 +60,7 @@ import { newDocumentAction } from '../newDocumentAction';
 import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
+import { DocumentPermissionsPanel } from './DocumentPermissionsPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
@@ -70,9 +71,12 @@ import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
-import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
+import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
+import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
+import { readSavedTemplateContext, savedTemplateFacts, type SavedTemplateContext } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { ImportSourceNotice } from './ImportSourceNotice';
+import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
 import type {
   ProposeRefusal,
@@ -749,9 +753,9 @@ function sourceStateLabel(s: SectionSource): {
       };
     case 'unresolved':
       return {
-        text: 'Source no longer available',
+        text: 'Source unavailable with current access',
         tone: 'warn',
-        hint: 'The citation is recorded but the source does not resolve in this organization — it may have been deleted.',
+        hint: 'This recorded citation’s source could not be resolved within your current access. The citation remains recorded.',
       };
     default:
       return {
@@ -964,6 +968,8 @@ export interface EditorBridge {
   openSection?: (sectionId: string) => void;
   sectionCode: string;
   sectionTitle: string;
+  /** The host's actual read/edit view, so a remedy can open the section editor. */
+  viewMode?: 'section' | 'document';
   /** False for a sealed document or assembled Document view: readable, but no insert. */
   editable: boolean;
   /** The real host's reason, including assembled Document view, when read-only. */
@@ -1000,6 +1006,10 @@ export interface EditorBridge {
     record?: AnaTurnRecordStatus,
     unfinished?: boolean,
   ) => Promise<EditorBridgeProposeResult>;
+  /** Observe only the current editor's actual application state; unavailable across scopes. */
+  getProposalState?: (receipt: EditorProposalReceipt) => ProposalState;
+  subscribeProposalChanges?: (listener: () => void) => () => void;
+  canPropose?: () => boolean;
 }
 
 /** An anchored proposal as the conversation hands it to the open section. */
@@ -1035,7 +1045,7 @@ export interface EditorBridgeProposal extends ReplacementProposal {
  *     record.
  */
 export type EditorBridgeProposeResult =
-  | { ok: true }
+  | { ok: true; receipt?: EditorProposalReceipt }
   | { ok: false; reason: 'model-not-approved'; message: string }
   | { ok: false; reason: ProposeRefusal | 'stale' | 'wrong-section' | 'no-base' };
 
@@ -1329,6 +1339,7 @@ export function DocumentWorkbench({
     | 'exports'
     | 'vault'
     | 'tasks'
+    | 'access'
     | null
   >(null);
   /* The two governed dialogs this workbench opens itself: filing the document
@@ -1345,6 +1356,7 @@ export function DocumentWorkbench({
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
+  const [docTemplateContext, setDocTemplateContext] = useState<SavedTemplateContext | null>(null);
   /* S5a: the save's check of the draft's figures against its cited sources. */
   const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
   const [docClaims, setDocClaims] = useState<ClaimsCheckSummary | null>(null);
@@ -1521,10 +1533,11 @@ export function DocumentWorkbench({
      HELD and the author decides: save (deliberate, attributable), leave it on
      this device, or stay. */
   type LeaveTarget =
-    | { kind: 'section'; id: string; module?: string }
+    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string }
     | { kind: 'document'; id: string; sectionId?: string; module?: string }
     | { kind: 'external-document'; id: string; module?: string }
     | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
+    | { kind: 'view'; mode: 'section' | 'document'; module?: never }
     | { kind: 'conversation'; prompt: string; module?: never };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
   const pendingLeaveRef = useRef(pendingLeave);
@@ -1550,14 +1563,18 @@ export function DocumentWorkbench({
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
-    if (target.kind === 'program') target.onContinue();
+    if (target.kind === 'view') setViewMode(target.mode);
+    else if (target.kind === 'program') target.onContinue();
     else if (target.kind === 'conversation') {
       prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
     }
     else if (target.kind === 'external-document') {
       setEditorTarget({ docType: null, docId: target.id, programId });
       onNav('document-authoring');
-    } else if (target.kind === 'section') setActiveSectionId(target.id);
+    } else if (target.kind === 'section') {
+      if (target.mode) setViewMode(target.mode);
+      setActiveSectionId(target.id);
+    }
     else {
       if (target.sectionId) targetSectionRef.current = { docId: target.id, sectionId: target.sectionId };
       if (target.id === activeDocId && target.sectionId) void sectionLoaderRef.current?.(target.id);
@@ -1574,7 +1591,8 @@ export function DocumentWorkbench({
       }
       navigationSequence.current += 1;
       const alreadyThere =
-        target.kind === 'section' ? target.id === activeSectionId : target.kind === 'document'
+        target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
+          ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
           && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
       if (alreadyThere) return true;
       if (!dirty) {
@@ -1586,7 +1604,7 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode]
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
@@ -1724,10 +1742,11 @@ export function DocumentWorkbench({
       sectionId: activeSection.id,
       get sectionLabels() { return editorSectionLabelsRef.current; },
       openSection: (id) => {
-        if (Object.hasOwn(editorSectionLabelsRef.current, id)) requestLeaveRef.current({ kind: 'section', id });
+        if (Object.hasOwn(editorSectionLabelsRef.current, id)) requestLeaveRef.current({ kind: 'section', id, mode: 'section' });
       },
       sectionCode: activeSection.code,
       sectionTitle: activeSection.title,
+      viewMode,
       editable: !editorInsertRefusal(docSealed, viewMode, activeSection.code),
       insertRefusal: editorInsertRefusal(docSealed, viewMode, activeSection.code),
       get authoringContext() { return authoringContextRef.current; },
@@ -1753,8 +1772,12 @@ export function DocumentWorkbench({
         if (!live) return { ok: false, reason: 'stale' };
         const result = editorRef.current?.proposeReplacement(proposal, author) ?? { ok: false as const, reason: 'not-editable' as const };
         if (result.ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
-        return result;
+        return scopedProposalResult(result, activeDocId, loaded.id);
       },
+      getProposalState: receipt => live && receipt.docId === activeDocId && receipt.sectionId === loaded.id
+        ? editorRef.current?.getProposalState(receipt) ?? 'unavailable' : 'unavailable',
+      subscribeProposalChanges: listener => live ? editorRef.current?.subscribeProposalChanges(listener) ?? (() => {}) : () => {},
+      canPropose: () => live && editorRef.current?.canProposeReplacement() === true,
     };
     onEditorBridge?.(bridge);
     return () => {
@@ -1776,6 +1799,7 @@ export function DocumentWorkbench({
       sectionTitle: activeSection?.title ?? null,
       sectionUpdatedAt: activeSection?.updated_at ?? null,
       savedRecordOnly: true,
+      ...savedTemplateFacts(docTemplateContext, activeDocId),
       evidenceSourceIds: sources.flatMap(s => s.source ? [String(s.source.id)] : []),
       evidenceSourcesRead: sourcesState,
       ...(docProvenance?.importSource ? { importSource: {
@@ -1797,7 +1821,7 @@ export function DocumentWorkbench({
        rather than sending an empty claim. */
     const screenActions = advertisedScreenActions('document-authoring');
     return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
-  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance]);
+  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance, docTemplateContext]);
   editorModuleContextRef.current = moduleContext;
   usePublishSurfaceContext('document-authoring', embedded ? null : {
     summary: activeDoc ? 'A saved authoring document is open.' : 'Authoring documents for the open project.',
@@ -1877,20 +1901,29 @@ export function DocumentWorkbench({
      a document with none, or a failed read, gets no origin line rather than a
      guessed one. Doc-scoped like the other loaders. */
   const provenanceDocRef = useRef<string | null>(null);
+  const [docTemplateId, setDocTemplateId] = useState<string | null>(null);
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocTemplateContext(null);
+    setDocTemplateId(null);
     setDocFigures(null);
     setDocClaims(null);
     setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
-    void readJson<{ document?: { provenance?: unknown }; access?: unknown }>(
+    void readJson<{ document?: { provenance?: unknown; template_id?: unknown }; access?: unknown }>(
       `/api/authoring/docs/${encodeURIComponent(wanted)}`,
     ).then(({ ok, body }) => {
       if (provenanceDocRef.current !== wanted) return;
-      if (!ok || !body?.document) return;
-      setDocProvenance(describeProvenance(body.document.provenance));
+      if (!ok || !body?.document) {
+        setDocTemplateContext({ documentId: wanted, templateId: null, templateSourceState: 'unavailable' });
+        return;
+      }
+      const template = readSavedTemplateContext(wanted, body.document);
+      setDocTemplateContext(template);
+      setDocProvenance(describeProvenance(body.document.provenance, { templateId: template.templateId }));
+      setDocTemplateId(typeof body.document.template_id === 'string' ? body.document.template_id : null);
       setDocFigures(describeFigureCheck(body.document.provenance));
       setDocClaims(describeClaimsCheck(body.document.provenance));
       /* GE-P-3: the same read carries the caller's access. */
@@ -2891,6 +2924,8 @@ export function DocumentWorkbench({
            the rail re-reads on mount, so bumping while it is closed simply
            means it opens on the truth rather than on a cached verdict. */
         setExportsEpoch(e => e + 1);
+        // A saved content change invalidates earlier peer verdict bindings.
+        setTasksEpoch(e => e + 1);
       } catch (err) {
         /* THE AUTHOR IS TOLD WHY THE RECORD REFUSED THEIR WORK.
            `apiRequest` throws ApiRequestError for every non-2xx except 401, so
@@ -4091,7 +4126,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setViewMode('section')}
+                onClick={() => requestLeave({ kind: 'view', mode: 'section' })}
                 data-active={viewMode === 'section' || undefined}
                 aria-pressed={viewMode === 'section'}
                 title="Edit one section"
@@ -4101,7 +4136,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setViewMode('document')}
+                onClick={() => requestLeave({ kind: 'view', mode: 'document' })}
                 data-active={viewMode === 'document' || undefined}
                 aria-pressed={viewMode === 'document'}
                 title="Read the whole document"
@@ -4218,6 +4253,15 @@ export function DocumentWorkbench({
               data-testid="tasks-rail-open"
             >
               {I.checkSquare} Tasks
+            </button>
+            <button
+              className="btn ghost"
+              ref={el => { railToggleRefs.current.access = el; }}
+              onClick={() => setRail(rail === 'access' ? null : 'access')}
+              data-active={rail === 'access' || undefined}
+              data-testid="access-rail-open"
+            >
+              {I.shieldCheck} Access
             </button>
             {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
                 will refuse this caller — the reason is the text beside it.
@@ -4415,8 +4459,7 @@ export function DocumentWorkbench({
                             className="btn ghost ed-full-edit"
                             style={{ height: 26 }}
                             onClick={() => {
-                              setViewMode('section');
-                              requestLeave({ kind: 'section', id: sec.id });
+                              requestLeave({ kind: 'section', id: sec.id, mode: 'section' });
                             }}
                           >
                             {I.penLine} Edit
@@ -4576,6 +4619,7 @@ export function DocumentWorkbench({
                   <ImportSourceNotice source={docProvenance?.importSource} />
                   {docFigures && <DraftFigureLine check={docFigures} />}
                   {docClaims && <DraftClaimsLine check={docClaims} />}
+                  {docTemplateId && <TemplateGuidance key={activeSection.id} sectionId={activeSection.id} />}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
@@ -5622,6 +5666,22 @@ export function DocumentWorkbench({
         </aside>
       )}
 
+      {rail === 'access' && (
+        <aside className="ed-comments" aria-label="Document access">
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Document access</span>
+            <RailClose label="Close document access" onClose={closeRail} />
+          </div>
+          <DocumentPermissionsPanel
+            docId={activeDocId}
+            docTitle={activeDoc?.title ?? null}
+            organizationId={user?.organizationId}
+            sections={sectionsState === 'ready' ? sections.filter(s => s.doc_id === activeDocId) : []}
+            fireToast={fireToast}
+          />
+        </aside>
+      )}
+
       {rail === 'comments' && (
         <aside className="ed-comments">
           <div className="ed-comments-h ed-comments-h-row">
@@ -5976,7 +6036,8 @@ export function DocumentWorkbench({
           sectionCode={activeSection.code}
           sectionTitle={activeSection.title}
           destination={
-            pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
+            pendingLeave.kind === 'view' ? `${pendingLeave.mode === 'document' ? 'Document' : 'Section'} view`
+              : pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }

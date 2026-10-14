@@ -23,9 +23,8 @@
 
 import { getEmbeddingProvider } from './ai-gateway/embeddings/embedding-provider';
 import { isTerminalGatewayError } from './ai-gateway/gateway-outcome';
-import pg from 'pg';
 import { atomDataEligibleSql, atomOriginalFileAvailableSql } from './document-data-disposition/eligibility.js';
-import { assertTenantIsCurrent, isTenantUuid, TenantKeyRequiredError } from '../db/currentTenant';
+import { assertTenantIsCurrent, isTenantUuid, TenantKeyRequiredError, type TenantKeyQueryable } from '../db/currentTenant';
 import crypto from 'crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -122,7 +121,7 @@ const MODEL_COSTS: Record<EmbeddingModel, number> = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export class EnhancedEmbeddingService {
-  private pool: pg.Pool;
+  private pool: TenantKeyQueryable;
   private defaultModel: EmbeddingModel = 'text-embedding-3-small';
   private embeddingCache: Map<string, number[]> = new Map();
   private cacheHits = 0;
@@ -130,7 +129,7 @@ export class EnhancedEmbeddingService {
   private processingQueue: AtomEmbeddingJob[] = [];
   private isProcessing = false;
 
-  constructor(pool: pg.Pool) {
+  constructor(pool: TenantKeyQueryable) {
     // Embeddings route through the gateway embedding-provider seam (OpenAI by
     // default, or a self-hosted OpenAI-compatible endpoint when
     // EMBEDDING_PROVIDER=local) — no hard OpenAI dependency at construction, so
@@ -685,20 +684,16 @@ export class EnhancedEmbeddingService {
   //                          PRIVATE HELPERS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  private buildEmbeddingText(atom: {
-    content: string;
-    title?: string;
-    description?: string;
-    atom_type?: string;
-  }): string {
+  private buildEmbeddingText(atom: Record<string, unknown>): string {
+    if (typeof atom.content !== 'string') throw new Error('The stored atom has no readable text for embedding.');
     const parts = [];
-    if (atom.title) parts.push(`Title: ${atom.title}`);
-    if (atom.atom_type) parts.push(`Type: ${atom.atom_type}`);
+    if (typeof atom.title === 'string' && atom.title) parts.push(`Title: ${atom.title}`);
+    if (typeof atom.atom_type === 'string' && atom.atom_type) parts.push(`Type: ${atom.atom_type}`);
     // lumen_data_atoms has no description column — the SELECTs above listed
     // one anyway, so every embedAtom() call failed 42703 and auto-embedding
     // had silently never worked. The optional field remains for callers that
     // construct atom text directly.
-    if (atom.description) parts.push(`Description: ${atom.description}`);
+    if (typeof atom.description === 'string' && atom.description) parts.push(`Description: ${atom.description}`);
     parts.push(atom.content);
     return parts.join('\n\n');
   }
@@ -740,16 +735,20 @@ export class EnhancedEmbeddingService {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                          SINGLETON INSTANCE
+//                          EXECUTOR INSTANCES
 // ═══════════════════════════════════════════════════════════════════════════
 
-let embeddingService: EnhancedEmbeddingService | null = null;
+// Keep the provider/cache behavior per executor. A request client must never
+// silently reuse a service bound to an earlier request or another pool.
+const embeddingServices = new WeakMap<TenantKeyQueryable, EnhancedEmbeddingService>();
 
-export function getEmbeddingService(pool: pg.Pool): EnhancedEmbeddingService {
-  if (!embeddingService) {
-    embeddingService = new EnhancedEmbeddingService(pool);
+export function getEmbeddingService(pool: TenantKeyQueryable): EnhancedEmbeddingService {
+  let service = embeddingServices.get(pool);
+  if (!service) {
+    service = new EnhancedEmbeddingService(pool);
+    embeddingServices.set(pool, service);
   }
-  return embeddingService;
+  return service;
 }
 
 export { MODEL_CONFIGS, MODEL_COSTS };

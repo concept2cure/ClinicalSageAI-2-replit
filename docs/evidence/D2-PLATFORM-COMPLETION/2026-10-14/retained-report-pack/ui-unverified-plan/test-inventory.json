@@ -1,0 +1,655 @@
+{
+  "passed": 161,
+  "failed": 0,
+  "skipped": 0,
+  "files": 17,
+  "durationSeconds": 30.77,
+  "newPlanExecutionAndReadControls": 9,
+  "existingPlanNoticeAndCompatibilityCases": 3,
+  "cases": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 server-byte exports > downloads the exact server report-pack blob once through the reports selector"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 server-byte exports > preserves the default manifest URL and its existing download filename"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > disables both controls during a pending reports export and suppresses duplicate dispatch"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > disables both controls during a pending manifest export and suppresses duplicate dispatch"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > allows a different bundle to export while this bundle is pending"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 pending requests > keeps a pending export disabled when the reader leaves and returns to Bundles"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > shows a backend response refusal without downloading, then re-enables both controls"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > shows a backend typed-error refusal without downloading, then re-enables both controls"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > reports a refused browser download without a success toast"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "retained bundle PDF downloads \u2014 failures > reports a transport failure and permits a retry"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 delayed transport > discards a delayed reports response after logout"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 delayed transport > discards a delayed manifest response after logout"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 delayed transport > discards a delayed reports response after organization-adoption"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 delayed transport > discards a delayed manifest response after organization-adoption"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 delayed transport > discards a delayed reports response after replacement-account"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 delayed transport > discards a delayed manifest response after replacement-account"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 body reads and failures > discards a body read that completes after organization adoption"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 body reads and failures > suppresses a delayed error JSON response after logout"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 body reads and failures > suppresses a delayed transport rejection after account replacement"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 body reads and failures > continues a delayed reports body after automatic bearer refresh in the same revision"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx",
+      "case": "bundle export session revisions \u2014 body reads and failures > continues a delayed manifest body after automatic bearer refresh in the same revision"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+      "case": "Insights \u2014 finalization belongs to the displayed run > does not attribute a signature that completes after a program change to the replacement report"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+      "case": "Insights \u2014 Finalize is a signature, separate from Export > offers the meanings a finalize can carry, sends reason, meaning and the password, and shows the manifestation"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+      "case": "Insights \u2014 Finalize is a signature, separate from Export > a member, who writes reports but may not finalize them, is offered Export and no Finalize"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+      "case": "Insights \u2014 Finalize is a signature, separate from Export > a report the gate holds below final is refused with its reasons, and nothing is shown as sealed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+      "case": "Insights \u2014 Finalize is a signature, separate from Export > a password the server does not accept is said in the dialog, and nothing is sealed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+      "case": "Insights \u2014 Finalize is a signature, separate from Export > separation of duties: an approval by the run's requester is refused with the server's sentence"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx",
+      "case": "Insights \u2014 Finalize is a signature, separate from Export > a role without signing authority is refused with the server's sentence, and nothing is sealed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "the reporting library > lands on the Report pane, so the surface a reader already knew is unchanged"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "the reporting library > offers a tab for each route family that had no screen"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > reads the route and renders the governed runs it returns"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > a run with no measured confidence says so, and never reads as 0%"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > sends the status filter the route accepts"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > a failed read is a failure with a retry, not an empty history"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > opens a run from the history through GET /runs/:id/rendered"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Run history \u2014 GET /api/report-os/runs > a sealed run whose seal no longer verifies is withheld with its reason, not shown"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > reads the route and renders the schedule in words"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > describes persisted platform output and does not promise external email"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > offers only report types an engine computes \u2014 scheduling the rest would never produce one"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > creates a schedule with the cadence chosen, and no creator in the body"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > pauses a schedule through PATCH, and says so when the server refuses"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Schedules \u2014 GET/POST/PATCH /api/insights/subscriptions > a failed read is a failure, not \"no scheduled reports\""
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Bundles \u2014 GET/POST /api/report-os/bundles > reads the route and renders each bundle with its reports"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Bundles \u2014 GET/POST /api/report-os/bundles > bundles the runs chosen in Run history, and posts their ids"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Bundles \u2014 GET/POST /api/report-os/bundles > a bundle whose runs belong to no project says why, rather than failing blankly"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Report catalog > offers every type an engine computes as a run control"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Report catalog > lists a type no engine computes by name, and never as a control"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "Report catalog > runs a catalog type through the governed run route"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > requests a page and sends the search to the canonical route"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > shows the server total and reaches older matching reports on the next page"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > does not imply a complete result when an older server omits pagination metadata"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "run history uses the complete SQL result before pagination > encodes scope, search and offset without dropping a zero offset"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a bundle's PDF is named for what it is > says the PDF is a manifest and where the sealed documents are"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a bundle's PDF is named for what it is > never offers the manifest as the reports"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > a 403 on the run history is a role refusal with NO retry"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > an expired session says to sign in, not that the server failed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > a 500 keeps the retry, because retrying could change the answer"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx",
+      "case": "a failed read says WHICH failure it was > readFailureOf classifies each status, and only the reachable ones retry"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1 \u2014 a type no engine computes > a pack lists only the types an engine computes \u2014 no not-computed tile inside it"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1 \u2014 a type no engine computes > a pack button counts the reports it runs, not the ones no engine computes"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1 \u2014 a type no engine computes > engine-less types are listed once, as not computed in this release"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1 \u2014 a type no engine computes > is said to be not computed when asked for, and nothing is run under its name"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1b \u2014 a pack\u2019s description names only the reports it computes > for a pharma program, every pack offered describes exactly the reports it holds"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1b \u2014 a pack\u2019s description names only the reports it computes > for a biologic program, every pack offered describes exactly the reports it holds"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1b \u2014 a pack\u2019s description names only the reports it computes > for a device program, every pack offered describes exactly the reports it holds"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1b \u2014 a pack\u2019s description names only the reports it computes > for an IVD program, every pack offered describes exactly the reports it holds"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1b \u2014 a pack\u2019s description names only the reports it computes > for a CRO program, every pack offered describes exactly the reports it holds"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1b \u2014 a pack\u2019s description names only the reports it computes > for an academic organisation, every pack offered describes exactly the reports it holds"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "1b \u2014 a pack\u2019s description names only the reports it computes > for a health-system organisation, every pack offered describes exactly the reports it holds"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "2 \u2014 a request about controlled documents > is sent to Audit & compliance reports and runs nothing"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "2 \u2014 a request about controlled documents > still runs the controlled substances ledger when that is what is asked for"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "3 \u2014 the program the report runs over > names the open program on the run, not a project id"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "3 \u2014 the program the report runs over > with no program open, asks which program, and opening one leads the canvas with it"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "5 \u2014 the catalog follows the program\u2019s product type > offers a biologic program no 510(k) prompt, and runs no 510(k) report when asked"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx",
+      "case": "6 \u2014 the report names its scope > shows the program\u2019s name, not \"project \u2014 11\""
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 a plan that could not be read > says the plan could not be read, rather than naming one"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 a plan that could not be read > control: says nothing extra when the plan was read"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 a plan that could not be read > treats an absent flag as resolved, so an older server loses nothing"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan execution > disables the generation-bearing Find button"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan execution > refuses base-report dispatch even when Enter reaches the handler"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan execution > does not replace an unread plan with a portfolio upgrade claim"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan execution > keeps packs readable but removes runnable tiles and fallback plan locks"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan execution > makes catalog generation unavailable with a verification reason"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan execution > also withholds organization catalog generation before a lead program exists"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan read and compatibility controls > continues known/legacy report generation when tierResolved is true"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan read and compatibility controls > continues known/legacy report generation when tierResolved is undefined"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx",
+      "case": "Insights \u2014 unverified plan read and compatibility controls > opens a retained report from history while plan generation is unavailable"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+      "case": "Reporting: \"Find a report\" > is a labelled field with a Find button, not a composer that sends"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+      "case": "Reporting: \"Find a report\" > carries no AnA mark anywhere on the screen"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+      "case": "Reporting: \"Find a report\" > answers with one result, never a conversation, and keeps the words in the field"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+      "case": "Reporting: \"Find a report\" > still runs the governed report the router matched, with a plain status while it runs"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+      "case": "Reporting: \"Find a report\" > a run that cannot start never leaves \"Running the \u2026\" beside the alert that says so"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+      "case": "Reporting: \"Find a report\" > a run that completes says so, in place of \"Running the \u2026\""
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx",
+      "case": "Reporting: \"Find a report\" > keeps the result's live region mounted from the start, so the first result is announced"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx",
+      "case": "Insights \u2014 the canvas says what is true about itself > claims no per-value provenance it does not carry"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx",
+      "case": "Insights \u2014 the canvas says what is true about itself > the portfolio board credits no one with ranking, and says the average is taken here"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx",
+      "case": "Insights \u2014 the canvas says what is true about itself > a preview says it is one, names the real plan, and does not answer as if the org had it"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx",
+      "case": "Insights \u2014 the canvas says what is true about itself > a plan refusal is said without a first person"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx",
+      "case": "Insights \u2014 the canvas says what is true about itself > an unregistered type is said without a first person"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > fetches the governed PDF for the run, hands the bytes to downloadBlob, and sends no finalize"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > exports a report the truthfulness gate holds below final as it stands, without sealing it"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > hands over NO file when the export is refused, and reports it as a failure"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx",
+      "case": "Insights \u2014 Export produces a file and finalizes nothing > reports a browser that refuses the download rather than claiming a saved file"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+      "case": "Insights \u2014 no prediction it cannot make > \"What is my CRL risk?\" is answered honestly and sends no run"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+      "case": "Insights \u2014 no prediction it cannot make > \"Forecast the review trajectory for BX204\" is answered honestly and sends no run"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+      "case": "Insights \u2014 no prediction it cannot make > \"Predict the likelihood of approval\" is answered honestly and sends no run"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+      "case": "Insights \u2014 no prediction it cannot make > the pharma opener no longer suggests a CRL risk question"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+      "case": "Insights \u2014 no prediction it cannot make > the biotech opener no longer suggests a CRL risk question"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+      "case": "Insights \u2014 no prediction it cannot make > no pharma standard pack offers a prediction tile"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx",
+      "case": "Insights \u2014 no prediction it cannot make > no biotech standard pack offers a prediction tile"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx",
+      "case": "a failed canvas load > offers a retry that reads again, in plain words"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx",
+      "case": "a report's tables and sources > a report table is a table with column headers, and a source is a disclosure, not a hover"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx",
+      "case": "Insights canvas \u2014 a viewer > is told the canvas is view only"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx",
+      "case": "Insights canvas \u2014 a viewer > is shown pack tiles it cannot run, not run buttons"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx",
+      "case": "Insights canvas \u2014 a viewer > asking for a report sends no run and says why"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx",
+      "case": "Insights canvas \u2014 a member > sees no view-only note and gets runnable tiles"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx",
+      "case": "Insights canvas \u2014 a member > a 403 from the write gate is not reported as a plan refusal"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx",
+      "case": "Insights canvas \u2014 a member > a 403 that names a required plan is still reported as one"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "a run\u2019s evidence disclosure > reads neither route until it is opened"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "a run\u2019s evidence disclosure > reads the seal and the dependencies once opened"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > an intact seal states the verdict, the four checks and the signature"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > \"not verifiable\" is its own state \u2014 neither a pass nor a failure"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > a mismatch says the document is withheld, not merely that a check failed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > an unfinalized run says it carries no seal, rather than failing to verify one"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > a run the chain records as finalized, no longer marked final, reports the contradiction"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > a sealed run with no signature row says so, rather than dropping the block"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > an unverified seal says its signer and meaning are only as recorded"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "the seal verdict > a failed seal read claims nothing about the seal"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "what the report read > lists each provider with its outcome, and the engine\u2019s own blocker sentence"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "what the report read > no recorded providers says so, and does not imply the run read nothing"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "what the report read > a failed dependency read is a failure, not an empty source list"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "sealFactRows \u2014 \u00a711.50 elements are never silently absent > shows the three manifestation elements plus whatever extras are recorded"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "sealFactRows \u2014 \u00a711.50 elements are never silently absent > a missing MEANING reads \"Not recorded\" rather than vanishing"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "sealFactRows \u2014 \u00a711.50 elements are never silently absent > a sealed run with no signature row still shows all three elements as not recorded"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "sealFactRows \u2014 \u00a711.50 elements are never silently absent > an UNSEALED run shows no manifestation at all \u2014 there is nothing to manifest"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "sealFactRows \u2014 \u00a711.50 elements are never silently absent > carries the chain\u2019s own record of the meaning and the prior status"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "sealFactRows \u2014 \u00a711.50 elements are never silently absent > marks the seal hash as mono so it is readable and wraps"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "signatureIsVerifiedAgainstSeal \u2014 one binding, not three > true only when the verdict is intact AND the signature check passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "signatureIsVerifiedAgainstSeal \u2014 one binding, not three > false when the seal does not verify"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "signatureIsVerifiedAgainstSeal \u2014 one binding, not three > false when intact but the signature check itself did not pass"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "signatureAbsent \u2014 no row is not the same as a row with gaps > true for a sealed run the server returned no signature for"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "signatureAbsent \u2014 no row is not the same as a row with gaps > false when a row exists, even with a null meaning"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx",
+      "case": "signatureAbsent \u2014 no row is not the same as a row with gaps > false for an unsealed run \u2014 the server looked for nothing"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx",
+      "case": "the portfolio board and the server\u2019s rollup cap > describes the accessible subset rather than every program in the organization"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx",
+      "case": "the portfolio board and the server\u2019s rollup cap > a complete rollup says nothing about a cap, and counts plainly"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx",
+      "case": "the portfolio board and the server\u2019s rollup cap > a capped rollup says the board is not the whole portfolio"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx",
+      "case": "the portfolio board and the server\u2019s rollup cap > a capped rollup counts as \"first N\", never as the organisation\u2019s total"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx",
+      "case": "the portfolio board and the server\u2019s rollup cap > the reply above the board says there are more, and that these are not ranked"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx",
+      "case": "the portfolio board and the server\u2019s rollup cap > the board note does not claim the shown programs are the worst ones"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx",
+      "case": "Insights \u2014 readiness that was not computed > says so in the opener instead of printing a percentage"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx",
+      "case": "Insights \u2014 readiness that was not computed > draws no ring for a program without a readiness, and averages only the computed ones"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx",
+      "case": "Insights \u2014 a readiness figure carrying outstanding critical gaps > does not call the program ready, and states the gap count instead"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx",
+      "case": "Insights \u2014 a readiness figure carrying outstanding critical gaps > qualifies the figure on the regional comparison line too"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx",
+      "case": "Insights reporting pane \u2014 identity > does not present itself as AnA"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx",
+      "case": "Insights reporting pane \u2014 identity > does not claim the suggested pack was derived from the readiness figure"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx",
+      "case": "Insights reporting pane \u2014 identity > states that the pane routes rather than answers"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx",
+      "case": "Insights \u2014 reports run over the lead project > sends the project scope and id the overview names"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx",
+      "case": "Insights \u2014 reports run over the lead project > a pack tile whose type does not run over a project says so and offers no run"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx",
+      "case": "Insights \u2014 the open program > names the open program to the overview and leads with it"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx",
+      "case": "Insights \u2014 the open program > a program with no project record is stated for that program, not replaced by another"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx",
+      "case": "Insights \u2014 the open program > with no program open, the organisation view is read as before"
+    }
+  ]
+}

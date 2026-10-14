@@ -1,0 +1,12 @@
+#!/bin/sh
+# Counterfactual adapter: exact currently shipped curl+checksum commands;
+# only destination and build arguments are redirected into the local fixture.
+set -eu
+VERAPDF_VERSION="$1"
+VERAPDF_SHA256="$2"
+destination="$3"
+mkdir -p "$(dirname "$destination")"
+    curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300 \
+      -o ${destination} \
+      "https://repo1.maven.org/maven2/org/verapdf/apps/cli/${VERAPDF_VERSION}/cli-${VERAPDF_VERSION}.jar"; \
+    echo "${VERAPDF_SHA256}  ${destination}" | sha256sum -c -

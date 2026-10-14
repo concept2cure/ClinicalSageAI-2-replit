@@ -51,6 +51,9 @@ export interface RunPdfInput {
   exportedAt: string;
 }
 
+/** The admitted retained document and its run facts, independent of export identity. */
+export type RunPdfContent = Omit<RunPdfInput, 'exportId' | 'exportedAt'>;
+
 type AnyBlock = Record<string, any>;
 const list = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 const cell = (c: unknown) => (c == null ? '' : String(c));
@@ -80,13 +83,14 @@ function blockLines(block: ReportBlock): string[] {
 /** The signature manifestation line (11.50): who, as what, when. */
 function signatureLine(s: RunSealView): string {
   const sig = s.signature;
-  const who = sig?.signerName ? ` by ${sig.signerName}` : '';
-  const meaning = sig?.meaning ? ` as ${sig.meaning}` : '';
-  return `Final. Signed${who}${meaning}, ${iso(sig?.signedAt ?? s.finalizedAt)} (UTC).`;
+  const who = sig?.signerName || 'not recorded';
+  const meaning = sig?.meaning || 'not recorded';
+  // A chain's finalization time cannot fill in a missing signature time.
+  return `Final. Signed by ${who} as ${meaning}, ${iso(sig?.signedAt)} (UTC).`;
 }
 
 /** The signature and seal of a final run, or why there is none. */
-function sealLines(input: RunPdfInput): Array<{ text: string; bold?: boolean }> {
+function sealLines(input: RunPdfContent): Array<{ text: string; bold?: boolean }> {
   if (input.run.status !== 'final') return [];
   const s = input.seal;
   if (!s) return [{ text: 'Final. The seal could not be read for this export.', bold: true }];
@@ -99,7 +103,7 @@ function sealLines(input: RunPdfInput): Array<{ text: string; bold?: boolean }> 
   return lines;
 }
 
-function writeHeader(w: Writer, input: RunPdfInput) {
+function writeHeader(w: Writer, input: RunPdfContent) {
   w.write(input.typeLabel || input.run.reportTypeId, { size: 16, bold: true, gap: 4 });
   w.write(`Run #${input.run.id}${input.run.runUuid ? ` (${input.run.runUuid})` : ''}`, { size: 9, color: GREY, gap: 8 });
   const facts = [
@@ -203,9 +207,9 @@ function writeProvenance(w: Writer, block: ReportBlock) {
   }
 }
 
-/** Build the saved report's PDF; governance identity is manifested on every page. */
-export async function buildRunPdf(input: RunPdfInput): Promise<{ bytes: Buffer; pages: number; replacedCharacters: number }> {
-  const w = new Writer({ title: `${input.typeLabel}, run ${input.run.id}`, exportId: input.exportId, exportedAt: input.exportedAt });
+/** One canonical body writer for individual exports and admitted retained report packs.
+ * The caller owns page boundaries, export stamps and saving the writer. */
+export function writeRunPdfContent(w: Writer, input: RunPdfContent): void {
   writeHeader(w, input);
   for (const section of input.report.sections) {
     w.write(section.title, { size: 11, bold: true, gap: 2 });
@@ -220,6 +224,12 @@ export async function buildRunPdf(input: RunPdfInput): Promise<{ bytes: Buffer; 
     w.write('Recorded calculation evidence', { size: 11, bold: true, gap: 2 });
     w.write(JSON.stringify(input.report.provenance, null, 2), { size: 8, indent: 8 });
   }
+}
+
+/** Build the saved report's PDF; governance identity is manifested on every page. */
+export async function buildRunPdf(input: RunPdfInput): Promise<{ bytes: Buffer; pages: number; replacedCharacters: number }> {
+  const w = new Writer({ title: `${input.typeLabel}, run ${input.run.id}`, exportId: input.exportId, exportedAt: input.exportedAt });
+  writeRunPdfContent(w, input);
   w.stampPages((n, total) => `Run #${input.run.id} · Export ${input.exportId} · Exported ${input.exportedAt} (UTC) · Page ${n} of ${total}`,
     input.run.status === 'final' ? undefined : `NOT FINAL (${input.run.status.toUpperCase()})`);
   return { bytes: await w.save(), pages: w.pages.length, replacedCharacters: 0 };

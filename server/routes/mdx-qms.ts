@@ -111,9 +111,27 @@ import { approveQmsChangeSigned } from '../services/qms/change-approval-signatur
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { governedReason } from './governed-reason';
+import { requestConnectable, requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { QmsSigningAdmissionRefused } from '../services/qms/current-signing-admission';
+import { qmsTrainingAcknowledgementInputSchema, qmsControlledTextInputSchema } from '../../shared/qms/training';
+import {
+  acknowledgeQmsTraining, readQmsTrainingContext, readQmsTrainingCompliance,
+  QmsTrainingRefused, QmsTrainingCommitUnconfirmed,
+} from '../services/qms/training';
+import type { QmsDocumentRow } from '../services/qms/document-approval-signature';
+import { saveQmsControlledText } from '../services/qms/training-controlled-text';
+import { describeQmsTrainingDocument } from '../services/qms/training-content';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms');
+
+function trainingRefusalResponse(res: Response, error: QmsTrainingRefused) {
+  if (error.status === 503) return res.status(503).json({
+    error: 'The current approval signature could not be checked. Reload the document before trying again.',
+    details: { code: error.code },
+  });
+  return clientError(res, error.status, error.message, { code: error.code });
+}
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -364,6 +382,7 @@ router.post('/qms/documents', requireEditorAccess, async (req: Request, res: Res
   const parsed = docCreate.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  if (p.metadata && Object.prototype.hasOwnProperty.call(p.metadata, 'controlledTextAuthorship')) return clientError(res, 422, 'Controlled-text authorship is recorded by the server and cannot be supplied during creation.');
   try {
     const { rows } = await pool.query(
       `INSERT INTO qms_documents (
@@ -432,24 +451,54 @@ router.get('/qms/documents/review-due', async (req: Request, res: Response) => {
 
 router.get('/qms/documents/:id', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
+  const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 422, 'id must be a positive integer');
   try {
-    const { rows } = await pool.query(
+    const client = requestPgClient(req);
+    const { rows } = await client.query(
       `SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [id, orgId],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Document');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'doc-get', err); }
+    const training = await readQmsTrainingContext(client, { organizationId: orgId, userId, document: rows[0] as QmsDocumentRow });
+    return ok(res, rows[0], { training });
+  } catch (err) {
+    if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
+    return serverError(res, log, 'doc-get', err);
+  }
 });
+
+async function saveControlledTextResponse(req: Request, res: Response, orgId: number, id: number) {
+  const userId = getUserId(req);
+  if (userId === null) return clientError(res, 401, 'User context required');
+  if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 422, 'id must be a positive integer');
+  const text = qmsControlledTextInputSchema.safeParse(req.body);
+  if (!text.success) return clientError(res, 422, 'Invalid controlled text save', text.error.flatten().fieldErrors);
+  try {
+    const document = await saveQmsControlledText(requestPgClient(req), {
+      organizationId: orgId, userId, documentId: id, input: text.data,
+      ipAddress: clientIpOf(req) ?? undefined, userAgent: req.get('user-agent'),
+    });
+    return ok(res, document, { training: describeQmsTrainingDocument(document), auditTrail: { persisted: true, chained: true } });
+  } catch (err) {
+    if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
+    if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({
+      error: 'The controlled text save could not be confirmed. Reload the document to check the saved text before trying again.',
+      details: { code: 'QMS_TRAINING_COMMIT_UNCONFIRMED' },
+    });
+    return serverError(res, log, 'doc-controlled-text', err);
+  }
+}
 
 router.patch('/qms/documents/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'controlledText')) return saveControlledTextResponse(req, res, orgId, id);
   const parsed = docPatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const COL: Record<string, string> = {
@@ -596,6 +645,7 @@ async function verifyApprovalSigner(
 function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Document' | 'Change' = 'Document'): Response {
   if (err.code === 'NOT_FOUND') return notFoundInTenant(res, what);
   if (err.code === 'SELF_APPROVAL') return clientError(res, 403, err.message, { code: 'QMS_SELF_APPROVAL' });
+  if (err.code === 'INVALID_AUTHORSHIP') return clientError(res, 409, err.message, { code: 'QMS_INVALID_AUTHORSHIP' });
   return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
 }
 
@@ -617,8 +667,9 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
   } catch (err) { return serverError(res, log, 'doc-approve-verify', err); }
   if (!verified) return res;
 
-  const client = await pool.connect();
+  let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   try {
+    client = await requestConnectable(req).connect();
     await client.query('BEGIN');
     const result = await approveQmsDocumentSigned(client, {
       orgId, userId, documentId: id,
@@ -635,11 +686,12 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
       signature: result.signature,
     });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err);
+    if (err instanceof QmsSigningAdmissionRefused) return res.status(err.status).json({ error: err.message, details: { code: err.code } });
     return serverError(res, log, 'doc-approve', err);
   } finally {
-    client.release();
+    client?.release();
   }
 });
 
@@ -729,8 +781,9 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
   } catch (err) { return serverError(res, log, 'doc-retire-verify', err); }
   if (!verified) return res;
 
-  const client = await pool.connect();
+  let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   try {
+    client = await requestConnectable(req).connect();
     await client.query('BEGIN');
     const result = await retireQmsDocumentSigned(client, {
       orgId, userId, documentId: id,
@@ -746,11 +799,12 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
       signature: result.signature,
     });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err);
+    if (err instanceof QmsSigningAdmissionRefused) return res.status(err.status).json({ error: err.message, details: { code: err.code } });
     return serverError(res, log, 'doc-retire', err);
   } finally {
-    client.release();
+    client?.release();
   }
 });
 
@@ -760,35 +814,24 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
   if (orgId === null) return orgRequired(res);
   if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  if (!Number.isSafeInteger(id) || id <= 0) return clientError(res, 422, 'id must be a positive integer');
+  const parsed = qmsTrainingAcknowledgementInputSchema.safeParse(req.body);
+  if (!parsed.success) return clientError(res, 422, 'An explicit personal acknowledgement of this revision is required.', parsed.error.flatten().fieldErrors);
   try {
-    /* Tenant gate. */
-    const doc = await pool.query<{ version: string }>(
-      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, orgId],
-    );
-    if (doc.rows.length === 0) return notFoundInTenant(res, 'Document');
-    const method = typeof req.body?.method === 'string' ? req.body.method : 'attestation';
-    const quizScore = typeof req.body?.quizScore === 'number' ? Math.round(req.body.quizScore) : null;
-    const { rows } = await pool.query(
-      `INSERT INTO qms_training_records (
-         organization_id, user_id, document_id, document_version,
-         acknowledgment_method, quiz_score, expires_at
-       ) VALUES ($1, $2, $3, $4, $5, $6, NOW() + INTERVAL '365 days')
-       RETURNING *`,
-      [orgId, userId, id, doc.rows[0].version, method, quizScore],
-    );
-    /* WO-16C #133. Was `void auditService.logAction({…})`. The acknowledgment
-       itself is the `qms_training_records` row the INSERT above returns, so the
-       training evidence survives a lost audit row; the audit row is the
-       §11.10(e) log beside it. `meta.auditTrail` reports which of the two
-       outcomes this request had. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.training.acknowledge',
-      resourceType: 'qms_document', resourceId: id, details: { method, quizScore },
+    const result = await acknowledgeQmsTraining(requestPgClient(req), {
+      organizationId: orgId, userId, documentId: id, input: parsed.data,
+      ipAddress: clientIpOf(req) ?? undefined, userAgent: req.get('user-agent'),
     });
-    return created(res, rows[0], { auditTrail });
-  } catch (err) { return serverError(res, log, 'training-ack', err); }
+    if (result.alreadyAcknowledged) return ok(res, result.acknowledgement, { alreadyAcknowledged: true });
+    return created(res, result.acknowledgement, { auditTrail: { persisted: true, chained: true } });
+  } catch (err) {
+    if (err instanceof QmsTrainingRefused) return trainingRefusalResponse(res, err);
+    if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({
+      error: 'The acknowledgement could not be confirmed. Reload the document to check your record before trying again.',
+      details: { code: 'QMS_TRAINING_COMMIT_UNCONFIRMED' },
+    });
+    return serverError(res, log, 'training-ack', err);
+  }
 });
 
 router.get('/qms/training', async (req: Request, res: Response) => {
@@ -831,30 +874,7 @@ router.get('/qms/training/compliance', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
-    const { rows } = await pool.query(
-      `WITH roster AS (
-         SELECT COUNT(*)::int AS n FROM organization_users WHERE organization_id = $1
-       ),
-       acks AS (
-         SELECT document_id,
-                COUNT(DISTINCT user_id) FILTER (WHERE expires_at IS NULL OR expires_at > NOW())::int AS current,
-                MAX(acknowledged_at) AS last_cycle
-           FROM qms_training_records
-          WHERE organization_id = $1
-          GROUP BY document_id
-       )
-       SELECT d.id, d.doc_number, d.title,
-              COALESCE(a.current, 0)::int AS current,
-              (SELECT n FROM roster)      AS of,
-              a.last_cycle
-         FROM qms_documents d
-         LEFT JOIN acks a ON a.document_id = d.id
-        WHERE d.organization_id = $1 AND d.deleted_at IS NULL
-          AND d.status = 'effective'
-          AND d.doc_type IN ('sop','wi','manual','policy','protocol','curriculum')
-        ORDER BY d.doc_number LIMIT 200`,
-      [orgId],
-    );
+    const rows = await readQmsTrainingCompliance(requestPgClient(req), orgId);
     return ok(res, rows, { count: rows.length });
   } catch (err) { return serverError(res, log, 'training-compliance', err); }
 });
@@ -1497,8 +1517,9 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'change-approve-verify', err); }
   if (!verified) return res;
 
-  const client = await pool.connect();
+  let client: (RequestSqlClient & { release(error?: Error): void }) | null = null;
   try {
+    client = await requestConnectable(req).connect();
     await client.query('BEGIN');
     const result = await approveQmsChangeSigned(client, {
       orgId, userId, changeId: id,
@@ -1514,11 +1535,12 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       signature: result.signature,
     });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await client?.query('ROLLBACK').catch(() => undefined);
     if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err, 'Change');
+    if (err instanceof QmsSigningAdmissionRefused) return res.status(err.status).json({ error: err.message, details: { code: err.code } });
     return serverError(res, log, 'change-approve', err);
   } finally {
-    client.release();
+    client?.release();
   }
 });
 

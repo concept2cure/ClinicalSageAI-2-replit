@@ -278,9 +278,13 @@ async function callSseRoute(
   path: string,
   body: Record<string, unknown>
 ): Promise<{ status: number; body: string }> {
+  const { getPool } = await import('../../server/db');
+  const sqlClient = getPool();
   return new Promise(resolve => {
     const app = express();
     app.use(express.json());
+    // Post-middleware fixture seam: use the same declared fake SQL executor.
+    app.use((req, _res, next) => { Object.assign(req, { dbClient: sqlClient }); next(); });
     app.use('/api/ana-ri', router);
 
     const server = http.createServer(app);

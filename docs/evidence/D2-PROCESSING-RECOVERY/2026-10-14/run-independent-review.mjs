@@ -57,7 +57,7 @@ const result = await new Promise(resolve => {
 closeSync(descriptor);
 const after = snapshot();
 const changedSources = files.filter(file => before[file] !== after[file]);
-const rawLog = readFileSync(logPath, 'utf8').replace(/\u001b\[[0-9;]*m/g, '');
+const rawLog = readFileSync(logPath, 'utf8').replace(new RegExp(String.fromCharCode(27)+'\\[[0-9;]*m','g'), '');
 const counts = rawLog.split('\n').find(line => /^\s*Tests\s/.test(line))?.trim() ?? 'No completed test count';
 const qualified = result.exitCode === 0 && changedSources.length === 0 && /^Tests\s+16 passed \(16\)$/.test(counts);
 const manifest = {

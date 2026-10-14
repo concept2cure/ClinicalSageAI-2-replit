@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS authoring_comment_activity (
 CREATE INDEX IF NOT EXISTS authoring_comment_activity_doc_idx ON authoring_comment_activity (doc_id, tenant_id);
 
 -- ─── Review + audit surface ──────────────────────────────────────────────────
+-- AMENDED 2026-10-14: retain exact reviewed snapshots without backfilling
+-- historical verdicts. The idempotent ALTERs also upgrade existing tables.
 
 CREATE TABLE IF NOT EXISTS authoring_reviews (
   id               TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -82,6 +84,9 @@ CREATE TABLE IF NOT EXISTS authoring_reviews (
   reviewer_email   TEXT,
   review_status    TEXT,
   review_comments  TEXT,
+  reviewed_snapshot JSONB,
+  reviewed_snapshot_hash TEXT,
+  review_binding_basis TEXT,
   reviewed_at      TIMESTAMPTZ,
   requested_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   requested_by     TEXT,
@@ -91,6 +96,9 @@ CREATE TABLE IF NOT EXISTS authoring_reviews (
   -- request-review upserts ON CONFLICT (doc_id, reviewer_id, tenant_id).
   CONSTRAINT authoring_reviews_doc_reviewer_tenant_uniq UNIQUE (doc_id, reviewer_id, tenant_id)
 );
+ALTER TABLE authoring_reviews ADD COLUMN IF NOT EXISTS reviewed_snapshot JSONB;
+ALTER TABLE authoring_reviews ADD COLUMN IF NOT EXISTS reviewed_snapshot_hash TEXT;
+ALTER TABLE authoring_reviews ADD COLUMN IF NOT EXISTS review_binding_basis TEXT;
 CREATE INDEX IF NOT EXISTS authoring_reviews_doc_idx ON authoring_reviews (doc_id, tenant_id);
 
 CREATE TABLE IF NOT EXISTS authoring_audit_events (

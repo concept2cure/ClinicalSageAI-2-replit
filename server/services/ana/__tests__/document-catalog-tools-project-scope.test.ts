@@ -19,6 +19,7 @@ import type { ToolContext } from '../AnaToolExecutor.js';
 const h = vi.hoisted(() => ({
   open: vi.fn(async (_db: unknown, _ctx: any): Promise<string | null> => null),
   inOrg: vi.fn(async () => true),
+  currentRole: vi.fn(() => 'member'),
   list: vi.fn(async (_input?: unknown, _opts?: unknown) => ({ documents: [], total: 0, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0 })),
   uploads: vi.fn(async (_input?: unknown, _opts?: unknown) => ({ uploads: [], hasMore: false })),
   docOf: vi.fn(async (): Promise<any> => null),
@@ -39,6 +40,21 @@ vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
   resolveOpenProgram: h.open,
   programInOrganization: h.inOrg,
 }));
+// Pure open-conversation boundary composition: current admission is supplied
+// for this member; SQL authority/RLS is covered by actual PGlite/native cases.
+vi.mock('../../c2c/current-program-access.js', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../c2c/current-program-access.js')>();
+  return { ...actual,
+    getCurrentAccessibleProgramScope: async (_q: unknown, input: { userId: number; programId?: string | null }) => {
+      if (input.programId && !await h.inOrg()) throw new actual.ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+      return { scope: 'verified-accessible-programs', actor: { userId: input.userId, role: h.currentRole() },
+        programIds: input.programId ? [input.programId] : [A, B], reconciliationRequired: false };
+    },
+    requireCurrentProgramAccess: async (_q: unknown, input: { userId: number }) => ({ actor: { userId: input.userId, role: 'member' } }),
+    assertVerifiedProgramScope: () => undefined,
+    requireProgramScopeStillCurrent: async () => undefined,
+  };
+});
 vi.mock('../../../db.js', () => ({ pool: { query: h.ownDocs }, getPool: () => ({ query: h.ownDocs }), db: {} }));
 vi.mock('../../vault/vault-assistant-search.js', () => ({ searchVaultForAssistant: (_db: any, p: any) => h.search(_db, p.query, p) }));
 vi.mock('../../vault/document-catalog-search.js', () => ({
@@ -57,6 +73,9 @@ vi.mock('../../../db/tenantStore.js', async (importOriginal) => ({
 vi.mock('../uploaded-file-access.js', () => ({
   loadUploadedFile: async () => ({ fileId: 'file_1712345678_ab12cd', fileName: 'f.pdf', mimeType: 'application/pdf', fileSize: 1, buffer: Buffer.from('x') }),
 }));
+// Source preview/callback admission is exercised by upload/native suites;
+// these isolated affordance tests supply an unchanged eligible uploaded file.
+vi.mock('../../vault/vault-upload-source-admission.js', () => ({ assertVaultUploadSource: async () => undefined }));
 vi.mock('../../vault/vault-ingest.service.js', () => ({ ingestVaultDocument: h.ingest }));
 vi.mock('../../vault/document-catalog.service.js', async () => {
   const { syntheticReadWrapper, syntheticActorDocument } = await import('./support/source-read-tool-fixture.js');
@@ -84,14 +103,16 @@ registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
 
 const A = '0a000000-0000-4000-8000-00000000000a';
 const B = '0b000000-0000-4000-8000-00000000000b';
-const V2_A: ToolContext = { organizationId: 42, userId: 7, projectId: null, projectRef: A };
-const NONE: ToolContext = { organizationId: 42, userId: 7 };
+const requestExecutor = { query: h.ownDocs };
+const V2_A: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor, projectId: null, projectRef: A };
+const NONE: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor };
 const call = async (tool: string, input: Record<string, unknown>, ctx: ToolContext) =>
   JSON.parse(await handlers.get(tool)!(input, ctx));
 const FILE = { file_id: 'file_1712345678_ab12cd', document_title: 'Tox study', document_type: 'nonclinical_study_report' };
 
 beforeEach(() => {
-  for (const f of [h.open, h.inOrg, h.list, h.uploads, h.ingest, h.docOf, h.receipt, h.complete, h.place, h.search, h.passages, h.ownDocs]) f.mockClear();
+  for (const f of [h.open, h.inOrg, h.currentRole, h.list, h.uploads, h.ingest, h.docOf, h.receipt, h.complete, h.place, h.search, h.passages, h.ownDocs]) f.mockClear();
+  h.currentRole.mockReturnValue('member');
   h.open.mockImplementation(async (_db: unknown, ctx: any) => (ctx?.projectRef === A ? A : null));
   h.inOrg.mockResolvedValue(true);
 });
@@ -114,12 +135,25 @@ describe('list_project_documents', () => {
     expect(r.scope).toEqual({ programId: A, actorFiltered: true });
   });
 
-  it('no project open: the organization, as today, or a program of the organization when named', async () => {
+  it('no project open: an actor-filtered accessible library, or a named accessible program', async () => {
     expect((await call('list_project_documents', {}, NONE)).scope).toEqual({ accessibleProjects: true, actorFiltered: true });
     expect((await call('list_project_documents', { program_id: B }, NONE)).scope).toEqual({ programId: B, actorFiltered: true });
     h.inOrg.mockResolvedValue(false);
     const foreign = await call('list_project_documents', { program_id: B }, NONE);
     expect(foreign.code).toBe('PROGRAM_NOT_FOUND');
+  });
+
+  it('requires the upstream request executor before source admission', async () => {
+    const r = await call('list_project_documents', {}, { organizationId: 42, userId: 7 });
+    expect(r).toMatchObject({ ok: false, code: 'REQUEST_DB_CONTEXT_REQUIRED' });
+    expect(h.list).not.toHaveBeenCalled();
+  });
+
+  it('refuses a role change between canonical source and request program admission', async () => {
+    h.currentRole.mockReturnValue('viewer');
+    const r = await call('list_project_documents', {}, V2_A);
+    expect(r).toMatchObject({ ok: false, code: 'ANA_SOURCE_SCOPE_CHANGED' });
+    expect(h.list).not.toHaveBeenCalled();
   });
 });
 
@@ -161,7 +195,7 @@ describe('the by-id tools: the open project\'s documents only', () => {
   ])("%s on another project's document is refused, and nothing is read or written", async (tool, input) => {
     h.docOf.mockResolvedValue(docOf(B));
     const r = await call(tool, input, V2_A);
-    expect(r.code).toBe(tool === 'place_project_document' ? 'ANA_SOURCE_ACCESS_DENIED' : 'CROSS_PROJECT');
+    expect(r.code).toBe('CROSS_PROJECT');
     expect(h.receipt).not.toHaveBeenCalled();
     expect(h.complete).not.toHaveBeenCalled();
     expect(h.place).not.toHaveBeenCalled();
@@ -183,24 +217,24 @@ describe('the by-id tools: the open project\'s documents only', () => {
 describe('search stays in the open project', () => {
   it('search_project_documents searches the open program only; with no project, the organization', async () => {
     await call('search_project_documents', { query: 'stability data' }, V2_A);
-    expect((h.search.mock.calls[0] as any)[2]).toMatchObject({ programId: A });
+    expect((h.search.mock.calls[0] as any)[2]).toMatchObject({ programId: A, sourceReadScope: { userId: 7 } });
     await call('search_project_documents', { query: 'stability data' }, NONE);
-    expect((h.search.mock.calls[1] as any)[2]).toMatchObject({ programId: null });
+    expect((h.search.mock.calls[1] as any)[2]).toMatchObject({ programId: null, sourceReadScope: { userId: 7 } });
   });
 
   it('search_document_passages searches the open program only; with no project, the organization', async () => {
     h.passages.mockResolvedValue({ hits: [], coverage: null });
     const UUID = '11111111-1111-4111-8111-111111111111';
     await call('search_document_passages', { query: 'stability data' }, { ...V2_A, organizationUuid: UUID });
-    expect((h.passages.mock.calls[0] as any)[1]).toMatchObject({ programId: A });
+    expect((h.passages.mock.calls[0] as any)[2]).toMatchObject({ programId: A });
     await call('search_document_passages', { query: 'stability data' }, { ...NONE, organizationUuid: UUID });
-    expect((h.passages.mock.calls[1] as any)[1]).toMatchObject({ programId: null });
+    expect((h.passages.mock.calls[1] as any)[2]).toMatchObject({ programId: null });
   });
 });
 
 describe('an open project with no program', () => {
   it('reads nothing: not the organization, and not a named program', async () => {
-    const UNANCHORED: ToolContext = { organizationId: 42, userId: 7, projectId: 99, projectRef: '99' };
+    const UNANCHORED: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor, projectId: 99, projectRef: '99' };
     expect((await call('list_project_documents', {}, UNANCHORED)).code).toBe('NO_PROJECT');
     expect((await call('list_project_documents', { program_id: B }, UNANCHORED)).code).toBe('NO_PROJECT');
     expect(h.list).not.toHaveBeenCalled();

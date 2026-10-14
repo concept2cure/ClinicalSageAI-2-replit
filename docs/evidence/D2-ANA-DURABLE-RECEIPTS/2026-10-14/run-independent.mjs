@@ -26,7 +26,7 @@ const command=['node_modules/vitest/vitest.mjs','run','--config',config];
 const child=spawn(process.execPath,command,{cwd:repo,stdio:['ignore',fd,fd]});
 const result=await new Promise(resolve=>{child.once('error',e=>resolve({exitCode:1,error:e.code??'RUNNER_ERROR'}));child.once('exit',(exitCode,signal)=>resolve({exitCode,signal}));});
 closeSync(fd);const after=snapshot(),changedSources=files.filter(f=>before[f]!==after[f]);
-const counts=readFileSync(log,'utf8').replace(/\u001b\[[0-9;]*m/g,'').split('\n').find(l=>/^\s*Tests\s/.test(l))?.trim()??'No completed count';
+const counts=readFileSync(log,'utf8').replace(new RegExp(String.fromCharCode(27)+'\\[[0-9;]*m','g'),'').split('\n').find(l=>/^\s*Tests\s/.test(l))?.trim()??'No completed count';
 const qualified=result.exitCode===0&&changedSources.length===0&&/^Tests\s+\d+ passed \(\d+\)$/.test(counts);
 writeFileSync(path.join(folder,`independent-${label}-manifest.json`),JSON.stringify({runtime:process.version,baselineHEAD:execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),command:['node',...command],startedAt,finishedAt:new Date().toISOString(),...result,counts,qualified,before,after,sourcesUnchangedDuringRun:changedSources.length===0,changedSources,logSha256:hash(readFileSync(log)),proofScope:'Actual strict DTO/fingerprint, selected default settlement, source verifier and ledger append with explicit controlled source/SQL seams. No actual PostgreSQL/provider/deployed/full-schema proof; PostgreSQL evidence is separate.'},null,2)+'\n');
 process.stdout.write(JSON.stringify({counts,qualified,changedSources})+'\n');process.exitCode=qualified?0:result.exitCode===0?3:result.exitCode??1;

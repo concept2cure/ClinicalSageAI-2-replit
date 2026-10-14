@@ -27,12 +27,14 @@
  */
 
 import { getPool } from '../db';
+import { ProgramReadAccessError } from './c2c/current-program-access.js';
 import {
   getRAGPipeline,
   type RetrievalOptions,
   type RAGContext,
   type RetrievedDocument,
   type MemoryScope,
+  type VerifiedVaultRead,
 } from './advancedRAGPipeline.js';
 import {
   recordRagRetrieval,
@@ -51,6 +53,8 @@ export type RagIntent = 'regulatory_qa' | 'foresight' | 'project_scoped';
  * provided field overrides that default for this call only.
  */
 export interface RagRetrievalParams {
+  /** Server-only exact executor and canonically minted current Vault scope. */
+  vaultRead?: VerifiedVaultRead;
   query: string;
   intent?: RagIntent;
   /**
@@ -164,6 +168,7 @@ export function optionsForIntent(params: RagRetrievalParams): RetrievalOptions {
     override !== undefined ? override : fallback;
 
   return {
+    ...(params.vaultRead ? { vaultRead: params.vaultRead } : {}),
     strategy: pick(params.strategy, defaults.strategy) ?? 'advanced',
     // Forwarded so the generator is attributable; omitted when unset.
     ...(params.model ? { model: params.model } : {}),
@@ -264,6 +269,10 @@ export async function ragRetrieve(params: RagRetrievalParams): Promise<RAGContex
  * Run a full RAG query (retrieve + generate) through the single router.
  */
 export async function ragQuery(params: RagRetrievalParams): Promise<RagRouterResult> {
+  if (params.vaultRead) {
+    throw new ProgramReadAccessError(403, 'VAULT_SCOPED_GENERATION_UNSUPPORTED',
+      'The verified Vault read scope is available for retrieval only.');
+  }
   const pipeline = getRAGPipeline(getPool());
   const options = optionsForIntent(params);
   const wallStart = Date.now();

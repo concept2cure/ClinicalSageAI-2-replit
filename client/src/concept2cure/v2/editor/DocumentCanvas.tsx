@@ -409,11 +409,11 @@ export function DocumentCanvas({
      wording asks for the text in the conversation: the document exists, and
      a second one drafted from this ask would be a duplicate. */
   const [focusSection, setFocusSection] = useOriginSectionFocus(focusSectionId);
-  const askToDraft = (sec: SectionRow, title: string) => {
+  const askToDraft = (sec: SectionRow) => {
     if (!doc) return;
     setFocusSection(prev => ({ id: sec.id, nonce: (prev?.nonce ?? 0) + 1 }));
     onExpandedChange(true);
-    onAsk(`Draft the text for section ${sec.code} ${sec.title} of “${title}” here in the conversation, so I can insert it into the document.`, originForSavedSection(doc, sec, programId));
+    onAsk('Draft the text for the saved section attached to this question here in the conversation, so I can insert it into the existing document.', originForSavedSection(doc, sec, programId));
   };
   /* The workbench reports its open section whether or not this canvas is
      expanded (it stays mounted, hidden), and so does this, saying which. An
@@ -531,7 +531,7 @@ export function DocumentCanvas({
                 ) : (
                   <p className="dcv-sec-empty">
                     Not drafted yet.
-                    <button type="button" className="nda-open" onClick={() => askToDraft(sec, title)}>
+                    <button type="button" className="nda-open" onClick={() => askToDraft(sec)}>
                       {`Ask AnA to draft ${sec.code}`}
                     </button>
                   </p>

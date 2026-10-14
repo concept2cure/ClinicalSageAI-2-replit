@@ -9,6 +9,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ToolContext } from '../AnaToolExecutor.js';
 
 const vaultModule = vi.hoisted(() => () => import('./support/read-delivery-vault.js'));
+const readFixtureModule = vi.hoisted(() => () => import('./support/source-read-tool-fixture.js'));
+// Actor admission is covered by current-access/native suites. These handler
+// cases isolate delivery budgets and receipts after a successful admission.
+vi.mock('../catalog-scope.js', async importOriginal =>
+  (await vaultModule()).catalogScopeMock(await importOriginal<Record<string, unknown>>()),
+);
+vi.mock('../../c2c/current-program-access.js', async importOriginal =>
+  (await readFixtureModule()).syntheticProgramAccessMock(await importOriginal<Record<string, unknown>>()),
+);
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(async () => ({ rows: [] })) }, getPool: () => ({}), db: {} }));
 vi.mock('../../vault/document-catalog.service.js', async () => (await vaultModule()).serviceMock());
 vi.mock('../document-tools-shared.js', async importOriginal => (await vaultModule()).gatesMock(await importOriginal<Record<string, unknown>>()));

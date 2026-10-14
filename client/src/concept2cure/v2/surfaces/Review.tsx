@@ -20,7 +20,7 @@
  * reviewer is added with request-review), and this board invents no state.
  *
  * NOTE: this surface records review verdicts. It does NOT apply a 21 CFR §11.50
- * electronic signature — see DecisionModal below. Binding signatures are applied
+ * electronic signature — see ReviewDecisionDialog. Binding signatures are applied
  * from the authoring workspace (server/routes/authoring.router.ts), re-verified
  * and sealed against a frozen document version.
  *
@@ -40,8 +40,11 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { useDialog } from '../useDialog';
-import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
+import { useAuthUser } from '@/services/portal/authService';
+import { ceremonyOpen } from '../ceremony';
+import { ReviewDecisionDialog } from './ReviewDecisionDialog';
+import type { AuthoringReviewRow } from '@shared/authoring/peer-review';
+import type { ReviewItem, ReviewComment, ReviewWorkflow, ReviewRequest } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { publishShellProject, readShellProject } from '../shellProject';
 import { setEditorTarget } from '../editorTarget';
@@ -73,9 +76,6 @@ const SCOPES: Array<{ id: Scope; label: string }> = [
   { id: 'requested', label: 'Requested by me' },
   { id: 'all', label: 'All open' },
 ];
-
-/** The authoring verdicts POST /documents/:id/review takes. */
-type Verdict = 'approved' | 'changes_requested' | 'rejected';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -171,208 +171,14 @@ export function openReviewDocument(
   onNav('document-authoring');
 }
 
-/* ── Review-decision modal ── */
-
-/** What a thrown review request says: the API's own message, or that nothing was reached. */
-function unreachedMessage(e: unknown): string {
-  const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-  return known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.';
-}
-
-function DecisionModal({ onClose, item, onRecorded }: {
-  onClose: () => void;
-  item: ReviewItem;
-  /** Fires only after the server confirms the write, with the verdict it recorded. */
-  onRecorded?: (verdict: Verdict) => void;
-}) {
-  /**
-   * This dialog does NOT apply an electronic signature, and does not claim to.
-   *
-   * It records the reviewer's VERDICT through the authoring workflow's own
-   * transition — POST /api/authoring/documents/:id/review — the same row the
-   * author's review panel and GET /documents/:id/reviews read. It used to POST
-   * to a board-only route that wrote a second store nobody else read.
-   *
-   * A §11.50 signature manifestation has to record the signer's printed name,
-   * the date and time of execution, and the meaning of the signing — bound to
-   * the signed record. None of that happens here. The real implementation
-   * exists: server/routes/authoring.router.ts applies a re-verified signature
-   * bound to a frozen document version, from the authoring workspace.
-   */
-  /* P-21 (docs/LAUNCH_DEFINITION_OF_DONE.md): a regulated choice starts
-     unstated. This opened on 'approved' with a "Record approval" button, so one
-     click recorded an approval verdict nobody chose (QA 2026-10-08, walk 2,
-     j4). '' is "Not stated — choose", and nothing is sent until a verdict is. */
-  const [decision, setDecision] = useState<Verdict | ''>('');
-  const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-
-  const chosen = decision !== '';
-  const needsReason = decision !== 'approved' && chosen;
-  const reasonOk = !needsReason || reason.trim().length >= 8;
-
-  const record = async () => {
-    if (busy || decision === '') return;
-    if (!reasonOk) {
-      setErr('A change request or a rejection needs a reason of at least 8 characters — it is what the author has to act on.');
-      return;
-    }
-    setBusy(true);
-    setErr('');
-    try {
-      const res = await apiRequest(
-        'POST',
-        '/api/authoring/documents/' + encodeURIComponent(String(item?.id ?? '')) + '/review',
-        { review_status: decision, review_comments: reason.trim() || undefined },
-      );
-      const body = await res.json().catch(() => null);
-      const payload = body as { success?: boolean } | null;
-      if (!res.ok || payload?.success !== true) {
-        setErr(serverMessage(body) ?? 'The decision was not recorded (HTTP ' + res.status + '). Nothing changed.');
-        return;
-      }
-      onRecorded?.(decision);
-    } catch (e) {
-      setErr(unreachedMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  /* Escape, focus-on-open and focus-return: a governed decision dialog must
-     have a way out for a keyboard user and announce that it opened. */
-  const dialogRef = useDialog(onClose);
-
-  const submitLabel =
-    decision === 'approved' ? 'Record approval'
-    : decision === 'changes_requested' ? 'Record change request'
-    : decision === 'rejected' ? 'Record rejection'
-    : 'Record decision';
-
-  return (
-    <div className="esign-bd" onClick={onClose}>
-      <div
-        className="esign-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Record review decision"
-        tabIndex={-1}
-        ref={dialogRef}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="esign-h">
-          <span className="ico">{I.lock}</span>
-          <span className="t">Record review decision</span>
-        </div>
-        <div className="esign-b">
-          {item && (
-            <div className="esign-field" style={{ marginBottom: 4 }}>
-              <label>Document</label>
-              <div style={{ fontSize: 12.5, fontWeight: 600 }}>{item.doc}</div>
-            </div>
-          )}
-          <div className="esign-field">
-            <label htmlFor="rv-decision">Decision</label>
-            <select
-              id="rv-decision"
-              value={decision}
-              onChange={(e) => setDecision(e.target.value as Verdict | '')}
-            >
-              <option value="">Not stated — choose</option>
-              <option value="approved">Approve</option>
-              <option value="changes_requested">Request changes — send it back with a reason</option>
-              <option value="rejected">Decline — reject this document</option>
-            </select>
-          </div>
-          <div className="esign-field">
-            <label htmlFor="rv-reason">
-              {needsReason ? 'Reason (required)' : 'Note for the thread (optional)'}
-            </label>
-            <textarea
-              id="rv-reason"
-              rows={3}
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder={needsReason
-                ? 'What has to change before this can be approved'
-                : 'Anything the author or the next reviewer should know'}
-            />
-          </div>
-          {err && <div className="esign-err" role="alert">{err}</div>}
-          <div className="esign-manifest">
-            {chosen ? (
-              <>This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
-              the document in the authoring workflow, where the author and the other
-              reviewers see it.</>
-            ) : (
-              <>No verdict is chosen yet, and nothing is recorded until one is. The verdict you
-              choose is recorded on the document in the authoring workflow, where the author and
-              the other reviewers see it.</>
-            )} It is <b>not</b> a 21 CFR §11.50 signature manifestation —
-            no signer identity is re-verified here and nothing is sealed against a
-            frozen document version. Apply a binding signature from the authoring
-            workspace, where the signer's password is re-verified and the signature sealed.
-          </div>
-        </div>
-        <div className="esign-f">
-          <button className="btn ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={onClose} disabled={busy}>Cancel</button>
-          <button
-            className="btn primary"
-            style={{ flex: 1, justifyContent: 'center' }}
-            onClick={record}
-            disabled={busy || !chosen || !reasonOk}
-          >
-            {I.shieldCheck} {busy ? 'Recording…' : submitLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Record-decision button ── */
-
-function RecordDecision({ item, onRecorded }: {
-  item: ReviewItem;
-  onRecorded?: (verdict: Verdict) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  /* The chip is driven by the caller's OWN review row as the board returned it
-     after the write — a statement about the record, not about this tab. */
-  if (item.myReviewStatus && item.myReviewStatus !== 'pending') {
-    const tone = item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn';
-    return (
-      <span
-        className={'rd-chip tone-' + tone}
-        style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}
-      >
-        {I.shieldCheck} Your decision recorded — {REVIEW_STATUS_LABEL[item.myReviewStatus] ?? item.myReviewStatus}
-      </span>
-    );
-  }
-
-  return (
-    <>
-      <button className="btn primary" onClick={() => setOpen(true)}>{I.shieldCheck} Record review decision</button>
-      {open && (
-        <DecisionModal
-          item={item}
-          onClose={() => setOpen(false)}
-          onRecorded={(verdict) => {
-            setOpen(false);
-            onRecorded?.(verdict);
-          }}
-        />
-      )}
-    </>
-  );
-}
-
 /* ════ Review & Approval surface ════ */
 
-export function Review({ onAsk, onNav }: SurfaceViewProps) {
+export function Review(props: SurfaceViewProps) {
+  const user = useAuthUser();
+  return <ReviewSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
+}
+
+function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
   const [queue, setQueue] = useState<ReviewItem[]>([]);
   const [sel, setSel] = useState('');
   /* The row whose thread the board should carry. Set only by an explicit
@@ -381,12 +187,9 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const [threadFor, setThreadFor] = useState('');
   const [thread, setThread] = useState<ReviewComment[]>([]);
   const [reply, setReply] = useState('');
-  const [rejecting, setRejecting] = useState(false);
-  const [reason, setReason] = useState('');
-  // Write state. `requesting` guards a double submit; `requestErr` is what makes
-  // a failure visible instead of the form silently staying open.
+  const [decisionFor, setDecisionFor] = useState<ReviewItem | null>(null);
+  // Shared comment-write state guards a double submit.
   const [requesting, setRequesting] = useState(false);
-  const [requestErr, setRequestErr] = useState('');
   const [scope, setScope] = useState<Scope>('all');
   const [toast, fireToast] = useToast();
   /** The queue column — "Open the queue" scrolls to it and focuses the row it selected. */
@@ -439,19 +242,20 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
   /** Re-read the board from the server after a confirmed write. */
   const refreshBoard = () => setBoardEpoch((e) => e + 1);
+  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
+    refreshBoard(); fireToast(recordedNotice(receipt));
+  }} />;
 
   /** Select a row: the detail pane AND the thread the next board read carries. */
   const selectRow = (id: string) => {
+    if (ceremonyOpen()) return;
     setSel(id);
     setThreadFor(id);
-    setRejecting(false);
-    setRequestErr('');
   };
 
   const changeScope = (s: Scope) => {
+    if (ceremonyOpen()) return;
     setScope(s);
-    setRejecting(false);
-    setRequestErr('');
   };
 
   /* Jump to the next document still awaiting a decision — ONE path shared by
@@ -460,7 +264,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const openQueue = (): ReviewItem | null => {
     const next = queue.find((r) => r.state !== 'approved') ?? null;
     if (next) selectRow(next.id);
-    else setRejecting(false);
+
     try {
       queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
@@ -476,7 +280,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
      in-progress justification is open. */
   const reviewBusyGuard = (): { ok: false; reason: string } | null => {
     if (requesting) return { ok: false, reason: 'A review write is in flight — wait for it to finish.' };
-    if (rejecting) return { ok: false, reason: 'The request-changes form is open — close it first.' };
+    if (ceremonyOpen()) return { ok: false, reason: 'The review decision dialog is open — close it first.' };
     return null;
   };
   useSurfaceActionHandlers('review', {
@@ -574,7 +378,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
   const scopeBar = (
     <>
-      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={(value) => { if (!ceremonyOpen()) setOnlyProgram(value); }} />
       {/* Send for review on a Vault version assigns nobody, so it was in no
           queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
       <ReviewVaultQueue items={board?.vaultReviews} onOpenVault={() => onNav('vault')} />
@@ -586,6 +390,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   if (boardState.loading && queue.length === 0) {
     return (
       <div className="page-inner">
+        {decisionDialog}
         <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState title="Loading the review board…" icon={I.clock} />
@@ -595,6 +400,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   if (boardState.error && queue.length === 0) {
     return (
       <div className="page-inner">
+        {decisionDialog}
         <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState
@@ -627,6 +433,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           : 'When a review is requested on a document in Authoring, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.';
     return (
       <div className="page-inner">
+        {decisionDialog}
         <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
         {scopeBar}
         {boardRead ? (
@@ -651,51 +458,6 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const wf: ReviewWorkflow | null = workflows[item.id] || null;
 
   const openEditor = () => openReviewDocument(item, onNav);
-
-  /**
-   * Request changes — the authoring verdict `changes_requested`, through
-   * POST /api/authoring/documents/:id/review with the reason as the review
-   * comment. `item.id` IS the authoring document id the route takes.
-   *
-   * The row is moved and the thread entry added ONLY after the write returns
-   * and the board is re-read.
-   */
-  const doRequestChanges = async () => {
-    const text = reason.trim();
-    if (!text || requesting) return;
-    if (text.length < 8) {
-      setRequestErr('A change request needs a reason of at least 8 characters — it is what the author has to act on.');
-      return;
-    }
-    setRequesting(true);
-    setRequestErr('');
-    try {
-      const res = await apiRequest(
-        'POST',
-        '/api/authoring/documents/' + encodeURIComponent(item.id) + '/review',
-        { review_status: 'changes_requested', review_comments: text },
-      );
-      const body = await res.json().catch(() => null);
-      const payload = body as { success?: boolean } | null;
-      if (!res.ok || !payload || payload.success !== true) {
-        setRequestErr(
-          serverMessage(body) ?? 'Could not record the change request (HTTP ' + res.status + ').',
-        );
-        return;
-      }
-      setRejecting(false);
-      setReason('');
-      refreshBoard();
-      fireToast('Change request recorded on the document');
-    } catch (e) {
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      setRequestErr(
-        known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service.',
-      );
-    } finally {
-      setRequesting(false);
-    }
-  };
 
   /**
    * Resolve a review comment — PATCH /api/authoring/comments/:id {status}.
@@ -806,6 +568,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
+        {decisionDialog}
       <PageHead
         eyebrow="Project · review"
         title="Review & approval"
@@ -860,68 +623,17 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             <div style={{ display: 'flex', gap: 8 }}>
               {item.awaitingMyReview
                 ? <>
-                    <button className="btn ghost" onClick={() => { setRejecting((v) => !v); setRequestErr(''); }}>{I.close} Request changes...</button>
-                    <RecordDecision
-                      item={item}
-                      onRecorded={(verdict) => {
-                        refreshBoard();
-                        fireToast(
-                          verdict === 'rejected'
-                            ? 'Rejection recorded — the author has your reason.'
-                            : verdict === 'changes_requested'
-                              ? 'Change request recorded — the author has your reason.'
-                              : 'Approval recorded on the document.',
-                          verdict === 'rejected' ? 'error' : 'ok',
-                        );
-                      }}
-                    />
+                    <button className="btn ghost" onClick={() => setDecisionFor(item)}>{I.close} Request changes...</button>
+                    <button className="btn primary" onClick={() => setDecisionFor(item)}>{I.shieldCheck} Record review decision</button>
                   </>
                 : item.myReviewStatus && item.myReviewStatus !== 'pending'
-                  ? <RecordDecision item={item} />
+                  ? <RecordedReviewStanding item={item} />
                   : item.atMySignOff
                     ? <button className="btn primary" onClick={openEditor} data-testid="rv-open-to-sign">{I.lock} Open the document to sign</button>
-                    : item.state === 'approved'
-                      ? <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.shieldCheck} Approved</span>
-                      : item.state === 'changes-requested'
-                        ? <span className="rd-chip tone-warn" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.alertTriangle} Changes requested</span>
-                        : item.state === 'rejected'
-                          ? <span className="rd-chip tone-err" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.close} Declined</span>
-                          : null
+                    : <Pill tone={REVIEW_STANDING_PILL_TONE[reviewStanding(item).group]}>{reviewStanding(item).words}</Pill>
               }
             </div>
           </div>
-
-          {rejecting && (
-            <div className="rv-reject">
-              <textarea
-                className="rv-reject-ta"
-                aria-label="Reason for requesting changes"
-                placeholder="State the specific change required..."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                autoFocus
-              />
-              {/* WIRED — the authoring verdict `changes_requested` on
-                  POST /api/authoring/documents/:id/review: the same row the
-                  author's review panel reads. The author is not notified
-                  automatically. */}
-              <div className="rv-reject-note">
-                Recorded as your verdict on the document in the authoring workflow,
-                with this reason. The author is not notified automatically.
-              </div>
-              {requestErr && (
-                <div className="rv-reject-note" role="alert" style={{ color: 'var(--error)' }}>
-                  Not recorded — {requestErr}
-                </div>
-              )}
-              <div className="rv-reject-row">
-                <button className="btn ghost" disabled={requesting} onClick={() => { setRejecting(false); setReason(''); setRequestErr(''); }}>Cancel</button>
-                <button className="btn primary" disabled={!reason.trim() || requesting} onClick={() => { void doRequestChanges(); }}>
-                  {I.close} {requesting ? 'Recording…' : requestErr ? 'Retry' : 'Request changes'}
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* The review requests on this document — who was asked, by whom,
               and what each has said. Same rows the author's review panel reads. */}
@@ -945,24 +657,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 </div>
               )}
-              {(item.reviews ?? []).map((rv, i) => (
-                <div key={rv.id} className="rv-wf-step" data-status={rv.status === 'approved' ? 'approved' : rv.status === 'pending' ? 'current' : 'pending'}>
-                  <span className="rv-wf-dot">{rv.status === 'approved' ? I.check : (i + 1)}</span>
-                  <div className="rv-wf-body">
-                    <div className="rv-wf-nm">
-                      {rv.reviewer}
-                      <span className={'rv-wf-tag tone-' + (rv.status === 'approved' ? 'ok' : rv.status === 'pending' ? 'warn' : rv.status === 'rejected' ? 'err' : 'warn')}>
-                        {REVIEW_STATUS_LABEL[rv.status] ?? rv.status}
-                      </span>
-                    </div>
-                    <div className="rv-wf-meta mono">
-                      {rv.requestedBy ? 'requested by ' + rv.requestedBy : 'requested'}
-                      {rv.reviewedAt ? ' · decided ' + new Date(rv.reviewedAt).toLocaleDateString() : ''}
-                      {rv.comments ? ' · ' + rv.comments : ''}
-                    </div>
-                  </div>
-                </div>
-              ))}
+              {(item.reviews ?? []).map((review, index) => <ReviewRequestStep key={review.id} review={review} index={index} />)}
             </div>
           </div>
 
@@ -1086,4 +781,42 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       <C2CToast msg={toast} />
     </div>
   );
+}
+
+function RecordedReviewStanding({ item }: { item: ReviewItem }) {
+  const current = item.myReviewStanding === 'current';
+  const label = REVIEW_STATUS_LABEL[item.myReviewStatus ?? ''] ?? item.myReviewStatus;
+  return <span className={`rd-chip tone-${current ? item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn' : 'warn'}`}>
+    {current ? 'Your decision recorded' : 'Your earlier decision'} — {label}
+    {!current && (item.myReviewStanding === 'stale' ? ' · Saved content changed' : ' · Content binding unavailable')}
+  </span>;
+}
+
+function recordedNotice(receipt: AuthoringReviewRow): string {
+  return receipt.review_status === 'approved' ? 'Approval recorded for the saved document shown.' : receipt.review_status === 'changes_requested' ?
+    'Change request recorded — the author has your reason.' : 'Rejection recorded — the author has your reason.';
+}
+
+function ReviewRequestStep({ review, index }: { review: ReviewRequest; index: number }) {
+  const current = review.standing === 'current';
+  const approved = current && review.status === 'approved';
+  const tone = approved ? 'ok' : current && review.status === 'rejected' ? 'err' : 'warn';
+  const state = approved ? 'approved' : review.status === 'pending' ? 'current' : 'pending';
+  return <div className="rv-wf-step" data-status={state}>
+    <span className="rv-wf-dot">{approved ? I.check : index + 1}</span>
+    <div className="rv-wf-body">
+      <div className="rv-wf-nm">{review.reviewer}<span className={`rv-wf-tag tone-${tone}`}>{reviewRequestWords(review)}</span></div>
+      <div className="rv-wf-meta mono">
+        {review.requestedBy ? `requested by ${review.requestedBy}` : 'requested'}
+        {review.reviewedAt && ` · decided ${new Date(review.reviewedAt).toLocaleDateString()}`}
+        {review.comments && ` · ${review.comments}`}
+      </div>
+    </div>
+  </div>;
+}
+
+function reviewRequestWords(review: ReviewRequest): string {
+  const label = REVIEW_STATUS_LABEL[review.status] ?? review.status;
+  if (review.status === 'pending' || review.standing === 'current') return label;
+  return `${label} · ${review.standing === 'stale' ? 'Earlier saved content' : 'Content binding unavailable'}`;
 }

@@ -274,6 +274,7 @@ async function runInvestigation(id: string): Promise<void> {
     maxRounds: resolveMaxRounds('thorough'),
     progressExtension: resolveRoundExtension('thorough'),
     toolContext: {
+      sqlClient: pool,
       organizationId: orgId,
       userId: row.user_id ?? null,
       projectId: row.project_id ?? null,

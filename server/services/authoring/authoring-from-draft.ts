@@ -341,7 +341,7 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
     const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
     for (const section of selected) {
       const excerpts: Array<CitedExcerpt & ClaimsExcerpt> = [];
-      const sources = await verifyDraftSourceReferences(section.refs, q, ctx.tenantId, programId, excerpts);
+      const sources = await verifyDraftSourceReferences(section.refs, q, ctx.tenantId, programId, { actor: ctx.actor, excerpts });
       const sectionText = sectionReadableText(section.storedContent);
       // Every figure the stored section states, against the excerpts just verified (S5a) — is the
       // number in the source at all — and then whether it agrees with the source's own figure for

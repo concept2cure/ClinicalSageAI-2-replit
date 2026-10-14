@@ -47,18 +47,18 @@ describe('source and catalog consumers of an actual recorded disposition', () =>
   it('starts with a readable file and an eligible, identifiable source', async () => {
     const f = await harness.seed();
     expect(await spine.resolveSourceUploadIds(f.org, [f.capture])).toEqual([f.upload]);
-    expect((await spine.listClientDocuments(f.org, { programId: f.program }))[0])
+    expect((await spine.listClientDocuments(sourceExecutor,f.org, { userId:42,programId: f.program }))[0])
       .toMatchObject({ id: f.capture, dataEligible: true, originalFileAvailable: true, disposition: null });
-    expect((await catalog.listProjectDocuments(f.org, { programId: f.program })).documents).toHaveLength(1);
+    expect((await catalog.listProjectDocuments(sourceExecutor,f.org, { userId:42,programId: f.program })).documents).toHaveLength(1);
   });
 
   it('retains extracted text and lineage while refusing original-file pins', async () => {
     const f = await harness.seed();
     await f.apply('keep_data');
     expect(await spine.resolveSourceUploadIds(f.org, [f.capture])).toEqual([]);
-    expect((await spine.listClientDocuments(f.org, { programId: f.program }))[0])
+    expect((await spine.listClientDocuments(sourceExecutor,f.org, { userId:42,programId: f.program }))[0])
       .toMatchObject({ dataEligible: true, originalFileAvailable: false, disposition: 'keep_data' });
-    expect(await catalog.loadDocumentForOrg(f.vault, f.org, { includeText: true }))
+    expect(await catalog.loadDocumentForOrg(f.vault, f.org, { executor:sourceExecutor,userId:42,includeText: true }))
       .toMatchObject({ extractedText: 'Extracted study values', originalFileAvailable: false, disposition: 'keep_data' });
     expect(await retained.readRetainedSourceContexts(f.org, f.program, [f.capture])).toEqual([
       expect.objectContaining({ sourceId: f.capture, text: 'Extracted study values', sha256: 'a'.repeat(64),
@@ -82,11 +82,11 @@ describe('source and catalog consumers of an actual recorded disposition', () =>
   it('withdraws new grounding without rewriting the historical captured identity', async () => {
     const f = await harness.seed();
     await f.apply('remove_data');
-    expect((await spine.listClientDocuments(f.org, { programId: f.program }))[0])
+    expect((await spine.listClientDocuments(sourceExecutor,f.org, { userId:42,programId: f.program }))[0])
       .toMatchObject({ id: f.capture, dataEligible: false, originalFileAvailable: false, disposition: 'remove_data' });
     expect(await retained.readRetainedSourceContexts(f.org, f.program, [f.capture])).toEqual([]);
-    expect(await catalog.loadDocumentForOrg(f.vault, f.org, { includeText: true })).toBeNull();
-    expect((await catalog.listProjectDocuments(f.org, { programId: f.program })).documents).toEqual([]);
+    expect(await catalog.loadDocumentForOrg(f.vault, f.org, { executor:sourceExecutor,userId:42,includeText: true })).toBeNull();
+    expect((await catalog.listProjectDocuments(sourceExecutor,f.org, { userId:42,programId: f.program })).documents).toEqual([]);
     expect(await links.resolveEvidenceSourceIdsByArtifact(f.org, [`cre_source:${f.capture}`], sourceExecutor)).toEqual(new Map());
     expect(await spine.getSource(f.org, f.capture)).toMatchObject({ id: f.capture, checksum: 'a'.repeat(64), dataEligible: false });
     expect((await harness.pg.query('SELECT * FROM document_span_lineage WHERE organization_id=$1', [f.org])).rows).toHaveLength(1);

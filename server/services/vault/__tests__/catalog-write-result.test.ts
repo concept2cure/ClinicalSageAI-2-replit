@@ -4,6 +4,13 @@ const h = vi.hoisted(() => ({ query: vi.fn(), embed: vi.fn(), updated: 0 }));
 // The suggestion is written in a transaction with its audit row (S4); the audit
 // writer is stubbed, the catalog statements reach the same mock.
 vi.mock('../../../db.js', () => ({ pool: { query: h.query, connect: async () => ({ query: h.query, release: () => undefined }) } }));
+// Current actor admission is separately proven by current-writer/native suites;
+// this fixture exercises byte/version persistence and vector fallback only.
+vi.mock('../../c2c/current-program-access', async importOriginal => ({
+  ...await importOriginal<typeof import('../../c2c/current-program-access')>(),
+  readCurrentProgramActor: vi.fn(async () => ({ userId: 1, role: 'member' })),
+  requireCurrentProgramAccess: vi.fn(async () => ({ actor: { userId: 1, role: 'member' } })),
+}));
 vi.mock('../../auditService.js', () => ({ writeChainedAuditRow: vi.fn(async () => undefined) }));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: h.embed }) }));
 vi.mock('../../ana/project-scope-admission.js', () => ({ admitAnaProjectScope: vi.fn(async () => ({ projectId: 83, programId: '10000000-0000-4000-8000-000000000001' })), AnaProjectScopeError: class extends Error {} }));
@@ -14,7 +21,11 @@ beforeEach(() => {
   h.query.mockImplementation(async (sql: string) => {
     if (sql.includes('SELECT d.id')) return { rows: [{ id, program_id: id, organization_id: 7, content_hash: 'a'.repeat(64),
       catalog_content_hash: 'a'.repeat(64), catalog_status: 'extracted', char_count: 4,
-      extracted_text: 'text', file_name: 'source.txt', original_file_available: true, data_eligible: true, superseded: false }], rowCount: 1 };
+      extracted_text: 'text', file_name: 'source.txt', original_file_available: true, data_eligible: true, superseded: false, is_current: true,
+      document_code: 'CSR', document_title: 'Study', document_type: 'csr', mime_type: null, disposition: null,
+      folder_id: null, evidence_kind: null, ctd_section: null, placement_status: 'unfiled',
+      extraction_method: null, extraction_confidence: null, extraction_error: null, word_count: null, page_count: null,
+      document_kind: null, purpose: null, summary: null, key_data: null, cataloged_at: null, catalog_state: null, proposed_model: null }], rowCount: 1 };
     if (sql.includes('SELECT char_start')) return { rows: [{ char_start: 0, char_end: 4 }], rowCount: 1 };
     if (sql.includes('SELECT ou.role')) return { rows: [{ role: 'member' }], rowCount: 1 };
     if (sql.includes('SELECT id FROM regulatory_programs')) return { rows: [{ id }], rowCount: 1 };
@@ -26,7 +37,7 @@ beforeEach(() => {
     throw new Error('Unexpected SQL in catalog test');
   });
 });
-const complete = () => runWithTenantScope({ tenantId: '7', role: 'member', source: 'test' }, () => completeCatalog({ documentId: id, organizationId: 7, userId: 41, documentKind: 'csr', purpose: 'Review', summary: 'Summary' }));
+const complete = () => runWithTenantScope({ tenantId: '7', role: 'member', source: 'test' }, () => completeCatalog({ documentId: id, organizationId: 7, userId: 41, executor: { query: h.query }, documentKind: 'csr', purpose: 'Review', summary: 'Summary' }));
 describe('catalog completion persistence receipts', () => {
   it.each(['vector', 'fallback'])('refuses zero updated rows on the %s path', async mode => {
     if (mode === 'vector') h.embed.mockResolvedValue({ embedding: [1, 2, 3] });
@@ -45,7 +56,7 @@ describe('catalog completion persistence receipts', () => {
 });
 describe('the kind is the Vault vocabulary (S4)', () => {
   it('refuses a kind outside it before reading anything', async () => {
-    const outcome = await completeCatalog({ documentId: id, organizationId: 7, documentKind: 'CSR', purpose: 'Review', summary: 'Summary' });
+    const outcome = await completeCatalog({ documentId: id, organizationId: 7, userId: 1, executor: { query: h.query }, documentKind: 'CSR', purpose: 'Review', summary: 'Summary' });
     expect(outcome).toMatchObject({ ok: false, refusal: expect.stringContaining('is not an evidence kind the Vault records') });
     expect(h.query).not.toHaveBeenCalled();
   });

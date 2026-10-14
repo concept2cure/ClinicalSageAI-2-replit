@@ -330,5 +330,22 @@ describe('formatSessionBootstrap — completeness is claimed only when earned', 
     });
     expect(out).not.toContain('were attached — list_project_documents');
   });
+
+  it('discloses an unmeasured actor scope total for a bounded chat page', () => {
+    const out = formatSessionBootstrap({ projectAtoms: [], clientAtoms: [], outcomeLessons: [],
+      chatUploads: { uploads: [{ fileName: 'a.pdf', fileId: 'file_a' }], hasMore: true, actorFiltered: true } });
+    expect(out).toContain('Showing 1 chat file(s) from your accessible source scope');
+    expect(out).toContain('scope total was not measured');
+    expect(out).toContain('More than these 1 were attached');
+    expect(out).not.toContain('1 chat file(s) in your accessible source scope at this recall check');
+  });
+
+  it('retains a measured scope total when an exhausted actor page supplies it', () => {
+    const out = formatSessionBootstrap({ projectAtoms: [], clientAtoms: [], outcomeLessons: [],
+      chatUploads: { uploads: [{ fileName: 'a.pdf', fileId: 'file_a' }], hasMore: false, actorFiltered: true, total: 1 } });
+    expect(out).toContain('1 chat file(s) in your accessible source scope at this recall check');
+    expect(out).not.toContain('scope total was not measured');
+    expect(out).not.toContain('More than these');
+  });
 });
 

@@ -1,0 +1,1078 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > lists actual memberships, requires a calm confirmation, and can cancel without rotating the session 261ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > adopts the server-verified scoped session, clears predecessor context and opens a fresh shell without a program deep link 50ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > keeps a membership refusal visible and keeps the existing session 42ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends the spent session and offers sign-in if the replacement session cannot be verified 39ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not store a replacement token whose verified user or organization differs from the requested membership 84ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not retain a new session if fresh-shell navigation fails 87ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > refuses dirty preflight without rotating, purging drafts or asking a second confirmation 569ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds editing while SELECT waits and restores it after a definite membership refusal 202ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > keeps the old editor held after assign returns until the current document unloads 189ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds the raw source textarea without rewriting the device recovery cache 267ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching waits for an existing editor write to settle > refuses preflight during a save even when typing returns the buffer to its old baseline 423ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after select, expires the spent bearer and preserves only the original account recovery cache 273ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after probe, expires the spent bearer and preserves only the original account recovery cache 239ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while select was pending 117ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while probe was pending 165ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > preserves a replacement sign-in for the same account and organization while SELECT waits 111ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > ends an expired access-token session rather than allowing another switch attempt 33ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > requires sign-in when the select request has an unknown outcome after a network failure 39ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > prevents duplicate session rotations while a switch request is pending 28ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > shows a membership read error with retry rather than pretending there are no organizations 16ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > renders the organization identifier when the backend has no name 14ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > refuses a stale account identity before dispatching an organization change 23ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > does not save prose typed during the wait under the system reason, and anchors the quoted words 492ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > follows the range through the tracking plugin's own transactions 164ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > saves only the anchor under the system reason once the author saved their own edits during the wait 176ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > refuses the anchor when the quoted words themselves changed during the wait 128ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > CONTROL: an untouched buffer is anchored and saved under the system reason, as before 120ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: text typed while the save is in flight stays unsaved, guarded and cached 62ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a keystroke during the save does not claim the save has settled 83ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not the one before it 123ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a restored device draft is what the next save sends 62ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > CONTROL: source mode with nothing typed mid-save is saved and leaves no device draft 41ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — the rich canvas keeps its device draft the same way > rich mode: an edit made while the save is in flight keeps its device draft 109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > shows real names, scope, UTC dates and reasons from the open document 82ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > offers duplicate names with the actual email so members can be distinguished 318ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > governed document access > posts the selected member, role, actual section, UTC expiry and required trimmed reason without a client-provided email 153ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > requires a reason before changing access 117ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > rejects past expiry dates and overlong reasons without sending 146ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > confirms revocation through the governed reason form and displays the server record 80ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > keeps the form and reason on an owner/admin refusal, without success or local grants 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > states the last-owner refusal and keeps the reason for correction 61ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > does not turn a forbidden or malformed access read into an empty list 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > retains access history but offers no new grants when members cannot be read 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access changes and refusals > reports unavailable member and section details without claiming either was removed 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > shows revoked and expired grants with their dates instead of calling them active 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > requires a reload after a network or unverified receipt outcome and suppresses duplicate changes 161ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > never confirms a changed row for another document or an unconfirmed audit entry 95ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > isolates late read results after selecting another document 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/documentPermissionsPanel.test.tsx > document access history and uncertain outcomes > does not invent a tenant or make requests without an open document 2ms
+stderr | client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > the same person is offered it back
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > another person on the same browser is not
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > the same person is offered it back 271ms
+stderr | client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > a read-only section offers no draft, even its author’s
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > another person on the same browser is not 108ms
+ ✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > a read-only section offers no draft, even its author’s 85ms
+stderr | client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > the offer goes when the section becomes read-only while open
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > signing out removes every device draft (SEC-A-5) > drafts under any key shape are purged; other storage is kept
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > a cached draft is offered only to the person who typed it (SEC-A-5) > the offer goes when the section becomes read-only while open 144ms
+ ✓ client/src/concept2cure/v2/__tests__/deviceDraftCacheOwner.test.tsx > signing out removes every device draft (SEC-A-5) > drafts under any key shape are purged; other storage is kept 84ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved 250ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > releases the guard when the canvas goes away
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > flushes work still inside the debounce window
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > does not hold a read-only canvas hostage 46ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > releases the guard when the canvas goes away 67ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > flushes work still inside the debounce window
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > flushes work still inside the debounce window 68ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed 70ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when no autosave was ever armed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when no autosave was ever armed 58ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > checks the synchronous adoption disposition before storing or purging anything 25ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 0 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id -1 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 33::34 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > guarded workspace adoption preserves the account recovery boundary > does not preserve drafts for an invalid account id 9007199254740992 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 4ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption 4ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not let an old account read replace the adopted organization 54ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > refuses account and policy refreshes begun while adoption is awaiting verification 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after the browser session has ended 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after logout has completed 7ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not let a deferred idle refusal for the old account end the adopted session 53ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not replace the adopted policy with a deferred previous-session policy 53ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > does not complete an adoption after a different account has signed in 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > an ended or replaced session invalidates its pending adoption > keeps the newest of overlapping session adoption attempts 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 23ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 3ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a refusal nested under error, as /mfa/resend writes it 2ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > still reads a top-level { code, message } 2ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a bare error string, and falls back to the status when the body says nothing 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 20ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 5ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 3ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > is read back on the next load (persistent adoption) 10ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > an expired stored session is still not read back 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password returns the server's refusal, and no refresh is attempted 8ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password with a stale session in storage still says so, and does not end or refresh it 3ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong current password (401 AUTH_001) is the refusal, not an expiry, and the session stays 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong verification code (401 AUTH_004) is the refusal, not an expiry 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a real expiry still says expiry > a signed-in request refused for its session, whose refresh also fails, is SESSION_EXPIRED 3ms
+
+ Test Files  11 passed (11)
+      Tests  97 passed (97)
+   Start at  04:57:01
+   Duration  19.55s (transform 1.33s, setup 1.03s, import 2.98s, tests 7.88s, environment 5.57s)
+

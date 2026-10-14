@@ -239,7 +239,7 @@ describe('POST /runs/:id/finalize is an electronic signature (reporting review 2
 const CEREMONY_NO_AUTHORITY =
   'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
 
-describe('POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g))', () => {
+describe('POST /runs/:id/finalize needs signing authority from the canonical ceremony (P1-44b, 21 CFR 11.10(g))', () => {
   it.each(['owner', 'manager'])(
     'refuses the role %s, which the default signing policy does not admit: the ceremony\'s 403, before any password or transaction',
     async (role) => {
@@ -282,14 +282,15 @@ describe('POST /runs/:id/finalize needs signing authority, checked once, by the 
     nothingWritten();
   });
 
-  it('a role with authority is looked up once, by the ceremony, and signs', async () => {
+  it('a role with authority is checked before credentials and again on the signing transaction', async () => {
     h.memberRole.mockResolvedValue('admin');
     eligible();
     lockedAs('completed');
     const res = await finalize('admin');
     expect(res.status).toBe(200);
-    expect(h.memberRole).toHaveBeenCalledTimes(1);
-    expect(h.memberRole).toHaveBeenCalledWith(5, 7);
+    expect(h.memberRole).toHaveBeenCalledTimes(2);
+    expect(h.memberRole).toHaveBeenNthCalledWith(1, 5, 7);
+    expect(h.memberRole).toHaveBeenNthCalledWith(2, 5, 7, expect.objectContaining({ query: expect.any(Function) }));
   });
 });
 

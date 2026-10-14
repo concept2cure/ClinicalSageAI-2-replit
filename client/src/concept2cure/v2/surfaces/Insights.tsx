@@ -5,7 +5,7 @@ import { useLiveData, EmptyState, ErrorState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
-import { useAuthUser } from '@/services/portal/authService';
+import { authService, useAuthUser } from '@/services/portal/authService';
 import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
 import { readinessPredicate, readinessQualifier } from '@shared/regulatory/readiness-statement';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
@@ -22,7 +22,7 @@ import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
-import type { ReportRunRow } from './insightsLibraryModel';
+import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -38,8 +38,11 @@ const RO_TIERS: Tier[] = [
   { id: 'enterprise', label: 'Enterprise', rank: 2 },
 ];
 
+const REPORT_PLAN_UNVERIFIED = "Your organization's plan could not be verified. Running reports is unavailable until it can be verified.";
+
 /** A tier's display name. */
 function tierLabel(id: string): string {
+  if (id === 'free') return 'Free';
   return (RO_TIERS.find(t => t.id === id) || { label: id }).label;
 }
 
@@ -108,10 +111,13 @@ interface ReportType {
   t: { allowPartial?: boolean; requireBlockers?: boolean; requireConfidence?: boolean; requireExplicitGaps?: boolean; forbidFinal?: boolean; requireDisclosure?: boolean };
   /** An engine computes it over a program; otherwise it is shown as not computed and never run. */
   runnable: boolean;
+  entitled?: boolean;
+  requiredTier?: string;
   region?: string | null;
   allowedPersonas?: string[];
   computedScope?: string | null;
   availabilityReason?: string | null;
+  reasonCode?: string | null;
   availabilityState?: LibraryReportType['availabilityState'];
   runScopeType?: string | null;
   runScopeId?: string | null;
@@ -127,10 +133,13 @@ interface CanvasReportType {
   allowedClientSegments?: string[];
   truthfulnessRules?: Record<string, unknown>;
   runnable?: boolean;
+  entitled?: boolean;
+  requiredTier?: string;
   region?: string | null;
   allowedPersonas?: string[];
   computedScope?: string | null;
   availabilityReason?: string | null;
+  reasonCode?: string | null;
   availabilityState?: LibraryReportType['availabilityState'];
   runScopeType?: string | null;
   runScopeId?: string | null;
@@ -151,10 +160,13 @@ function catalogFrom(rows: CanvasReportType[] | undefined): ReportType[] {
     segments: r.allowedClientSegments ?? [],
     t: (r.truthfulnessRules ?? {}) as ReportType['t'],
     runnable: r.runnable === true,
+    entitled: typeof r.entitled === 'boolean' ? r.entitled : undefined,
+    requiredTier: typeof r.requiredTier === 'string' ? r.requiredTier : undefined,
     region: r.region,
     allowedPersonas: r.allowedPersonas,
     computedScope: r.computedScope,
     availabilityReason: r.availabilityReason,
+    reasonCode: r.reasonCode,
     availabilityState: r.availabilityState,
     runScopeType: r.runScopeType,
     runScopeId: r.runScopeId,
@@ -171,9 +183,8 @@ const SEG_LABEL: Record<string, string> = {
 interface ProgramCtx {
   code: string;
   label: string;
-  // filing / agency / pdufa are NOT on the projects / readiness model and are
-  // returned as an explicit null by the overview endpoint — rendered null-safe,
-  // never fabricated.
+  // Filing and agency come from authorized recorded registry metadata.
+  // Missing/unverifiable context and the unsourced action date stay null.
   filing: string | null;
   indication: string | null;
   readiness: number | null;
@@ -187,10 +198,9 @@ interface ProgramCtx {
 
 /* ── Live canvas bootstrap (GET /api/insights-canvas/overview) ──
    Mirrors the server CanvasOverview (server/routes/insights-canvas-routes.ts):
-   the org's REAL subscription tier, its derived segments, the flagship
-   program's REAL governed readiness (computeInitialRun), and the
-   enterprise-gated portfolio rollup. No metric is originated on the client;
-   filing/agency/pdufa arrive as explicit null (unsourced), never faked. */
+   the org's real subscription tier, derived segments, selected program's
+   governed readiness and enterprise-gated portfolio rollup. Filing and agency
+   arrive only after server admission of recorded metadata; PDUFA stays null. */
 interface CanvasLeadProgram {
   /** The lead is a project (L189: it said 'program' with a project id). */
   scope: 'project';
@@ -204,6 +214,7 @@ interface CanvasLeadProgram {
   status: string;
   riskLevel: string;
   criticalBlockerCount: number;
+  registryId?: string | null;
   filing: string | null;
   agency: string | null;
   pdufa: string | null;
@@ -273,8 +284,7 @@ export function programName(p: { code: string | null; label?: string | null }): 
   return 'This program';
 }
 
-/** Map the live flagship program into the surface's ProgramCtx. filing/agency/
-    pdufa are unsourced on the readiness model (explicit null) — never faked. */
+/** Map the admitted selected program; recorded labels and nulls stay intact. */
 function leadToProgramCtx(lp: CanvasLeadProgram): ProgramCtx {
   return {
     code: programName(lp),
@@ -296,8 +306,17 @@ function roDecide(typeId: string, family: string, tier: string): { entitled: boo
   let feature = 'report_families';
   if (/(^|[._\s])portfolio|board[_\s-]?pack|rollup|roll[_\s-]up/.test(hay)) feature = 'portfolio_rollup';
   const required = RO_FEATURE_TIER[feature] || 'standard';
-  const rank = (t: string) => (RO_TIERS.find(x => x.id === t) || { rank: 0 }).rank;
+  const rank = (t: string) => t === 'free' ? -1 : (RO_TIERS.find(x => x.id === t) || { rank: 0 }).rank;
   return { entitled: rank(tier) >= rank(required), feature, requiredTier: required };
+}
+
+function actualReportDecision(type: Pick<ReportType, 'typeId' | 'family' | 'entitled' | 'requiredTier'>, tier: string) {
+  const decision = roDecide(type.typeId, type.family, tier);
+  return { ...decision, entitled: decision.entitled && type.entitled !== false, requiredTier: type.requiredTier || decision.requiredTier };
+}
+
+function actualPlanReason(decision: ReturnType<typeof roDecide>, tier: string): string {
+  return `Your current ${tierLabel(tier)} plan does not unlock this report. Its recorded requirement is the ${tierLabel(decision.requiredTier)} plan. Previewing another plan does not grant execution.`;
 }
 
 /* ── Presets per segment ── */
@@ -1036,9 +1055,19 @@ function ROReport({ report, onExport, onFinalize, seal, runId }: {
 }
 
 /* ── RODashboard ── */
+function PlanUnavailableCard({ type, family, reason = REPORT_PLAN_UNVERIFIED }: { type: ReportType; family?: string; reason?: string }) {
+  return (
+    <div className="ro-pack-card is-locked">
+      <div className="ro-pack-fam">{family}</div>
+      <div className="ro-pack-title">{type.label}</div>
+      <div className="ro-pack-sub">{reason}</div>
+    </div>
+  );
+}
+
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
-function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog, onOpenProgram }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[]; onOpenProgram?: (r: PortfolioRow) => void }) {
+function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun, scope, catalog, onOpenProgram }: { dashboard: DashboardData; tier: string; actualTier: string; tierResolved: boolean; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[]; onOpenProgram?: (r: PortfolioRow) => void }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -1131,8 +1160,9 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog, onOpenPro
       <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Standard pack</div><h2 className="ro-rep-title">{dashboard.label}</h2><p className="ro-dash-why">{dashboard.why}</p></div></div>
       <div className="ro-pack-grid">
         {types.map(t => {
-          const dec = roDecide(t.typeId, t.family, tier);
+          const dec = roDecide(t.typeId, t.family, tier), actual = actualReportDecision(t, actualTier);
           const fam = RO_FAMILY[t.family] || {};
+          if (!tierResolved) return <PlanUnavailableCard key={t.typeId} type={t} family={fam.label} />;
           if (!dec.entitled) return (
             <div key={t.typeId} className="ro-pack-card is-locked">
               <div className="ro-pack-fam">{fam.label}</div>
@@ -1154,6 +1184,7 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog, onOpenPro
               <div className="ro-pack-sub">Runs over {t.scopes.join(' or ')}, not a single {scope}.</div>
             </div>
           );
+          if (!actual.entitled) return <PlanUnavailableCard key={t.typeId} type={t} family={fam.label} reason={actualPlanReason(actual, actualTier)} />;
           if (!canRun) return (
             <div key={t.typeId} className="ro-pack-card is-locked">
               <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
@@ -1296,19 +1327,31 @@ async function downloadRunPdf(runId: number, rep: RenderedReport): Promise<{ ok:
  * report's bundled status beside its current one (`pdf/bundle-pdf.ts`). So the
  * only thing this has to get right is to say what was saved, or why nothing was.
  */
-async function downloadBundlePdf(bundleId: string, name: string): Promise<{ ok: boolean; text: string }> {
+async function downloadBundlePdf(
+  bundleId: string,
+  name: string,
+  content: BundlePdfContent,
+  sameSessionRevision: () => boolean,
+): Promise<{ ok: boolean; text: string } | null> {
   try {
-    const res = await apiRequest('GET', `/api/report-os/bundles/${encodeURIComponent(bundleId)}/export.pdf`);
+    const suffix = content === 'reports' ? '?content=reports' : '';
+    const res = await apiRequest('GET', `/api/report-os/bundles/${encodeURIComponent(bundleId)}/export.pdf${suffix}`);
+    if (!sameSessionRevision()) return null;
     if (!res.ok) {
       const body = await res.json().catch(() => null);
+      if (!sameSessionRevision()) return null;
       return { ok: false, text: `No file saved — ${serverMessage(body) ?? 'the export service did not say why'}.` };
     }
     const blob = await res.blob();
-    const filename = `${safeFileName(name || 'report-bundle', 'report-bundle')}_${bundleId.slice(0, 8)}.pdf`;
+    if (!sameSessionRevision()) return null;
+    const filename = content === 'reports'
+      ? `report-pack-${bundleId.slice(0, 8)}.pdf`
+      : `${safeFileName(name || 'report-bundle', 'report-bundle')}_${bundleId.slice(0, 8)}.pdf`;
     return downloadBlob(filename, blob)
       ? { ok: true, text: `Saved ${filename}.` }
       : { ok: false, text: 'No file saved — this browser refused the download.' };
   } catch (e) {
+    if (!sameSessionRevision()) return null;
     return { ok: false, text: `No file saved — ${e instanceof Error ? e.message : String(e)}.` };
   }
 }
@@ -1543,13 +1586,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // "preview on another plan" control (canonical entitlement UX), not persisted.
   const [tierOverride, setTierOverride] = useState<string | null>(null);
   const realTier = data?.tier ?? 'standard';
-  /* HS-1008-4. `requireReportEntitlement` degrades to `standard` when the
-     capability lookup throws, which is right for the gate and was wrong for the
-     screen: an enterprise customer whose lookup failed saw "Plan: Standard" and
-     a wall of locked tiles, with nothing saying their plan had not been read.
-     The locks stay — entitlement still fails closed — but the plan is no longer
-     asserted. Absent (an older server) is read as resolved: the flag only
-     withdraws a claim, never adds one. */
+  /* A fallback tier does not verify an entitlement. An explicit unresolved
+     result withholds generation instead of presenting a plan or upgrade claim.
+     Preserve the existing absent-flag compatibility for an older server. */
   const tierResolved = data?.tierResolved !== false;
   const tier = tierOverride ?? realTier;
   const previewing = tierOverride != null && tierOverride !== realTier;
@@ -1579,6 +1618,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      rather than offered runs the server will refuse. */
   const authUser = useAuthUser();
   const canWrite = canGovernedWrite(authUser);
+  const canExecute = canWrite && tierResolved;
   const canFinalize = canFinalizeReport(authUser);
   // The displayed run's signature and seal once finalized here, and whether the signing dialog is open.
   const [seal, setSeal] = useState<ReportSeal | null>(null);
@@ -1593,6 +1633,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   /* Runs chosen in Run history, waiting to be bundled. Held here so the choice
      survives moving between the Runs and Bundles panels. */
   const [bundlePicks, setBundlePicks] = useState<number[]>([]);
+  // The ref closes same-frame duplicate clicks; state keeps both export controls
+  // disabled for this bundle, including when the reader returns to the tab.
+  const bundleExportsInFlight = useRef(new Set<string>());
+  const [pendingBundleExports, setPendingBundleExports] = useState<ReadonlySet<string>>(new Set());
   const contextKey = `${openProgramId ?? ''}|${data?.organizationId ?? ''}|${program?.scope ?? ''}|${program?.scopeId ?? ''}|${seg}`;
   const activeContext = useRef(contextKey);
   activeContext.current = contextKey;
@@ -1633,10 +1677,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     const settle = (next: FoundResult | null) => { if (foundSeq.current === mine) setFound(next); };
     const say = (text: string) => { if (isCurrent()) { settle(null); setRunNote(text); } };
     setRunNote(null);
+    if (!tierResolved) { say(`"${type.label}" wasn't run. ${REPORT_PLAN_UNVERIFIED}`); return; }
     if (!canWrite) {
       say(`"${type.label}" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.`);
       return;
     }
+    const actual = actualReportDecision(catalog.find(row => row.typeId === type.typeId) ?? type, realTier);
+    if (!actual.entitled) { say(`"${type.label}" wasn't run. ${actualPlanReason(actual, realTier)}`); return; }
     setBusy(true);
     setDashboard(null);
     displayedRun.current = null;
@@ -1665,6 +1712,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     if (!text || busy || !program || !data) return;
     if (raw != null) setQuery(raw);
     setRunNote(null);
+    if (!tierResolved) { setFound({ text: REPORT_PLAN_UNVERIFIED }); return; }
     // roRouteReply resolves intent, chips and the entitlement lock — all
     // deterministic. When it resolves a report type, generation goes to the REAL
     // backend via runReport, not to a client-built preview.
@@ -1686,7 +1734,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const buildPreset = (preset: Preset) => {
     if (!preset) return;
     setRunNote(null);
-    setFound({ text: `${preset.label}: ${preset.why} Each tile runs a governed report against the live record; pick one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.` });
+    setFound({ text: `${preset.label}: ${preset.why} ${tierResolved ? 'Each tile runs a governed report against the live record; pick one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.' : REPORT_PLAN_UNVERIFIED}` });
     setDashboard({ kind: 'pack', label: preset.label, why: preset.why, types: preset.types });
     setReport(null);
     setReportRunId(null);
@@ -1724,6 +1772,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      unlocks the catalog exactly as it unlocks the find box. */
   const libraryCatalog: LibraryReportType[] = catalog.map((t) => {
     const d = roDecide(t.typeId, t.family, tier);
+    const blockedByPlan = !tierResolved && (t.runnable || t.computedScopes.length > 0);
     return {
       typeId: t.typeId,
       label: t.label,
@@ -1731,18 +1780,25 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       scopes: t.scopes,
       computedScopes: t.computedScopes,
       segments: t.segments,
-      runnable: t.runnable,
-      entitled: d.entitled,
+      runnable: t.runnable && tierResolved,
+      entitled: tierResolved ? d.entitled : undefined,
       requiredTier: tierLabel(d.requiredTier),
       region: t.region,
       allowedPersonas: t.allowedPersonas,
       computedScope: t.computedScope,
-      availabilityReason: t.availabilityReason,
-      availabilityState: t.availabilityState,
+      availabilityReason: blockedByPlan ? REPORT_PLAN_UNVERIFIED : t.availabilityReason,
+      reasonCode: t.reasonCode,
+      availabilityState: blockedByPlan ? 'disabled' : t.availabilityState,
       runScopeType: t.runScopeType,
       runScopeId: t.runScopeId,
     };
   });
+
+  const unavailableRunReason = (type: LibraryReportType) => {
+    if (!tierResolved) return REPORT_PLAN_UNVERIFIED;
+    const actual = actualReportDecision(catalog.find(row => row.typeId === type.typeId) ?? type, realTier);
+    return actual.entitled ? undefined : actualPlanReason(actual, realTier);
+  };
 
   /* A run opened from the history replaces the artifact pane. Its seal is
      dropped: the seal state belongs to a finalize performed here, and showing
@@ -1773,13 +1829,18 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     pushCanvasTop();
   };
 
-  const exportBundle = async (bundleId: string, name: string) => {
-    const out = await downloadBundlePdf(bundleId, name);
-    /* The tone matters: fireToast defaults to 'ok', which draws a green check.
-       A refusal ("Exporting this bundle requires the enterprise plan") under a
-       green tick is the defect toast.tsx's own header names, and exportRep
-       beside this already passes the tone. */
-    fireToast(out.text, out.ok ? undefined : 'error');
+  const exportBundle = async (bundleId: string, name: string, content: BundlePdfContent) => {
+    if (bundleExportsInFlight.current.has(bundleId)) return;
+    bundleExportsInFlight.current.add(bundleId);
+    setPendingBundleExports(new Set(bundleExportsInFlight.current));
+    const session = authService.captureSessionReadGuard();
+    try {
+      const out = await downloadBundlePdf(bundleId, name, content, session.sameRevision);
+      if (out && session.sameRevision()) fireToast(out.text, out.ok ? undefined : 'error');
+    } finally {
+      bundleExportsInFlight.current.delete(bundleId);
+      setPendingBundleExports(new Set(bundleExportsInFlight.current));
+    }
   };
 
   /* A report run from the catalog shows its document, as a run from the find
@@ -1825,16 +1886,17 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     onNav?.('project-home');
   };
   const libraryTabs = <ReportingTabs value={paneView} id={tabsId} onChange={view => { setPaneView(view); pushCanvasTop(); }} />;
-  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} types={libraryCatalog} onRun={runFromCatalog} canRun={canWrite} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
+  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
     : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite} />
     : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} onSaved={fireToast} />
-    : paneView === 'bundles' ? <BundlesPanel pendingRunIds={bundlePicks} canWrite={canWrite} onExport={(id, name) => void exportBundle(id, name)} onSaved={fireToast} onClearPending={() => setBundlePicks([])} /> : null;
+    : paneView === 'bundles' ? <BundlesPanel pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} onSaved={fireToast} onClearPending={() => setBundlePicks([])} /> : null;
   const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined} seal={seal} runId={reportRunId} /> : null;
   const visibleGeneration = requestSequence.current;
   const sealForDisplayedRun = (sealed: ReportSeal) => {
     if (activeContext.current === contextKey && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration) onSealed(sealed);
   };
-  const withoutProgram = (content: React.ReactNode) => <div className="rc"><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} />}</div></div>;
+  const planNotice = !tierResolved && <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">{I.alertTriangle} {REPORT_PLAN_UNVERIFIED} This is not a statement about your plan — try again in a moment, and contact your administrator if it persists.</div>;
+  const withoutProgram = (content: React.ReactNode) => <div className="rc"><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} />}</div></div>;
 
   // Four-state render: loading → honest error → honest empty (no flagship
   // program) → the live canvas. No fixture stand-in in any state.
@@ -1980,7 +2042,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               </>
             )}
             <div className="rc-chips">
-              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" onClick={() => findReport(q)}>{q}</button>))}
+              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" disabled={!tierResolved} onClick={() => findReport(q)}>{q}</button>))}
             </div>
           </div>
 
@@ -1993,8 +2055,8 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               "Result", a region, only while it holds one. */}
           <section aria-label={found ? 'Result' : undefined} data-testid="rc-find-result" data-empty={found ? undefined : 'true'}>
             {found && <div className="ro-rep-eyebrow">Result</div>}
-            <p className="rc-op-body" role="status" style={found ? undefined : { margin: 0 }}>{found?.text ?? ''}</p>
-            {found?.locked && (
+            <p className="rc-op-body" role="status" style={found ? undefined : { margin: 0 }}>{found?.locked && !tierResolved ? REPORT_PLAN_UNVERIFIED : found?.text ?? ''}</p>
+            {found?.locked && tierResolved && (
               <div className="rc-lock">
                 <div className="rc-lock-h">{I.lock} {tierLabel(found.locked.requiredTier)} plan unlocks {found.locked.typeLabel}</div>
                 <div className="rc-lock-s">{RO_FEATURE_LABEL[found.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
@@ -2004,7 +2066,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                 </div>
               </div>
             )}
-            {found?.chips && found.chips.length ? <div className="rc-chips">{found.chips.map((c, ci) => (<button key={ci} className="rc-chip" onClick={() => findReport(c[1])}>{c[0]}</button>))}</div> : null}
+            {found?.chips && found.chips.length ? <div className="rc-chips">{found.chips.map((c, ci) => (<button key={ci} className="rc-chip" disabled={!tierResolved} onClick={() => findReport(c[1])}>{c[0]}</button>))}</div> : null}
             {found?.nav ? <div className="rc-chips"><button type="button" className="rc-chip" onClick={() => { if (found.nav && onNav) onNav(found.nav.surface); }}>{found.nav.label}</button></div> : null}
           </section>
           {/* A run in flight is a sentence in a status region. It was three
@@ -2026,7 +2088,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               {I.info} Previewing {tierLabel(tier)}.{' '}
               {tierResolved
                 ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
-                : <>Your organization's plan could not be read, so it is not named here.{' '}</>}
+                : <>Your organization's plan could not be verified, so it is not named here.{' '}</>}
               <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>
                 {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
               </button>
@@ -2034,13 +2096,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           )}
           {/* Not previewing, and the plan was never read: say so where the plan
               is shown, so a wall of locks is not read as the plan's doing. */}
-          {!previewing && !tierResolved && (
-            <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">
-              {I.alertTriangle} Your organization's plan could not be read just now, so paid
-              capabilities are shown locked. This is not a statement about your plan — try again
-              in a moment, and contact your administrator if it persists.
-            </div>
-          )}
+          {!previewing && planNotice}
           <label className="gov-label" htmlFor={fieldId} style={{ display: 'block', marginBottom: 5 }}>Find a report</label>
           <div className="rc-input">
             {/* One line: Enter finds, as the button does. The words stay after a
@@ -2048,7 +2104,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             <textarea id={fieldId} rows={1} value={query} placeholder={`A report type, market or question for ${p.code}`}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
-            <button type="button" className="btn primary" disabled={!query.trim() || busy} onClick={() => void findReport()}>Find</button>
+            <button type="button" className="btn primary" disabled={!tierResolved || !query.trim() || busy} onClick={() => void findReport()}>Find</button>
           </div>
           <div className="rc-guardrail">{I.shieldCheck} {RO_GUARDRAIL}</div>
         </div>
@@ -2064,7 +2120,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       <div className="rc-canvas" ref={canvasRef}>
         {libraryTabs}
         <div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>
-        {libraryPane || reportPane || (dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
+        {libraryPane || reportPane || (dashboard ? <RODashboard dashboard={dashboard} tier={tier} actualTier={realTier} tierResolved={tierResolved} onRun={runFromTile} canRun={canExecute} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
           : (
             <div className="rc-empty">
               {/* "AnA builds the report" and "a pack AnA suggests … based on

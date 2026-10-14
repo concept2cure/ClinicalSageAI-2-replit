@@ -3,6 +3,7 @@
 import type { ToolContext } from './AnaToolExecutor.js';
 import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
 import type { CatalogDocumentRow } from '../vault/document-catalog.service.js';
+import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
 export interface DraftSource {
   documentId: string;
@@ -62,7 +63,7 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext): 
     remaining -= text.length;
     sources.push({
       documentId: doc.id, programId: scope.programId, contentHash: doc.contentHash,
-      title: doc.documentTitle || doc.fileName,
+      title: doc.documentTitle || doc.fileName || '',
       extractionMethod: doc.catalog.extractionMethod, extractionConfidence: doc.catalog.extractionConfidence,
       ...sourceAvailabilityPresentation(doc),
       span: { start: 0, end: text.length, totalChars: doc.extractedText.length },
@@ -70,6 +71,7 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext): 
     });
   }
   await revalidateActorSourceScope(actor, scope.admittedScope);
+  await requireProgramScopeStillCurrent(scope.executor, { organizationId: ctx.organizationId, userId: ctx.userId, programId: scope.programId }, scope.accessibleScope);
   return { status: 'loaded', sources };
 }
 
