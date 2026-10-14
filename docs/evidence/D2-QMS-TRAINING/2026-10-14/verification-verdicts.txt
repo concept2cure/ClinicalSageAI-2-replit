@@ -1,10 +1,10 @@
 2026-10-14 UTC — final integrated verification
-Canonical base after safe fast-forward: 11fb58f19e769f901566d1be5aec452d75164891
+Latest canonical integration: merged 695a906ebab6c7ce7fa8d8f81f5e4149b23f380e, preserving upstream 4894de1f7a075e43138319a6c7e8d18d0ef28bde.
 
 Combined native Quality, canonical SQL/approval, AnA authorization, inherited route and reused editor regression:
 Test Files  29 passed (29)
-Tests  514 passed (514)
-Duration  129.90s (transform 41.06s, setup 2.04s, import 74.36s, tests 40.17s, environment 7.89s)
+Tests  516 passed (516)
+Duration  89.07s
 
 Official whole-repository TypeScript gate:
 [ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
@@ -12,7 +12,7 @@ Official whole-repository TypeScript gate:
 [ci:typecheck-no-regression] OK — error count 0 matches baseline.
 
 Production build:
-✓ built in 36.43s
+✓ built in 21.56s
 ✅ Server build complete → dist/index.js
 Existing bundle-size warnings remain; build exits 0.
 
@@ -42,3 +42,13 @@ AnA native refusal and canonical QMS/Vault creation/audit regression after priva
 Pushed warnings ratchet: no file gained warnings against 11fb58f19.
 Pushed import guard: every relative import in 40 source files resolves to a tracked file.
 Selected raw logs: qms-standing-sql-interpolation-{before,after}.log; qms-training-validation/final-fixed-standing-suites-private.log; qms-training-validation/fixed-standing-lock-trace-private.log; qms-final-native-create-regression.log; qms-pushed-lint-warnings.log; qms-pushed-imports.log.
+
+Final static-error recovery follow-up:
+Both uncertain COMMIT 503 responses use fixed recovery text and a literal stable code.
+Hostile exception message/code negative: 2 failed before repair -> both pass after repair.
+ci:server-error-leaks: red mdx-qms 0->2, then green with no baseline change.
+Final backend replay: 149/149 in seven suites.
+Final combined source-frozen replay: 516/516 in29suites,89.07s; exact log qms-latest-regression.log.
+Official merged whole-repository typecheck: errors found0,tsc exit0; qms-latest-typecheck.log.
+Final production build: client built21.56s/server build complete; qms-latest-build.log.
+Latest actual-browser replay: both light1440 and dark390 editor/reader/receipt flows pass; synthetic accounts/API only.

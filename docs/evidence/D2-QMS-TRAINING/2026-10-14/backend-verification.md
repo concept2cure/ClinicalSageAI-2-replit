@@ -1,19 +1,20 @@
 # Backend verification — personal QMS acknowledgement
 
 2026-10-14 UTC. Contract: [QMS_PERSONAL_TRAINING.md](../../../architecture/QMS_PERSONAL_TRAINING.md).
-These results cover the local working snapshot based on
-`bd8738868e1ebd0519ac39608f142dfacdd0a6fe`, including the new backend changes.
+Final results cover the local working snapshot based on merged HEAD
+`695a906ebab6c7ce7fa8d8f81f5e4149b23f380e`, including the bounded safe-error repair.
+Earlier red proofs were captured on the preceding local implementation snapshots.
 They are focused backend results, not a hosted deployment or whole-repository verdict.
 
 ## Final results
 
-**147/147 tests passed across seven suites.** The exact suite paths and counts are:
+**149/149 tests passed across seven suites.** The exact suite paths and counts are:
 
 | Suite | Passed |
 | --- | ---: |
 | `server/services/qms/__tests__/training.pglite.integration.test.ts` | 35 |
 | `server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts` | 34 |
-| `server/routes/__tests__/qms-personal-training.test.ts` | 19 |
+| `server/routes/__tests__/qms-personal-training.test.ts` | 21 |
 | `server/routes/__tests__/qms-legacy-api-retired.test.ts` | 18 |
 | `server/routes/__tests__/qms-document-approval-signature.test.ts` | 18 |
 | `server/services/qms/__tests__/document-approval-signature.test.ts` | 8 |
@@ -22,20 +23,10 @@ They are focused backend results, not a hosted deployment or whole-repository ve
 Selected raw verdicts, with exact local scratch log filenames:
 
 ```text
-/workspace/scratch/qms-training-validation/final-sixtynine-suites-private.log
-Test Files  2 passed (2)
-Tests  69 passed (69)
-Duration  10.53s
-
-/workspace/scratch/qms-authorship-existing-final.log
-Test Files  4 passed (4)
-Tests  63 passed (63)
-Duration  25.05s
-
-/workspace/scratch/qms-authorship-retire-final.log
-Test Files  1 passed (1)
-Tests  15 passed (15)
-Duration  2.36s
+/workspace/scratch/qms-training-validation/final-seven-backend-safeerror-private.log
+Test Files  7 passed (7)
+Tests  149 passed (149)
+Duration  34.83s
 ```
 
 Strict ESLint passed with zero warnings for the five new services, canonical
@@ -43,8 +34,7 @@ document-approval service, three affected native/legacy route tests, and both
 PGlite test files. The existing `mdx-qms.ts` has zero errors and its same two
 inherited warnings (`max-lines` and unrelated handler `complexity`).
 `git diff --check` passed. Full typecheck/build and hosted evidence belong to
-the integration report; a prior default-heap typecheck exhausted memory and
-provides no type verdict.
+the integration report.
 
 ## Failures demonstrated before repair
 
@@ -59,6 +49,16 @@ are reproduced here; database configuration, credentials and full logs are omitt
 | Actual text writer could approve their own revision | `Tests  7 failed \| 1 passed \| 25 skipped (33)` — `/workspace/scratch/qms-training-validation/contributor-sod-before-private.log`; canonical approval resolved instead of refusing | Actual writer is refused before approval mutation; uninvolved signer remains permitted. |
 | Canonical native approval ignored contributor attribution | `Tests  4 failed \| 14 skipped (18)` — `/workspace/scratch/qms-authorship-native-before.log` | Contributor refusals, malformed attribution and truthful null-original-author two-person manifest pass. |
 | Native creation accepted fictional contributor metadata | `Tests  1 failed \| 18 skipped (19)` — `/workspace/scratch/qms-authorship-create-before.log`; it reached the poisoned database collaborator | Reserved metadata now returns 422 before database/audit calls. |
+| Uncertain COMMIT responses reflected custom underlying text/code | `Tests  2 failed \| 19 skipped (21)` — `/workspace/scratch/qms-uncertain-error-native-before.log`; both responses exposed the injected diagnostic | Both paths retain 503/reload recovery using fixed safe text and the literal `QMS_TRAINING_COMMIT_UNCONFIRMED` code; custom message/code are absent. |
+
+The exact error-leak guard also failed before repair with `mdx-qms.ts — 0 → 2`
+at its two 503 paths (`/workspace/scratch/qms-uncertain-error-leaks-before.log`).
+After the static responses, the unchanged guard/baseline passes:
+
+```text
+/workspace/scratch/qms-uncertain-error-leaks-after.log
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+```
 
 ## Executed SQL and security boundary
 
@@ -76,7 +76,9 @@ back. Production uses canonical `writeChainedAuditRow` on that same request-pinn
 client. Native route tests poison pooled access and verify the request client is
 used; failures cannot fall back to the shared pool. COMMIT-response loss is
 simulated after persistence: the response is unconfirmed, and rereading proves
-the saved receipt/text rather than claiming rollback.
+the saved receipt/text rather than claiming rollback. The native response uses
+fixed recovery text and a stable code even if the typed exception contains a
+custom underlying diagnostic or code.
 
 These tests prove SQL transaction coupling and native request-client use. They
 mock audit-chain cryptography and electronic-signature persistence; they do not

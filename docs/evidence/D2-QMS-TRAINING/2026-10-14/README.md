@@ -32,8 +32,8 @@ engine, table, dependency or model call was introduced.
 ## Verification
 
 [Backend verification](backend-verification.md) records failing-before-repair
-proofs and 147 passing tests across seven canonical SQL/native approval suites.
-The final integrated run passes **514/514 across 29 suites**. Whole-repository
+proofs and 149 passing tests across seven canonical SQL/native approval suites.
+The final integrated run passes **516/516 across 29 suites**. Whole-repository
 TypeScript has zero errors and the production build passes. Selected raw
 verdicts are retained in [verification-verdicts.txt](verification-verdicts.txt).
 

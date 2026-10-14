@@ -1,7 +1,9 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from '../../services/qms/document-approval-signature';
+import * as trainingService from '../../services/qms/training';
+import * as controlledTextService from '../../services/qms/training-controlled-text';
 
 const h = vi.hoisted(() => ({
   doc: null as QmsDocumentRow | null, pendingDoc: null as QmsDocumentRow | null, records: [] as Record<string, unknown>[],
@@ -75,6 +77,7 @@ beforeEach(() => {
     throw new Error('Unexpected training SQL');
   });
 });
+afterEach(() => vi.restoreAllMocks());
 
 describe('native personal QMS training request contract', () => {
   it('refuses fictional server-owned contributor metadata during native creation', async () => {
@@ -182,5 +185,30 @@ describe('native controlled QMS text request contract', () => {
     h.doc!.organization_id = 99;
     const res = await request(app()).get('/api/mdx/qms/documents/11');
     expect(res.status).toBe(404); expect(res.body.meta?.training).toBeUndefined();
+  });
+});
+
+describe('uncertain QMS writes expose safe recovery information', () => {
+  const driverDetail = 'Synthetic sensitive driver diagnostic: DO_NOT_REFLECT_FIXTURE_DETAILS';
+  const driverCode = 'SYNTHETIC_INTERNAL_DRIVER_CODE';
+  function assertSafeRecovery(res: request.Response) {
+    expect(res.status).toBe(503); expect(res.body.error).toMatch(/confirm.*reload|reload.*confirm/i);
+    expect(res.body.details.code).toBe('QMS_TRAINING_COMMIT_UNCONFIRMED');
+    expect(JSON.stringify(res.body)).not.toContain(driverDetail);
+    expect(JSON.stringify(res.body)).not.toContain(driverCode);
+    expect(res.body.meta?.auditTrail).toBeUndefined();
+  }
+  it('does not reflect a custom acknowledgement COMMIT error message or code', async () => {
+    vi.spyOn(trainingService, 'acknowledgeQmsTraining').mockRejectedValueOnce(
+      new trainingService.QmsTrainingCommitUnconfirmed(driverDetail, driverCode));
+    const res = await request(app()).post('/api/mdx/qms/documents/11/training-ack').send(body());
+    assertSafeRecovery(res); expect(h.pooled).not.toHaveBeenCalled();
+  });
+  it('does not reflect a custom controlled-text COMMIT error message or code', async () => {
+    h.role = h.membershipRole = 'member'; h.doc!.status = 'draft';
+    vi.spyOn(controlledTextService, 'saveQmsControlledText').mockRejectedValueOnce(
+      new trainingService.QmsTrainingCommitUnconfirmed(driverDetail, driverCode));
+    const res = await request(app()).patch('/api/mdx/qms/documents/11').send(controlledBody());
+    assertSafeRecovery(res); expect(h.pooled).not.toHaveBeenCalled();
   });
 });

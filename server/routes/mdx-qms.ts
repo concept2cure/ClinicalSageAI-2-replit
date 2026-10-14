@@ -476,7 +476,10 @@ async function saveControlledTextResponse(req: Request, res: Response, orgId: nu
     return ok(res, document, { training: describeQmsTrainingDocument(document), auditTrail: { persisted: true, chained: true } });
   } catch (err) {
     if (err instanceof QmsTrainingRefused) return clientError(res, err.status, err.message, { code: err.code });
-    if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({ error: err.message, details: { code: err.code } });
+    if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({
+      error: 'The controlled text save could not be confirmed. Reload the document to check the saved text before trying again.',
+      details: { code: 'QMS_TRAINING_COMMIT_UNCONFIRMED' },
+    });
     return serverError(res, log, 'doc-controlled-text', err);
   }
 }
@@ -810,7 +813,10 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
     return created(res, result.acknowledgement, { auditTrail: { persisted: true, chained: true } });
   } catch (err) {
     if (err instanceof QmsTrainingRefused) return clientError(res, err.status, err.message, { code: err.code });
-    if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({ error: err.message, details: { code: err.code } });
+    if (err instanceof QmsTrainingCommitUnconfirmed) return res.status(503).json({
+      error: 'The acknowledgement could not be confirmed. Reload the document to check your record before trying again.',
+      details: { code: 'QMS_TRAINING_COMMIT_UNCONFIRMED' },
+    });
     return serverError(res, log, 'training-ack', err);
   }
 });
