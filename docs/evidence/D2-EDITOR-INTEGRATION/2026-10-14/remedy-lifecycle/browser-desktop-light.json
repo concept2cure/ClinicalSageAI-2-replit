@@ -1,0 +1,1925 @@
+{
+  "label": "desktop-light",
+  "width": 1440,
+  "theme": "light",
+  "status": "pass",
+  "rejectionRequests": {
+    "document": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "title": "Synthetic stability summary",
+      "module": "M3",
+      "product_code": null,
+      "status": "DRAFT",
+      "c2c_document_id": null,
+      "client_program_id": "22222222-2222-4222-8222-222222222221",
+      "updated_at": "2026-10-14T06:00:00.000Z",
+      "section_count": 2,
+      "created_by": 1
+    },
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/templates",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/documents",
+        "query": "?projectId=22222222-2222-4222-8222-222222222221"
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221/sources",
+        "query": "?limit=200&offset=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/citations",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/data-origins/document",
+        "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/sections/22222222-2222-4222-8222-222222222223/sources",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions/bulk",
+        "query": ""
+      }
+    ],
+    "decisions": [
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "body": {
+          "decision": "reject",
+          "sectionId": "22222222-2222-4222-8222-222222222223",
+          "changeId": "deletion:1f6874a6fb171264",
+          "changeType": "deletion",
+          "text": "18 months",
+          "authorId": "ana",
+          "authorName": "AnA (proposed fix)",
+          "at": "2026-10-14T12:00:00Z",
+          "sourceRecord": "22222222-2222-4222-8222-222222222225"
+        }
+      },
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "body": {
+          "decision": "reject",
+          "sectionId": "22222222-2222-4222-8222-222222222223",
+          "changeId": "insertion:d2d62cd8134aa39a",
+          "changeType": "insertion",
+          "text": "24 months",
+          "authorId": "ana",
+          "authorName": "AnA (proposed fix)",
+          "at": "2026-10-14T12:00:00Z",
+          "sourceRecord": "22222222-2222-4222-8222-222222222225"
+        }
+      },
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions/bulk",
+        "body": {
+          "decision": "accept",
+          "changeIds": [
+            "insertion:b452901376dafb79",
+            "deletion:9f5a55ad26a82837"
+          ],
+          "changes": [
+            {
+              "changeId": "insertion:b452901376dafb79",
+              "changeType": "insertion",
+              "text": "24 months",
+              "authorId": "ana",
+              "authorName": "AnA (proposed fix)",
+              "at": "2026-10-14T12:00:00Z",
+              "sourceRecord": "22222222-2222-4222-8222-222222222225"
+            },
+            {
+              "changeId": "deletion:9f5a55ad26a82837",
+              "changeType": "deletion",
+              "text": "18 months",
+              "authorId": "ana",
+              "authorName": "AnA (proposed fix)",
+              "at": "2026-10-14T12:00:00Z",
+              "sourceRecord": "22222222-2222-4222-8222-222222222225"
+            }
+          ],
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    ],
+    "patches": [],
+    "unexpected": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "snapshot": {
+      "synthetic": true,
+      "limits": [
+        "No real project, provider, authorization decision or regulatory source is used.",
+        "The qualified model and recorded turn are explicit browser fixtures; this does not qualify any serving model."
+      ],
+      "program": {
+        "id": "22222222-2222-4222-8222-222222222221",
+        "name": "Synthetic remedy lifecycle project",
+        "phase": "ind_enabling",
+        "program_type": "ind",
+        "status": "active"
+      },
+      "document": {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "title": "Synthetic stability summary",
+        "module": "M3",
+        "product_code": null,
+        "status": "DRAFT",
+        "c2c_document_id": null,
+        "client_program_id": "22222222-2222-4222-8222-222222222221",
+        "updated_at": "2026-10-14T06:00:00.000Z",
+        "section_count": 2,
+        "created_by": 1
+      },
+      "sections": [
+        {
+          "id": "22222222-2222-4222-8222-222222222223",
+          "doc_id": "22222222-2222-4222-8222-222222222222",
+          "code": "3.2.P.8.1",
+          "title": "Stability summary and conclusion",
+          "content": "<p>The synthetic product is stable for 18 months.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T06:00:00.000Z",
+          "track_changes": false,
+          "comment_count": 0,
+          "revision_count": 1,
+          "citation_count": 0
+        },
+        {
+          "id": "22222222-2222-4222-8222-222222222224",
+          "doc_id": "22222222-2222-4222-8222-222222222222",
+          "code": "3.2.P.8.2",
+          "title": "Stability source notes",
+          "content": "<p>Source notes retain the synthetic duration of 18 months.</p>",
+          "order_index": 1,
+          "updated_at": "2026-10-14T06:00:00.000Z",
+          "track_changes": false,
+          "comment_count": 0,
+          "revision_count": 1,
+          "citation_count": 0
+        }
+      ],
+      "remedy": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "record": {
+        "status": "recorded",
+        "id": "22222222-2222-4222-8222-222222222225",
+        "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+        "servedBy": [
+          {
+            "provider": "synthetic-browser-fixture",
+            "model": "qualified-evaluation-fixture",
+            "qualified": true,
+            "approvedForHighRisk": true,
+            "pq": "passed"
+          }
+        ]
+      }
+    }
+  },
+  "rejection": {
+    "stages": [
+      {
+        "stage": "partial-rejection",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 639.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 639.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 358.5,
+            "width": 854,
+            "height": 628.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 629,
+            "scrollHeight": 808
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 394.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "Review the tracked change in the editor, then save with your reason for change. Adding the suggestion did not save or approve the document.",
+        "states": [
+          "pending"
+        ]
+      },
+      {
+        "stage": "full-rejection",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 322.5,
+            "width": 854,
+            "height": 664.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 665,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 358.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "targets": [
+                [
+                  ".rse-foot-sep"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "This suggestion is no longer present. Applying again checks the saved version and original passage; nothing is saved or approved.",
+        "states": [
+          "absent"
+        ]
+      },
+      {
+        "stage": "accepted",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 570.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 570.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 358.5,
+            "width": 854,
+            "height": 628.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 629,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 394.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "The tracked change has been reviewed in the editor. Save with your reason for change; adding the suggestion did not save or approve the document.",
+        "states": [
+          "absent",
+          "settled"
+        ]
+      }
+    ],
+    "first": {
+      "proposal": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "result": {
+        "ok": true,
+        "applicationId": "3528d0e1-d817-4fda-ba72-696506c9b987",
+        "editorInstanceId": "82d0353b-597e-4aed-abbe-9c79372f5726",
+        "receipt": {
+          "applicationId": "3528d0e1-d817-4fda-ba72-696506c9b987",
+          "editorInstanceId": "82d0353b-597e-4aed-abbe-9c79372f5726",
+          "docId": "22222222-2222-4222-8222-222222222222",
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    },
+    "second": {
+      "proposal": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "result": {
+        "ok": true,
+        "applicationId": "b19cfb76-4bbd-4c5a-90f5-266d5205172a",
+        "editorInstanceId": "82d0353b-597e-4aed-abbe-9c79372f5726",
+        "receipt": {
+          "applicationId": "b19cfb76-4bbd-4c5a-90f5-266d5205172a",
+          "editorInstanceId": "82d0353b-597e-4aed-abbe-9c79372f5726",
+          "docId": "22222222-2222-4222-8222-222222222222",
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    },
+    "decisions": [
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "body": {
+          "decision": "reject",
+          "sectionId": "22222222-2222-4222-8222-222222222223",
+          "changeId": "deletion:1f6874a6fb171264",
+          "changeType": "deletion",
+          "text": "18 months",
+          "authorId": "ana",
+          "authorName": "AnA (proposed fix)",
+          "at": "2026-10-14T12:00:00Z",
+          "sourceRecord": "22222222-2222-4222-8222-222222222225"
+        }
+      },
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "body": {
+          "decision": "reject",
+          "sectionId": "22222222-2222-4222-8222-222222222223",
+          "changeId": "insertion:d2d62cd8134aa39a",
+          "changeType": "insertion",
+          "text": "24 months",
+          "authorId": "ana",
+          "authorName": "AnA (proposed fix)",
+          "at": "2026-10-14T12:00:00Z",
+          "sourceRecord": "22222222-2222-4222-8222-222222222225"
+        }
+      },
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions/bulk",
+        "body": {
+          "decision": "accept",
+          "changeIds": [
+            "insertion:b452901376dafb79",
+            "deletion:9f5a55ad26a82837"
+          ],
+          "changes": [
+            {
+              "changeId": "insertion:b452901376dafb79",
+              "changeType": "insertion",
+              "text": "24 months",
+              "authorId": "ana",
+              "authorName": "AnA (proposed fix)",
+              "at": "2026-10-14T12:00:00Z",
+              "sourceRecord": "22222222-2222-4222-8222-222222222225"
+            },
+            {
+              "changeId": "deletion:9f5a55ad26a82837",
+              "changeType": "deletion",
+              "text": "18 months",
+              "authorId": "ana",
+              "authorName": "AnA (proposed fix)",
+              "at": "2026-10-14T12:00:00Z",
+              "sourceRecord": "22222222-2222-4222-8222-222222222225"
+            }
+          ],
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    ]
+  },
+  "cacheRequests": {
+    "document": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "title": "Synthetic stability summary",
+      "module": "M3",
+      "product_code": null,
+      "status": "DRAFT",
+      "c2c_document_id": null,
+      "client_program_id": "22222222-2222-4222-8222-222222222221",
+      "updated_at": "2026-10-14T06:00:00.000Z",
+      "section_count": 2,
+      "created_by": 1
+    },
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/templates",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/documents",
+        "query": "?projectId=22222222-2222-4222-8222-222222222221"
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221/sources",
+        "query": "?limit=200&offset=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/citations",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/data-origins/document",
+        "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/sections/22222222-2222-4222-8222-222222222223/sources",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/data-origins/document",
+        "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+      },
+      {
+        "method": "GET",
+        "path": "/api/data-origins/document",
+        "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+      }
+    ],
+    "decisions": [],
+    "patches": [],
+    "unexpected": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "snapshot": {
+      "synthetic": true,
+      "limits": [
+        "No real project, provider, authorization decision or regulatory source is used.",
+        "The qualified model and recorded turn are explicit browser fixtures; this does not qualify any serving model."
+      ],
+      "program": {
+        "id": "22222222-2222-4222-8222-222222222221",
+        "name": "Synthetic remedy lifecycle project",
+        "phase": "ind_enabling",
+        "program_type": "ind",
+        "status": "active"
+      },
+      "document": {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "title": "Synthetic stability summary",
+        "module": "M3",
+        "product_code": null,
+        "status": "DRAFT",
+        "c2c_document_id": null,
+        "client_program_id": "22222222-2222-4222-8222-222222222221",
+        "updated_at": "2026-10-14T06:00:00.000Z",
+        "section_count": 2,
+        "created_by": 1
+      },
+      "sections": [
+        {
+          "id": "22222222-2222-4222-8222-222222222223",
+          "doc_id": "22222222-2222-4222-8222-222222222222",
+          "code": "3.2.P.8.1",
+          "title": "Stability summary and conclusion",
+          "content": "<p>The synthetic product is stable for 18 months.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T06:00:00.000Z",
+          "track_changes": false,
+          "comment_count": 0,
+          "revision_count": 1,
+          "citation_count": 0
+        },
+        {
+          "id": "22222222-2222-4222-8222-222222222224",
+          "doc_id": "22222222-2222-4222-8222-222222222222",
+          "code": "3.2.P.8.2",
+          "title": "Stability source notes",
+          "content": "<p>Source notes retain the synthetic duration of 18 months.</p>",
+          "order_index": 1,
+          "updated_at": "2026-10-14T06:00:00.000Z",
+          "track_changes": false,
+          "comment_count": 0,
+          "revision_count": 1,
+          "citation_count": 0
+        }
+      ],
+      "remedy": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "record": {
+        "status": "recorded",
+        "id": "22222222-2222-4222-8222-222222222225",
+        "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+        "servedBy": [
+          {
+            "provider": "synthetic-browser-fixture",
+            "model": "qualified-evaluation-fixture",
+            "qualified": true,
+            "approvedForHighRisk": true,
+            "pq": "passed"
+          }
+        ]
+      }
+    }
+  },
+  "cache": {
+    "stages": [
+      {
+        "stage": "restore-choice",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 575.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 575.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 322.5,
+            "width": 854,
+            "height": 664.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 665,
+            "scrollHeight": 780
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 358.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "Wait for the section editor and resolve any Restore or Discard choice before applying this fix.",
+        "states": [
+          "unavailable"
+        ]
+      },
+      {
+        "stage": "restored-pending",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 570.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 570.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 358.5,
+            "width": 854,
+            "height": 628.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 629,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 394.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "Review the tracked change in the editor, then save with your reason for change. Adding the suggestion did not save or approve the document.",
+        "states": [
+          "pending"
+        ]
+      },
+      {
+        "stage": "discarded",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 322.5,
+            "width": 854,
+            "height": 664.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 665,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 358.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "targets": [
+                [
+                  ".rse-foot-sep"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "This suggestion is no longer present. Applying again checks the saved version and original passage; nothing is saved or approved.",
+        "states": [
+          "absent"
+        ]
+      },
+      {
+        "stage": "discard-reapplied",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 570.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 570.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 358.5,
+            "width": 854,
+            "height": 628.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 629,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 394.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "Review the tracked change in the editor, then save with your reason for change. Adding the suggestion did not save or approve the document.",
+        "states": [
+          "unavailable",
+          "pending"
+        ]
+      }
+    ],
+    "first": {
+      "proposal": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "result": {
+        "ok": true,
+        "applicationId": "d465ca98-3f48-4d04-9fe1-446b9b5f6d38",
+        "editorInstanceId": "2f008951-46c8-4cfd-a087-5e09ea0396f0",
+        "receipt": {
+          "applicationId": "d465ca98-3f48-4d04-9fe1-446b9b5f6d38",
+          "editorInstanceId": "2f008951-46c8-4cfd-a087-5e09ea0396f0",
+          "docId": "22222222-2222-4222-8222-222222222222",
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    },
+    "second": {
+      "proposal": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "result": {
+        "ok": true,
+        "applicationId": "2fdb41a0-574b-4594-a17a-adf543e1cf74",
+        "editorInstanceId": "d63e6415-05e8-4141-b39e-a61c0f1b4c6b",
+        "receipt": {
+          "applicationId": "2fdb41a0-574b-4594-a17a-adf543e1cf74",
+          "editorInstanceId": "d63e6415-05e8-4141-b39e-a61c0f1b4c6b",
+          "docId": "22222222-2222-4222-8222-222222222222",
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    }
+  },
+  "safeguards": [
+    {
+      "mode": "stale",
+      "stage": {
+        "stage": "stale",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 322.5,
+            "width": 854,
+            "height": 664.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 665,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 358.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "targets": [
+                [
+                  ".rse-foot-sep"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "The saved section changed since AnA read it. Ask AnA to re-read it before preparing this fix again.",
+        "states": [
+          null
+        ]
+      },
+      "requestQualification": {
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/templates",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/documents",
+            "query": "?projectId=22222222-2222-4222-8222-222222222221"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221/sources",
+            "query": "?limit=200&offset=0"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/citations",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/data-origins/document",
+            "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/sections/22222222-2222-4222-8222-222222222223/sources",
+            "query": ""
+          }
+        ],
+        "decisions": [],
+        "patches": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "unexpected": []
+      },
+      "attempts": [
+        {
+          "proposal": {
+            "sectionId": "22222222-2222-4222-8222-222222222223",
+            "baseUpdatedAt": "2026-10-13T06:00:00.000Z",
+            "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+            "quote": "18 months",
+            "replacement": "24 months",
+            "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+          },
+          "result": {
+            "ok": false,
+            "reason": "stale"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "frozen",
+      "stage": {
+        "stage": "frozen",
+        "metrics": {
+          "visibleEditableViewport": null,
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": null,
+          "documentScroll": {
+            "x": 573,
+            "y": 322.5,
+            "width": 854,
+            "height": 664.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 665,
+            "scrollHeight": 787
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 358.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 0
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            }
+          ],
+          "passes": 20
+        },
+        "status": "This document is read-only or frozen.",
+        "states": []
+      },
+      "requestQualification": {
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/templates",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/documents",
+            "query": "?projectId=22222222-2222-4222-8222-222222222221"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221/sources",
+            "query": "?limit=200&offset=0"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/citations",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/data-origins/document",
+            "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/sections/22222222-2222-4222-8222-222222222223/sources",
+            "query": ""
+          }
+        ],
+        "decisions": [],
+        "patches": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "unexpected": []
+      },
+      "attempts": []
+    },
+    {
+      "mode": "wrong-section",
+      "stage": {
+        "stage": "wrong-section",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 322.5,
+            "width": 854,
+            "height": 664.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 665,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 358.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "targets": [
+                [
+                  ".rse-foot-sep"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "Open the section named by this fix before applying it.",
+        "states": []
+      },
+      "requestQualification": {
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/templates",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/documents",
+            "query": "?projectId=22222222-2222-4222-8222-222222222221"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221/sources",
+            "query": "?limit=200&offset=0"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/citations",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/data-origins/document",
+            "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/sections/22222222-2222-4222-8222-222222222223/sources",
+            "query": ""
+          }
+        ],
+        "decisions": [],
+        "patches": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "unexpected": []
+      },
+      "attempts": []
+    },
+    {
+      "mode": "unqualified",
+      "stage": {
+        "stage": "unqualified",
+        "metrics": {
+          "visibleEditableViewport": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320
+          },
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "page": {
+            "clientWidth": 1440,
+            "scrollWidth": 1440
+          },
+          "canvas": {
+            "x": 352,
+            "y": 12,
+            "width": 1076,
+            "height": 976,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "clientHeight": 974,
+            "scrollHeight": 974
+          },
+          "editor": {
+            "x": 618,
+            "y": 534.296875,
+            "width": 764,
+            "height": 320,
+            "clientWidth": 764,
+            "scrollWidth": 764,
+            "clientHeight": 320,
+            "scrollHeight": 320
+          },
+          "documentScroll": {
+            "x": 573,
+            "y": 322.5,
+            "width": 854,
+            "height": 664.5,
+            "clientWidth": 854,
+            "scrollWidth": 854,
+            "clientHeight": 665,
+            "scrollHeight": 739
+          },
+          "editorScroll": null,
+          "sectionHeading": {
+            "x": 617,
+            "y": 358.5,
+            "width": 766,
+            "height": 93.796875,
+            "clientWidth": 766,
+            "scrollWidth": 766,
+            "clientHeight": 93,
+            "scrollHeight": 93
+          },
+          "editorCount": 1
+        },
+        "axe": {
+          "violations": [],
+          "incomplete": [
+            {
+              "id": "aria-prohibited-attr",
+              "impact": "serious",
+              "targets": [
+                [
+                  "div[data-state=\"closed\"] > div"
+                ]
+              ]
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "targets": [
+                [
+                  ".rse-foot-sep"
+                ]
+              ]
+            },
+            {
+              "id": "label-content-name-mismatch",
+              "impact": "serious",
+              "targets": [
+                [
+                  "button[title=\"Bold (⌘B)\"]"
+                ],
+                [
+                  "button[title=\"Italic (⌘I)\"]"
+                ],
+                [
+                  "button[title=\"Underline (⌘U)\"]"
+                ]
+              ]
+            }
+          ],
+          "passes": 24
+        },
+        "status": "This answer was written by qualified-evaluation-fixture, which is not approved for regulatory drafting, so the answer can’t be inserted.",
+        "states": []
+      },
+      "requestQualification": {
+        "requests": [
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/templates",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/documents",
+            "query": "?projectId=22222222-2222-4222-8222-222222222221"
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221/sources",
+            "query": "?limit=200&offset=0"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/citations",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+            "query": ""
+          },
+          {
+            "method": "GET",
+            "path": "/api/data-origins/document",
+            "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+          },
+          {
+            "method": "GET",
+            "path": "/api/authoring/sections/22222222-2222-4222-8222-222222222223/sources",
+            "query": ""
+          }
+        ],
+        "decisions": [],
+        "patches": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "unexpected": []
+      },
+      "attempts": []
+    }
+  ],
+  "violations": []
+}

@@ -1,0 +1,349 @@
+{
+  "failure": null,
+  "state": {
+    "document": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "title": "Synthetic stability summary",
+      "module": "M3",
+      "product_code": null,
+      "status": "DRAFT",
+      "c2c_document_id": null,
+      "client_program_id": "22222222-2222-4222-8222-222222222221",
+      "updated_at": "2026-10-14T06:00:00.000Z",
+      "section_count": 2,
+      "created_by": 1
+    },
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/templates",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/documents",
+        "query": "?projectId=22222222-2222-4222-8222-222222222221"
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/c2c/projects/22222222-2222-4222-8222-222222222221/sources",
+        "query": "?limit=200&offset=0"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/citations",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/docs/22222222-2222-4222-8222-222222222222/sections",
+        "query": ""
+      },
+      {
+        "method": "GET",
+        "path": "/api/data-origins/document",
+        "query": "?documentTable=authoring_sections&documentId=22222222-2222-4222-8222-222222222223"
+      },
+      {
+        "method": "GET",
+        "path": "/api/authoring/sections/22222222-2222-4222-8222-222222222223/sources",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "query": ""
+      },
+      {
+        "method": "POST",
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions/bulk",
+        "query": ""
+      }
+    ],
+    "decisions": [
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "body": {
+          "decision": "reject",
+          "sectionId": "22222222-2222-4222-8222-222222222223",
+          "changeId": "deletion:3dd1c8d8923725ce",
+          "changeType": "deletion",
+          "text": "18 months",
+          "authorId": "ana",
+          "authorName": "AnA (proposed fix)",
+          "at": "2026-10-14T12:00:00Z",
+          "sourceRecord": "22222222-2222-4222-8222-222222222225"
+        }
+      },
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions",
+        "body": {
+          "decision": "reject",
+          "sectionId": "22222222-2222-4222-8222-222222222223",
+          "changeId": "insertion:4f6694da74cfecf4",
+          "changeType": "insertion",
+          "text": "24 months",
+          "authorId": "ana",
+          "authorName": "AnA (proposed fix)",
+          "at": "2026-10-14T12:00:00Z",
+          "sourceRecord": "22222222-2222-4222-8222-222222222225"
+        }
+      },
+      {
+        "path": "/api/authoring/documents/22222222-2222-4222-8222-222222222222/tracked-change-decisions/bulk",
+        "body": {
+          "decision": "accept",
+          "changeIds": [
+            "insertion:1d2ed8a5ba20575b",
+            "deletion:acc4ca1fe42e74c9"
+          ],
+          "changes": [
+            {
+              "changeId": "insertion:1d2ed8a5ba20575b",
+              "changeType": "insertion",
+              "text": "24 months",
+              "authorId": "ana",
+              "authorName": "AnA (proposed fix)",
+              "at": "2026-10-14T12:00:00Z",
+              "sourceRecord": "22222222-2222-4222-8222-222222222225"
+            },
+            {
+              "changeId": "deletion:acc4ca1fe42e74c9",
+              "changeType": "deletion",
+              "text": "18 months",
+              "authorId": "ana",
+              "authorName": "AnA (proposed fix)",
+              "at": "2026-10-14T12:00:00Z",
+              "sourceRecord": "22222222-2222-4222-8222-222222222225"
+            }
+          ],
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    ],
+    "patches": [],
+    "unexpected": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "snapshot": {
+      "synthetic": true,
+      "limits": [
+        "No real project, provider, authorization decision or regulatory source is used.",
+        "The qualified model and recorded turn are explicit browser fixtures; this does not qualify any serving model."
+      ],
+      "program": {
+        "id": "22222222-2222-4222-8222-222222222221",
+        "name": "Synthetic remedy lifecycle project",
+        "phase": "ind_enabling",
+        "program_type": "ind",
+        "status": "active"
+      },
+      "document": {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "title": "Synthetic stability summary",
+        "module": "M3",
+        "product_code": null,
+        "status": "DRAFT",
+        "c2c_document_id": null,
+        "client_program_id": "22222222-2222-4222-8222-222222222221",
+        "updated_at": "2026-10-14T06:00:00.000Z",
+        "section_count": 2,
+        "created_by": 1
+      },
+      "sections": [
+        {
+          "id": "22222222-2222-4222-8222-222222222223",
+          "doc_id": "22222222-2222-4222-8222-222222222222",
+          "code": "3.2.P.8.1",
+          "title": "Stability summary and conclusion",
+          "content": "<p>The synthetic product is stable for 18 months.</p>",
+          "order_index": 0,
+          "updated_at": "2026-10-14T06:00:00.000Z",
+          "track_changes": false,
+          "comment_count": 0,
+          "revision_count": 1,
+          "citation_count": 0
+        },
+        {
+          "id": "22222222-2222-4222-8222-222222222224",
+          "doc_id": "22222222-2222-4222-8222-222222222222",
+          "code": "3.2.P.8.2",
+          "title": "Stability source notes",
+          "content": "<p>Source notes retain the synthetic duration of 18 months.</p>",
+          "order_index": 1,
+          "updated_at": "2026-10-14T06:00:00.000Z",
+          "track_changes": false,
+          "comment_count": 0,
+          "revision_count": 1,
+          "citation_count": 0
+        }
+      ],
+      "remedy": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "record": {
+        "status": "recorded",
+        "id": "22222222-2222-4222-8222-222222222225",
+        "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+        "servedBy": [
+          {
+            "provider": "synthetic-browser-fixture",
+            "model": "qualified-evaluation-fixture",
+            "qualified": true,
+            "approvedForHighRisk": true,
+            "pq": "passed"
+          }
+        ]
+      }
+    }
+  },
+  "layout": {
+    "htmlOverflow": "visible",
+    "bodyOverflow": "visible",
+    "scrollTop": 0,
+    "scrollHeight": 1000,
+    "viewport": 1000
+  },
+  "metrics": {
+    "visibleEditableViewport": {
+      "x": 618,
+      "y": 570.296875,
+      "width": 764,
+      "height": 320
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "page": {
+      "clientWidth": 1440,
+      "scrollWidth": 1440
+    },
+    "canvas": {
+      "x": 352,
+      "y": 12,
+      "width": 1076,
+      "height": 976,
+      "clientWidth": 1074,
+      "scrollWidth": 1074,
+      "clientHeight": 974,
+      "scrollHeight": 974
+    },
+    "editor": {
+      "x": 618,
+      "y": 570.296875,
+      "width": 764,
+      "height": 320,
+      "clientWidth": 764,
+      "scrollWidth": 764,
+      "clientHeight": 320,
+      "scrollHeight": 320
+    },
+    "documentScroll": {
+      "x": 573,
+      "y": 358.5,
+      "width": 854,
+      "height": 628.5,
+      "clientWidth": 854,
+      "scrollWidth": 854,
+      "clientHeight": 629,
+      "scrollHeight": 739
+    },
+    "editorScroll": null,
+    "sectionHeading": {
+      "x": 617,
+      "y": 394.5,
+      "width": 766,
+      "height": 93.796875,
+      "clientWidth": 766,
+      "scrollWidth": 766,
+      "clientHeight": 93,
+      "scrollHeight": 93
+    },
+    "editorCount": 1
+  },
+  "body": "Proposed fix · 3.2.P.8.1 Stability summary and conclusion\n\nAlign the synthetic duration with the source passage used in this browser qualification.\n\nWhat changed\nAdded as tracked suggestion\n\nThe tracked change has been reviewed in the editor. Save with your reason for change; adding the suggestion did not save or approve the document.\n\nBack to conversation\nSynthetic stability summary\nDraft\nSynthetic remedy lifecycle project · IND enabling\nEsc\nSynthetic stability summary\n1 document · all\nThis project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.\nM3\nSynthetic stability summary\n2\n3.2.P.8.1\nStability summary and conclusion\n3.2.P.8.2\nStability source notes\nSynthetic remedy lifecycle project · IND enabling\n›\nM3\n›\nSynthetic stability summary\n›\n3.2.P.8.1\nRequired to save: at least 8 characters, recorded with the revision.\nSave\nFreeze\nE-sign\nPlace into filing\nNew document\nNew section\nDownload\nSection\nDocument\nComments\nHistory 1\nSources\nSignatures\nAudit\nExports\nProject files\nTasks\nAccess\nSend for review\nFile to vault\nDraft with AnA\nDraft from sources\nReview with AnA\n\nAnA reviews the saved record. Your unsaved changes are not included.\n\n3.2.P.8.1\nStability summary and conclusion\nRename\nCheck\nSynthetic stability summary · 1 revisions · unsaved changes — on this device only\nParagraph\nHeading 1\nHeading 2\nHeading 3\nHeading 4\nHeading 5\nB\nI\nU\nx2\nx2\nab\n§ Ref\nCite\nTable\nCaption\nΩ…\n±\n°\nµ\n≤\n≥\n×\n≈\n½\nα\nβ\nγ\nΔ\nAsk for a source\nComment\nTrack changes\n\nThe synthetic product is stable for 24 months.\n\n0% of this document has a recorded origin\n0 of 46 characters\nNo recorded origin — 100% (46 characters)\nnothing records where this text came from\nUnsaved changes — cached on this device\n·\n8 words",
+  "attempts": [
+    {
+      "proposal": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "result": {
+        "ok": true,
+        "applicationId": "1da9bcbd-711c-484a-a5ae-c5c0f829ea95",
+        "editorInstanceId": "06a075d1-4408-4dd5-875d-6a11a204a71b",
+        "receipt": {
+          "applicationId": "1da9bcbd-711c-484a-a5ae-c5c0f829ea95",
+          "editorInstanceId": "06a075d1-4408-4dd5-875d-6a11a204a71b",
+          "docId": "22222222-2222-4222-8222-222222222222",
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    },
+    {
+      "proposal": {
+        "sectionId": "22222222-2222-4222-8222-222222222223",
+        "baseUpdatedAt": "2026-10-14T06:00:00.000Z",
+        "baseSha256": "60727b549441f0a29d8b57252fcb360efb549862692816f2ed9aa38699d613eb",
+        "quote": "18 months",
+        "replacement": "24 months",
+        "reason": "Align the synthetic duration with the source passage used in this browser qualification."
+      },
+      "result": {
+        "ok": true,
+        "applicationId": "706708e8-9467-41cf-831b-8a10fcf1a36e",
+        "editorInstanceId": "06a075d1-4408-4dd5-875d-6a11a204a71b",
+        "receipt": {
+          "applicationId": "706708e8-9467-41cf-831b-8a10fcf1a36e",
+          "editorInstanceId": "06a075d1-4408-4dd5-875d-6a11a204a71b",
+          "docId": "22222222-2222-4222-8222-222222222222",
+          "sectionId": "22222222-2222-4222-8222-222222222223"
+        }
+      }
+    }
+  ],
+  "states": [
+    "absent",
+    "settled"
+  ]
+}
