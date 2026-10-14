@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "phase": "native-catalogue-request-context",
+  "branch": "concept2cure-v2",
+  "startingHead": "71444466ba9826575ebe127dad609c6f0a815a0b",
+  "runtime": {
+    "node": "v22.22.0",
+    "vitest": "v4.1.7",
+    "heapMiB": 4096,
+    "configuration": "vitest.db.config.ts"
+  },
+  "sourceRecords": [
+    {
+      "path": "tests/db/document-catalog.dbtest.ts",
+      "kind": "owned-frozen-fixture",
+      "bytes": 28736,
+      "digestAlgorithm": "sha256",
+      "digest": "0c846ba6bcf45b49e64d726e47a99137c9337aa869d0361fa14467ebd8dd9241"
+    },
+    {
+      "path": "tests/db/document-catalog-recall.dbtest.ts",
+      "kind": "owned-frozen-fixture",
+      "bytes": 26543,
+      "digestAlgorithm": "sha256",
+      "digest": "caf5b36ab3ae66a45203b1bb83d2d512328d22d893eb71ca00fa5b990b94ab86"
+    },
+    {
+      "path": "tests/db/document-catalog-role.dbtest.ts",
+      "kind": "owned-frozen-fixture",
+      "bytes": 6330,
+      "digestAlgorithm": "sha256",
+      "digest": "8be1b085f2f64733195f814d0c4c1e2fdb9720b9c56f14f7cfa5a12899a1a4b5"
+    },
+    {
+      "path": "tests/db/document-catalog-governed.dbtest.ts",
+      "kind": "owned-frozen-fixture",
+      "bytes": 16366,
+      "digestAlgorithm": "sha256",
+      "digest": "28961dcf060223b7526f0d7e9471785c451c605f67a5063c3bad6289324f2c2b"
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "kind": "owned-frozen-fixture",
+      "bytes": 18820,
+      "digestAlgorithm": "sha256",
+      "digest": "c8ad759daddc40fe72e637eb7d839f613a9ea22d294b07d49d8f6612e6c82c76"
+    },
+    {
+      "path": "tests/db/catalog-native-fixture.ts",
+      "kind": "owned-frozen-fixture",
+      "bytes": 5083,
+      "digestAlgorithm": "sha256",
+      "digest": "0711edcd607f5f99433cf124a5d12b4210500fb9b386c8ac123eeb97b7bcf507"
+    },
+    {
+      "path": "docs/design/NATIVE_CATALOGUE_REQUEST_CONTEXT.md",
+      "kind": "design-contract",
+      "bytes": 5226,
+      "digestAlgorithm": "sha256",
+      "digest": "fd8a2a4da4251f39176c98bb80467fd7d3e159d9fb5f27a8128be21332ecddc9"
+    }
+  ],
+  "unchangedValidationInputRecords": [
+    {
+      "path": "server/db.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 1084,
+      "digestAlgorithm": "sha256",
+      "digest": "14fff5aa3ca4e2a9dc9becc4c4716d8c08e26ce82eeeed5dbbea4eb99a737126"
+    },
+    {
+      "path": "server/db/runtime.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 10272,
+      "digestAlgorithm": "sha256",
+      "digest": "cf1dbf69e60e0c4b356842d107f1465e0a2e77047d0fced2a74ab7b1a73a47e8"
+    },
+    {
+      "path": "server/db/getDatabaseUrl.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 2885,
+      "digestAlgorithm": "sha256",
+      "digest": "602cf10a94a464ebd42a50573662f286b1821fc43792161a569010426434d5d1"
+    },
+    {
+      "path": "server/middleware/lazyRequestDbClient.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 5789,
+      "digestAlgorithm": "sha256",
+      "digest": "257ce09f03442c9288bd43362a89f36b1b0d4ec5c3fc6b281f6dec92a1153cef"
+    },
+    {
+      "path": "server/db/sessionScope.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 4108,
+      "digestAlgorithm": "sha256",
+      "digest": "53a488a133fbf2b6489c09634a39520dd2d91174267798ea5d4818871e4231e9"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 4073,
+      "digestAlgorithm": "sha256",
+      "digest": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+    },
+    {
+      "path": "tests/setup.db.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 8777,
+      "digestAlgorithm": "sha256",
+      "digest": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3"
+    },
+    {
+      "path": "eslint.config.js",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 16479,
+      "digestAlgorithm": "sha256",
+      "digest": "8980ee711992c0d216296b9cfe4351531569582b130ccb3e3f856e62901f8804"
+    },
+    {
+      "path": "server/services/ana/document-catalog-tools.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 32669,
+      "digestAlgorithm": "sha256",
+      "digest": "d0e01e3857ea88cc24b47c041a27287b15bf269013eac0fcdd4a169a04efd2b9"
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 27094,
+      "digestAlgorithm": "sha256",
+      "digest": "6e78f952e9e0d9714d076f4047b6faa0a854c7b73cb5a8150bd12c4cf42a6493"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 8717,
+      "digestAlgorithm": "sha256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/embedding-provider.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 21522,
+      "digestAlgorithm": "sha256",
+      "digest": "e1954d4e95e7efcf00d9f869b3be647a482faef9177a2cba9c277e4ed94e8c80"
+    },
+    {
+      "path": "scripts/db/provision-app-role.mjs",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 45550,
+      "digestAlgorithm": "sha256",
+      "digest": "1cf41357d41035bd9d3fbe71343050697c1f089fe3415f6cd7ad1a3f6a91aa63"
+    },
+    {
+      "path": "server/mcp/tools/runtime.ts",
+      "kind": "unchanged-production-or-native-validation-input",
+      "bytes": 14029,
+      "digestAlgorithm": "sha256",
+      "digest": "b9de66006ef78d433cdff7e51cd3765e68eeda4b5f2c128d5ece783b976e59ae"
+    }
+  ],
+  "hostedBaselineRecords": [
+    {
+      "path": "/tmp/project-vault-hosted-native-failure-census.json",
+      "kind": "preserved-complete-hosted-census-or-assessment",
+      "bytes": 29829,
+      "digestAlgorithm": "sha256",
+      "digest": "a3f5d5bd0767a6c89800fc24eccaa953c312b07895f4a927492506d00f236f85"
+    },
+    {
+      "path": "/tmp/baff-hosted-native-census.json",
+      "kind": "preserved-complete-hosted-census-or-assessment",
+      "bytes": 18766,
+      "digestAlgorithm": "sha256",
+      "digest": "a59c375423188f007948e38194816768c52a85e462dad11e19d736795e3735ea"
+    },
+    {
+      "path": "/tmp/project-vault-hosted-ci-assessment.md",
+      "kind": "preserved-complete-hosted-census-or-assessment",
+      "bytes": 7316,
+      "digestAlgorithm": "sha256",
+      "digest": "3e4f1313f4c2f9f3d80bca328e531349dbe13bf2c670c79c7be1e791b652995e"
+    }
+  ],
+  "verifiedOriginalFixtureSnapshotRecords": [
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/base/tests/db/document-catalog.dbtest.ts",
+      "kind": "original-fixture-snapshot-matches-published-baffbeac2",
+      "bytes": 28705,
+      "digestAlgorithm": "sha256",
+      "digest": "ee517798491db424a22a1d7e51adc2bbc4229337d7626cc69eaaaaf4a927e5ce"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/base/tests/db/document-catalog-recall.dbtest.ts",
+      "kind": "original-fixture-snapshot-matches-published-baffbeac2",
+      "bytes": 28879,
+      "digestAlgorithm": "sha256",
+      "digest": "9a26e45e008427c7735d7e85e2719eca5bd1596e45f0af3b922681d74033a9fd"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/base/tests/db/document-catalog-role.dbtest.ts",
+      "kind": "original-fixture-snapshot-matches-published-baffbeac2",
+      "bytes": 6354,
+      "digestAlgorithm": "sha256",
+      "digest": "0e579032e2a508716709a3e70257302b6f266b3ca8b8facce7be9c1eedbbf00e"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/base/tests/db/document-catalog-governed.dbtest.ts",
+      "kind": "original-fixture-snapshot-matches-published-baffbeac2",
+      "bytes": 16174,
+      "digestAlgorithm": "sha256",
+      "digest": "9e96f13bd15c6e88b64a7e1b2f21374aafdbd3957e254ae2beccdc7f884962e2"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/base/server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "kind": "original-fixture-snapshot-matches-published-baffbeac2",
+      "bytes": 19625,
+      "digestAlgorithm": "sha256",
+      "digest": "a8c525e07d3036683a22b7fa348fa9ce721d16c39f511ea70584e1b59047edb5"
+    }
+  ],
+  "preservedPreparationRecords": [
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/sources.json",
+      "kind": "preserved-preparation",
+      "bytes": 3683,
+      "digestAlgorithm": "sha256",
+      "digest": "58528b7d8de3f18d0a74c7ad21dea4c4eaf297f69b8a687c42e1ea66640dd222"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/bounded.patch",
+      "kind": "preserved-preparation",
+      "bytes": 32330,
+      "digestAlgorithm": "sha256",
+      "digest": "d21228cded0d031b3b1d36eea894e6f3edc546f1d2300ac1d4cf87bc9792ad1e"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/README.md",
+      "kind": "preserved-preparation",
+      "bytes": 4822,
+      "digestAlgorithm": "sha256",
+      "digest": "bb45be77d56e0774e16c0c72fb8eba7047563d06e6fbaff307440032cd2c69a3"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/refined/sources.json",
+      "kind": "preserved-preparation",
+      "bytes": 3683,
+      "digestAlgorithm": "sha256",
+      "digest": "dadfe2e61b610f96d2e8b18df4680d9e81bc24d7d5e6d52663abc83b520d72cf"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/refined/bounded.patch",
+      "kind": "preserved-preparation",
+      "bytes": 32256,
+      "digestAlgorithm": "sha256",
+      "digest": "188863b84c96fe45f3a738d56bb0454f043494d383088662ac67dec37890880a"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/refined/README.md",
+      "kind": "preserved-preparation",
+      "bytes": 4919,
+      "digestAlgorithm": "sha256",
+      "digest": "1e4d50ce1f5ea08b12ca7a311fc9930a45f90dc20ecc81d7cb88279611bdca9b"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/sources.json",
+      "kind": "preserved-preparation",
+      "bytes": 5327,
+      "digestAlgorithm": "sha256",
+      "digest": "604958371d8d72ce5db2dcd470ea8d9c3de04cbef68fd409cf8edb9c01e1dc17"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/bounded.patch",
+      "kind": "preserved-preparation",
+      "bytes": 34594,
+      "digestAlgorithm": "sha256",
+      "digest": "a0b793ddb4b36b5f274a8d39929513e7a32e8b3201f01b74e4fc8fc30cc58669"
+    },
+    {
+      "path": "/tmp/catalog-native-fixture-reconciliation/runtime-posture/README.md",
+      "kind": "preserved-preparation",
+      "bytes": 7528,
+      "digestAlgorithm": "sha256",
+      "digest": "acbb91fc540e2b077bdfb3a63944dcb73b8f525b8f56c547bab041fa30a07e29"
+    }
+  ],
+  "rawExecutionAndLauncherRecords": [
+    {
+      "path": "/tmp/catalog-native-fixtures-first.txt",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 49761,
+      "digestAlgorithm": "sha256",
+      "digest": "77e32674dd5c5bea0cfaf7d43d6662cd27fc3544270a06e0c2b09b9ef6ce0d8f"
+    },
+    {
+      "path": "/tmp/catalog-native-fixtures-second.txt",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 48932,
+      "digestAlgorithm": "sha256",
+      "digest": "17280de61542119774ceebf1910b87e0efb3d709e092fafd4e32994bed37723f"
+    },
+    {
+      "path": "/tmp/catalog-native-fixtures-baseline-lint.json",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 1568,
+      "digestAlgorithm": "sha256",
+      "digest": "4f6e530b2113f093cc2e57cd269aae76e77798585cffbff02838137dab8c34f0"
+    },
+    {
+      "path": "/tmp/catalog-native-fixtures-first-lint.json",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 28884,
+      "digestAlgorithm": "sha256",
+      "digest": "96c948f58ca111c69f918f60a5b5a738fa086419923635afe65595ebe36aea98"
+    },
+    {
+      "path": "/tmp/catalog-native-fixtures-first-lint-stderr.txt",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/catalog-native-fixtures-final-lint.json",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 1513,
+      "digestAlgorithm": "sha256",
+      "digest": "5e9a2b6ca99dc4d81a18767fb2f318a82f2746f637b97be4b8433d1d53673f6c"
+    },
+    {
+      "path": "/tmp/catalog-native-fixtures-final-lint-stderr.txt",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 0,
+      "digestAlgorithm": "sha256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/catalog-native-first-source-pins.json",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 1334,
+      "digestAlgorithm": "sha256",
+      "digest": "7ba130d1d8f9f22ba8157369e87d997834b830e7a823c21603a21ff38909bda1"
+    },
+    {
+      "path": "/tmp/catalog-native-final-source-pins.json",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 1334,
+      "digestAlgorithm": "sha256",
+      "digest": "b96e0a03b9cea5125e6260c94593a347a1e1067687756b9a9e7cc68eaa12761e"
+    },
+    {
+      "path": "/tmp/run-catalog-native-fixtures.py",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 3815,
+      "digestAlgorithm": "sha256",
+      "digest": "b7d615cf23c87429ef83dec6b200ef9d628283a0372307130d630255e23a7ba1"
+    },
+    {
+      "path": "/tmp/run-catalog-native-fixtures-second.py",
+      "kind": "preserved-actual-raw-phase-log-or-private-launcher",
+      "bytes": 4005,
+      "digestAlgorithm": "sha256",
+      "digest": "3126c8bad2fe455ef8fecefba81ce662e9512abe205067a1090577aa8059ad21"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/README.md",
+      "kind": "bounded-filed-artifact",
+      "bytes": 6596,
+      "digestAlgorithm": "sha256",
+      "digest": "1893753cda7a5449bbb8fe8956886fdf83b9687c9af51a9bfebfd47f419992cb"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/actual-native-case-results.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 30726,
+      "digestAlgorithm": "sha256",
+      "digest": "45c977140672d94a52ac4c3d5f17dde76c9d293a5e271f5f24f1a033e2e49587"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/actual-native-first.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 49761,
+      "digestAlgorithm": "sha256",
+      "digest": "77e32674dd5c5bea0cfaf7d43d6662cd27fc3544270a06e0c2b09b9ef6ce0d8f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/actual-native-second.txt",
+      "kind": "bounded-filed-artifact",
+      "bytes": 48932,
+      "digestAlgorithm": "sha256",
+      "digest": "17280de61542119774ceebf1910b87e0efb3d709e092fafd4e32994bed37723f"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/forced-scoped-lint-projection.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 3628,
+      "digestAlgorithm": "sha256",
+      "digest": "67e2e8b94bc146bb3afec9cacf465b30a4ea003eceee38dc6e5f57fcc20168ad"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/hosted-baseline-failure-projection.json",
+      "kind": "bounded-filed-artifact",
+      "bytes": 9437,
+      "digestAlgorithm": "sha256",
+      "digest": "a49250f93f9e4385e43fc5e4484cd103fed1e8ffa40d1fa8a7f1d71c3d156fce"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/launcher-refinement.diff",
+      "kind": "bounded-filed-artifact",
+      "bytes": 1136,
+      "digestAlgorithm": "sha256",
+      "digest": "139cdccd55448b08db19c74261a3ecc494e86ba19cfc066f77caf17c36823d1e"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/private-launcher-first.py",
+      "kind": "bounded-filed-artifact",
+      "bytes": 3815,
+      "digestAlgorithm": "sha256",
+      "digest": "b7d615cf23c87429ef83dec6b200ef9d628283a0372307130d630255e23a7ba1"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/native-catalogue-request-context/private-launcher-second.py",
+      "kind": "bounded-filed-artifact",
+      "bytes": 4005,
+      "digestAlgorithm": "sha256",
+      "digest": "3126c8bad2fe455ef8fecefba81ce662e9512abe205067a1090577aa8059ad21"
+    }
+  ],
+  "staticPreservation": {
+    "originalCaseDeclarations": 55,
+    "originalExpectationContainingLines": 239,
+    "qualification": "byte-identical static text comparison, separate from actual native run results"
+  },
+  "firstRunQualification": "55 assertions passed; provider-isolation condition not met because failed frontier transport attempts were observed.",
+  "finalRunQualification": "55/55 actual native tests with canonical strict posture, existing local/no-endpoint rejection except approved recall localhost stub; no independent packet capture or production assurance claim."
+}

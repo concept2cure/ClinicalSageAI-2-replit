@@ -1,0 +1,17 @@
+{
+  "exitCode": 0,
+  "exitCodeObserved": true,
+  "timeout": false,
+  "startedAtUtc": "2026-10-14T21:36:15.461262+00:00",
+  "finishedAtUtc": "2026-10-14T21:36:44.949499+00:00",
+  "executionHead": "31ec977a619ebb380f8e06737b8692ab852e7d15",
+  "pid": 208559,
+  "expectedCaseCount": 38,
+  "testFile": "tests/db/submission-required-deliverables.dbtest.ts",
+  "sourcePins": 43,
+  "allFrozenSourcePinsUnchanged": true,
+  "changedFrozenSourceFiles": [],
+  "logSha256": "7f6b6efed8229a5e06761e90d9206f8183028658168c56127bee0c3fa25a1997",
+  "observationsPresent": true,
+  "observationsSha256": "f1677d8cd63b9c077bc5351c878c0bed16f7d9e2dfd0a068a57938d169fa524e"
+}

@@ -34,12 +34,15 @@ import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { callToolAsTurn } from './ana-tool-call';
+import type { RequestSqlClient } from '../../server/db/requestDb';
+import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 process.env.ANA_VAULT_CHUNKING_FORCE_ON = 'true';
 
-const PROBE_PREFIX = 'dbtest-recall ';
-const PROBE_CODE = 'DBTEST-RECALL-DOC';
+const RUN = nativeCatalogRunId();
+const PROBE_PREFIX = `dbtest-recall-${RUN} `;
+const PROBE_CODE = `DBTEST-RECALL-DOC-${RUN}`;
 
 const TOX_BODY =
   'GLP 28-Day Repeat-Dose Toxicology Study TOX-77-A in Sprague-Dawley rats. ' +
@@ -56,7 +59,6 @@ let owner: Pool;
 let orgId: number;
 let orgUuid: string;
 let userId: number;
-let workspaceId: number;
 let projectId: number;
 let profileId: number;
 let programId: string;
@@ -103,23 +105,16 @@ function startEmbeddingStub(): Promise<string> {
   });
 }
 
-async function inTenantScope<T>(fn: () => Promise<T>): Promise<T> {
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
-  return runWithTenantScope(
-    {
-      tenantId: String(orgId),
-      orgUuid,
-      role: 'admin',
-      source: 'request',
-      caller: 'tests/db/document-catalog-recall.dbtest.ts',
-    },
-    fn,
-  );
+async function inTenantScope<T>(fn: (sqlClient: RequestSqlClient) => Promise<T>): Promise<T> {
+  return withNativeCatalogClient({
+    organizationId: orgId, organizationUuid: orgUuid, userId, role: 'admin',
+    caller: 'tests/db/document-catalog-recall.dbtest.ts',
+  }, fn);
 }
 
 /** A tool called as AnA's turn calls it (a read counts once delivered; see ana-tool-call.ts). */
 async function callTool(name: string, input: Record<string, unknown>, extra: { humanConfirmed?: boolean } = {}) {
-  return inTenantScope(() => callToolAsTurn(name, input, { organizationId: orgId, userId, projectId, ...extra }));
+  return inTenantScope(sqlClient => callToolAsTurn(name, input, { organizationId: orgId, userId, projectId, sqlClient, ...extra }));
 }
 
 async function buildApp(): Promise<express.Express> {
@@ -141,48 +136,6 @@ async function buildApp(): Promise<express.Express> {
   return a;
 }
 
-async function cleanupProbeRows(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${PROBE_CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  /* Delete by PROGRAM, not by document_code.
-     The code-prefix delete matched only the documents this suite names itself.
-     `file_chat_upload_to_vault` derives the code from the uploaded FILE NAME,
-     so the document it admits is called `coa-batch-23-104` and survived every
-     run — one orphaned document and its chunks per run, accumulating in any
-     database that is not thrown away afterwards. With the embedding stub
-     returning a constant vector every chunk ties, so after a few runs the
-     leftovers won the similarity ranking and the passage-retrieval case
-     started failing on a reused database while passing in CI. A suite whose
-     own residue breaks its next run is not hermetic; scoping the delete to the
-     programs this suite created covers every document it admits, whatever the
-     admitting path decided to call it. */
-  await owner.query(
-    `DELETE FROM vault.documents
-      WHERE program_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)
-         OR document_code LIKE $2`,
-    [`${PROBE_PREFIX}%`, `${PROBE_CODE}%`],
-  );
-  await owner.query(`DELETE FROM cre_evidence_sources WHERE organization_id = $1 AND title LIKE $2`,
-    [orgId, `${PROBE_PREFIX}%`]);
-  await owner.query(`DELETE FROM project_memory_entries WHERE organization_id = $1`, [orgId]);
-  await owner.query(`DELETE FROM project_ingested_documents WHERE organization_id = $1`, [orgId]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
-}
-
 beforeAll(async () => {
   // The stub must exist before anything resolves the provider seam.
   const baseUrl = await startEmbeddingStub();
@@ -198,7 +151,7 @@ beforeAll(async () => {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-recall-tenant'],
+    [`${PROBE_PREFIX}tenant`, `dbtest-recall-tenant-${RUN}`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(
@@ -207,7 +160,7 @@ beforeAll(async () => {
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-recall@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    [`dbtest-recall-${RUN}@example.test`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
   // AnA's tool dispatch reads the caller's role live from organization_users
@@ -216,31 +169,18 @@ beforeAll(async () => {
   await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
      ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
 
-  await cleanupProbeRows();
 
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
        (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4) RETURNING id`,
-    [`${PROBE_PREFIX}program`, 'DBTEST-RECALL-A', orgId, 'Recallin 5mg'],
+    [`${PROBE_PREFIX}program`, `DBTEST-RECALL-A-${RUN}`, orgId, 'Recallin 5mg'],
   );
   programId = String(prog.rows[0].id);
 
-  const ws = await owner.query(
-    `INSERT INTO client_workspaces (organization_id, name, slug) VALUES ($1, $2, $3)
-       ON CONFLICT DO NOTHING RETURNING id`,
-    [orgId, `${PROBE_PREFIX}workspace`, 'dbtest-recall-ws'],
-  );
-  workspaceId =
-    Number(ws.rows[0]?.id) ||
-    Number((await owner.query(`SELECT id FROM client_workspaces WHERE slug = 'dbtest-recall-ws'`)).rows[0].id);
-
-  const proj = await owner.query(
-    `INSERT INTO projects (organization_id, client_workspace_id, name, type, regulatory_program_id)
-     VALUES ($1, $2, $3, 'IND', $4) RETURNING id`,
-    [orgId, workspaceId, `${PROBE_PREFIX}project`, programId],
-  );
-  projectId = Number(proj.rows[0].id);
+  ({ projectId } = await seedNativeCatalogProject(owner, {
+    organizationId: orgId, userId, programId, namespace: `dbtest-recall-${RUN}`,
+  }));
 
   const profile = await owner.query(
     `INSERT INTO project_intelligence_profiles (project_id, organization_id)
@@ -253,9 +193,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
-  await owner.query('DELETE FROM project_intelligence_profiles WHERE id = $1', [profileId]).catch(() => {});
-  await owner.query('DELETE FROM projects WHERE id = $1', [projectId]).catch(() => {});
+  // Retain this fresh run's source ancestry and immutable audit history.
   await owner.end().catch(() => {});
   await new Promise<void>(resolve => embedServer.close(() => resolve()));
 });
@@ -358,6 +296,7 @@ describe('chat-upload discovery', () => {
     const v1 = await inTenantScope(() =>
       createSource(orgId, {
         sourceType: 'client_document',
+        createdBy: userId,
         clientProgramId: programId,
         title: `${PROBE_PREFIX}protocol draft`,
         checksum: 'a'.repeat(64),
@@ -373,6 +312,7 @@ describe('chat-upload discovery', () => {
         orgId,
         {
           sourceType: 'client_document',
+          createdBy: userId,
           clientProgramId: programId,
           title: `${PROBE_PREFIX}protocol draft`,
           checksum: 'b'.repeat(64),
@@ -437,8 +377,11 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
 
     // End to end: the vault corpus returns the passage through the single router.
     const { ragRetrieve } = await import('../../server/services/ragRouter');
-    const ctx = await inTenantScope(() =>
-      ragRetrieve({
+    const ctx = await inTenantScope(async sqlClient => {
+      const { getCurrentAccessibleProgramScope } = await import('../../server/services/c2c/current-program-access');
+      const verifiedScope = await getCurrentAccessibleProgramScope(sqlClient, { organizationId: orgId, userId, programId });
+      return ragRetrieve({
+        vaultRead: { sqlClient, organizationId: orgId, userId, programId, verifiedScope },
         query: 'dissolution profile batch 44-B',
         organizationUuid: orgUuid,
         strategy: 'basic',
@@ -449,8 +392,8 @@ describe('vault passage retrieval — the reader finally has a writer', () => {
         useContextExpansion: false,
         threshold: 0.2,
         limit: 3,
-      }),
-    );
+      });
+    });
     expect(ctx.documents.length).toBeGreaterThan(0);
     expect(ctx.documents[0].content).toContain('dissolution profile');
   });

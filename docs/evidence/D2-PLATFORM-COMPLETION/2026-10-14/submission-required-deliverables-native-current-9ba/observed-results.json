@@ -1,0 +1,226 @@
+{
+  "phase": "third actual native execution after current9ba peer-review integration; retained terminal and structured observations recovered after environment/tool reconnect",
+  "executionHead": "9ba70078fb55520244b5376d5d17d5e3f09e4471",
+  "testFile": "tests/db/submission-required-deliverables.dbtest.ts",
+  "casesPassed": 36,
+  "failed": 0,
+  "skipped": 0,
+  "files": 1,
+  "processExitCode": null,
+  "processExitObservation": "Original unified-exec handle became unavailable during environment/tool reconnect. The complete Vitest terminal summary and 36 individual pass lines were retained; no process exit code was recovered or inferred.",
+  "node": "22.22.0",
+  "vitest": "4.1.7",
+  "config": "vitest.db.config.ts",
+  "heapMiB": 4096,
+  "durationSeconds": 14.09,
+  "testDurationSeconds": 5.87,
+  "namespace": "sdd_mv8lqfc0_5c4b919b",
+  "organizationId": 19,
+  "preflight": {
+    "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+    "role": "app_service",
+    "pid": 21926,
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on",
+    "tenant": "1",
+    "user_role": "member",
+    "bypass": "",
+    "admin": ""
+  },
+  "rlsForceRelations": [
+    {
+      "relname": "c2c_document_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "c2c_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "ectd_sequences",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "organization_users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_members",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "project_visibility_settings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "projects",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "regulatory_programs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_leaves",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submission_regions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "submissions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "httpResponses": 59,
+  "requestPostures": 57,
+  "statusDistribution": {
+    "200": 31,
+    "401": 1,
+    "403": 6,
+    "404": 6,
+    "409": 8,
+    "422": 1,
+    "500": 1,
+    "503": 5
+  },
+  "forwardedHttpReaderSql": 1379,
+  "observedPidTenantViolations": 0,
+  "preInstrumentationRefusals": [
+    {
+      "status": 403,
+      "code": "AUTH_009"
+    },
+    {
+      "status": 401,
+      "code": "ACCOUNT_INACTIVE"
+    }
+  ],
+  "nativeBinding": {
+    "firstPid": 21930,
+    "otherPid": 21926,
+    "attemptedReads": 0,
+    "actualSameActorDifferentExecutorsRefused": true
+  },
+  "basePrograms": {
+    "private": {
+      "id": "3409ce2d-f78f-4e62-9fa6-a97ace1ee1a6",
+      "projectId": 31,
+      "organizationId": 19,
+      "ownerId": 33,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "public": {
+      "id": "ff1b442f-5c46-4f89-8d27-c29f2c1bdb78",
+      "projectId": 32,
+      "organizationId": 19,
+      "ownerId": 33,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "foreign": {
+      "id": "ca950965-da21-48f0-8825-1d9dafc88b03",
+      "projectId": 33,
+      "organizationId": 20,
+      "ownerId": 41,
+      "type": "US_510K",
+      "region": "fda",
+      "pathway": "estar"
+    },
+    "ind": {
+      "id": "85ae77ca-a59a-442f-b6b4-2c2558a2f5c9",
+      "projectId": 34,
+      "organizationId": 19,
+      "ownerId": 33,
+      "type": "IND",
+      "region": "fda",
+      "pathway": "ectd_v322"
+    },
+    "mdr": {
+      "id": "fc14f78e-6094-41f6-a083-468ed95d6b06",
+      "projectId": 35,
+      "organizationId": 19,
+      "ownerId": 33,
+      "type": "EU_MDR_TECHDOC",
+      "region": "eu",
+      "pathway": "mdr"
+    }
+  },
+  "baseFilings": {
+    "private": {
+      "id": 47,
+      "sequenceId": 47,
+      "leafId": 45,
+      "sectionId": 43,
+      "documentId": "sdd_mv8lqfc0_5c4b919b-private-9768fab6-9a00-40bf-8030-266636dc7b61",
+      "programId": "3409ce2d-f78f-4e62-9fa6-a97ace1ee1a6"
+    },
+    "public": {
+      "id": 48,
+      "sequenceId": 48,
+      "leafId": 46,
+      "sectionId": 44,
+      "documentId": "sdd_mv8lqfc0_5c4b919b-public-67954eba-1d6b-45c1-a558-1e2efd023b96",
+      "programId": "ff1b442f-5c46-4f89-8d27-c29f2c1bdb78"
+    },
+    "foreign": {
+      "id": 49,
+      "sequenceId": 49,
+      "leafId": 47,
+      "sectionId": 45,
+      "documentId": "sdd_mv8lqfc0_5c4b919b-foreign-f3cb6e4e-a049-4a40-bade-a51c4ab26f57",
+      "programId": "ca950965-da21-48f0-8825-1d9dafc88b03"
+    },
+    "ind": {
+      "id": 50,
+      "sequenceId": 50,
+      "leafId": 48,
+      "sectionId": 46,
+      "documentId": "sdd_mv8lqfc0_5c4b919b-ind-567baea6-0802-4597-a2f1-85ffeefc24dc",
+      "programId": "85ae77ca-a59a-442f-b6b4-2c2558a2f5c9"
+    },
+    "mdr": {
+      "id": 51,
+      "sequenceId": 51,
+      "leafId": 49,
+      "sectionId": 47,
+      "documentId": "sdd_mv8lqfc0_5c4b919b-mdr-8993dd4b-1887-4146-ae36-6cbe3ddf7791",
+      "programId": "fc14f78e-6094-41f6-a083-468ed95d6b06"
+    },
+    "unanchored": {
+      "id": 52,
+      "sequenceId": 52,
+      "leafId": null,
+      "sectionId": null,
+      "documentId": null,
+      "programId": null
+    }
+  },
+  "sourcePins": 43,
+  "allCurrentSourcePinsMatch": true,
+  "launcherPinMatches": true,
+  "tokenShapedObservationValues": 0,
+  "credentialUrlObservationValues": 0,
+  "limits": "Current structural/source-content and native request policy coverage, not all pathways, filing approval, agency compliance, production boot/browser sign-in, exports or network packet capture."
+}

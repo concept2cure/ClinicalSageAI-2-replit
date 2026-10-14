@@ -248,15 +248,19 @@ function parseSealBody(frozenContent: string): SealBody | null {
  * copy's text — must file exactly as the sealed ones would: same headings, same
  * text, same order, same document title.
  */
-async function checkAgainstSeal(
+export async function checkAgainstSeal(
   q: DrizzleQueryable,
-  args: { sourceId: string; organizationId: number; live: SectionRow[]; title: string; verdict: string },
+  args: { sourceId: string; organizationId: number; live: SectionRow[]; title: string; verdict: string; sealVersion?: string },
 ): Promise<{ ok: true; seal: Seal } | SnapshotRefusal> {
   const r = await q.query<{ version: string; frozen_content: string; content_hash: string }>(
-    `SELECT version, frozen_content, content_hash FROM frozen_documents
+    args.sealVersion === undefined
+      ? `SELECT version, frozen_content, content_hash FROM frozen_documents
       WHERE document_id = $1 AND tenant_id = $2
+      ORDER BY frozen_at DESC, id DESC LIMIT 1`
+      : `SELECT version, frozen_content, content_hash FROM frozen_documents
+      WHERE document_id = $1 AND tenant_id = $2 AND version = $3
       ORDER BY frozen_at DESC, id DESC LIMIT 1`,
-    [args.sourceId, args.organizationId],
+    args.sealVersion === undefined ? [args.sourceId, args.organizationId] : [args.sourceId, args.organizationId, args.sealVersion],
   );
   const notSealed = (): SnapshotRefusal =>
     refuse(

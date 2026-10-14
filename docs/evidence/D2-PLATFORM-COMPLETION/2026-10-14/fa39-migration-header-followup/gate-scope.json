@@ -1,0 +1,21 @@
+{
+  "publishedHead": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
+  "actualBase": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "actualChangedMigrationPaths": [
+    "db/migrations/20260314_phase12_multi_user_review.sql",
+    "db/migrations/20260401_project_sharing_visibility.sql",
+    "migrations/20260928_platform_role_grants_platform_writes.sql"
+  ],
+  "gateBytesUnchangedFromPublished": true,
+  "scopeMethod": "Private wrapper resolves only the symbolic published range and forwards actual git reads; unchanged gate validates copied published-original versus copied current file bytes. No branch/ref/index/worktree mutation or fabricated file list.",
+  "results": [
+    {
+      "phase": "original",
+      "exit": 1
+    },
+    {
+      "phase": "current",
+      "exit": 0
+    }
+  ]
+}

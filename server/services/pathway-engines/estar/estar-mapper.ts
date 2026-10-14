@@ -1,3 +1,4 @@
+import { matchedSourceEvidence, type PathwayEvidenceLeaf, type PathwayEvidenceSlot } from '../source-aware-evidence';
 /**
  * eSTAR readiness mapper (FDA 510(k) / De Novo — MedTech & IVD)
  *
@@ -20,7 +21,7 @@
 
 export type EstarType = '510k' | 'de_novo';
 
-export interface EstarInputLeaf {
+export interface EstarInputLeaf extends PathwayEvidenceLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
@@ -94,7 +95,7 @@ export interface EstarSlot {
  */
 export type EstarApplicability = 'required' | 'not-applicable' | 'undetermined' | 'when-applicable';
 
-export interface EstarSlotStatus extends EstarSlot {
+export interface EstarSlotStatus extends EstarSlot, PathwayEvidenceSlot  {
   present: boolean;
   sources: string[];
   applicability: EstarApplicability;
@@ -459,12 +460,13 @@ function publicSlot(s: SlotDef): EstarSlot {
   };
 }
 
-function evalSlot(slot: SlotDef, leaves: EstarInputLeaf[], flags: DeviceFlags | undefined): EstarSlotStatus {
+function evalSlot(slot: SlotDef, leaves: EstarInputLeaf[], flags: DeviceFlags | undefined, sourceAware?: boolean): EstarSlotStatus {
   // A matched-but-non-substantive leaf (a draft/placeholder stub whose title
   // merely matches) never marks a required section present — only a matched
   // leaf that is ALSO substantive counts.
   const matched = leaves.filter((l) => slot.match(l));
-  const present = matched.some((l) => l.substantive);
+  const proof = matchedSourceEvidence(matched, sourceAware, matched.some((l) => l.substantive));
+  const { present } = proof;
   const sources = matched.filter((l) => l.substantive).map((l) => l.sectionCode || l.title);
   const rest = publicSlot(slot);
   const applicability = slotApplicability(slot, flags);
@@ -472,7 +474,7 @@ function evalSlot(slot: SlotDef, leaves: EstarInputLeaf[], flags: DeviceFlags | 
      device", so a sterile device's sterilization section reports required and
      the completeness figures computed from it by five callers are right without
      any of them changing. */
-  return { ...rest, required: applicability === 'required', present, sources, applicability };
+  return { ...rest, ...proof, required: applicability === 'required', present, sources, applicability };
 }
 
 /**
@@ -482,12 +484,12 @@ function evalSlot(slot: SlotDef, leaves: EstarInputLeaf[], flags: DeviceFlags | 
  * a claim about the device.
  */
 function contradictionFor(
-  slot: SlotDef, leaves: EstarInputLeaf[], applicability: EstarApplicability,
+  slot: SlotDef, leaves: EstarInputLeaf[], applicability: EstarApplicability, sourceAware?:boolean,
 ): EstarContradiction | null {
   if (applicability !== 'not-applicable' || !slot.flag || slot.contradicts === null) return null;
   const asserts = slot.contradicts ?? slot.match;
   const sources = leaves
-    .filter((l) => l.substantive && slot.match(l) && asserts(l))
+    .filter((l) => matchedSourceEvidence([l],sourceAware,!!l.substantive).present && slot.match(l) && asserts(l))
     .map((l) => l.sectionCode || l.title);
   return sources.length > 0 ? { section: slot.id, flag: slot.flag, sources } : null;
 }
@@ -516,6 +518,8 @@ export function estarSlots(type: EstarType, variant?: 'device' | 'ivd'): EstarSl
 }
 
 export interface MapToEstarInput {
+  /** Request-owned coverage only; omitted preserves legacy structural behavior. */
+  sourceAware?: boolean;
   leaves: EstarInputLeaf[];
   type: EstarType;
   /**
@@ -538,14 +542,14 @@ export interface MapToEstarInput {
 export function mapToEstar(input: MapToEstarInput): EstarResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   const registry = registryFor(input.type, input.variant);
-  const sections = registry.map((s) => evalSlot(s, leaves, input.flags));
+  const sections = registry.map((s) => evalSlot(s, leaves, input.flags, input.sourceAware));
   const contradictions = registry
-    .map((s, i) => contradictionFor(s, leaves, sections[i].applicability))
+    .map((s, i) => contradictionFor(s, leaves, sections[i].applicability, input.sourceAware))
     .filter((c): c is EstarContradiction => c !== null);
 
   const absent = sections.filter((s) => !s.present);
-  const missingRequired = absent.filter((s) => s.applicability === 'required').map((s) => s.id);
-  const undetermined = absent.filter((s) => s.applicability === 'undetermined').map((s) => s.id);
+  const missingRequired = absent.filter((s) => s.applicability === 'required' && !s.contentUndetermined).map((s) => s.id);
+  const undetermined = absent.filter((s) => s.applicability === 'undetermined' || (s.required && s.contentUndetermined)).map((s) => s.id);
   const checkApplicability = absent
     .filter((s) => s.applicability === 'when-applicable')
     .map((s) => s.id);

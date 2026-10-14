@@ -32,13 +32,14 @@ import jwt from 'jsonwebtoken';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { databaseUrl } from '../../../tests/setup.db';
+import { nativeCatalogRunId, seedNativeCatalogProject } from '../../../tests/db/catalog-native-fixture';
 import {
   provisionAppServiceRole,
   resolveAppServiceRole,
 } from '../../../scripts/db/provision-app-role.mjs';
 
-const PREFIX = 'dbtest-w7';
-const RUN = `${process.pid}_${Date.now().toString(36)}`;
+const RUN = nativeCatalogRunId();
+const PREFIX = `dbtest-w7-${RUN}`;
 const RUNTIME_PASSWORD = 'dbtest-w7-connector-runtime-password';
 const runtimeRole = resolveAppServiceRole({ APP_SERVICE_DB_ROLE: `dbw7_rt_${RUN}` });
 let runtimePool: { query: Pool['query']; end: () => Promise<void> } | null = null;
@@ -85,27 +86,13 @@ async function seedTenant(tag: string): Promise<Tenant> {
     [orgId, `${PREFIX} program ${tag}`, `W7-${tag}`, `${PREFIX} product ${tag}`],
   );
   const programId = String(program.rows[0].id);
+  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId, namespace: `${PREFIX}-${tag}` });
   const doc = await owner.query(
     `INSERT INTO vault.documents (program_id, content_hash, file_name, document_title, document_code, document_type, organization_id)
        VALUES ($1, $2, $3, $4, $5, 'protocol', $6) RETURNING id`,
     [programId, createHash('sha256').update(`${PREFIX}-${tag}`).digest('hex'), `${PREFIX}-${tag}.pdf`, `${PREFIX} protocol ${tag}`, `W7DOC-${tag}`, orgId],
   );
   return { orgId, orgUuid: String(org.rows[0].uuid), userId, membershipId: Number(membership.rows[0].id), programId, docId: String(doc.rows[0].id) };
-}
-
-async function cleanup(): Promise<void> {
-  const orgIds = await owner.query(`SELECT id FROM organizations WHERE slug LIKE $1`, [`${PREFIX}-org-%`]);
-  const ids = orgIds.rows.map((r) => Number(r.id));
-  if (ids.length === 0) return;
-  await owner.query(`DELETE FROM submission_leaves WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM ectd_sequences WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM submissions WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM vault.documents WHERE program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = ANY($1))`, [ids]);
-  await owner.query(`DELETE FROM regulatory_programs WHERE organization_id = ANY($1)`, [ids]);
-  await owner.query(`DELETE FROM organization_users WHERE organization_id = ANY($1)`, [ids]);
-  // tenant-isolation-safe: removes only this suite's fixture users, matched by the suite-unique PREFIX
-  await owner.query(`DELETE FROM users WHERE email LIKE $1`, [`${PREFIX}-%@example.test`]);
-  await owner.query(`DELETE FROM organizations WHERE id = ANY($1)`, [ids]);
 }
 
 async function mcpClient(token: string): Promise<Client> {
@@ -123,9 +110,9 @@ async function call(client: Client, name: string, args: Record<string, unknown>)
 }
 
 beforeAll(async () => {
-  for (const k of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'MOONSHOT_API_KEY', 'AZURE_OPENAI_API_KEY']) delete process.env[k];
+  for (const k of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'MOONSHOT_API_KEY', 'AZURE_OPENAI_API_KEY']) process.env[k] = '';
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
-  await cleanup();
+  // This run never deletes historical rows from previous fixture namespaces.
 
   // The role production connects as, before any server module opens a pool.
   for (let attempt = 1; ; attempt++) {
@@ -200,7 +187,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await new Promise<void>((resolve) => (server ? server.close(() => resolve()) : resolve()));
   if (runtimePool) await runtimePool.end().catch(() => {});
-  await cleanup().catch(() => {});
+  // Retain this run's real anchors, source pointers and immutable audit history.
   for (let attempt = 1; ; attempt++) {
     try {
       await owner.query(`REASSIGN OWNED BY ${runtimeRole} TO CURRENT_USER; DROP OWNED BY ${runtimeRole}`);

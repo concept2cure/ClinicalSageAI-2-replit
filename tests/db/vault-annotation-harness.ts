@@ -6,23 +6,24 @@
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
+import { randomUUID } from 'node:crypto';
+import jwt from 'jsonwebtoken';
+import { activeJwtSecret } from '../../server/utils/jwtVerify';
 import { expect } from 'vitest';
 
-export type Tenant = { orgId: number; orgUuid: string; programId: string; slug: string };
+export type Tenant = { orgId: number; orgUuid: string; programId: string; projectId: number; slug: string };
 export type Outcome = { ok: true; rows: Array<Record<string, unknown>> } | { ok: false; message: string };
 
 export function harness(prefix: string) {
-  const PROBE = `dbtest-${prefix} `;
-  const CODE = `DBTEST-${prefix.toUpperCase()}`;
+  const runId = randomUUID();
+  const PROBE = `dbtest-${prefix} ${runId} `;
+  const CODE = `DBTEST-${prefix.toUpperCase()}-${runId.slice(0, 12)}`;
   const state = { owner: undefined as unknown as Pool };
 
   async function user(email: string, name: string): Promise<number> {
     const r = await state.owner.query(
-      `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, 'not-a-real-hash')
-         ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-      [email, name],
+      `INSERT INTO users (email, name, password_hash, status) VALUES ($1, $2, 'not-a-real-hash', 'active') RETURNING id`,
+      [email.replace('@', `+${runId}@`), name],
     );
     return Number(r.rows[0].id);
   }
@@ -36,72 +37,65 @@ export function harness(prefix: string) {
     );
   }
 
-  async function tenant(slug: string): Promise<Tenant> {
-    const org = await state.owner.query(
-      `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active')
-         ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, status = 'active' RETURNING id, uuid`,
-      [`${PROBE}${slug}`, `dbtest-${prefix}-${slug}`],
-    );
-    const prog = await state.owner.query(
-      `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-       VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Annota 5mg') RETURNING id`,
-      [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, org.rows[0].id],
-    );
-    return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id), slug };
+  async function tenant(slug: string, ownerUserId: number): Promise<Tenant> {
+    const org = (await state.owner.query("INSERT INTO organizations(name,slug,status) VALUES($1,$2,'active') RETURNING id,uuid",
+      [`${PROBE}${slug}`, `dbtest-${prefix}-${runId}-${slug}`])).rows[0];
+    const { ensureOrganizationDefaultWorkspace, poolClientWorkspaceStore } = await import('../../server/services/c2c/organization-default-workspace');
+    const client = await state.owner.connect();
+    try {
+      await client.query('BEGIN');
+      await ensureOrganizationDefaultWorkspace(poolClientWorkspaceStore(client), { orgId: Number(org.id), orgName: `${PROBE}${slug}`, orgSlug: `dbtest-${prefix}-${runId}-${slug}` });
+      await client.query('COMMIT');
+    } catch (error) { await client.query('ROLLBACK'); throw error; }
+    finally { client.release(); }
+    return program({ orgId: Number(org.id), orgUuid: String(org.uuid) }, slug, ownerUserId);
   }
 
-  async function appFor(t: Tenant, userId: number, role = 'admin'): Promise<express.Express> {
+  async function program(t: Pick<Tenant, 'orgId' | 'orgUuid'>, slug: string, ownerUserId: number): Promise<Tenant> {
+    const { requireProgramProjectAnchor } = await import('../../server/services/c2c/program-project-anchor');
+    const client = await state.owner.connect();
+    try {
+      await client.query('BEGIN');
+      const id = String((await client.query(`INSERT INTO regulatory_programs(name,code,organization_id,program_type,product_type,primary_agency,product_name,lead_user_id)
+        VALUES($1,$2,$3,'ind','drug','FDA','Invented annotation QA product',$4) RETURNING id`,
+      [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, t.orgId, ownerUserId])).rows[0].id);
+      const anchor = await requireProgramProjectAnchor({ client, orgId: t.orgId, userId: ownerUserId, programId: id,
+        name: `${PROBE}${slug} project`, code: `${CODE}-${slug.toUpperCase()}`, priority: 'normal', metadata: { registryId: 'US_IND', submissionType: 'US_IND' } });
+      await client.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,$2,'org_public')", [t.orgId, anchor.projectId]);
+      await client.query('COMMIT');
+      return { ...t, programId: id, projectId: anchor.projectId, slug };
+    } catch (error) { await client.query('ROLLBACK'); throw error; }
+    finally { client.release(); }
+  }
+
+  async function appFor(): Promise<express.Express> {
     const createVaultIngestRoutes = (await import('../../server/routes/vault-ingest')).default;
     const createProjectVaultRoutes = (await import('../../server/routes/c2c/project-vault')).default;
-    const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
-    const a = express();
-    a.use(express.json());
-    a.use((req, _res, next) => {
-      Object.assign(req, {
-        userId, tenantId: t.orgId, userRole: role,
-        user: { id: userId, organizationId: t.orgId, organizationUuid: t.orgUuid, role },
-      });
-      next();
-    });
-    a.use(establishRequestTenantScope);
+    const { requireTenantContext } = await import('../../server/middleware/tenantContext');
+    const a = express(); a.use(express.json()); a.use(requireTenantContext);
     a.use('/api/vault/ingest', createVaultIngestRoutes());
     a.use('/api/c2c/project-vault', createProjectVaultRoutes());
     return a;
   }
 
+  async function requestFor(t: Tenant, userId: number, role = 'admin') {
+    const token = jwt.sign({ type: 'access', userId: String(userId), organizationId: String(t.orgId), organizationUuid: t.orgUuid, role }, activeJwtSecret(), { expiresIn: '15m' });
+    return request.agent(await appFor()).set('Authorization', `Bearer ${token}`);
+  }
+
   async function ingest(t: Tenant, userId: number, file: { bytes: Buffer; name: string; type: string }, fields: Record<string, string>): Promise<string> {
-    let r = request(await appFor(t, userId)).post('/api/vault/ingest').field('programId', t.programId).field('documentType', 'OTHER');
+    let r = (await requestFor(t, userId)).post('/api/vault/ingest').field('programId', t.programId).field('documentType', 'OTHER');
     for (const [k, v] of Object.entries(fields)) r = r.field(k, v);
     const res = await r.attach('file', file.bytes, { filename: file.name, contentType: file.type });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     return String(res.body.document.id);
   }
 
-  async function cleanup(): Promise<void> {
-    const orgs = `(SELECT id FROM organizations WHERE slug LIKE 'dbtest-${prefix}-%')`;
-    const client = await state.owner.connect();
-    try {
-      await client.query('BEGIN');
-      await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-      await client.query(`DELETE FROM audit_logs WHERE tenant_id IN ${orgs}`);
-      await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-      await client.query('COMMIT');
-    } catch {
-      await client.query('ROLLBACK').catch(() => {});
-    } finally {
-      client.release();
-    }
-    // Versions first, as the owner: their annotations and relationships follow by cascade.
-    await state.owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-    await state.owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-    await state.owner.query(`DELETE FROM canonical_documents WHERE organization_id IN ${orgs}`).catch(() => {});
-    await state.owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-    await state.owner.query(`DELETE FROM organization_users WHERE organization_id IN ${orgs}`).catch(() => {});
-    await state.owner.query(`UPDATE organizations SET status = 'active' WHERE slug LIKE 'dbtest-${prefix}-%'`).catch(() => {});
-  }
+  /** Fresh run namespaces retain all history instead of disabling guards. */
+  async function cleanup(): Promise<void> { /* Retained QA records are intentional. */ }
 
   const asRuntime = (sql: string, params: unknown[], scope: Tenant | 'system') => runAsRuntime(prefix, sql, params, scope);
-  return { PROBE, CODE, state, user, member, tenant, appFor, ingest, asRuntime, cleanup, removeStorage };
+  return { PROBE, CODE, state, user, member, tenant, program, appFor, requestFor, ingest, asRuntime, cleanup, removeStorage };
 }
 
 /** SQL as the runtime role, in a tenant's scope or the system scope, in its own transaction. */
@@ -127,11 +121,8 @@ export async function runAsRuntime(prefix: string, sql: string, params: unknown[
   return runWithTenantScope({ tenantId: String(scope.orgId), orgUuid: scope.orgUuid, role: 'admin', source: 'request', caller }, body);
 }
 
-export async function removeStorage(tenants: Tenant[]): Promise<void> {
-  for (const t of tenants) {
-    if (t) await fs.rm(path.resolve(process.cwd(), 'storage', 'vault', String(t.orgId)), { recursive: true, force: true }).catch(() => {});
-}
-  }
+/** Stored QA bytes remain available for the retained evidence rows. */
+export async function removeStorage(_tenants: Tenant[]): Promise<void> { /* No teardown deletion. */ }
 
 export const refused = (r: Outcome, pattern = /IMMUTABILITY_VIOLATION|VAULT_ANNOTATION_REFUSED/) => {
   expect(r.ok, 'the change was applied').toBe(false);

@@ -1,0 +1,16 @@
+{
+  "id": 11924713848,
+  "name": "real-database-test-results",
+  "size_in_bytes": 99436,
+  "digest": "sha256:0b343b94e2150de5eb0be8f2a124db0c8d16db58b1219f407dc8d30adf7c301e",
+  "created_at": "2026-10-14T20:08:24Z",
+  "expired": false,
+  "workflow_run": {
+    "id": 38625681016,
+    "repository_id": 1096040843,
+    "head_repository_id": 1096040843,
+    "head_branch": "concept2cure-v2",
+    "head_sha": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd"
+  },
+  "qualification": "Metadata for the complete native result archive only; temporary download references are excluded."
+}

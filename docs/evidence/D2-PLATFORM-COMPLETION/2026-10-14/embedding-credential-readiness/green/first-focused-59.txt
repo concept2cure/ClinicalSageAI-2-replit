@@ -1,0 +1,612 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-10-14T19:58:41.466Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:58:41.468Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+{
+  "timestamp": "2026-10-14T19:58:41.468Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 3ms org=- user=- caller=embedding-provider req=10b69b7d-e5a4-4c4e-9871-67577283f252
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed
+{
+  "timestamp": "2026-10-14T19:58:41.623Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_SHARED_PROVIDER_WITHOUT_ZDR",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry
+{
+  "timestamp": "2026-10-14T19:58:41.627Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "DENY_UNAPPROVED_INTENDED_USE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "phi",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant
+{
+  "timestamp": "2026-10-14T19:58:41.630Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_APPROVED_PLACEMENT",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "phi",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none
+{
+  "timestamp": "2026-10-14T19:58:41.634Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=2163211a-814a-4720-ab31-f40f3e87f456
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a missing OpenAI credential lazily and records no content
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 0ms org=7 user=- caller=embedding-provider req=e536299d-ea09-4ed1-98f4-422e1c47f9a9
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a missing OpenAI credential lazily and records no content
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a empty OpenAI credential lazily and records no content
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1ms org=7 user=- caller=embedding-provider req=dcdddbe9-2fcf-4b9c-b482-123b3417f37e
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a empty OpenAI credential lazily and records no content
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a whitespace OpenAI credential lazily and records no content
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 0ms org=7 user=- caller=embedding-provider req=6071a004-dbef-4f9b-b927-04c61b7ce0e2
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a whitespace OpenAI credential lazily and records no content
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a missing credential
+{
+  "timestamp": "2026-10-14T19:58:41.644Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a missing credential
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a empty credential
+{
+  "timestamp": "2026-10-14T19:58:41.646Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a empty credential
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a whitespace credential
+{
+  "timestamp": "2026-10-14T19:58:41.648Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a whitespace credential
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > a keyless local endpoint still embeds at its native width and records the padded result
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=3 1ms org=7 user=- caller=embedding-provider req=382945fb-fc9f-4039-969d-7386b445d4ca
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > a keyless local endpoint still embeds at its native width and records the padded result
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=7 user=- caller=embedding-provider req=d98dc95e-6ff5-4af4-ad47-c227419e3518
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=e5250dcf-11a4-4eb1-a3fc-2d002f853800
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > asks the server for 1024 (bge-m3) and pads each vector to the 1536 the corpus holds
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=6 0ms org=- user=- caller=embedding-provider req=3ba14e14-5e29-4419-af13-a0bac81b071b
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > asks the server for 1024 (bge-m3) and pads each vector to the 1536 the corpus holds
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > pads to 3072 for document_vectors, from the same 1024
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=3 1ms org=- user=- caller=embedding-provider req=bb0c06d0-6b92-461a-a5d5-185194a24e56
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > pads to 3072 for document_vectors, from the same 1024
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > padding leaves the cosine between two vectors exactly as the model gave it
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=6 0ms org=- user=- caller=embedding-provider req=e0c8cdca-001c-4080-b070-9fc79f447098
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > padding leaves the cosine between two vectors exactly as the model gave it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the native width is configurable (EMBEDDING_LOCAL_NATIVE_DIMENSIONS)
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=3 1ms org=- user=- caller=embedding-provider req=53b2cc5c-0b31-4006-a73b-e64fa69922db
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the native width is configurable (EMBEDDING_LOCAL_NATIVE_DIMENSIONS)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector wider than the model it asked for (another model behind the address), and records the failure
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1ms org=- user=- caller=embedding-provider req=9fd38c87-f853-45f3-a932-694873788d08
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector wider than the model it asked for (another model behind the address), and records the failure
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector narrower than the model (it is not padded into the corpus either)
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=4842e3fb-a54e-4203-a0ca-ddf85c82d169
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector narrower than the model (it is not padded into the corpus either)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the OpenAI lane is unchanged: the corpus width is asked for and the vector returned as given
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=29abeaae-097f-4ef5-9055-f5c0af6973ae
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the OpenAI lane is unchanged: the corpus width is asked for and the vector returned as given
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > the self-hosted lane passes when it serves bge-m3 at 1024, padded to 1536 and 3072
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=166931c1-4991-4a4f-ba36-c64774ca7aed
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > the self-hosted lane passes when it serves bge-m3 at 1024, padded to 1536 and 3072
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > the self-hosted lane passes when it serves bge-m3 at 1024, padded to 1536 and 3072
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=94bfc8f6-6da0-4ecd-bccf-2dfc0b27fe12
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > passes in production with no organization bound: the probe text is the platform's, and not sensitive
+{
+  "timestamp": "2026-10-14T19:58:41.672Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > passes in production with no organization bound: the probe text is the platform's, and not sensitive
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > passes in production with no organization bound: the probe text is the platform's, and not sensitive
+{
+  "timestamp": "2026-10-14T19:58:41.673Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "local",
+    "region": "on_prem",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails, naming the widths, when the server answers in a width that is not the model's
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=c7783960-4ecb-4d84-9f62-fcf540121d31
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails, naming the widths, when the server answers in a width that is not the model's
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails, naming the widths, when the server answers in a width that is not the model's
+{
+  "timestamp": "2026-10-14T19:58:41.674Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "EmbeddingConfigurationError: The self-hosted embedding server answered with 1536 values where its model emits 1024: it is not serving the configured model."
+  }
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server says it serves another model: one column must hold one model
+[AI Gateway Audit] ✓ local/BAAI/bge-large-en-v1.5 task=embedding tokens=3 1ms org=- user=- caller=embedding-provider req=1380d020-75bd-47ab-b0d5-4dd44b1567a0
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server says it serves another model: one column must hold one model
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server is unreachable, and the reason carries no address or upstream text
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=71a9951a-35e5-47be-82df-b5eda2c4a122
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server is unreachable, and the reason carries no address or upstream text
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server is unreachable, and the reason carries no address or upstream text
+{
+  "timestamp": "2026-10-14T19:58:41.677Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "APIConnectionError: connect ECONNREFUSED 10.10.1.xxx:8080"
+  }
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server refuses, naming the HTTP status only
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=0a921af4-ce38-429f-a66d-f611531d7d85
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server refuses, naming the HTTP status only
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server refuses, naming the HTTP status only
+{
+  "timestamp": "2026-10-14T19:58:41.678Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "Error: `dimensions` should be smaller than the maximum embedding dimension."
+  }
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the lane hands back a zero vector, which is no embedding
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=67bea151-e1e9-4182-8329-525591257c23
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the lane hands back a zero vector, which is no embedding
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > a server that never answers fails the probe within its bound, so boot is not held for the SDK's ten minutes
+{
+  "timestamp": "2026-10-14T19:58:41.686Z",
+  "level": "warn",
+  "message": "[embedding-provider] embedding lane readiness probe failed",
+  "context": {
+    "lane": "local",
+    "width": 1536,
+    "error": "EmbeddingProbeTimeout: did not answer within 10 s"
+  }
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > on the OpenAI lane, asks each corpus model for its own width
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=7c4bd13d-45ab-4469-97a4-9c45de3047af
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > on the OpenAI lane, asks each corpus model for its own width
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > on the OpenAI lane, asks each corpus model for its own width
+[AI Gateway Audit] ✓ openai/text-embedding-3-large task=embedding tokens=3 0ms org=- user=- caller=embedding-provider req=f1a4f880-d1b3-4a5c-8de7-33f91a6887c9
+
+(node:189855) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > defaults to the OpenAI embedding provider (shared frontier) 3ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > selects the self-hosted provider when EMBEDDING_PROVIDER=local and a base URL is set 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding provider selection > local with no base URL is a configuration error naming EMBEDDING_LOCAL_BASE_URL, never a fallback to OpenAI 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > plain text with no policy embeds through OpenAI; the client is constructed once, lazily 8ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed 4ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > PHI to a provider not approved for embedding is refused with a content-free audit entry 3ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant 5ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the running request's tenant scope supplies the organisation when the caller passes none 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding placement gate (before the SDK client exists) > the estate-wide system scope ('0') is not an organisation and is not offered as one 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a missing OpenAI credential lazily and records no content 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a empty OpenAI credential lazily and records no content 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > refuses a whitespace OpenAI credential lazily and records no content 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a missing credential 3ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a empty credential 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > placement refusal takes priority over a whitespace credential 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > embedding credential readiness before SDK dispatch > a keyless local endpoint still embeds at its native width and records the padded result 3ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > one content-free served row, with the placement decision, the model and the tokens 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > a served embedding is on the ledger (D6) > an embedding the provider failed leaves a failure row, and the error still reaches the caller 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > asks the server for 1024 (bge-m3) and pads each vector to the 1536 the corpus holds 4ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > pads to 3072 for document_vectors, from the same 1024 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > padding leaves the cosine between two vectors exactly as the model gave it 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the native width is configurable (EMBEDDING_LOCAL_NATIVE_DIMENSIONS) 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses, before anything is sent, when the model is wider than the corpus: no silent truncation 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector wider than the model it asked for (another model behind the address), and records the failure 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > refuses a vector narrower than the model (it is not padded into the corpus either) 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > a native width that is not a positive whole number is a configuration error naming the variable 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > the self-hosted lane's width: the model's own, zero-padded to the corpus > the OpenAI lane is unchanged: the corpus width is asked for and the vector returned as given 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > the self-hosted lane passes when it serves bge-m3 at 1024, padded to 1536 and 3072 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > passes in production with no organization bound: the probe text is the platform's, and not sensitive 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails, naming the widths, when the server answers in a width that is not the model's 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server says it serves another model: one column must hold one model 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server is unreachable, and the reason carries no address or upstream text 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the server refuses, naming the HTTP status only 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > fails when the lane hands back a zero vector, which is no embedding 1ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > a server that never answers fails the probe within its bound, so boot is not held for the SDK's ten minutes 7ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts > probeEmbeddingLane: one short text through the configured lane, at every corpus width > on the OpenAI lane, asks each corpus model for its own width 2ms
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 1ms org=7 user=- caller=embedding-provider req=e607dd25-2f40-4346-94f2-84800703af73
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 0ms org=7 user=- caller=embedding-provider req=2222da2a-963d-43b0-a3ad-a4649612e562
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 0ms org=9 user=- caller=embedding-provider req=a6cf591d-1113-45d4-820b-7bfa0d056a24
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically
+[AI Gateway Audit] ✗ none/none task=embedding tokens=0 0ms org=- user=- caller=embedding-provider req=33b8c82d-8ae2-424b-98c2-5eb0a73678fc
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:189864) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:189864) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189864) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189864) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189864) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189864) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189864) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > plain text with no org policy is allowed on both lanes 8ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a zero-retention tenant cannot embed plain text through OpenAI, even outside production 5ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > the same zero-retention tenant may embed through the self-hosted lane 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an EU-resident tenant cannot embed through OpenAI (global only); the self-hosted lane satisfies it 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > a signed zero-retention agreement (OPENAI_ZERO_RETENTION=true) is the operator control that unlocks OpenAI 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > residency / zero-retention (any data class, any environment) > an explicit request flag is honoured without an org policy 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > PHI under production enforcement with no approvals is refused (DENY_UNKNOWN_PROVIDER), content-free 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > an approval for "chat" does not cover embedding: DENY_UNAPPROVED_INTENDED_USE 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > the self-hosted lane, approved for embedding, embeds PHI for an on-prem zero-retention tenant 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce enforces identically 1ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > a classifier failure under enforcement fails closed (DENY_DETECTOR_FAILURE) 2ms
+ ✓ server/services/ai-gateway/__tests__/embedding-placement-gate.test.ts > AIGateway.authorizeEmbedding > sensitive text meets the enforced last-mile gate with intended use "embedding" > development audit mode records PHI-bound embedding content-free and does not block 1ms
+ ✓ server/services/innovation/__tests__/embedding-failure-honesty.contract.test.ts > an embedding outage is reported, not answered > auto-traceability: detectLinks throws instead of reporting zero links 41ms
+ ✓ server/services/innovation/__tests__/embedding-failure-honesty.contract.test.ts > an embedding outage is reported, not answered > delta-radar: a scan that cannot embed throws instead of flagging every requirement 90ms
+ ✓ server/services/innovation/__tests__/embedding-failure-honesty.contract.test.ts > an embedding outage is reported, not answered > never yields a zero vector — the value that made both scans wrong 1ms
+ ✓ server/services/innovation/__tests__/embedding-failure-honesty.contract.test.ts > an embedding outage is reported, not answered > logbook SEARCH throws rather than answering "no results" 21ms
+ ✓ server/services/innovation/__tests__/embedding-failure-honesty.contract.test.ts > an embedding outage is reported, not answered > logbook WRITE still persists when embedding fails — the record outranks its index 1ms
+ ✓ server/services/innovation/__tests__/embedding-failure-honesty.contract.test.ts > an embedding outage is reported, not answered > a working embedding is used, so none of the above is fail-closed-on-everything 1ms
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+{
+  "timestamp": "2026-10-14T19:58:43.866Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:58:43.868Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+{
+  "timestamp": "2026-10-14T19:58:43.868Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists
+{
+  "timestamp": "2026-10-14T19:58:43.913Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election
+{
+  "timestamp": "2026-10-14T19:58:43.920Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI
+{
+  "timestamp": "2026-10-14T19:58:43.922Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] embedding placement decision",
+  "context": {
+    "reasonCode": "DENY_TENANT_POLICY",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before
+{
+  "timestamp": "2026-10-14T19:58:43.924Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "ALLOW_NON_SENSITIVE",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "none",
+    "allowed": true
+  }
+}
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development
+[AI Gateway Audit] ✓ openai/text-embedding-3-small task=embedding tokens=3 0ms org=4502 user=- caller=embedding-provider req=1d0c8a1d-e3a2-46f1-99ea-d5e9089e126b
+
+stderr | server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:189879) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:189879) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189879) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189879) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:189879) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization with no placement row is refused before the OpenAI client exists 10ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > the tenant bound from the request scope is held to the same election 3ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > platform work with no organization (system scope) is not embedded through OpenAI 2ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 production embeddings: no election, no OpenAI call > an organization that named openai embeds through it as before 3ms
+ ✓ server/services/ai-gateway/embeddings/__tests__/embedding-provider-election.test.ts > P1-45 outside production: embeddings unchanged > an organization with no placement row embeds through OpenAI in development 2ms
+
+ Test Files  4 passed (4)
+      Tests  59 passed (59)
+   Start at  19:58:37
+   Duration  6.47s (transform 2.30s, setup 290ms, import 5.00s, tests 299ms, environment 0ms)

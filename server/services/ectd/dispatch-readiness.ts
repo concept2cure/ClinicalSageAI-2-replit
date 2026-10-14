@@ -145,6 +145,8 @@ export interface LeafDocumentResolution {
   status:
     /** A document exists in this organization and its pin, if any, matches. */
     | 'resolved'
+    /** Request-owned coverage could not establish the retained source proof. */
+    | 'undetermined'
     /** The pointer is incomplete — no table, or not the key the table uses. */
     | 'no_pointer'
     /** The table is outside the placeable set; nothing can look it up. */

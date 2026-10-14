@@ -1,0 +1,37 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/submissions-request-current-access.pglite.test.ts
+  73:62  warning  Arrow function has too many lines (105). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/submissions.ts
+  112:1  warning  Function 'fail' has a complexity of 16. Maximum allowed is 15  complexity
+  631:1  warning  File has too many lines (1555). Maximum allowed is 500         max-lines
+
+/workspace/ClinicalSageAI-2-replit/server/services/ectd/dispatch-readiness.ts
+  710:8  warning  Function 'computeDispatchReadiness' has a complexity of 20. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/ectd/leaf-source-resolver.ts
+  383:8   warning  Async function 'materializeLeafSources' has too many lines (336). Maximum allowed is 100  max-lines-per-function
+  383:8   warning  Async function 'materializeLeafSources' has a complexity of 78. Maximum allowed is 15     complexity
+  594:11  warning  The value assigned to 'buf' is not used in subsequent statements                          no-useless-assignment
+  770:11  warning  The value assigned to 'bytes' is not used in subsequent statements                        no-useless-assignment
+
+/workspace/ClinicalSageAI-2-replit/server/services/ectd/submission-leaf-source-evidence.ts
+  208:80  warning  Unexpected control character(s) in regular expression: \x00, \x08, \x0b, \x0c, \x0e, \x1f  no-control-regex
+
+/workspace/ClinicalSageAI-2-replit/server/services/pathway-engines/mdr-ivdr/tech-doc-assembler.ts
+  396:11  warning  'match' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/pathway-engines/pma/pma-mapper.ts
+  212:11  warning  'match' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/pathway-engines/pmda/pmda-shonin.ts
+  186:11  warning  'match' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/services/pathway-engines/prestar/prestar-mapper.ts
+  249:11  warning  'match' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/shared/types/submission-api.ts
+  603:1  warning  File has too many lines (610). Maximum allowed is 500  max-lines
+
+✖ 14 problems (0 errors, 14 warnings)
+

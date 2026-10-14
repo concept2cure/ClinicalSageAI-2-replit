@@ -1,0 +1,12 @@
+{
+  "files": {
+    "README.md": "bb345f67ac2b981177d7b060e86a4b5f5fb93bc43714a8fde41cf31336ea98a1",
+    "after-critical-source-pins.json": "ea66c16a7559c65297cf2229f66e51b7cf9aba66493486db39e99c272d4448ca",
+    "before-critical-source-pins.json": "a671f02d5e874a83e0e30f33aa94fcec5cdb110f38f34ef3975df8c0e74c6d77",
+    "final-physical-observations.json": "8f0551aa5d3a4e801fb9947d728dcd3c5a46bacb0e3f35e381d09e061a144135",
+    "launcher-result.txt": "733524111ddc779c2e7a0a5a94fcca38b7733c2fa51da7389b7c89a60cf227e5",
+    "observed-stages.json": "fd05ec60e54ea18fb2474e8d241c36b4e27d3efbf845ad6592ed209fda33ae47",
+    "private-artifact-hashes.json": "e4b7c1ce5184647cd44be3b1288a451b206e05fa6d9f4c12af8abbe959ea6415",
+    "second-deploy.raw.txt.gz": "01f2bafe2530e43fb6638593497d69f552eec48eff29009d129fba70a0ba8784"
+  }
+}
