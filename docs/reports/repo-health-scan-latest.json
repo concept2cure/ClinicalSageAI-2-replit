@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T00:33:44.704Z",
+  "generatedAt": "2026-10-14T02:09:06.385Z",
   "git": {
-    "sha": "317831f4596b966d4e4a857c4686fe8d119ad605",
+    "sha": "92864923bc8f6467bf0b26f3c2f6e5181ca22859",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2143,7 +2143,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 398319
+        "bytes": 399696
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2151,7 +2151,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 298976
+        "bytes": 297623
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2210,6 +2210,10 @@
         "bytes": 144995
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 137216
+      },
+      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "bytes": 137175
       },
@@ -2228,10 +2232,6 @@
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 134327
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2369,7 +2369,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8622
+        "lines": 8635
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2377,7 +2377,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6131
+        "lines": 6081
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2461,7 +2461,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2906
+        "lines": 2933
       },
       {
         "file": "server/routes/auth.ts",
