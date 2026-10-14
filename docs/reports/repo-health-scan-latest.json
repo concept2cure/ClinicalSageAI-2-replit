@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-13T22:56:06.540Z",
+  "generatedAt": "2026-10-14T00:33:44.704Z",
   "git": {
-    "sha": "18df9a0b8dc88bc6b18e0a7e03b41c018032c089",
+    "sha": "317831f4596b966d4e4a857c4686fe8d119ad605",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -458,6 +458,16 @@
           "server/services/projects/schedule-of-events/templates.ts",
           "ui_kits/mdx/data/templates.js",
           "ui_kits/mdx/surfaces/Templates.jsx"
+        ]
+      },
+      {
+        "basename": "vitest.probe.config",
+        "count": 4,
+        "paths": [
+          "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/vitest.probe.config.ts",
+          "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/vitest.probe.config.ts",
+          "docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/vitest.probe.config.ts",
+          "docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/round-2/probe/vitest.probe.config.ts"
         ]
       },
       {
@@ -2101,14 +2111,6 @@
         ]
       },
       {
-        "basename": "vitest.probe.config",
-        "count": 2,
-        "paths": [
-          "docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/vitest.probe.config.ts",
-          "docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/round-2/probe/vitest.probe.config.ts"
-        ]
-      },
-      {
         "basename": "vocabulary",
         "count": 2,
         "paths": [
@@ -2129,7 +2131,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1134231
+        "bytes": 1134692
       },
       {
         "file": "shared/schema.ts",
@@ -2141,7 +2143,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 395290
+        "bytes": 398319
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2149,7 +2151,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 293466
+        "bytes": 298976
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2161,7 +2163,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 194986
+        "bytes": 194782
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2229,7 +2231,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 133663
+        "bytes": 134327
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2257,7 +2259,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "bytes": 121260
+        "bytes": 121387
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2359,7 +2361,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21834
+        "lines": 21838
       },
       {
         "file": "shared/schema.ts",
@@ -2367,7 +2369,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8627
+        "lines": 8622
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2375,7 +2377,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6056
+        "lines": 6131
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2403,7 +2405,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3806
+        "lines": 3799
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2459,7 +2461,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2902
+        "lines": 2906
       },
       {
         "file": "server/routes/auth.ts",
@@ -2470,12 +2472,12 @@
         "lines": 2889
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
+        "file": "server/routes/report-os.ts",
         "lines": 2798
       },
       {
-        "file": "server/routes/report-os.ts",
-        "lines": 2796
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2798
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2825,7 +2827,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 161,
+      "duplicateGroups": 163,
       "largeByBytes": 2,
       "largeByLines": 8
     },
