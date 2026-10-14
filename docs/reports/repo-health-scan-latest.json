@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T08:31:01.912Z",
+  "generatedAt": "2026-10-14T19:41:03.611Z",
   "git": {
-    "sha": "baffbeac2fb3a0c9bb5f05f64e9278708fc985e7",
+    "sha": "fa39bd5d8cd5641a6dc0d5b573c145f4e17731cd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2288,7 +2288,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 120736
+        "bytes": 122493
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2577,6 +2577,10 @@
         "lines": 2186
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 2177
+      },
+      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 2175
       },
@@ -2591,10 +2595,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2150
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
@@ -2793,6 +2793,10 @@
         "lines": 1650
       },
       {
+        "file": "server/routes/mdx-qms.ts",
+        "lines": 1634
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1631
       },
@@ -2811,10 +2815,6 @@
       {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
-      },
-      {
-        "file": "server/routes/mdx-qms.ts",
-        "lines": 1619
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
