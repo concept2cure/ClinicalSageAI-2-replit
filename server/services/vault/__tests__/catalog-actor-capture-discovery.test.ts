@@ -152,7 +152,7 @@ function captureSqlClient(): RequestSqlClient {
   }
   async function canonicalSelectedParent() {
     const { admitRecordedCreSourceScope } = await import('../../clinical-regulatory-evidence/source-read-access');
-    const source = await fixture.pg.query('SELECT * FROM cre_evidence_sources WHERE id=$1', [fixture.capture]);
+    const source = await fixture.pg.query<Record<string, unknown>>('SELECT * FROM cre_evidence_sources WHERE id=$1', [fixture.capture]);
     return admitRecordedCreSourceScope(captureSqlClient(), { organizationId: fixture.org, userId: 43 }, source.rows[0]);
   }
 
