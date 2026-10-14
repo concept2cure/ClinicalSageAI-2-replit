@@ -22,6 +22,7 @@ and [human-review evidence](../evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/READ
 Use a Codespace dedicated to this test. Confirm the branch before updating it:
 
 ```bash
+set -e
 test "$(git branch --show-current)" = concept2cure-v2
 git pull --ff-only origin concept2cure-v2
 git rev-parse HEAD
@@ -45,6 +46,7 @@ delete a database. Use the Codespace's local administrator authentication if
 required.
 
 ```bash
+set -e
 export C2C_EDITOR_TEST_DATABASE=c2c_editor_human_20261014
 export C2C_EDITOR_TEST_ADMIN_URL="postgresql://postgres@127.0.0.1:5432/${C2C_EDITOR_TEST_DATABASE}?sslmode=disable"
 

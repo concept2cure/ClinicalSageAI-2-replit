@@ -1637,6 +1637,9 @@ function objectGate(
       reason: `${act} is refused while the document's status is ${decision.scope?.documentStatus ?? 'unknown'}.`,
     };
   }
+  if (decision.reason === 'organization-read-only') {
+    return { allowed: false, reason: `${act} needs an editing role in this organization. Your current organization access is read-only.` };
+  }
   if (decision.reason === 'permission-denied') {
     return {
       allowed: false,

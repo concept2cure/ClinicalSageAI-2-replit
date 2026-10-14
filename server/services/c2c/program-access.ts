@@ -64,6 +64,11 @@ export function canMutateProgram(input: ProgramMutationInput): boolean {
 /** Org roles that may NOT create a program. Everything else in the org may. */
 const ORG_READ_ONLY_ROLES = new Set(['viewer', 'readonly', 'read_only', 'guest']);
 
+/** Existing organization read-only policy, shared by governed authoring. */
+export function isReadOnlyOrganizationRole(role: string | null | undefined): boolean {
+  return ORG_READ_ONLY_ROLES.has((role || '').toLowerCase().trim());
+}
+
 /**
  * May this actor create a program?
  *
@@ -81,8 +86,7 @@ const ORG_READ_ONLY_ROLES = new Set(['viewer', 'readonly', 'read_only', 'guest']
  * cannot write.
  */
 export function canCreateProgram(input: { orgRole: string | null | undefined }): boolean {
-  const normalizedRole = (input.orgRole || '').toLowerCase().trim();
-  return !ORG_READ_ONLY_ROLES.has(normalizedRole);
+  return !isReadOnlyOrganizationRole(input.orgRole);
 }
 
 /**

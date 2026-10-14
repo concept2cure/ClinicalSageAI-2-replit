@@ -207,7 +207,53 @@
     }
   },
   "humanSession": "Not run; executable worksheet provided.",
-  "currentRoleFinding": "Blocking independent follow-up; do not infer resolved from UI interaction checks.",
+  "currentRoleFinding": {
+    "status": "resolved by following server increment",
+    "regression": {
+      "files": 18,
+      "passed": 291,
+      "singleRun": true,
+      "receipt": "current-role/post-sync-verification.json"
+    },
+    "sourcePins": [
+      {
+        "path": "server/services/c2c/program-access.ts",
+        "sha256": "d2d0dd697ea15fbfac097a5eb45b385562df6d9f35a30987ce8977c9231bfa81",
+        "match": true
+      },
+      {
+        "path": "server/services/authoring/authoring-permissions.ts",
+        "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+        "match": true
+      },
+      {
+        "path": "server/middleware/authoringObjectAuthorization.ts",
+        "sha256": "5c636aadb702fada68f38ca7494dadebdf74f0a9876ae6c107323d7f5bf9d7ac",
+        "match": true
+      },
+      {
+        "path": "server/routes/authoring.router.ts",
+        "sha256": "4f999eda26c295f4fcf41657d7a95918b7ba5a7c7c5bb0d8c3435cb659446d2e",
+        "match": true
+      },
+      {
+        "path": "server/services/authoring/__tests__/authoring-current-role.test.ts",
+        "sha256": "7f7e177d0500eaf0412d82fd91b5af0d3a54969c88e31ddf745ebbbf04f75e85",
+        "match": true
+      },
+      {
+        "path": "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+        "sha256": "ed67ce3d5d848806cd954266cb727ee352fb7bd2022fc8693e4e44c44f6a0fd7",
+        "match": true
+      },
+      {
+        "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+        "sha256": "cb6d5b8ca9d7490917eee3a7361788c37697268dd36979c24117d4337d5cfad9",
+        "match": true
+      }
+    ],
+    "policy": "Current read-only membership precedes durable object grants and stale token roles; same-account/same-org current identity supplies authority. Existing canonical role list and ACL/frozen/tenant restrictions retained."
+  },
   "deployment": "None; local Codespaces workflow only.",
   "integrationBase": "4997d35ebd6a17bfb33df7860195d832bc094921",
   "integrationQualification": "Clean explicit-path stash/ff/pop to4997d35e; incoming452files, zero overlap with239taskpaths; no task stash remains. Own source hashes unchanged, affected UI/backend/native runtime and compiler/build replayed separately.",
@@ -249,5 +295,72 @@
     "baselinesEdited": false,
     "receipt": "release-warningRatchetPostIntegration.txt",
     "rawSha256": "2dcdd2d78edd68999bf346069c7a56184977c39fe69f51fb2535c78091347937"
+  },
+  "firstPublication": {
+    "commit": "2df2adde85d0c83695f3090557f68151605d79ed",
+    "normalHooks": "passed",
+    "remote": "origin/concept2cure-v2",
+    "receipt": "first-increment-publication.txt",
+    "rawSha256": "ad06e70118127276ab33f24c2f9214e92e8d5bccd68fac14e4a022018b166a8c"
+  },
+  "realLocalRuntime": {
+    "node": "v22.23.3",
+    "base": "4997d35ebd6a17bfb33df7860195d832bc094921",
+    "requests": 115,
+    "templatesListed": 305,
+    "starts": 11,
+    "seededSections": 714,
+    "currentViewerDenials": {
+      "oldAdminJwt": 403,
+      "freshViewerJwt": 403,
+      "documentCountUnchanged": true,
+      "membershipRestored": true
+    },
+    "vault": {
+      "status": 201,
+      "downloadStatus": 200,
+      "bytes": 9151,
+      "sha256": "7eeb2ac57bad24282c8ebeee37cbe497828ff98ffaa9feac012cd17fe5289a3f",
+      "draftMarking": true,
+      "exactParagraph": true,
+      "approval": {
+        "carried": false,
+        "reason": "It is not approved in Authoring (status: draft)."
+      }
+    },
+    "runtimeRole": {
+      "role": {
+        "rolname": "app_service",
+        "rolsuper": false,
+        "rolbypassrls": false
+      },
+      "observedRequestConnections": [
+        {
+          "usename": "app_service",
+          "state": "active",
+          "wait_event_type": "Lock"
+        }
+      ],
+      "lockReleased": true
+    },
+    "cleanup": {
+      "serverStopped": true,
+      "ownContainerAndAnonymousVolumeRemoved": true,
+      "temporaryWrapperRemoved": true,
+      "ownProjectBytesRemoved": true
+    },
+    "readiness": {
+      "status": 503,
+      "failedDependencies": [
+        "ana"
+      ],
+      "anaState": "no_provider"
+    },
+    "scope": "Local editor API and working-draft Vault qualification. No human browser, provider-backed AnA, untrusted-upload scanner, deployment, submission or agency readiness claim.",
+    "receipt": "local-runtime/post-sync-node22/summary.json"
+  },
+  "secondPublication": {
+    "method": "Normal direct commit/push to concept2cure-v2; no PR, no hook bypass.",
+    "receipt": "Final commit and remote ancestry; no pre-publication claim of hook outcome."
   }
 }
