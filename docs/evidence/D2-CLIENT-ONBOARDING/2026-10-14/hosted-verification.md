@@ -47,3 +47,30 @@ No production runtime or deployment credentials are configured in this session.
 Passing the isolated hosted CI environment does not establish production
 availability or live SMTP, identity-provider or payment delivery, and does not
 close a production launch row requiring those proofs.
+
+## Published delivery verification
+
+Delivery commit `b50b330977c8563e3fd715d956430fe5501429cb` subsequently passed
+[Tier 5 run 38516972230](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38516972230):
+the real database/application/Chromium smoke and governed customer journey.
+In [main CI run 38516972339](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38516972339),
+Security Scan and the pinned full-history secret scan also passed. Every
+pre-push gate passed for that delivery, including cold incremental TypeScript
+checking with zero errors and no new ESLint warnings.
+
+The hosted Security Contract job found one older invitation fixture mismatch
+(493 checks passed, one failed). The accepted-invitation service now reads the
+actual persisted membership role; that fixture returned no row for its
+`INSERT … RETURNING role`. The correction emulates the actual return and
+conflict-role read, and parameterizes the success check for a new member and an
+existing viewer. Authorization, tenant and no-mutation checks remain intact;
+actual response role, chained audit and no role UPDATE are asserted.
+
+Both exact hosted job commands then passed locally with `CI=true`:
+`npm run test:security` passed **495 tests in 51 files**, and
+`npm run test:mcp-sdk-issuer` passed **both tests**. Their safe verdicts are in
+`security-contract-final-status.json` and `mcp-issuer-final-status.json`.
+The fixture adds no lint warnings. Production source is unchanged from the
+browser-verified delivery by this correction. That older failed workflow job
+retains its conclusion; this local result is not a claim that its historical
+status changed or that the broader CI run has completed.
