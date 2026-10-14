@@ -21,6 +21,7 @@ vi.mock('../../vault/vault-filing.service.js', () => ({
 }));
 
 import { recordSourceProcessing, processPendingSources, processCapturedSource } from '../data-room-processing';
+import { claimSource, finishClaim } from '../data-room-processing-store';
 
 let ORG = 901041;
 let PROGRAM = randomUUID();
@@ -39,17 +40,16 @@ const exec = {
   },
 };
 
-async function seed(status: string, options: { current?: boolean; organization?: number; deleted?: boolean; text?: string | null; metadata?: unknown } = {}) {
-  const fileId = randomUUID();
-  const org = options.organization ?? ORG;
+async function seed(status: string, options: { current?: boolean; organization?: number; deleted?: boolean; text?: string | null; metadata?: unknown; workspace?: number | null } = {}) {
+  const fileId = randomUUID(), org = options.organization ?? ORG;
   const storagePath = `uploads/org-${org}/${fileId}`;
   await exec.query(`INSERT INTO file_uploads (id,organization_id,original_name,mime_type,file_size,storage_path,checksum_sha256,status)
     VALUES ($1,$2,'Protocol.txt','text/plain',$3,$4,$5,'uploaded')`, [fileId, org, Buffer.byteLength(BODY), storagePath, DIGEST]);
   const r = await exec.query(`INSERT INTO cre_evidence_sources
-      (organization_id, client_program_id, source_type, title, checksum, stored_artifact_ref, is_current, extraction_status, extracted_text, provenance, metadata, deleted_at)
-    VALUES ($1,$2,'client_document','Protocol.txt',$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10)
+      (organization_id, client_program_id, source_type, title, checksum, stored_artifact_ref, is_current, extraction_status, extracted_text, provenance, metadata, deleted_at, client_workspace_id)
+    VALUES ($1,$2,'client_document','Protocol.txt',$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10,$11)
     RETURNING id`, [org, PROGRAM, DIGEST, storagePath, options.current ?? true, status, options.text ?? null,
-    JSON.stringify({fileUploadId:fileId}), JSON.stringify(options.metadata ?? {mimeType:'text/plain', unrelated:'preserve'}), options.deleted ? new Date() : null]);
+    JSON.stringify({fileUploadId:fileId}), JSON.stringify(options.metadata ?? {mimeType:'text/plain', unrelated:'preserve'}), options.deleted ? new Date() : null, options.workspace ?? null]);
   return Number(r.rows[0].id);
 }
 
@@ -69,7 +69,7 @@ beforeAll(async () => {
   await db.exec(`CREATE SCHEMA vault;
     CREATE TABLE vault.documents (id uuid PRIMARY KEY,organization_id integer,program_id uuid,content_hash text,document_title text,file_name text,extracted_text text,deleted_at timestamptz);
     CREATE TABLE regulatory_programs (id uuid PRIMARY KEY,organization_id integer,deleted_at timestamptz,product_name text,indication text,phase text,program_type text,application_number text,primary_agency text);
-    CREATE TABLE projects(id serial PRIMARY KEY,organization_id integer,regulatory_program_id uuid);
+    CREATE TABLE projects(id serial PRIMARY KEY,organization_id integer,regulatory_program_id uuid,client_workspace_id integer,status text DEFAULT 'active');
     CREATE TABLE file_uploads (id text PRIMARY KEY,organization_id integer,user_id integer,original_name text,mime_type text,file_size bigint,storage_path text,checksum_sha256 text,status text);
     CREATE TABLE audit_logs(id uuid PRIMARY KEY,tenant_id integer,action text,table_name text,target text,record_id text,new_values json);
   `);
@@ -135,6 +135,77 @@ async function expire(id: number) {
   await exec.query(`UPDATE cre_evidence_sources SET metadata=jsonb_set(jsonb_set(metadata,'{dataRoomProcessing,claimedAt}',
     to_jsonb('2000-01-01T00:00:00.000Z'::text)),'{dataRoomProcessing,leaseExpiresAt}',to_jsonb('2000-01-01T00:15:00.000Z'::text)) WHERE id=$1`, [id]);
 }
+
+describe('D2 program-bound capture workspace admission', () => {
+  async function anchor(workspace = 900, status = 'active') {
+    const result = await exec.query('INSERT INTO projects (organization_id,regulatory_program_id,client_workspace_id,status) VALUES ($1,$2,$3,$4) RETURNING id', [ORG, PROGRAM, workspace, status]);
+    return Number(result.rows[0].id);
+  }
+
+  it('automatically recovers an exact captured workspace that differs from the project row identifier', async () => {
+    const projectId = await anchor(), id = await seed('pending', { workspace: 900 });
+    expect(projectId).not.toBe(900);
+    expect((await processPendingSources(ORG, { ...opts(), sourceId: id, apply: true })).processed).toBe(1);
+    const row = await state(id);
+    expect(row.client_workspace_id).toBe(900);
+    expect(row.extracted_text).toBe(BODY);
+    expect(row.metadata.dataRoomProcessing).toMatchObject({ state: 'completed', identity: { workspaceId: 900, programId: PROGRAM } });
+    const held = seam.query.mock.calls.filter(([sql]) => String(sql).includes('FROM projects') && String(sql).includes('FOR SHARE'));
+    expect(held.length).toBeGreaterThanOrEqual(2);
+    expect(held.every(([, args]) => args[0] === projectId && args[1] === ORG)).toBe(true);
+  });
+
+  it('refuses a wrong workspace even when that number is an unrelated project ID', async () => {
+    await anchor(); await exec.query('INSERT INTO projects (id,organization_id,regulatory_program_id,client_workspace_id) VALUES (901,$1,$2,901)', [ORG, randomUUID()]);
+    const id = await seed('pending', { workspace: 901 }), valid = await seed('pending', { workspace: 900 });
+    const report = await processPendingSources(ORG, { ...opts(), limit: 1 });
+    expect(report.items.filter(item => item.status === 'candidate').map(item => item.sourceId)).toEqual([valid]);
+    expect(report.items.find(item => item.sourceId === id)?.status).toBe('blocked');
+    expect((await processCapturedSource(ORG, id, input({ expectedWorkspaceId: 901 }), opts())).status).toBe('blocked');
+    expect(seam.extract).not.toHaveBeenCalled();
+    expect((await state(id)).extracted_text).toBeNull();
+  });
+
+  it.each(['ambiguous', 'deleted'])('refuses an %s anchor before extraction', async kind => {
+    if (kind === 'ambiguous') { await anchor(); await anchor(); }
+    else await anchor(900, 'deleted');
+    const id = await seed('pending', { workspace: 900 });
+    expect((await processPendingSources(ORG, { ...opts(), limit: 1 })).examined).toBe(0);
+    expect((await processCapturedSource(ORG, id, input(), opts())).status).toBe('blocked');
+    expect(seam.extract).not.toHaveBeenCalled();
+  });
+
+  it('rechecks the exact program workspace after extraction before storing derived text', async () => {
+    const projectId = await anchor(), id = await seed('pending', { workspace: 900 });
+    seam.extract.mockImplementationOnce(async () => {
+      await exec.query('UPDATE projects SET client_workspace_id=902 WHERE id=$1 AND organization_id=$2', [projectId, ORG]);
+      return { text: BODY, method: 'plain-text' };
+    });
+    expect((await processCapturedSource(ORG, id, input(), opts())).status).toBe('stale_source');
+    expect((await state(id)).extracted_text).toBeNull();
+  });
+
+  it('refuses an anchor swap after extraction even if the new anchor has the same workspace', async () => {
+    const projectId = await anchor(), id = await seed('pending', { workspace: 900 });
+    seam.extract.mockImplementationOnce(async () => {
+      await exec.query('UPDATE projects SET regulatory_program_id=$1 WHERE id=$2 AND organization_id=$3', [randomUUID(), projectId, ORG]);
+      await anchor();
+      return { text: BODY, method: 'plain-text' };
+    });
+    expect(await processCapturedSource(ORG, id, input(), opts())).toMatchObject({ status: 'stale_source', reasonCode: 'SOURCE_SCOPE_CHANGED' });
+    expect(await state(id)).toMatchObject({ extracted_text: null, metadata: { dataRoomProcessing: { state: 'running' } } });
+  });
+
+  it('a copied claim cannot self-attest the attempt-local workspace admission', async () => {
+    await anchor(); const id = await seed('pending', { workspace: 900 });
+    const admitted = await claimSource(transactionalDb, ORG, id, { programId: PROGRAM, expectedWorkspaceId: 900 });
+    if (!('claim' in admitted)) throw new Error('Positive claim control did not run');
+    await expect(finishClaim(transactionalDb, { ...admitted.claim }, { state: 'completed', reasonCode: null, retryable: false })).rejects.toMatchObject({ status: 'stale_source', reasonCode: 'SOURCE_SCOPE_CHANGED' });
+    expect((await stage(id)).state).toBe('running');
+    await finishClaim(transactionalDb, admitted.claim, { state: 'failed', reasonCode: 'EXTRACTION_FAILED', retryable: false });
+    expect((await stage(id)).state).toBe('failed');
+  });
+});
 
 describe('D2 exact original identity and atomic derived processing', () => {
   it('loads the recorded original; correct duplicate bytes do not mask missing original', async () => {

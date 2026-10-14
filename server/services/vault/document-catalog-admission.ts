@@ -1,6 +1,7 @@
 /** Shared catalog actor admission. Uses the existing project policy on the
  * caller's transaction connection; a token/ALS role cannot replace live membership. */
 import type { RequestSqlClient } from '../../db/requestDb';
+import { programInOrganization } from '../c2c/program-access.js';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership.js';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../ana/project-scope-admission.js';
@@ -43,15 +44,12 @@ async function catalogMembershipRole(client: RequestSqlClient, args: CatalogActo
 }
 
 async function holdCatalogProject(client: RequestSqlClient, args: CatalogActorArgs, projectId: number): Promise<void> {
-  const program = await client.query(
-    'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE',
-    [args.programId, args.organizationId],
-  );
+  const programOwned = await programInOrganization(client, args.programId, args.organizationId, { forShare: true });
   const project = await client.query(
     'SELECT id FROM projects WHERE id = $1 AND organization_id = $2 AND regulatory_program_id = $3 FOR UPDATE',
     [projectId, args.organizationId, args.programId],
   );
-  if (program.rows.length !== 1 || project.rows.length !== 1 || project.rows[0].id !== projectId) {
+  if (!programOwned || project.rows.length !== 1 || project.rows[0].id !== projectId) {
     throw new CatalogAdmissionError(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
   }
   // Parent FOR UPDATE also fences FK-bound policy insertions. Existing

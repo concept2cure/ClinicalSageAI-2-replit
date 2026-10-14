@@ -6,6 +6,7 @@ import {
   type ProcessingQueryable, type ProcessingDatabase, type SourceProcessingStatus,
 } from './data-room-processing-state.js';
 import type { SourceProcessingResult } from './data-room-processing.js';
+import { listProgramAnchorCandidates } from '../c2c/program-project-anchor.js';
 
 export interface PendingSweepOptions {
   apply?:boolean; limit?:number; sourceId?:number; retryFailed?:boolean;
@@ -76,7 +77,10 @@ function originalAdmissionSql():string {
     AND f.storage_path !~ '(^|/)[.]{1,2}(/|$)|//|/$' AND f.file_size BETWEEN 0 AND 9007199254740991
     AND ${capturedDataEligibleSql('s')} AND ${capturedBinaryAvailableSql('s')} AND ${uploadedBinaryAvailableSql('f')}
     AND (s.client_program_id IS NULL OR EXISTS(SELECT 1 FROM regulatory_programs p WHERE p.id=s.client_program_id AND p.organization_id=s.organization_id AND p.deleted_at IS NULL))
-    AND (s.client_workspace_id IS NULL OR EXISTS(SELECT 1 FROM projects p WHERE p.id=s.client_workspace_id AND p.organization_id=s.organization_id))
+    AND (s.client_workspace_id IS NULL OR CASE WHEN s.client_program_id IS NOT NULL THEN
+      EXISTS(SELECT 1 FROM jsonb_to_recordset($3::jsonb) processing_anchor(program_id uuid,workspace_id integer)
+        WHERE processing_anchor.program_id=s.client_program_id AND processing_anchor.workspace_id=s.client_workspace_id)
+      ELSE EXISTS(SELECT 1 FROM projects p WHERE p.id=s.client_workspace_id AND p.organization_id=s.organization_id) END)
     AND (s.client_program_id IS NOT NULL OR s.client_workspace_id IS NOT NULL)`;
 }
 function runnableSql(retry:boolean):string {
@@ -114,29 +118,47 @@ function diagnostic(row:any):{status:SourceProcessingStatus;reasonCode?:string} 
     return {status,reasonCode:statusReason(status,s)??'STAGE_METADATA_INVALID'};
   } catch(err) {return {status:'blocked',reasonCode:err instanceof ProcessingRefusal?err.reasonCode:'STAGE_METADATA_INVALID'};}
 }
+/** Candidate preselection only. The processor rechecks and holds the actual
+ * canonical relationship before claiming or committing derived data. */
+async function programWorkspaceFrame(q: ProcessingQueryable, org: number): Promise<Array<{program_id: string; workspace_id: number}>> {
+  const candidates = await listProgramAnchorCandidates(q, { orgId: org, eligibility: 'non-deleted' });
+  const grouped = new Map<string, typeof candidates>();
+  for (const candidate of candidates) {
+    const group = grouped.get(candidate.programId) ?? [];
+    group.push(candidate); grouped.set(candidate.programId, group);
+  }
+  const frame: Array<{program_id: string; workspace_id: number}> = [];
+  for (const [programId, group] of grouped) {
+    const anchor = group.length === 1 ? group[0].anchor : null;
+    if (anchor?.clientWorkspaceId != null) frame.push({ program_id: programId, workspace_id: anchor.clientWorkspaceId });
+  }
+  return frame;
+}
 export async function runProcessingSweep(org:number,opts:PendingSweepOptions,defaultDb:ProcessingDatabase,process:(row:any)=>Promise<SourceProcessingResult>):Promise<PendingSweepReport> {
   validateSweepOptions(org,opts);
   const q=opts.exec??opts.db??defaultDb;
+  const sourceId = opts.sourceId;
   const report=reportFor(opts.limit??50); report.dryRun=opts.apply!==true;
   const run=runnableSql(opts.retryFailed===true);
   const ordinary=`s.deleted_at IS NULL AND s.is_current IS NOT FALSE`;
   const join=`FROM cre_evidence_sources s LEFT JOIN file_uploads f ON f.id=s.provenance->>'fileUploadId' AND f.organization_id=s.organization_id`;
   const base=`s.organization_id=$1 AND s.source_type='client_document'`;
   const select=`SELECT s.*,clock_timestamp() AS observed_at,${expectedIdentitySql()} AS expected_identity,(${originalAdmissionSql()}) IS TRUE AS original_admitted`;
-  const sql=opts.sourceId!==undefined?`${select},(${run}) IS TRUE AS runnable ${join} WHERE ${base} AND s.id=$2`
+  const sql=sourceId!==undefined?`${select},(${run}) IS TRUE AS runnable ${join} WHERE ${base} AND s.id=$2`
     :`${select},TRUE AS runnable ${join} WHERE ${base} AND ${ordinary} AND (${run}) ORDER BY s.created_at,s.id LIMIT $2`;
-  const found=await q.query(sql,[org,opts.sourceId??report.limit]);
-  if(opts.sourceId!==undefined&&!found.rows[0]) record(report,opts.sourceId,'blocked','SOURCE_NOT_FOUND',true);
+  const frame = JSON.stringify(await programWorkspaceFrame(q, org));
+  const found=await q.query(sql,[org,sourceId??report.limit,frame]);
+  if(sourceId!==undefined&&!found.rows[0]) record(report,sourceId,'blocked','SOURCE_NOT_FOUND',true);
   for(const row of found.rows) {
     if(!row.runnable||row.deleted_at||row.is_current===false) {const d=diagnostic(row);record(report,Number(row.id),d.status,d.reasonCode,true);continue;}
     report.examined++;
     if(report.dryRun) record(report,Number(row.id),'candidate');
     else {const done=await process(row);record(report,Number(row.id),done.status,done.reasonCode);}
   }
-  if(opts.sourceId===undefined) {
+  if(sourceId===undefined) {
     const omitted=await q.query(`${select} ${join} WHERE ${base} AND ${ordinary} AND NOT COALESCE((${run}),FALSE)
       AND NOT ((${healthy}) AND (${S} IS NULL OR (${validStageSql()} AND ${text('state')}='completed')))
-      AND NOT(s.id=ANY($3::integer[])) ORDER BY s.created_at,s.id LIMIT $2`,[org,report.diagnosticLimit+1,found.rows.map(r=>Number(r.id))]);
+      AND NOT(s.id=ANY($4::integer[])) ORDER BY s.created_at,s.id LIMIT $2`,[org,report.diagnosticLimit+1,frame,found.rows.map(r=>Number(r.id))]);
     report.diagnosticsCapped=omitted.rows.length>report.diagnosticLimit;
     for(const row of omitted.rows.slice(0,report.diagnosticLimit)) {const d=diagnostic(row);record(report,Number(row.id),d.status,d.reasonCode,true);}
   }

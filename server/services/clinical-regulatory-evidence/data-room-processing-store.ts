@@ -6,6 +6,8 @@ import {
   type DataRoomProcessingReasonCode,
 } from '../../../shared/data-room-processing-status.js';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock.js';
+import { programInOrganization } from '../c2c/program-access.js';
+import { readProgramAnchorRow } from '../c2c/program-project-anchor.js';
 import { capturedDataEligibleSql, capturedBinaryAvailableSql, uploadedBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import {
   HASH, object, parseProcessingStage, processingDisposition, sameIdentity, statusReason,
@@ -16,11 +18,19 @@ import {
 
 export interface ProcessingDecision { status: SourceProcessingStatus; reasonCode?: DataRoomProcessingReasonCode; }
 export interface ProcessingScope { programId?: string | null; expectedWorkspaceId?: number | null; suppliedSha256?: string; }
-interface Admission { row: any; identity: ProcessingIdentity; now: Date; }
+interface Admission { row: any; identity: ProcessingIdentity; now: Date; programWorkspaceProjectId: number | null; }
 export interface ProcessingAuthorization {
   client: ProcessingClient; claim: ProcessingClaim; stage: ProcessingStage; row: any;
 }
 const authorized = new WeakSet<object>();
+// Attempt-local admission context, not persisted scientific provenance. A
+// copied/client-constructed claim cannot self-attest this project relationship.
+const reservedWorkspaceProjects = new WeakMap<ProcessingClaim, number>();
+function requireAttemptWorkspaceProject(claim: ProcessingClaim, projectId: number | null): void {
+  if (claim.identity.programId !== null && claim.identity.workspaceId !== null && reservedWorkspaceProjects.get(claim) !== projectId) {
+    throw new ProcessingRefusal('stale_source','SOURCE_SCOPE_CHANGED');
+  }
+}
 export function isProcessingAuthorization(a: ProcessingAuthorization | undefined, q: unknown, org: number, source: number): a is ProcessingAuthorization {
   return !!a && authorized.has(a) && a.client === q && a.claim.identity.organizationId === org && a.claim.identity.sourceId === source;
 }
@@ -72,31 +82,45 @@ function identityFrom(row: any, upload: any): ProcessingIdentity {
 function refuseSource(final:boolean,code:DataRoomProcessingReasonCode):never {
   throw new ProcessingRefusal(final?'stale_source':'blocked',code);
 }
+async function reserveProgramWorkspace(q: ProcessingClient, org: number, programId: string, workspaceId: number, final: boolean): Promise<number> {
+  const params = { programId, orgId: org, context: 'data-room-processing-workspace', requireUnique: true, eligibility: 'non-deleted' as const };
+  const anchor = await readProgramAnchorRow(q, params);
+  if (!anchor || anchor.clientWorkspaceId !== workspaceId) return refuseSource(final, 'PROJECT_UNAVAILABLE');
+  const held = await q.query("SELECT id,regulatory_program_id,client_workspace_id FROM projects WHERE id=$1 AND organization_id=$2 AND status IS DISTINCT FROM 'deleted' FOR SHARE", [anchor.id, org]);
+  const row = held.rows.length === 1 ? held.rows[0] : null;
+  if (!row || row.id !== anchor.id || row.regulatory_program_id !== programId || row.client_workspace_id !== workspaceId) return refuseSource(final, 'PROJECT_UNAVAILABLE');
+  const current = await readProgramAnchorRow(q, params);
+  if (!current || current.id !== anchor.id || current.clientWorkspaceId !== workspaceId) return refuseSource(final, 'PROJECT_UNAVAILABLE');
+  return anchor.id;
+}
 /** Reservations precede admission, including organization-wide withdrawal from another project. */
-async function reserveScope(q:ProcessingClient,org:number,id:number,final:boolean):Promise<{programId:string|null;workspaceId:number|null}> {
+async function reserveScope(q:ProcessingClient,org:number,id:number,final:boolean):Promise<{programId:string|null;workspaceId:number|null;programWorkspaceProjectId:number|null}> {
   const found = await q.query('SELECT client_program_id,client_workspace_id FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2 AND source_type=\'client_document\'', [id,org]);
   if (!found.rows[0]) return refuseSource(final,'SOURCE_NOT_FOUND');
   const programId = found.rows[0].client_program_id;
   if (programId) await lockDocumentDispositionProgram(q,org,programId);
   await q.query('LOCK TABLE public.cre_evidence_sources, public.file_uploads IN ROW EXCLUSIVE MODE');
   if(programId) {
-    const p=await q.query('SELECT id FROM regulatory_programs WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR SHARE',[programId,org]);
-    if(!p.rows[0]) return refuseSource(final,'PROJECT_UNAVAILABLE');
+    if(!await programInOrganization(q,programId,org,{forShare:true})) return refuseSource(final,'PROJECT_UNAVAILABLE');
   }
   const workspaceId=found.rows[0].client_workspace_id;
+  let programWorkspaceProjectId: number | null = null;
   if(workspaceId!==null && workspaceId!==undefined) {
-    const p=await q.query('SELECT id FROM projects WHERE id=$1 AND organization_id=$2 FOR SHARE',[workspaceId,org]);
-    if(!p.rows[0]) return refuseSource(final,'PROJECT_UNAVAILABLE');
+    if (programId) programWorkspaceProjectId = await reserveProgramWorkspace(q, org, programId, workspaceId, final);
+    else {
+      const p=await q.query('SELECT id FROM projects WHERE id=$1 AND organization_id=$2 FOR SHARE',[workspaceId,org]);
+      if(!p.rows[0]) return refuseSource(final,'PROJECT_UNAVAILABLE');
+    }
   }
   if(!programId&&!workspaceId) return refuseSource(final,'PROJECT_UNAVAILABLE');
-  return {programId:programId??null,workspaceId:workspaceId??null};
+  return {programId:programId??null,workspaceId:workspaceId??null,programWorkspaceProjectId};
 }
 function requestedScopeMatches(row:any,scope:ProcessingScope):boolean {
   return (scope.programId===undefined||(scope.programId?.toLowerCase()??null)===(row.client_program_id??null))
     && (scope.expectedWorkspaceId===undefined||scope.expectedWorkspaceId===(row.client_workspace_id??null));
 }
-async function admittedSource(q:ProcessingClient,org:number,id:number,scope:ProcessingScope,final:boolean):Promise<any> {
-  const {programId,workspaceId}=await reserveScope(q,org,id,final);
+async function admittedSource(q:ProcessingClient,org:number,id:number,scope:ProcessingScope,final:boolean):Promise<{row:any;programWorkspaceProjectId:number|null}> {
+  const {programId,workspaceId,programWorkspaceProjectId}=await reserveScope(q,org,id,final);
   const r = await q.query(`SELECT s.*, ${capturedDataEligibleSql('s')} AS processing_data_eligible,
       ${capturedBinaryAvailableSql('s')} AS processing_binary_eligible
     FROM cre_evidence_sources s WHERE s.id=$1 AND s.organization_id=$2 AND s.source_type='client_document' FOR UPDATE OF s`,[id,org]);
@@ -106,7 +130,7 @@ async function admittedSource(q:ProcessingClient,org:number,id:number,scope:Proc
   if((row.client_program_id??null)!==programId||(row.client_workspace_id??null)!==workspaceId) return refuseSource(final,'SOURCE_SCOPE_CHANGED');
   if(!requestedScopeMatches(row,scope)) return refuseSource(final,'SOURCE_SCOPE_CHANGED');
   if (!row.processing_data_eligible || !row.processing_binary_eligible) return refuseSource(final,'SOURCE_WITHDRAWN');
-  return row;
+  return {row,programWorkspaceProjectId};
 }
 async function admittedUpload(q:ProcessingClient,org:number,row:any,final:boolean):Promise<any> {
   if (typeof row.provenance?.fileUploadId !== 'string' || !row.provenance.fileUploadId) return refuseSource(final,'ORIGINAL_IDENTITY_INVALID');
@@ -117,14 +141,14 @@ async function admittedUpload(q:ProcessingClient,org:number,row:any,final:boolea
   return u.rows[0];
 }
 async function admit(q: ProcessingClient, org: number, id: number, scope: ProcessingScope, final: boolean): Promise<Admission> {
-  const row=await admittedSource(q,org,id,scope,final);
+  const {row,programWorkspaceProjectId}=await admittedSource(q,org,id,scope,final);
   const upload=await admittedUpload(q,org,row,final);
   let identity: ProcessingIdentity;
   try { identity = identityFrom(row,upload); }
   catch (err) { if (final) return refuseSource(final,'SOURCE_IDENTITY_CHANGED'); throw err; }
   if (scope.suppliedSha256 && scope.suppliedSha256 !== identity.sha256) return refuseSource(final,'SOURCE_BYTES_MISMATCH');
   const clock = await q.query('SELECT clock_timestamp() AS now');
-  return {row,identity,now:new Date(clock.rows[0].now)};
+  return {row,identity,now:new Date(clock.rows[0].now),programWorkspaceProjectId};
 }
 export async function claimSource(db: ProcessingDatabase, org: number, id: number, scope: ProcessingScope, retryFailed = false): Promise<{claim:ProcessingClaim;row:any} | ProcessingDecision> {
   return processingTransaction(db,async q => {
@@ -147,7 +171,9 @@ export async function claimSource(db: ProcessingDatabase, org: number, id: numbe
     [id,org,JSON.stringify(stage),prior ? JSON.stringify(prior) : null,admitted.identity.sha256,admitted.identity.programId,
       admitted.identity.workspaceId,admitted.identity.storageRef,admitted.identity.fileUploadId]);
     if (changed.rowCount !== 1) throw new ProcessingRefusal('stale_source','ATTEMPT_STALE');
-    return {claim:{identity:admitted.identity,stage},row:admitted.row};
+    const claim: ProcessingClaim = {identity:admitted.identity,stage};
+    if (admitted.programWorkspaceProjectId !== null) reservedWorkspaceProjects.set(claim, admitted.programWorkspaceProjectId);
+    return {claim,row:admitted.row};
   });
 }
 export async function finishClaim(
@@ -158,6 +184,7 @@ export async function finishClaim(
     const {identity}=claim;
     const admitted=await admit(q,identity.organizationId,identity.sourceId,{},true);
     if (!sameIdentity(identity,admitted.identity)) throw new ProcessingRefusal('stale_source','SOURCE_IDENTITY_CHANGED');
+    requireAttemptWorkspaceProject(claim, admitted.programWorkspaceProjectId);
     const current=parseProcessingStage(admitted.row.metadata);
     if (!current || current.state!=='running' || current.attemptId!==claim.stage.attemptId) throw new ProcessingRefusal('stale_source','ATTEMPT_STALE');
     if (!sameIdentity(current.identity,identity)) throw new ProcessingRefusal('stale_source','SOURCE_IDENTITY_CHANGED');

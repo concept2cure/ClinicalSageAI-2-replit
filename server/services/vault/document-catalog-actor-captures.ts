@@ -38,20 +38,34 @@ function captureScopeSql(): string {
 function captureJoinsSql(): string {
   return `FROM cre_evidence_sources s
     JOIN file_uploads f ON f.id=s.provenance->>'fileUploadId' AND f.organization_id=s.organization_id
+    LEFT JOIN concept2cure_artifacts source_artifact ON s.client_program_id IS NULL AND s.client_workspace_id IS NOT NULL
+      AND source_artifact.organization_id=s.organization_id
+      AND s.provenance->>'origin'='chat_upload' AND source_artifact.artifact_id=s.metadata->>'artifactId'
+      AND source_artifact.metadata->>'fileId'=s.provenance->>'fileUploadId'
     LEFT JOIN projects source_project ON source_project.organization_id=s.organization_id
       AND ((s.client_program_id IS NOT NULL AND source_project.regulatory_program_id=s.client_program_id
-          AND (s.client_workspace_id IS NULL OR s.client_workspace_id=source_project.id))
-        OR (s.client_program_id IS NULL AND s.client_workspace_id=source_project.id))
+          AND (s.client_workspace_id IS NULL OR s.client_workspace_id=source_project.client_workspace_id))
+        OR (s.client_program_id IS NULL AND source_artifact.project_id=source_project.id
+          AND s.client_workspace_id=source_project.id AND source_project.status<>'deleted'))
     LEFT JOIN regulatory_programs rp ON rp.id=source_project.regulatory_program_id AND rp.organization_id=s.organization_id`;
 }
 function checkUnboundCapture(row: Record<string, unknown>, scope: AdmittedAnaSourceReadScope): void {
   if (scope.projectId !== null || Number(row.upload_user_id) !== scope.userId || row.created_by !== scope.userId || row.source_origin !== 'chat_upload') identityFailure();
 }
+function checkLegacyCaptureBinding(row: Record<string, unknown>): void {
+  if (row.source_origin !== 'chat_upload' || row.client_workspace_id !== row.source_project_id ||
+      typeof row.source_artifact_ref !== 'string' || !row.source_artifact_ref ||
+      row.source_artifact_id !== row.source_artifact_ref || row.source_artifact_file_id !== row.file_id ||
+      row.source_artifact_project_id !== row.source_project_id || Number(row.artifact_binding_count) !== 1) identityFailure();
+}
 function checkBoundCapture(row: Record<string, unknown>, scope: AdmittedAnaSourceReadScope): void {
   if (!positive(row.source_project_id) || row.program_organization_id !== scope.organizationId || row.program_deleted_at !== null ||
       typeof row.resolved_program_id !== 'string' || Number(row.anchor_count) !== 1) identityFailure();
-  if ((row.client_workspace_id != null && row.client_workspace_id !== row.source_project_id) ||
-      (row.client_program_id != null && row.client_program_id !== row.resolved_program_id)) identityFailure();
+  if (row.client_program_id != null) {
+    if (row.client_program_id !== row.resolved_program_id ||
+      (row.client_workspace_id != null && row.client_workspace_id !== row.source_project_workspace_id)) identityFailure();
+  } else checkLegacyCaptureBinding(row);
+
   assertAnaSourceProgramAllowed(scope, row.resolved_program_id);
 }
 function checkCaptureIdentity(row: Record<string, unknown>, scope: AdmittedAnaSourceReadScope): void {
@@ -109,7 +123,16 @@ export async function listChatUploadsInReadScope(
   const identities = `s.id, s.organization_id, s.client_program_id, s.client_workspace_id, s.created_by,
     s.provenance->>'origin' AS source_origin,
     f.id AS file_id, f.organization_id AS upload_organization_id, f.user_id AS upload_user_id,
-    source_project.id AS source_project_id, source_project.regulatory_program_id AS resolved_program_id,
+    source_project.id AS source_project_id, source_project.client_workspace_id AS source_project_workspace_id,
+    source_project.regulatory_program_id AS resolved_program_id,
+    s.metadata->>'artifactId' AS source_artifact_ref,
+    source_artifact.artifact_id AS source_artifact_id, source_artifact.metadata->>'fileId' AS source_artifact_file_id,
+    source_artifact.project_id AS source_artifact_project_id,
+    (SELECT count(*) FROM concept2cure_artifacts all_binding JOIN projects binding_project
+      ON binding_project.id=all_binding.project_id AND binding_project.organization_id=all_binding.organization_id
+      WHERE all_binding.organization_id=$1 AND all_binding.artifact_id=s.metadata->>'artifactId'
+        AND all_binding.metadata->>'fileId'=s.provenance->>'fileUploadId'
+        AND binding_project.status<>'deleted') AS artifact_binding_count,
     rp.organization_id AS program_organization_id, rp.deleted_at AS program_deleted_at,
     (SELECT count(*) FROM projects all_anchor WHERE all_anchor.organization_id=$1
       AND all_anchor.regulatory_program_id=source_project.regulatory_program_id) AS anchor_count`;

@@ -103,6 +103,14 @@ describe('catalog suggestion final-write admission', () => {
     expect(await scope(() => writeCatalogSuggestion(args))).toMatchObject({ ok: false });
     expect(h.audit).not.toHaveBeenCalled();
   });
+  it('refuses a program removed at canonical held ownership before catalog metadata or DML', async () => {
+    const original = h.query.getMockImplementation()!;
+    h.query.mockImplementation(async (sql: string) => sql.includes('FROM regulatory_programs') && sql.includes('FOR SHARE')
+      ? { rows: [], rowCount: 0 } : original(sql));
+    expect(await scope(() => writeCatalogSuggestion(suggestion()))).toMatchObject({ ok: false, refusal: expect.stringContaining('No such document') });
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(h.query.mock.calls.some(([sql]) => sql.includes('SELECT c.') || sql.includes('UPDATE vault.document_catalog'))).toBe(false);
+  });
   it('does not replace a human-confirmed record', async () => {
     h.record.catalog_state = 'confirmed'; h.record.confirmed_at = '2026-10-13';
     expect(await scope(() => writeCatalogSuggestion(suggestion()))).toMatchObject({ ok: false, refusal: expect.stringContaining('person confirmed') });
@@ -114,6 +122,10 @@ describe('catalog suggestion final-write admission', () => {
     const catalog = calls.findIndex(sql => sql.includes('LOCK TABLE vault.document_catalog'));
     const documents = calls.findIndex(sql => sql.includes('LOCK TABLE vault.documents'));
     const loaded = calls.findIndex(sql => sql.includes('SELECT d.') && sql.includes('FOR '));
+    const heldProgram = calls.findIndex(sql => sql.includes('FROM regulatory_programs') && sql.includes('FOR SHARE'));
+    const heldProject = calls.findIndex(sql => sql.includes('FROM projects') && sql.includes('FOR UPDATE'));
+    expect(heldProgram).toBeGreaterThan(documents); expect(heldProject).toBeGreaterThan(heldProgram);
+    expect(h.query.mock.calls[heldProgram][1]).toEqual([PROGRAM, 7]);
     expect(catalog).toBeGreaterThan(-1); expect(documents).toBeGreaterThan(catalog); expect(loaded).toBeGreaterThan(documents);
     expect(h.audit.mock.calls[0][1].details).toMatchObject({ contentHash: HASH, extractedTextSha256: digest(TEXT),
       checkScope: { kind: 'legacy_value_presence', context: 'not_recorded', scientificQualification: 'unassessed' } });
