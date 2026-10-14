@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "testedHead": "9ba70078fb55520244b5376d5d17d5e3f09e4471",
+  "contexts": 4,
+  "cases": 24,
+  "stages": 120,
+  "callbacks": 96,
+  "explicitSyntheticCreatePosts": 24,
+  "otherMutations": 0,
+  "unexpected": 0,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "axeViolations": 0,
+  "axeIncompleteRuleIds": [
+    "aria-prohibited-attr",
+    "color-contrast",
+    "label-content-name-mismatch"
+  ],
+  "minimumAssertedEditingViewport": {
+    "width": 298,
+    "height": 110
+  },
+  "assertedEditingViewports": 72,
+  "productionPins": 33,
+  "allSourcePinsStillCurrent": true,
+  "allFixturePinsStillCurrent": true,
+  "concisePicker": {
+    "all24DrawersAtScrollTop0": true,
+    "all24SelectorsModulesAndSummariesVisible": true,
+    "startFromTopY": [
+      330.34375,
+      409.90625
+    ]
+  },
+  "qualification": "Pre-lint-helper diagnostic metadata on 9ba70078 plus the concise-picker feature. Behavior-preserving helper extraction changes production source hashes; final-path PNGs are replaced by the subsequent lint-clean final replay and must not be paired with these earlier metrics."
+}

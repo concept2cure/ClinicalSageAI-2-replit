@@ -36,9 +36,10 @@ import { unboundNotice } from '../governanceNotice';
 import { downloadBlob, safeFileName } from '../download';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
+import type { RecordedTemplateFilingContext } from '@shared/authoring/recorded-template-source';
 
 interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null;
-  module?: string | null; limitations?: string[] }
+  module?: string | null; limitations?: string[]; filingContext?: RecordedTemplateFilingContext }
 
 export interface AuthoringCreateExportProps {
   /** Currently open document (null when none). */
@@ -68,6 +69,13 @@ export interface AuthoringCreateExportProps {
 const NONE = '(blank document)';
 function creationModule(template: AuthoringTemplate | undefined, entered: string, fallback: string): string | null {
   return template?.module === undefined ? entered || fallback : template.module;
+}
+
+function templateStartDescription(template: AuthoringTemplate | undefined): string | undefined {
+  if (template?.filingContext) {
+    return 'Creates an empty working copy. Confirm product and jurisdiction; retain original forms, data and signed records. Read the full applicability limits and any missing-outline notices in “Template guidance and source requirements” in the editor.';
+  }
+  return template?.limitations?.join(' ');
 }
 
 export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports }: AuthoringCreateExportProps) {
@@ -140,7 +148,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
     sub:
       'Creates a governed document in the authoring store. Choosing a template seeds its sections server-side.' +
       (globalCatalog === 'unavailable'
-        ? ' The shared reference store did not load; organization and built-in IND templates remain available.'
+        ? ' The shared reference store did not load; organization and built-in regulatory templates remain available.'
         : globalCatalog === 'failed'
           ? ' The template list didn’t load — only a blank document can be started right now. This is a failed read, not an empty catalog.'
           : ''),
@@ -152,7 +160,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
           return selected?.module === undefined ? null : selected.module ?? 'No CTD placement (preparation)'; } },
       { key: 'template', label: 'Start from', type: 'select', options: [{ value: NONE, label: NONE },
         ...templates.map(t => ({ value: String(t.id), label: templateLabel(t) }))], default: NONE, half: true,
-        desc: selectedTemplate?.limitations?.join(' ') },
+        desc: templateStartDescription(selectedTemplate) },
     ],
   };
 

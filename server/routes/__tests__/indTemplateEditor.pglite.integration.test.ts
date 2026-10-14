@@ -1,70 +1,37 @@
 /** Real HTTP/JWT, canonical authoring writes and PGlite. No native PostgreSQL
  * concurrency, production RLS, provider or generated-content claim is made. */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import request from 'supertest';
-import type express from 'express';
-import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { getIndAuthoringTemplates, indTemplateSnapshot } from '../../services/authoring/ind-authoring-templates';
 import type { IndAuthoringTemplate } from '../../services/authoring/ind-template-types';
 import type { IndDocumentCatalog } from '../../../shared/authoring/ind-document-catalog';
-import { AUTHOR, AUTHORING_ACCESS_DDL, ORG, OTHER_PROGRAM, PREREQ, PROGRAM, asToken, makeApp, mint } from './_authoring-canvas-fixture';
+import { AUTHOR, ORG, OTHER_PROGRAM, PROGRAM } from './_authoring-canvas-fixture';
+import { db, app, author, payload, counts, create, sections, templateEditorFixture } from './_template-editor-fixture';
 
-const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
-vi.mock('../../db', () => ({ get db() { return h.db; }, get pool() { return h.pool; }, getPool: () => h.pool,
-  query: (sql: string, args?: unknown[]) => (h.pool as { query(s: string, a?: unknown[]): Promise<unknown> }).query(sql, args) }));
-let db: JourneyDb;
-let app: express.Express;
-let author: (r: request.Test) => request.Test;
+// The migration-closure gate reads these literal paths in each actual test harness.
+templateEditorFixture([
+  'db/migrations/20260725_authoring_document_loop_tables.sql',
+  'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+  'db/migrations/20260725_authoring_audit_trail.sql',
+  'db/migrations/20260813_audit_tamper_proof_log.sql',
+  'db/migrations/20260725_authoring_signatures_and_workflow.sql',
+  'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+  'db/migrations/20260730_authoring_runtime_ddl.sql',
+  'db/migrations/20260730_authoring_comments_router_columns.sql',
+  'db/migrations/20260727_authoring_object_permissions.sql',
+  'db/migrations/20260803_document_span_lineage.sql',
+  'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+  'migrations/20260908_span_lineage_machine_draft.sql',
+  'migrations/20260728_authoring_comments_threading.sql',
+  'migrations/20260727_authoring_document_program_scope.sql',
+  'migrations/20260728_authoring_document_governed_binding.sql',
+  'migrations/20260814d_document_alias_map.sql',
+  'migrations/20260921_audit_logs_chain_seq.sql',
+  'migrations/20260921_authoring_document_provenance.sql',
+]);
+
 const templates = () => getIndAuthoringTemplates();
 const selected = (entryId: string) => templates().find(template => template.entryId === entryId)!;
-const payload = (template: IndAuthoringTemplate) => ({ title: `Working copy of ${template.name}`, module: template.module,
-  template_id: template.id, client_program_id: PROGRAM });
-
-beforeAll(async () => {
-  db = await createJourneyDb({ prereqSql: PREREQ + AUTHORING_ACCESS_DDL, migrations: [
-    'db/migrations/20260725_authoring_document_loop_tables.sql',
-    'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
-    'db/migrations/20260725_authoring_audit_trail.sql',
-    'db/migrations/20260813_audit_tamper_proof_log.sql',
-    'db/migrations/20260725_authoring_signatures_and_workflow.sql',
-    'db/migrations/20260725_authoring_signature_freeze_binding.sql',
-    'db/migrations/20260730_authoring_runtime_ddl.sql',
-    'db/migrations/20260730_authoring_comments_router_columns.sql',
-    'db/migrations/20260727_authoring_object_permissions.sql',
-    'db/migrations/20260803_document_span_lineage.sql',
-    'migrations/20260907_span_lineage_accepted_machine_draft.sql',
-    'migrations/20260908_span_lineage_machine_draft.sql',
-    'migrations/20260728_authoring_comments_threading.sql',
-    'migrations/20260727_authoring_document_program_scope.sql',
-    'migrations/20260728_authoring_document_governed_binding.sql',
-    'migrations/20260814d_document_alias_map.sql',
-    'migrations/20260921_audit_logs_chain_seq.sql',
-    'migrations/20260921_authoring_document_provenance.sql',
-  ], testOnlySql: `CREATE TABLE client_workspaces(id integer PRIMARY KEY, organization_id integer);
-    CREATE SCHEMA intelligence;
-    CREATE TABLE intelligence.document_templates(id uuid PRIMARY KEY,template_name text,document_type text,agency text,description text,created_at timestamptz DEFAULT now(),status text);
-    CREATE TABLE intelligence.template_sections(template_id uuid,section_code text,section_title text,ordering integer);` });
-  h.db = db.db; h.pool = db.pool;
-  author = asToken(await mint(AUTHOR));
-  const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
-}, 180_000);
-afterAll(async () => { await db?.close(); });
-
-interface Counts { docs: number; sections: number; revisions: number; audits: number; signatures: number }
-async function counts(): Promise<Counts> {
-  return (await db.pglite.query<Counts>(`SELECT (SELECT count(*) FROM authoring_documents)::int AS docs,
-    (SELECT count(*) FROM authoring_sections)::int AS sections,(SELECT count(*) FROM doc_revisions)::int AS revisions,
-    (SELECT count(*) FROM authoring_audit_trail)::int AS audits,(SELECT count(*) FROM authoring_signatures)::int AS signatures`)).rows[0];
-}
-async function create(template: IndAuthoringTemplate, extra: Record<string, unknown> = {}) {
-  return author(request(app).post('/api/authoring/docs')).send({ ...payload(template), ...extra });
-}
-async function sections(documentId: string) {
-  const response = await author(request(app).get(`/api/authoring/docs/${documentId}/sections`));
-  expect(response.status, JSON.stringify(response.body)).toBe(200);
-  return response.body.sections as Array<{ id: string; code: string; title: string; content: string; doc_id: string; tenant_id: number }>;
-}
 async function verifyCopy(template: IndAuthoringTemplate) {
   const created = await create(template);
   expect(created.status, `${template.entryId}: ${JSON.stringify(created.body)}`).toBe(201);
@@ -95,7 +62,7 @@ describe('every IND template reaches the existing saved document editor', () => 
   it('lists all 200 exact builtin identities and their complete catalogue/module coverage', async () => {
     const before = await counts();
     const expectedIds = new Set(templates().map(template => template.id));
-    const response = await author(request(app).get('/api/authoring/templates'));
+    const response = await author(request(app).get('/api/authoring/templates?category=IND%20pyramid'));
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     expect(response.body.templates).toHaveLength(200);
     expect(new Set(response.body.templates.map((template: { id: string }) => template.id)).size).toBe(200);

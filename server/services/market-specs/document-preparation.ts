@@ -231,8 +231,14 @@ function preparationTemplateId(input: PreparationInput): string | undefined {
   return named?.id ?? component ?? input.templateId;
 }
 
+/** The one regional identity of a standalone component, including its aliases. */
+export function documentComponentRegion(templateId: string | undefined): 'EU' | 'GLOBAL' {
+  const canonical = templateId ? getDocumentTemplate(templateId)?.id ?? templateId : undefined;
+  return canonical && ['smpc', 'impd', 'risk_management_plan', 'pil'].includes(canonical) ? 'EU' : 'GLOBAL';
+}
+
 function assertRegionalComponentScope(templateId: string | undefined, market: PreparationMarket | undefined): void {
-  if (templateId && ['smpc', 'impd', 'risk_management_plan'].includes(templateId) && market && market !== 'EU') {
+  if (documentComponentRegion(templateId) === 'EU' && market && market !== 'EU') {
     throw new Error('This outline represents an EU document. Confirm the current regional and client template before a targeted non-EU build; reference use or a regional addendum is not represented by this API.');
   }
 }
