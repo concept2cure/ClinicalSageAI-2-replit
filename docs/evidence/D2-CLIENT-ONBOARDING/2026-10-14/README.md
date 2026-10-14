@@ -134,3 +134,7 @@ follow-up integration of tenant-pinned API-key audit outcomes, preserved-role
 invitation acceptance and stale-organization session-policy guards, together
 with the 77-suite regression list and final build. All 827 tests in that final
 consolidated run passed; the complete reconciled client/server build passed.
+The subsequent concurrent IND-template update was preserved and verified with
+301 editor/backend/startup checks, 26 creation-picker checks and a fresh build.
+Its evidence checksum/prose scan dispositions and exact range proof are linked
+from that final verification record.

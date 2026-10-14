@@ -223,3 +223,48 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 #   Two reviewers verified it as source identity, not a delegated credential.
 #   Evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/history-scan-dispositions.md.
 0e4ccf46f437af463a52f580c0775c8f4f02197f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/ci-followup-38463370149/manifest.json:generic-api-key:59
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-final-checks.json:generic-api-key:3
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-before-canonical-sync/browser-summary.json:generic-api-key:5
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-final-checks.json:generic-api-key:3
+
+# status: not a secret
+# reason: 2026-10-14 — apiContractSha256 equals SHA-256 of the browser-eval-fixture/api-contract.json blob at this exact 49dba3d214da commit; two independent reviews plus control-tower checksum verification.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-summary.json:generic-api-key:5
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:10167
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:28292
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:29293
+
+# status: not a secret
+# reason: 2026-10-14 — static guidance_text regulatory prose span matches server/services/ind/ctd/authoring-guidance.ts at the exact 49dba3d214da finding commit; two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/api-contract.json:generic-api-key:51945
+
+# status: not a secret
+# reason: 2026-10-14 — four static regulatory prose occurrences share this exact line-1 fingerprint; same-commit decoded reference scalars match services/regulatory/ind-ectd-sections.ts:878 and server/services/ind/ctd/authoring-guidance.ts:3359; other spans match canonical guidance/checklist prose. Two independent source reviews.
+# evidence: docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/authoring-evidence-scan-dispositions.md
+49dba3d214da2f50872d2c7b889a7abb8fc82678:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-fixture/catalogue.json:generic-api-key:1

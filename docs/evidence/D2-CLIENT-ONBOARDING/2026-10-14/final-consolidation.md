@@ -58,6 +58,32 @@ exit zero, zero findings. [The safe committed-range record](final-commit-range-s
 identifies the exact revisions and scanner settings. Hosted reruns are
 separate evidence; older failed workflow runs retain their conclusions.
 
+## Subsequent authoring update
+
+The first final push passed every pre-push gate, including a cold incremental
+TypeScript check with zero errors, but its remote ref update raced an independent
+IND authoring/template delivery. That update and its repository-health refresh
+through `fe2545537` were merged without conflict in `4546acd6d`.
+
+The shared workbench retains both document Access and the new template guidance.
+Template creation retains project/tenant authorization, atomic creator grants,
+sections/revisions/audit and verified handoff to the existing editor. The pure
+digest functions and their public re-exports are unchanged. A focused post-merge
+run passed **301 tests in 19 suites**, covering the new IND templates and the
+existing permission, review, workflow and actual bundled-startup paths. The
+creation picker separately passed **26 tests**. The rebuilt client/server also
+passed. These are follow-up integration checks, not additional unique tests to
+sum into the preceding 827-test run.
+
+Safe records are `authoring-sync-regressions.txt`, `authoring-sync-test-files.txt`,
+`authoring-sync-creation-picker.txt` and `build-authoring-sync.txt`. The added
+browser-evidence scan findings and their provenance are recorded in the linked
+[authoring evidence dispositions](authoring-evidence-scan-dispositions.md).
+Those 12 matches are four artifact checksums and eight static regulatory prose
+spans at nine immutable fingerprints. After those precise dispositions, the
+same pinned added-history range scan passed with zero findings; the scanner
+rules and previous ignore content remain unchanged.
+
 The original isolated hosted browser proof and local bundled-initialization
 proof retain the boundaries described in [hosted verification](hosted-verification.md)
 and [CI follow-up](ci-followup-repairs.md). Production delivery, SMTP, identity
