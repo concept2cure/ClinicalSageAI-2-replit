@@ -3,30 +3,36 @@
  *
  * The v2 New-Project wizard persists here instead of the old client-only
  * window.C2C_PROJECT stub. This locks: org scoping, required-field + enum
- * validation (so bad input never reaches SQL), the INSERT into the SAME
+ * validation (so bad input never reaches business SQL), the INSERT into the SAME
  * regulatory_programs table the portfolio list reads, the org-unique code
  * retry on 23505, the { data } response shaped to the portfolio display
  * contract, and the 503 PENDING_STORE fail-soft on an unprovisioned store.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 import type { ScaffoldResult } from '../../../services/c2c/scaffold-project-documents.js';
+import { ANCHOR, KEYS, shapedRow, validBody, executeProjectFixtureQuery, projectFixtureApp } from './projects-create-fixture';
 
 // The create route now runs the program INSERT and the document scaffold in ONE
 // transaction, so it acquires a client. `query` models that client: every
 // statement the route issues — BEGIN, the INSERT, the scaffold's reads/writes,
 // COMMIT — lands here in order. The pool's own `query` still serves the
 // post-commit re-select, which deliberately runs outside the transaction.
-const query = vi.fn();
-const release = vi.fn();
+const { query, release, membershipQuery, activeMemberships } = vi.hoisted(() => ({
+  query: vi.fn(), release: vi.fn(), activeMemberships: new Map<string, string>(),
+  membershipQuery: vi.fn<(sql: string, params: unknown[]) => Promise<{ rows: { role: string }[] }>>(),
+}));
+
+function executeFixtureQuery(...args: unknown[]) {
+  return executeProjectFixtureQuery(query, membershipQuery, ...args);
+}
 /** The transaction client the route checked out — captured so the spine test
  *  can prove createSubmissionTx received THIS client (same transaction). */
 let txnClient: { query: (...a: unknown[]) => unknown; release: () => void } | null = null;
 vi.mock('../../../db.js', () => ({
   pool: {
-    query: (...a: unknown[]) => query(...a),
-    connect: async () => (txnClient = { query: (...a: unknown[]) => query(...a), release }),
+    query: executeFixtureQuery,
+    connect: async () => (txnClient = { query: executeFixtureQuery, release }),
   },
 }));
 // The scaffold is exercised by its own contract test; here it is stubbed so
@@ -75,21 +81,20 @@ vi.mock('../../../services/submission-service/submission-service.js', () => ({
 
 import projectsRouter from '../projects';
 
-function appWith(org: number | null, userId?: number) {
-  const app = express();
-  app.use(express.json());
-  app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { organizationId: number }).organizationId = org;
-    if (userId !== undefined) (req as unknown as { userId: number }).userId = userId;
-    next();
-  });
-  app.use('/api/c2c/projects', projectsRouter);
-  return app;
+function appWith(org: number | null, userId?: number, requestId?: string) {
+  return projectFixtureApp(projectsRouter, org, userId, requestId);
 }
 
 beforeEach(() => {
   query.mockReset();
   release.mockReset();
+  membershipQuery.mockReset();
+  activeMemberships.clear();
+  activeMemberships.set('7:3', 'member');
+  membershipQuery.mockImplementation(async (_sql, [organizationId, userId]) => {
+    const role = activeMemberships.get(`${organizationId}:${userId}`);
+    return { rows: role ? [{ role }] : [] };
+  });
   txnClient = null;
   scaffold.mockReset();
   scaffold.mockResolvedValue({ documentId: 'doc_test', sectionCount: 24 });
@@ -108,47 +113,59 @@ const sqlCalls = () => query.mock.calls.map((c) => String(c[0]).trim().split(/\s
 const callWith = (frag: string) =>
   query.mock.calls.find((c) => String(c[0]).includes(frag)) as [string, unknown[]] | undefined;
 
-/** The anchor's three statements: preflight (column present, one workspace),
- *  no existing anchor, the INSERT. Every successful create now writes the
- *  program's project record (P-19), so every success queue carries them. Before
- *  P-19 these queues held none: the preflight read an empty row as "no anchor
- *  column", skipped, and the program was created unanchored without any test
- *  noticing. */
-const ANCHOR = [
-  { rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55, default_workspace_id: null }] }, // preflight
-  { rows: [] }, // no anchor yet
-  { rows: [{ id: 9001 }] }, // INSERT INTO projects … RETURNING id
-];
-const KEYS = ['id', 'title', 'ws', 'code', 'stage', 'readiness', 'status', 'lead', 'blocker', 'due', 'activity'];
-const shapedRow = () => Object.fromEntries(KEYS.map((k) => [k, k === 'readiness' ? 0 : k === 'blocker' ? null : 'x']));
-const validBody = {
-  name: 'BX-204 — NDA',
-  productName: 'BX-204',
-  programType: 'nda',
-  productType: 'drug',
-  primaryAgency: 'FDA',
-  indication: 'Solid tumors',
-  targetSubmissionDate: '2026-12-01',
-  teamMembers: ['Jordan Chen'],
-};
-
 describe('POST /api/c2c/projects', () => {
   it('403 without org context', async () => {
     const res = await request(appWith(null)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(403);
     expect(query).not.toHaveBeenCalled();
+    expect(membershipQuery).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing membership', 7, null, 'PROJECT_ACTOR_ACCESS_DENIED'],
+    ['membership in a different organization', 8, 'member', 'PROJECT_ACTOR_ACCESS_DENIED'],
+    ['active viewer', 7, 'viewer', 'PROJECT_WRITE_ACCESS_DENIED'],
+  ] as const)('refuses %s before quota or any program mutation', async (_name, org, role, error) => {
+    activeMemberships.clear();
+    if (role) activeMemberships.set('7:3', role);
+    const res = await request(appWith(org, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe(error);
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [org, 3]);
+    for (const operation of [query, programQuota, scaffold, createSubmissionTx]) expect(operation).not.toHaveBeenCalled();
+  });
+
+  it('rolls back if membership is revoked between preflight and the locked admission', async () => {
+    query.mockImplementationOnce(async (sql: string) => {
+      expect(sql).toBe('BEGIN');
+      activeMemberships.delete('7:3');
+      return { rows: [] };
+    });
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('PROJECT_ACTOR_ACCESS_DENIED');
+    expect(membershipQuery.mock.calls).toEqual([
+      [expect.not.stringContaining('FOR SHARE'), [7, 3]],
+      [expect.stringContaining('FOR SHARE OF ou,u,o'), [7, 3]],
+    ]);
+    expect(sqlCalls()).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(release).toHaveBeenCalledExactlyOnceWith();
+    expect(scaffold).not.toHaveBeenCalled();
+    expect(createSubmissionTx).not.toHaveBeenCalled();
   });
 
   it('400 when name is missing', async () => {
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, name: '' });
     expect(res.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3]);
   });
 
-  it('400 on an invalid programType (never reaches SQL)', async () => {
+  it('400 on an invalid programType (never reaches business SQL)', async () => {
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, programType: 'bogus' });
     expect(res.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3]);
   });
 
   it('inserts into regulatory_programs and returns the portfolio display contract', async () => {
@@ -168,6 +185,10 @@ describe('POST /api/c2c/projects', () => {
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(201);
     expect(res.body.meta.created).toBe(true);
+    expect(membershipQuery.mock.calls).toEqual([
+      [expect.not.stringContaining('FOR SHARE'), [7, 3]],
+      [expect.stringContaining('FOR SHARE OF ou,u,o'), [7, 3]],
+    ]);
     for (const k of KEYS) expect(res.body.data).toHaveProperty(k);
 
     const insert = callWith('INSERT INTO regulatory_programs');
@@ -631,16 +652,7 @@ describe('POST /api/c2c/projects — a 500 is diagnosable from the reference the
 
   /** The app with the request-id middleware the real server mounts. */
   function appWithRequestId(org: number, userId: number) {
-    const app = express();
-    app.use(express.json());
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      res.setHeader('X-Request-Id', REF);
-      (req as unknown as { organizationId: number }).organizationId = org;
-      (req as unknown as { userId: number }).userId = userId;
-      next();
-    });
-    app.use('/api/c2c/projects', projectsRouter);
-    return app;
+    return appWith(org, userId, REF);
   }
 
   it('echoes the reference id in the body and says what failed', async () => {

@@ -56,6 +56,7 @@ import { publishShellProject } from '../shellProject';
 import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { surfaceLeaveRefusal } from '../navParams';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
@@ -206,6 +207,15 @@ afterEach(() => {
 });
 
 describe('the tab cannot be closed over unsaved work', () => {
+  it('refuses the task drawer exit without saving or unmounting the dirty canvas', async () => {
+    await renderDirty();
+    expect(surfaceLeaveRefusal()).toMatch(/unsaved edits.*3\.2\.S\.1/i);
+    expect(contentPatches()).toHaveLength(0);
+    expect(canvasText()).toBe('Half-written sentence that');
+    cleanup();
+    expect(surfaceLeaveRefusal()).toBeNull();
+  });
+
   it('cancels beforeunload while the canvas is dirty', async () => {
     await renderDirty();
     const ev = new Event('beforeunload', { cancelable: true });

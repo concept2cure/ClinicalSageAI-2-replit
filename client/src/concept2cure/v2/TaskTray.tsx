@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { I } from './icons';
 import { useLiveData, useLiveRows } from './dataConnect';
 import { apiCall } from './apiCall';
 import { useDialog } from './useDialog';
+import { authService, useAuth } from '@/services/portal/authService';
+import { capturedActorHeaders } from '@/utils/authToken';
+import { surfaceLeaveRefusal } from './navParams';
+import { taskActorScope, taskTargetLocation, type TaskActorScope } from './taskTarget';
 
 /* ================================================================
    Task Tray — the persistent "what needs me" affordance in every
@@ -99,9 +103,26 @@ function dueLabel(iso: string | null): string {
   return `due in ${days}d`;
 }
 
-export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk?: (text: string) => void }) {
+type TaskTrayProps = { onNav?: (id: string) => void; onAsk?: (text: string) => void };
+
+export function TaskTray(props: TaskTrayProps) {
+  const { user } = useAuth();
+  const scope = taskActorScope(user);
+  return <TaskTrayOwner key={scope ? `${scope.userId}:${scope.organizationId}` : 'signed-out'} {...props} scope={scope} />;
+}
+
+function TaskTrayOwner({ onNav, onAsk, scope }: TaskTrayProps & { scope: TaskActorScope | null }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [navigationError, setNavigationError] = useState('');
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const stillOwned = () => {
+    const current = taskActorScope(authService.getUser());
+    if (!mounted.current || !scope || !current || current.userId !== scope.userId || current.organizationId !== scope.organizationId) return false;
+    try { capturedActorHeaders({ userId: Number(scope.userId), organizationId: Number(scope.organizationId) }); return true; }
+    catch { return false; }
+  };
 
   // The badge needs a count while the tray is closed; the heavier sources load
   // when it opens. refreshKey re-pulls after a mutation (mark read).
@@ -137,21 +158,40 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
     : `Your work${badge ? ` — ${badge} item${badge === 1 ? '' : 's'} waiting` : ''}`;
 
   const markRead = async (id: number) => {
+    if (!stillOwned()) { setNavigationError('Your signed-in account or organization changed. Reopen Your work.'); return; }
     const res = await apiCall('POST', `/api/mdx/notifications/${id}/read`);
     // A failed mark-read leaves the row unread — nothing is fabricated.
-    if (res.ok) setRefreshKey(k => k + 1);
+    if (res.ok && stillOwned()) setRefreshKey(k => k + 1);
   };
 
-  const go = (surface: string) => {
+  const canLeave = () => {
+    if (!stillOwned()) { setNavigationError('Your signed-in account or organization changed. Reopen Your work.'); return false; }
+    const refusal = surfaceLeaveRefusal();
+    if (refusal) { setNavigationError(refusal); return false; }
+    return true;
+  };
+  const triage = onAsk ? (text: string) => {
+    if (!canLeave()) return;
+    onAsk(text);
     setOpen(false);
-    onNav?.(surface);
+  } : undefined;
+  const go = (surface: string) => {
+    if (!canLeave()) return;
+    if (!onNav) { setNavigationError('Navigation is unavailable. Close and reopen Your work.'); return; }
+    onNav(surface);
+    setOpen(false);
+  };
+  const openTask = (taskId: string) => {
+    const target = taskTargetLocation(taskId, scope);
+    if (!target) { setNavigationError('This task link is invalid. Open the task board to retry.'); return; }
+    go(target);
   };
 
   return (
     <>
       <button
         className="tt-trigger tb-btn"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { setNavigationError(''); setOpen(o => !o); }}
         title={countsIncomplete ? "Your tasks, approvals and messages — some counts couldn't be loaded" : 'Your tasks, approvals and messages'}
         aria-label={triggerLabel}
         aria-expanded={open}
@@ -179,7 +219,9 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
           notifsError={notifsError}
           markRead={markRead}
           go={go}
-          onAsk={onAsk}
+          openTask={openTask}
+          navigationError={navigationError}
+          onAsk={triage}
         />
       )}
     </>
@@ -188,7 +230,7 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
 
 function TrayPanel({
   onClose, work, workLoading, workError, assigned, queue, queueError, approvalRows, approvalsError,
-  notifs, notifsLoading, notifsError, markRead, go, onAsk,
+  notifs, notifsLoading, notifsError, markRead, go, openTask, navigationError, onAsk,
 }: {
   onClose: () => void;
   work: MyWork | null;
@@ -208,6 +250,8 @@ function TrayPanel({
   notifsError?: string;
   markRead: (id: number) => void;
   go: (surface: string) => void;
+  openTask: (taskId: string) => void;
+  navigationError: string;
   onAsk?: (text: string) => void;
 }) {
   const ref = useDialog(onClose);
@@ -234,8 +278,10 @@ function TrayPanel({
           <button className="tt-close" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
 
+        {navigationError && <div className="tt-empty" role="alert">{navigationError}</div>}
+
         {onAsk && (
-          <button className="tt-triage" onClick={() => { onAsk('Triage everything assigned to me across all projects and tell me what to do first'); onClose(); }}>
+          <button className="tt-triage" onClick={() => { onAsk('Triage everything assigned to me across all projects and tell me what to do first'); }}>
             {I.sparkles} Triage my day with AnA
           </button>
         )}
@@ -250,7 +296,7 @@ function TrayPanel({
             ) : !ordered.length ? (
               <div className="tt-empty">Nothing assigned to you right now. Tasks land here as soon as someone assigns you one.</div>
             ) : ordered.slice(0, 8).map(t => (
-              <button key={t.taskId} className="tt-item" onClick={() => go('tasks')}>
+              <button key={t.taskId} className="tt-item" onClick={() => openTask(t.taskId)}>
                 <span className={`tt-dot tt-dot-${t.overdue ? 'err' : t.dueSoon || t.blocked ? 'warn' : 'ok'}`} aria-hidden />
                 <span className="tt-item-body">
                   <span className="tt-item-title">{t.title}</span>
@@ -275,7 +321,7 @@ function TrayPanel({
                 </div>
               )}
               {approvalsFromBoard.map(t => (
-                <button key={t.taskId} className="tt-item" onClick={() => go('tasks')}>
+                <button key={t.taskId} className="tt-item" onClick={() => openTask(t.taskId)}>
                   <span className="tt-dot tt-dot-err" aria-hidden />
                   <span className="tt-item-body">
                     <span className="tt-item-title">{t.title}</span>

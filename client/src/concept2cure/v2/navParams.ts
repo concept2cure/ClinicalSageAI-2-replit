@@ -111,3 +111,32 @@ export function consumeNavParams(
   }
   return Object.keys(out).length > 0 ? out : null;
 }
+
+/* Shell affordances must not silently unmount a surface's in-progress work.
+ * The surface owns its refusal and existing save/cancel controls; navigation
+ * never invents a save, discard, or deferred continuation. */
+const surfaceLeaveGuards = new Set<() => string | null>();
+
+export function registerSurfaceLeaveGuard(guard: () => string | null): () => void {
+  surfaceLeaveGuards.add(guard);
+  return () => { surfaceLeaveGuards.delete(guard); };
+}
+
+export function surfaceLeaveRefusal(): string | null {
+  for (const guard of surfaceLeaveGuards) {
+    try {
+      const reason = guard();
+      if (reason) return reason;
+    } catch {
+      return 'Finish or close the work on this screen before navigating.';
+    }
+  }
+  // Portalled native ceremonies (including review/signature dialogs) also
+  // own their work. The drawer itself is the navigation affordance, excluded.
+  if (typeof document !== 'undefined') {
+    const dialog = Array.from(document.querySelectorAll('[role="dialog"], [role="alertdialog"]'))
+      .find(element => !element.classList.contains('tt-panel') && !element.closest('[hidden], [aria-hidden="true"]'));
+    if (dialog) return 'A dialog is open — finish or close it before navigating.';
+  }
+  return null;
+}

@@ -1,0 +1,27 @@
+
+/workspace/concept2cure/client/src/concept2cure/v2/TaskTray.tsx
+  113:1  warning  Function 'TaskTrayOwner' has a complexity of 24. Maximum allowed is 15  complexity
+  230:1  warning  Function 'TrayPanel' has too many lines (173). Maximum allowed is 100   max-lines-per-function
+  230:1  warning  Function 'TrayPanel' has a complexity of 27. Maximum allowed is 15      complexity
+
+/workspace/concept2cure/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+   329:8   warning  Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15                                                      complexity
+   797:1   warning  File has too many lines (4603). Maximum allowed is 500                                                                              max-lines
+  1191:8   warning  Function 'DocumentWorkbench' has too many lines (3815). Maximum allowed is 100                                                      max-lines-per-function
+  1191:8   warning  Function 'DocumentWorkbench' has a complexity of 339. Maximum allowed is 15                                                         complexity
+  2010:26  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  2045:16  warning  Arrow function has a complexity of 22. Maximum allowed is 15                                                                        complexity
+  2756:50  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  2812:55  warning  Async arrow function has a complexity of 36. Maximum allowed is 15                                                                  complexity
+  2977:5   warning  React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  3344:43  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  3628:7   warning  'queueMicrotask' is not defined                                                                                                     no-undef
+  5780:28  warning  Arrow function has too many lines (210). Maximum allowed is 100                                                                     max-lines-per-function
+  5780:28  warning  Arrow function has a complexity of 24. Maximum allowed is 15                                                                        complexity
+
+/workspace/concept2cure/client/src/concept2cure/v2/navParams.ts
+  95:8  warning  Function 'consumeNavParams' has a complexity of 16. Maximum allowed is 15  complexity
+
+✖ 17 problems (0 errors, 17 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

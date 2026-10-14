@@ -1,0 +1,74 @@
+{
+  "baseline": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+  "branch": "concept2cure-v2",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/TaskTray.tsx",
+      "sha256": "727ba959a3e740234e516fa09c7ac5c458b93120d7c029451402c6713878554d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "sha256": "b656908ca70480ecd90028a21dd6bae4ed63a7dd4400dc3d52b6ff35b94cff35"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx",
+      "sha256": "5d7131b8464ae25455129bc696d2588e2a71d9a448b2d920be238b1ba78bf361"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx",
+      "sha256": "3fcc02b823cf34028b2f12d18f9e2abf2e3756db060e1f16df77f324a7f05f24"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskTarget.test.ts",
+      "sha256": "732f0f3d1db0b44eceade67947c1a76a38e3848255b2c6695f2f7b946c1d63d3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx",
+      "sha256": "37e03b6b78e7b391e5b6a0b5055321c767a1eb994dedac5b610416d67d2d6a29"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "5fe3d9b7229ec5c90a89ed29e7df836ef4cbf8956e414473b27cc6d5385639db"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "sha256": "007100ef34f8b4455005657b8867bb8fddfb85a4fce3d7393d5efa17526604e5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "ad5d129722348d4d61558732b4e05e8e643f379fc6bbe890f9d36637b90b1d46"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+      "sha256": "9601a7349248d041d743e680105aa9f91eafd776626226d0f32c07d9322f03a0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/taskTarget.ts",
+      "sha256": "ea2e6512e4e94f8e050ac72d3b49af8537eb1d4605efcef6413e19cfca966b3f"
+    },
+    {
+      "path": "docs/design/TASK_DRAWER_HANDOFF_2026-10-14.md",
+      "sha256": "3bb0b2e4c1e90bdca0499219a8d8d3e3e7a66766adc443154c822e60f072bc89"
+    },
+    {
+      "path": "docs/testing/HUMAN_BETA_CHECKLIST_V1.md",
+      "sha256": "c19f92e0c8bd071d30299b8b0a78581d01a2fb50e3a46e518a7474057ce4bce4"
+    },
+    {
+      "path": "docs/testing/HUMAN_BETA_PROGRAM_V1.md",
+      "sha256": "7079301a097e5c4e59dcdf5031d55930405a98895e163b3cbe788366e4ba09c2"
+    },
+    {
+      "path": "docs/work-orders/README.md",
+      "sha256": "e51bc90bd652bf9f5e571e91ba2189a855a4e74f00c5913bf9b8b6e0737267cc"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-create-fixture.ts",
+      "sha256": "e5f0302686eebe2e3fb8b98d12b79dc272a137e97175667f8bf4b9079d7cff07"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-create.test.ts",
+      "sha256": "7a99656a6f898bae53abdfc7891c87753819408d0949deb955660d3d0788ca00"
+    }
+  ]
+}

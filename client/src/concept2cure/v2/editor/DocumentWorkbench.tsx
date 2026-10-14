@@ -108,7 +108,7 @@ import {
   setEditorTarget,
   type EditorTarget,
 } from '../editorTarget';
-import { consumeNavParams } from '../navParams';
+import { consumeNavParams, registerSurfaceLeaveGuard } from '../navParams';
 import {
   advertisedScreenActions,
   listedChoices,
@@ -2259,6 +2259,11 @@ export function DocumentWorkbench({
     const where = activeSection?.code ? `§${activeSection.code}` : 'the open section';
     return { ok: false, reason: `There are unsaved edits in ${where} — save or leave them first.` };
   };
+  // The persistent task drawer shares these same refusal reasons. Keep the
+  // current render's guard in a ref so a click cannot observe an older draft.
+  const surfaceLeaveGuardRef = useRef<() => string | null>(() => null);
+  surfaceLeaveGuardRef.current = () => (authoringGuard() ?? dirtyGuard())?.reason ?? null;
+  useEffect(() => registerSurfaceLeaveGuard(() => surfaceLeaveGuardRef.current()), []);
   useSurfaceActionHandlers(surfaceActionId, {
     'authoring.open-document': params => {
       const guarded = authoringGuard() ?? dirtyGuard();
