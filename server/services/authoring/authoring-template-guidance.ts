@@ -28,10 +28,15 @@ export async function savedTemplateGuidance(q: RequestSqlClient, tenantId: numbe
   if (!doc) throw new TemplateGuidanceError(404, 'Section not found.');
   let current = principal;
   if (typeof doc.client_program_id === 'string') {
-    const user = await q.query(`SELECT email FROM users WHERE id=$1 AND status=$2
-      AND EXISTS (SELECT 1 FROM organization_users ou WHERE ou.user_id=users.id AND ou.organization_id=$3)`,
-      [principal.id, 'active', tenantId]);
-    const email = typeof user.rows[0]?.email === 'string' ? user.rows[0].email : null;
+    // Email-only document grants use the current actor's canonical identity;
+    // resolve it only through membership in the captured tenant.
+    const user = await q.query(`SELECT u.email FROM users u
+      JOIN organization_users ou ON ou.user_id=u.id
+      WHERE u.id=$1 AND u.status=$2 AND ou.organization_id=$3`, [principal.id, 'active', tenantId]);
+    if (user.rows.length !== 1 || (user.rows[0].email !== null && typeof user.rows[0].email !== 'string')) {
+      throw new TemplateGuidanceError(403, 'Current organization membership with an active account is required.');
+    }
+    const email = user.rows[0].email;
     current = (await authorizeAuthoringProgram(q, { tenantId, actor: { id: principal.id, email }, programId: doc.client_program_id, forWrite: false })).principal;
   }
   if (!(await decideAuthoringPermission({ pool: q, principal: current, scope, action: 'view' })).allowed) throw new TemplateGuidanceError(403, 'Current document view permission is required.');

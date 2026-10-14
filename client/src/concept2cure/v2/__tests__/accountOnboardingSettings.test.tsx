@@ -94,7 +94,7 @@ describe('preserved membership role on invitation acceptance', () => {
     });
     open();
     fireEvent.click(await screen.findByRole('button', { name: 'Accept invitation to Inviting sponsor' }));
-    expect(await screen.findByText(new RegExp(`Your existing membership role remains ${role}`))).toBeTruthy();
+    expect(await screen.findByText(`Invitation accepted for Inviting sponsor. Your existing membership role remains ${role}. Your current workspace remains active.`)).toBeTruthy();
     expect(await screen.findByText('No pending invitations.')).toBeTruthy();
     expect(await screen.findByRole('option', { name: 'Inviting sponsor' })).toBeTruthy();
     expect(mocks.user?.organizationId).toBe('1');

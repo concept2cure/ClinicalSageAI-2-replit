@@ -48,7 +48,7 @@ const { authState, dbState, emailState } = vi.hoisted(() => ({
     // id of an existing user found by email (null = email not registered)
     existingUserIdByEmail: null as number | null,
     // is that user already a member of the target org?
-    invitedUserInTargetOrg: false,
+    invitedUserInTargetOrg: false, existingInviteeMembershipRole: null as string | null,
     // a stored organization_invitations row (null = none)
     invitation: null as Record<string, unknown> | null,
     // make the activation-token UPDATE fail (the account is already committed)
@@ -78,6 +78,12 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   if (/SELECT role FROM organization_users WHERE user_id/i.test(sql)) {
     return { rows: authState.membershipRole ? [{ role: authState.membershipRole }] : [] };
   }
+  // Invitation acceptance reads the actual persisted role. A conflict keeps
+  // the existing membership, rather than returning the invitation's role.
+  if (/INSERT INTO organization_users\s*\(organization_id,\s*user_id,\s*role,/i.test(sql) && /RETURNING role/i.test(sql))
+    return { rows: dbState.invitedUserInTargetOrg ? [] : [{ role: params[2] }], rowCount: dbState.invitedUserInTargetOrg ? 0 : 1 };
+  if (/SELECT role FROM organization_users WHERE organization_id = \$1 AND user_id = \$2/i.test(sql) && dbState.invitedUserInTargetOrg && Number(params[0]) === Number(dbState.invitation?.organization_id) && Number(params[1]) === Number(dbState.invitation?.user_id))
+    return { rows: dbState.existingInviteeMembershipRole ? [{ role: dbState.existingInviteeMembershipRole }] : [] };
   // atomic quota service: the organization row lock (the member ceiling is
   // organizations.max_users — there is no organization-keyed licence row)
   if (/FROM organizations WHERE id = \$1 FOR UPDATE/i.test(sql)) {
@@ -210,7 +216,7 @@ beforeEach(async () => {
   emailState.configured = false;
   emailState.sent = [];
   dbState.existingUserIdByEmail = null;
-  dbState.invitedUserInTargetOrg = false;
+  dbState.invitedUserInTargetOrg = false; dbState.existingInviteeMembershipRole = null;
   dbState.invitation = null;
   dbState.tokenStoreFails = false;
   dbState.unredeemedInvitee = null;
@@ -494,17 +500,20 @@ describe('Cross-org invite consent (decision-register #12, issue #727)', () => {
     expect(executedMatching(/FROM organization_invitations/i)).toEqual([]);
   });
 
-  it('POST /invitations/:id/accept — the invited user accepting creates the membership and marks accepted (200)', async () => {
+  it.each(['member', 'viewer'])('POST /invitations/:id/accept — commits acceptance with the actual persisted %s role (200)', async persistedRole => {
     dbState.invitation = pendingInvitation();
+    dbState.invitedUserInTargetOrg = persistedRole === 'viewer'; dbState.existingInviteeMembershipRole = persistedRole === 'viewer' ? persistedRole : null;
 
     const res = await request(app).post('/api/tenant-users/invitations/5/accept').expect(200);
     expect(res.body.success).toBe(true);
+    expect(res.body.data.role).toBe(persistedRole); expect(res.body.auditTrail).toEqual({ persisted: true, chained: true });
 
     const membershipInserts = executedMatching(/INSERT INTO organization_users/i);
     expect(membershipInserts.length).toBe(1);
     // org-scoped write: organization_id is carried explicitly
     expect(membershipInserts[0].sql).toMatch(/organization_id/);
     expect(membershipInserts[0].params).toEqual([999, 1, 'member']);
+    expect(executedMatching(/UPDATE organization_users/i)).toEqual([]);
 
     const statusUpdates = executedMatching(
       /UPDATE organization_invitations\s+SET status = 'accepted'/i

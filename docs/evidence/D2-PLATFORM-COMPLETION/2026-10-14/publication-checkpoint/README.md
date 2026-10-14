@@ -56,8 +56,16 @@ is unchanged. The production build passes on the frozen follow-up source.
 The final IND-merged compiler finds zero errors; the merged production build,
 SQL interpolation ratchet, tenant isolation ratchet and eight security-contract
 tests pass. Their exact raw and filed digests are recorded in
-`merged-gate-artifacts.json`. History scan, normal pre-push gates, publication
-and remote checks remain pending. Earlier lint and history results remain
+`merged-gate-artifacts.json`. The next small Claude merge (`bd8738868`) adds an exact active same-tenant
+identity check before saved template guidance and two fixture corrections.
+Its [four exact suites](../latest-claude-consolidation/guidance-tenant-merge/README.md)
+pass 78 cases. The later normal push refused net warning growth, preserved in
+[the warning repair](lint-repair/README.md); canonical extractions remove all
+three new warnings without expanding a baseline. Source Tracer passes ten
+cases, protocol routes 26, and five ingest neighbours 57. The final compiler
+again has zero errors and build completes in 32.30 seconds with server output
+complete, pinned in `final-guards-gate-artifacts.json`. History scan, normal
+pre-push gates, publication and remote checks remain pending. Earlier lint and history results remain
 qualified to their original phase; their baselines were not expanded.
 
 ## Next reporting increment
