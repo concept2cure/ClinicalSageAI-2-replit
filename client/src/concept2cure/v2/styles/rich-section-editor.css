@@ -65,7 +65,7 @@
 .rse-img-status { display:block; font-size:11px; color:var(--text-400); padding:16px 12px; background:var(--bg-50); border:1px dashed var(--border-control); border-radius:var(--radius-sm); }
 .rse-img[data-error="1"] .rse-img-status { color:var(--error); border-color:var(--error); }
 .rse-body .tiptap .ProseMirror-selectednode { outline:2px solid var(--accent-100); outline-offset:2px; border-radius:var(--radius-sm); }
-.rse-body .tiptap a { color:var(--accent-100); text-decoration:underline; text-underline-offset:2px; }
+.rse-body .tiptap a { color:var(--accent-200); text-decoration:underline; text-underline-offset:2px; }
 .rse-body .tiptap .selectedCell { outline:2px solid color-mix(in srgb, var(--accent-100) 55%, transparent); outline-offset:-2px; }
 .rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400); pointer-events:none; height:0; }
 .rse-ins { background:color-mix(in srgb, var(--success) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success); }
@@ -85,8 +85,8 @@
 .rse-xref[data-missing="1"] { color:var(--error); border-bottom:1px dashed var(--error); font-style:italic; white-space:normal; }
 /* A citation shows the number its source holds in this document's
    reference list — derived from position, never stored. */
-.rse-cite { color:var(--accent-100); white-space:nowrap; }
-.rse-cite[data-missing="1"] { color:var(--error); border-bottom:1px dashed var(--error); font-style:italic; white-space:normal; }
+.rse-cite { color:var(--accent-200); white-space:nowrap; }
+.rse-body .tiptap .rse-cite[data-missing="1"] { color:var(--error); border-bottom:1px dashed var(--error); font-style:italic; white-space:normal; }
 .rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100); background:var(--bg-000); }
 /* Borderless source textarea — inset outline restores keyboard focus. */
 .rse-source:focus-visible { outline:2px solid var(--accent-200); outline-offset:-2px; }
@@ -95,3 +95,8 @@
 .rse-save { display:flex; align-items:center; gap:5px; }
 .rse-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
 .rse-foot-sep { color:var(--bg-200); }
+
+@media (pointer: coarse) {
+  .rse-track { min-height:44px; }
+  .rse-track input[type="checkbox"] { width:24px; height:24px; margin:0; }
+}

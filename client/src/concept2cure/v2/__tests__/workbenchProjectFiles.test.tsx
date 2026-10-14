@@ -73,13 +73,14 @@ function mockApi(routes: Routes = {}) {
       return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
     }
     if (url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
+    if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
     if (url === `/api/authoring/docs/${DOC}/sections`) {
       return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The product rationale.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
     }
     if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [] });
-    if (url === `/api/c2c/projects/${PID}/sources`) {
+    if (url.startsWith(`/api/c2c/projects/${PID}/sources?`)) {
       // The protocol IS a data-room source (same bytes); the SAP is not.
-      return ok({ sources: [{ id: 5, title: 'Protocol C2C-101-201 v1.0', extractionStatus: 'extracted', checksum: 'sha-protocol' }] });
+      return ok({ projectId: PID, sources: [{ id: 5, title: 'Protocol C2C-101-201 v1.0', extractionStatus: 'extracted', checksum: 'sha-protocol', isCurrent: true, dataEligible: true, originalFileAvailable: true }], total: 1, currentTotal: 1, page: { limit: 200, offset: 0 }, window: { shown: 1, truncated: false } });
     }
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
     if (url === `/api/c2c/project-vault/${PID}`) return (routes.vault ?? (() => ok(VAULT)))();

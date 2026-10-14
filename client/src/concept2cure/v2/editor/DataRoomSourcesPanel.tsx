@@ -1,16 +1,12 @@
 import React, { useEffect, useId, useState } from 'react';
-import { EmptyState, hasKeys, useLiveData, type DataState } from '../dataConnect';
-import { SourceCatalogLine, SourceSnippet, type SourceCatalog } from './SourceCatalogLine';
+import { EmptyState, useLiveData, type DataState } from '../dataConnect';
+import { SourceCatalogLine, SourceSnippet } from './SourceCatalogLine';
 import { SourceImportDialog, sourceImportUnavailableReason } from './SourceImportDialog';
 import { I } from '../icons';
+import { parseProjectSourcePage, projectSourceCatalogUrl, type ProjectSourcePage, type ProjectSourceRecord } from './projectSourceCatalog';
 
-interface SourceRow {
-  id: number; title: string | null; checksum: string | null;
-  extractionStatus: string | null; extractionMethod: string | null;
-  isCurrent?: boolean; dataEligible?: boolean; originalFileAvailable?: boolean;
-  catalog?: SourceCatalog | null; snippet?: string | null;
-}
-interface SourcesPage { sources: SourceRow[]; total?: number; window?: { truncated: boolean } }
+type SourceRow = ProjectSourceRecord;
+type SourcesPage = ProjectSourcePage;
 const PAGE_SIZE = 50;
 
 function sourceReadLabel(source: SourceRow): string {
@@ -82,7 +78,29 @@ function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull,
 }
 
 /** The same paged data-room read used by Projects, beside the existing editor. */
-export function DataRoomSourcesPanel({ programId, onOpenDocument, onAsk }: {
+export function DataRoomSourcesPanel(props: {
+  programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void;
+}) {
+  return <DataRoomForProgram key={props.programId} {...props} />;
+}
+
+function DataRoomPage({ programId, offset, term, ...actions }: {
+  programId: string; offset: number; term: string; onRetry: () => void; onClear: () => void;
+  onPage: (offset: number) => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void;
+}) {
+  const url = projectSourceCatalogUrl(programId, { limit: PAGE_SIZE, offset, query: term });
+  const read = useLiveData<unknown>(url, [url]);
+  const parsed = parseProjectSourcePage(read.data, { programId, limit: PAGE_SIZE, offset });
+  const state: DataState<SourcesPage> = {
+    ...read, data: parsed.ok ? parsed.page : null,
+    error: read.error ?? (!read.loading && !parsed.ok ? parsed.message : undefined),
+  };
+  return <div className="pf-list" aria-busy={state.loading}>
+    <SourceListPage state={state} offset={offset} term={term} {...actions} />
+  </div>;
+}
+
+function DataRoomForProgram({ programId, onOpenDocument, onAsk }: {
   programId: string; onOpenDocument?: (docId: string) => void; onAsk?: (text: string) => void;
 }) {
   const searchId = useId();
@@ -95,19 +113,17 @@ export function DataRoomSourcesPanel({ programId, onOpenDocument, onAsk }: {
     const timer = setTimeout(() => { setTerm(query.trim()); setOffset(0); }, 250);
     return () => clearTimeout(timer);
   }, [query]);
-  const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) });
-  if (term) params.set('q', term);
-  const state = useLiveData<SourcesPage>(`/api/c2c/projects/${encodeURIComponent(programId)}/sources?${params}`, [programId, term, offset, epoch], hasKeys<SourcesPage>('sources'));
+  const searchPending = query.trim() !== term;
   return <div className="pf-library" data-testid="editor-data-room">
     <div className="pf-search pf-library-head">
       <p className="pf-sel-m">Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it.</p>
       <label className="sr-only" htmlFor={searchId}>Search the data room catalogue</label>
       <input id={searchId} className="c2c-input" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Find source documents and data…" />
     </div>
-    <div className="pf-list" aria-busy={state.loading}>
-      <SourceListPage state={state} offset={offset} term={term} onRetry={() => setEpoch(v => v + 1)}
-        onClear={() => { setQuery(''); setTerm(''); setOffset(0); }} onPage={setOffset} onPull={setPullSource} onAsk={onAsk} />
-    </div>
+    {searchPending ? <div className="pf-list" aria-busy="true"><EmptyState busy icon={I.fileText} title="Loading project sources…" /></div>
+      : <DataRoomPage key={`${term}\u0000${offset}\u0000${epoch}`} programId={programId} offset={offset} term={term}
+        onRetry={() => { setOffset(0); setEpoch(v => v + 1); }} onClear={() => { setQuery(''); setTerm(''); setOffset(0); }}
+        onPage={setOffset} onPull={setPullSource} onAsk={onAsk} />}
     {pullSource && <SourceImportDialog programId={programId} source={{ kind: 'data-room', sourceId: pullSource.id }}
       title={pullSource.title || `Source ${pullSource.id}`} onClose={() => setPullSource(null)} onOpenDocument={onOpenDocument} />}
   </div>;

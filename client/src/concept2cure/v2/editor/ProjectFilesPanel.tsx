@@ -75,7 +75,7 @@ export interface ProjectFilesPanelProps {
    *  the citation picker); a vault upload is citable when its hash matches. */
   projectSources?: ProjectSource[];
   /** Insert a citation node through the editor. False when nothing was inserted. */
-  onCite?: (sourceId: string) => boolean;
+  onCite?: (sourceId: string) => boolean | Promise<boolean>;
   /** Insert plain reference text through the editor. False when nothing was inserted. */
   onInsertReference?: (text: string) => boolean;
   /** The host guards unsaved work before opening the returned exact document. */
@@ -286,11 +286,12 @@ function useVaultPdfViewer() {
 function useVaultFileActions(opts: {
   programId: string | null; sectionCode: string | null; fireToast: FireToast;
   sourceFor: (doc: VaultDoc) => ProjectSource | null;
-  onCite: (sourceId: string) => boolean; onInsertReference: (text: string) => boolean;
+  onCite: (sourceId: string) => boolean | Promise<boolean>; onInsertReference: (text: string) => boolean;
   showPdf: (doc: VaultDoc, blob: Blob, hash: string | null) => void;
 }) {
   const { programId, sectionCode, fireToast, sourceFor, onCite, onInsertReference, showPdf } = opts;
   const [opening, setOpening] = useState<string | null>(null);
+  const citing = useRef(false);
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
@@ -310,15 +311,23 @@ function useVaultFileActions(opts: {
     }
   };
 
-  const cite = (doc: VaultDoc) => {
+  const cite = async (doc: VaultDoc) => {
+    if (citing.current) return;
     const src = sourceFor(doc);
     if (!src) return;
-    const ok = onCite(String(src.id));
-    fireToast(
-      ok ? `Cited “${src.title ?? doc.title}” in ${sectionCode ?? 'the open section'} — the citation numbers from its position and the section now records this source.`
-        : 'Couldn’t insert the citation — the canvas is not editable right now (source mode, a frozen document, or no caret).',
-      ok ? 'ok' : 'error',
-    );
+    citing.current = true;
+    try {
+      const ok = await onCite(String(src.id));
+      if (alive.current) fireToast(
+        ok ? `Cited “${src.title ?? doc.title}” in ${sectionCode ?? 'the open section'} — the citation numbers from its position and the section now records this source.`
+          : 'Couldn’t insert the citation — the source or editable section could not be confirmed. Try again in the current section.',
+        ok ? 'ok' : 'error',
+      );
+    } catch {
+      if (alive.current) fireToast('Couldn’t insert the citation — source registration could not be confirmed. Try again.', 'error');
+    } finally {
+      citing.current = false;
+    }
   };
 
   const insertRef = (doc: VaultDoc) => {

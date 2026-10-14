@@ -211,6 +211,7 @@ beforeAll(async () => {
       'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
       // cre_evidence_sources.client_program_id: a citation is judged by its source's project (PF-11).
       'migrations/20260726_cre_source_program_scope.sql',
+      'migrations/20260829_cre_source_versioning.sql',
       'migrations/20260726_authoring_citation_source_usage.sql',
       // Citation eligibility reads this existing ledger and its write guards.
       'migrations/20261006_document_data_dispositions.sql',
@@ -417,6 +418,39 @@ describe('P11-A-1 / SEC-A-8 — every citation write is on the document trail, w
     expect(JSON.parse(String(rows[0].after_content))).toMatchObject({ id: res.body.citation.id, source: 'lims_result', reference_id: 'BATCH-9' });
     expect(where(/INSERT INTO authoring_citations/i)).toEqual(once);
     expect(where(/INSERT INTO authoring_audit_trail/i)).toEqual(once);
+  }, T);
+});
+
+describe('canonical source admission through the generic citation route', () => {
+  it('reads eligible recorded metadata for an unfiled document through the existing citation list', async () => {
+    const doc = await makeDoc(); const sec = await makeSection(doc); const src = await makeSource('sha-unfiled');
+    await author(request(app).post(`/api/authoring/sections/${sec}/cite-source`)).send({ source_id: src });
+    const res = await author(request(app).get(`/api/authoring/docs/${doc}/citations`));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([expect.objectContaining({ section_id: sec, reference_id: String(src), source_details: expect.objectContaining({ id: String(src) }) })]);
+  }, T);
+  it('records the authoritative source checksum and one citation audit, preserving the existing response', async () => {
+    const doc = await makeDoc(); const sec = await makeSection(doc); const src = await makeSource('sha-generic-source');
+    const res = await author(request(app).post(`/api/authoring/sections/${sec}/cite`))
+      .send({ source: 'cre_evidence_source', reference_id: String(src), citation_text: 'Source paragraph' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body).toMatchObject({ success: true, message: 'Citation added successfully', citation: {
+      section_id: sec, source: 'cre_evidence_source', reference_id: String(src), payload_sha256: 'sha-generic-source',
+    } });
+    expect(await trail(doc, 'CITATION_ADDED')).toHaveLength(1);
+    expect(where(/INSERT INTO authoring_citations/i)).toEqual(once);
+    expect(where(/INSERT INTO authoring_audit_trail/i)).toEqual(once);
+  }, T);
+
+  it('refuses a superseded canonical source through the generic entry without a citation or audit', async () => {
+    const doc = await makeDoc(); const sec = await makeSection(doc); const src = await makeSource('sha-generic-retired');
+    await q('UPDATE cre_evidence_sources SET is_current=false WHERE id=$1', [src]);
+    const before = await trailTotal();
+    const res = await author(request(app).post(`/api/authoring/sections/${sec}/cite`))
+      .send({ source: 'cre_evidence_source', reference_id: String(src) });
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect((await q('SELECT id FROM authoring_citations WHERE section_id=$1', [sec])).rows).toEqual([]);
+    expect(await trailTotal()).toBe(before);
   }, T);
 });
 

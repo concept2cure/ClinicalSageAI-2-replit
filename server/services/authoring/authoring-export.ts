@@ -270,16 +270,18 @@ async function prepareShared(args: RenderExportArgs) {
   const captionTargets = parsedSections.flatMap((p) => collectCaptionTargets(p.blocks, captionDirectory));
   const crossRefs = crossReferenceLookupFor([...sectionTargets, ...captionTargets]);
 
-  const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
-  const citationSources = citedSourceIds.length
-    ? await (async () => {
-        const { listCitationSources } = await import(
-          '../../services/clinical-regulatory-evidence/source-usage.service.js'
-        );
-        return listCitationSources(tenantId, citedSourceIds);
-      })()
-    : [];
+  const { listCitationSources } = await import('../../services/clinical-regulatory-evidence/source-usage.service.js');
+  const citationSourcesBySection = new Map<string, Awaited<ReturnType<typeof listCitationSources>>>();
+  for (const { section, blocks } of parsedSections) {
+    citationSourcesBySection.set(String(section.id), await listCitationSources(tenantId, collectCitedSourceIds(blocks),
+      { documentId: String(doc.id), sectionId: String(section.id) }, executor));
+  }
+  const citationSources = [...citationSourcesBySection.values()].flat();
   const citations = makeCitationRegistry(citationLookupFor(citationSources));
+  const citationsForSection = (sectionId: string): typeof citations => {
+    const allowed = new Set((citationSourcesBySection.get(sectionId) ?? []).map(source => source.id));
+    return { cite: id => id && allowed.has(id) ? citations.cite(id) : { found: false }, entries: citations.entries };
+  };
 
   let pendingIns = 0;
   let pendingDel = 0;
@@ -295,6 +297,7 @@ async function prepareShared(args: RenderExportArgs) {
     crossRefs,
     crossReferenceAnchorId,
     citations,
+    citationsForSection,
     makeCaptionNumbering,
     pendingIns,
     pendingDel,
@@ -453,7 +456,7 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
         revisionDate: exportedAt,
         footnoteSink,
         crossRefs: shared.crossRefs,
-        citations: shared.citations,
+        citations: shared.citationsForSection(String(section.id)),
         captions,
       }),
     );
@@ -526,7 +529,7 @@ async function renderPdf(
   const pdfSections = shared.parsedSections.map(({ section: s, blocks }) => {
     const body = blocksToHtml(blocks, shared.exportImages, {
       crossRefs: shared.crossRefs,
-      citations: shared.citations,
+      citations: shared.citationsForSection(String(s.id)),
       captions: pdfCaptions,
     });
     // The heading is the anchor a resolved cross-reference links to.

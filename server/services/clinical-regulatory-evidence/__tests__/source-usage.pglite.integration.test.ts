@@ -116,6 +116,7 @@ beforeAll(async () => {
   await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
+  await pglite.exec(migration('migrations/20260829_cre_source_versioning.sql'));
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
   await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
   await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));

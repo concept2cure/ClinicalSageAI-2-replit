@@ -1,0 +1,464 @@
+[
+  {
+    "scenario": {
+      "mode": "conversation",
+      "theme": "light",
+      "width": 1440
+    },
+    "errors": [],
+    "metrics": {
+      "overflow": false,
+      "editorViewport": {
+        "top": 499.296875,
+        "bottom": 899.296875,
+        "height": 400,
+        "overflow": "auto"
+      },
+      "accent": "#d97757",
+      "canvas": "#faf9f5",
+      "ribbonNames": [
+        {
+          "text": "B",
+          "name": "Bold (⌘B)",
+          "glyphHidden": null
+        },
+        {
+          "text": "I",
+          "name": "Italic (⌘I)",
+          "glyphHidden": null
+        },
+        {
+          "text": "U",
+          "name": "Underline (⌘U)",
+          "glyphHidden": null
+        },
+        {
+          "text": "x2",
+          "name": "Superscript (⌘.) — x2",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "x2",
+          "name": "Subscript (⌘,) — x2",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "ab",
+          "name": "Highlight — ab",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Bullet list (⌘⇧8)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Numbered list (⌘⇧7)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align left",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align center",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align right",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Insert a link",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "§ Ref",
+          "name": "Insert a cross-reference to another section — § Ref"
+        },
+        {
+          "text": "Cite",
+          "name": "Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
+        },
+        {
+          "text": "Table",
+          "name": "Insert table (3 columns × 3 rows, header row)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "Caption",
+          "name": "Caption a table or figure — put the cursor in a table, or select a figure"
+        },
+        {
+          "text": "",
+          "name": "Undo (⌘Z)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Redo (⌘⇧Z)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Find & replace (Ctrl/⌘-F)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "Ask for a source",
+          "name": "Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source"
+        },
+        {
+          "text": "Comment",
+          "name": "Comment on the selection"
+        }
+      ],
+      "targets": [
+        {
+          "label": "Review with AnA",
+          "height": 18,
+          "width": 664.5625
+        },
+        {
+          "label": "Review section",
+          "height": 32,
+          "width": 116.09375
+        },
+        {
+          "label": "Review document",
+          "height": 32,
+          "width": 133.984375
+        },
+        {
+          "label": "Reconcile project evidence",
+          "height": 32,
+          "width": 184.953125
+        },
+        {
+          "label": "Prepare targeted fixes",
+          "height": 32,
+          "width": 160.171875
+        }
+      ]
+    },
+    "violations": []
+  },
+  {
+    "scenario": {
+      "mode": "conversation",
+      "theme": "light",
+      "width": 390
+    },
+    "errors": [],
+    "metrics": {
+      "overflow": false,
+      "editorViewport": {
+        "top": 680,
+        "bottom": 1098,
+        "height": 418,
+        "overflow": "auto"
+      },
+      "accent": "#d97757",
+      "canvas": "#faf9f5",
+      "ribbonNames": [
+        {
+          "text": "B",
+          "name": "Bold (⌘B)",
+          "glyphHidden": null
+        },
+        {
+          "text": "I",
+          "name": "Italic (⌘I)",
+          "glyphHidden": null
+        },
+        {
+          "text": "U",
+          "name": "Underline (⌘U)",
+          "glyphHidden": null
+        },
+        {
+          "text": "x2",
+          "name": "Superscript (⌘.) — x2",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "x2",
+          "name": "Subscript (⌘,) — x2",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "ab",
+          "name": "Highlight — ab",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Bullet list (⌘⇧8)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Numbered list (⌘⇧7)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align left",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align center",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align right",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Insert a link",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "§ Ref",
+          "name": "Insert a cross-reference to another section — § Ref"
+        },
+        {
+          "text": "Cite",
+          "name": "Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
+        },
+        {
+          "text": "Table",
+          "name": "Insert table (3 columns × 3 rows, header row)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "Caption",
+          "name": "Caption a table or figure — put the cursor in a table, or select a figure"
+        },
+        {
+          "text": "",
+          "name": "Undo (⌘Z)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Redo (⌘⇧Z)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Find & replace (Ctrl/⌘-F)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "Ask for a source",
+          "name": "Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source"
+        },
+        {
+          "text": "Comment",
+          "name": "Comment on the selection"
+        }
+      ],
+      "targets": [
+        {
+          "label": "Review with AnA",
+          "height": 44,
+          "width": 340
+        },
+        {
+          "label": "Review section",
+          "height": 44,
+          "width": 116.09375
+        },
+        {
+          "label": "Review document",
+          "height": 44,
+          "width": 133.984375
+        },
+        {
+          "label": "Reconcile project evidence",
+          "height": 44,
+          "width": 184.953125
+        },
+        {
+          "label": "Prepare targeted fixes",
+          "height": 44,
+          "width": 160.171875
+        }
+      ]
+    },
+    "violations": []
+  },
+  {
+    "scenario": {
+      "mode": "conversation",
+      "theme": "dark",
+      "width": 1440
+    },
+    "errors": [],
+    "metrics": {
+      "overflow": false,
+      "editorViewport": {
+        "top": 499.296875,
+        "bottom": 899.296875,
+        "height": 400,
+        "overflow": "auto"
+      },
+      "accent": "#d97757",
+      "canvas": "#262624",
+      "ribbonNames": [
+        {
+          "text": "B",
+          "name": "Bold (⌘B)",
+          "glyphHidden": null
+        },
+        {
+          "text": "I",
+          "name": "Italic (⌘I)",
+          "glyphHidden": null
+        },
+        {
+          "text": "U",
+          "name": "Underline (⌘U)",
+          "glyphHidden": null
+        },
+        {
+          "text": "x2",
+          "name": "Superscript (⌘.) — x2",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "x2",
+          "name": "Subscript (⌘,) — x2",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "ab",
+          "name": "Highlight — ab",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Bullet list (⌘⇧8)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Numbered list (⌘⇧7)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align left",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align center",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Align right",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Insert a link",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "§ Ref",
+          "name": "Insert a cross-reference to another section — § Ref"
+        },
+        {
+          "text": "Cite",
+          "name": "Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
+        },
+        {
+          "text": "Table",
+          "name": "Insert table (3 columns × 3 rows, header row)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "Caption",
+          "name": "Caption a table or figure — put the cursor in a table, or select a figure"
+        },
+        {
+          "text": "",
+          "name": "Undo (⌘Z)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Redo (⌘⇧Z)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "",
+          "name": "Find & replace (Ctrl/⌘-F)",
+          "glyphHidden": "true"
+        },
+        {
+          "text": "Ask for a source",
+          "name": "Ask AnA to suggest a source for the selected claim — this does not insert a citation — Ask for a source"
+        },
+        {
+          "text": "Comment",
+          "name": "Comment on the selection"
+        }
+      ],
+      "targets": [
+        {
+          "label": "Review with AnA",
+          "height": 18,
+          "width": 664.5625
+        },
+        {
+          "label": "Review section",
+          "height": 32,
+          "width": 116.09375
+        },
+        {
+          "label": "Review document",
+          "height": 32,
+          "width": 133.984375
+        },
+        {
+          "label": "Reconcile project evidence",
+          "height": 32,
+          "width": 184.953125
+        },
+        {
+          "label": "Prepare targeted fixes",
+          "height": 32,
+          "width": 160.171875
+        }
+      ]
+    },
+    "violations": []
+  }
+]
