@@ -13,6 +13,7 @@ import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { CONNECTOR_NOT_A_GENERAL_SETTING, ConnectorSettingRefusedError, namesClaudeConnector } from '../mcp/auth/connector-enablement';
 import { overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
+import { onboardingDiscoverySchema } from '../../shared/types/onboarding-discovery';
 
 const router = Router();
 
@@ -493,7 +494,7 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
       typeof body.settings === 'object' &&
       body.settings !== null &&
       Object.keys(body).every(k => k === 'settings' || k === 'reason');
-    const settingsUpdate = isGoverned ? body.settings : body;
+    let settingsUpdate = isGoverned ? body.settings : body;
     const reason = isGoverned && typeof body.reason === 'string' ? body.reason.trim() : null;
 
     if (isGoverned && (!reason || reason.length < 3)) {
@@ -501,6 +502,29 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
         success: false,
         error: 'A reason (min 3 chars) is required for this action',
       });
+    }
+    // Discovery is one complete, versioned document of the setup author's
+    // answers. It uses this governed door, not the legacy reason-free form.
+    // Validate before calling the writer; bad input changes no other section
+    // in the same request either. Its preferences carry no permission grants
+    // or security enforcement: those remain their own governed actions.
+    const writesDiscovery = Object.prototype.hasOwnProperty.call(settingsUpdate, 'onboardingDiscovery');
+    if (writesDiscovery) {
+      if (!isGoverned || !reason || reason.length > 500) {
+        return res.status(400).json({
+          success: false,
+          error: 'Discovery answers require the governed settings form and a reason of 3–500 characters.',
+        });
+      }
+      const parsed = onboardingDiscoverySchema.safeParse(settingsUpdate.onboardingDiscovery);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid onboarding discovery answers. Nothing was changed.',
+          fields: [...new Set(parsed.error.issues.map((issue) => issue.path.join('.')))],
+        });
+      }
+      settingsUpdate = { ...settingsUpdate, onboardingDiscovery: parsed.data };
     }
     if (
       typeof settingsUpdate !== 'object' ||
@@ -532,7 +556,12 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // above, still does.
     const stored = await writeTenantSettings(req, parseInt(id), {
       action: 'tenant_settings_changed',
-      next: (current: Settings) => overlaySettings(current, settingsUpdate as Settings),
+      next: (current: Settings) => {
+        const next = overlaySettings(current, settingsUpdate as Settings);
+        // Other settings retain their partial-merge contract. Discovery is a
+        // full snapshot: do not carry old, unvalidated fields into its schema.
+        return writesDiscovery ? { ...next, onboardingDiscovery: settingsUpdate.onboardingDiscovery } : next;
+      },
       sections: () => Object.keys(settingsUpdate),
       reason,
     });

@@ -18,13 +18,12 @@ import { z } from 'zod';
 import { authMiddleware, requireAdminRole } from '../auth.js';
 import {
   generateApiKey,
-  validateApiKey as validateApiKeyService,
   revokeApiKey,
   listApiKeys,
   getApiKeyUsage,
 } from '../services/api-key-service.js';
 import { API_KEY_SCOPES } from '../../shared/schema/api-keys.js';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('api-keys');
@@ -50,6 +49,9 @@ const createApiKeySchema = z.object({
     .optional(),
   rateLimit: z.number().int().positive().optional(),
   metadata: z.record(z.unknown()).optional(),
+  // Legacy clients may omit the reason; a supplied reason is the human's
+  // bounded, reviewed explanation and reaches the existing audit record.
+  reason: z.string().trim().min(3).max(500).optional(),
 });
 
 // All routes require authentication + admin role
@@ -61,8 +63,8 @@ router.use(requireAdminRole);
  * programmatic access to a tenant's data and AI spend — every
  * creation, revocation, and expiration is a security event that
  * regulators expect in the audit trail. Audit-write failures are
- * non-fatal so a transient pipeline issue never breaks the admin
- * UX.
+ * non-fatal so an already-created credential is returned exactly once. The
+ * actual outcome reaches the caller instead of silently losing the record.
  */
 async function auditApiKeyEvent(entry: {
   action: 'api_key_created' | 'api_key_revoked';
@@ -75,8 +77,8 @@ async function auditApiKeyEvent(entry: {
   userAgent?: string;
   outcome: 'success' | 'failure';
   reason?: string;
-}): Promise<void> {
-  const apiKeyAudit = await auditService.logAction({
+}): Promise<AuditRowOutcome> {
+  return recordAuditRow({
     tenantId: entry.organizationId,
     userId: entry.userId,
     action: entry.action,
@@ -84,6 +86,7 @@ async function auditApiKeyEvent(entry: {
     resourceId: String(entry.keyId),
     ipAddress: entry.ipAddress,
     userAgent: entry.userAgent,
+    reason: entry.reason,
     details: {
       outcome: entry.outcome,
       reason: entry.reason,
@@ -91,12 +94,6 @@ async function auditApiKeyEvent(entry: {
       scopes: entry.scopes,
     },
   });
-  if (!apiKeyAudit.persisted) {
-    log.warn('API-key audit write failed (non-fatal)', {
-      err: apiKeyAudit.error ?? 'no durable store accepted the row',
-      action: entry.action,
-    });
-  }
 }
 
 // ============================================================================
@@ -126,7 +123,7 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
     // z.string().trim() has already normalized `name`.
-    const { name, scopes, expiresAt, rateLimit, metadata } = parsed.data;
+    const { name, scopes, expiresAt, rateLimit, metadata, reason } = parsed.data;
     const parsedExpiry: Date | undefined = expiresAt;
 
     const result = await generateApiKey(
@@ -143,7 +140,7 @@ router.post('/', async (req: Request, res: Response) => {
     // it carries, and the prefix (NOT the raw key — that's returned
     // to the caller exactly once and never logged). Future security
     // reviews can trace which admin authorized which scope grant.
-    await auditApiKeyEvent({
+    const auditTrail = await auditApiKeyEvent({
       action: 'api_key_created',
       organizationId,
       userId,
@@ -153,6 +150,7 @@ router.post('/', async (req: Request, res: Response) => {
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'] as string | undefined,
       outcome: 'success',
+      reason,
     });
 
     return res.status(201).json({
@@ -163,6 +161,7 @@ router.post('/', async (req: Request, res: Response) => {
       name,
       scopes,
       expiresAt: parsedExpiry || null,
+      auditTrail,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -218,7 +217,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
       // or belongs to another tenant — still an event worth recording.
       // revokeApiKey itself scopes by organizationId so a foreign-
       // tenant id naturally returns false here.
-      await auditApiKeyEvent({
+      const auditTrail = await auditApiKeyEvent({
         action: 'api_key_revoked',
         organizationId,
         userId,
@@ -230,13 +229,14 @@ router.delete('/:id', async (req: Request, res: Response) => {
       });
       return res.status(404).json({
         error: 'API key not found or already revoked',
+        auditTrail,
       });
     }
 
     // Audit: successful revocation. Inspectors can correlate this
     // with the original api_key_created event to see the full
     // lifecycle of a credential.
-    await auditApiKeyEvent({
+    const auditTrail = await auditApiKeyEvent({
       action: 'api_key_revoked',
       organizationId,
       userId,
@@ -246,7 +246,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
       outcome: 'success',
     });
 
-    return res.json({ message: 'API key revoked successfully', keyId });
+    return res.json({ message: 'API key revoked successfully', keyId, auditTrail });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     log.error('Failed to revoke API key', { err: message });

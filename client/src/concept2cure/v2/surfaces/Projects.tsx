@@ -20,6 +20,7 @@ import {
   type DirectiveProgram,
 } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { DiscoveryProjectPrefill } from '../onboarding/DiscoveryProjectPrefill';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -482,6 +483,13 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
             steps are read line by line and want a measure. One container, two
             widths, rather than one compromise that serves neither. */}
         <div className="npw-inner" data-measure={step === 0 ? 'wide' : 'form'}>
+          {step < 2 && <DiscoveryProjectPrefill onApply={(project) => {
+            setName(project.name);
+            setIndication(project.productType === 'drug' || project.productType === 'biologic' ? project.indication : '');
+            setIntendedUse(project.productType === 'device' || project.productType === 'ivd' ? project.indication : '');
+            setStatedClass(project.productType === 'drug' || project.productType === 'biologic' ? project.productType : '');
+            setTarget(project.targetDate);
+          }} />}
           {/* Step 0: Choose template */}
           {step === 0 && (
             <div>

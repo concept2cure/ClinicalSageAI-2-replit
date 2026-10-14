@@ -49,16 +49,19 @@
 import { createHash, randomUUID } from 'crypto';
 
 import { createScopedLogger } from '../utils/logger';
+import {
+  ABSOLUTE_SESSION_HOURS, DEFAULT_IDLE_MINUTES, MIN_IDLE_MINUTES, MAX_IDLE_MINUTES,
+  clampIdleSeconds, idleWindowSecondsOf, maxConcurrentSessionsOf,
+} from '../../shared/auth/session-policy';
+
+export {
+  ABSOLUTE_SESSION_HOURS, DEFAULT_IDLE_MINUTES, MIN_IDLE_MINUTES, MAX_IDLE_MINUTES,
+  DEFAULT_MAX_CONCURRENT_SESSIONS, MIN_MAX_CONCURRENT_SESSIONS, MAX_MAX_CONCURRENT_SESSIONS,
+  idleWindowSecondsOf, maxConcurrentSessionsOf,
+} from '../../shared/auth/session-policy';
 
 const log = createScopedLogger('session-inactivity');
 
-export const DEFAULT_IDLE_MINUTES = 15;
-export const MIN_IDLE_MINUTES = 1;
-export const MAX_IDLE_MINUTES = 24 * 60;
-export const ABSOLUTE_SESSION_HOURS = 12;
-export const DEFAULT_MAX_CONCURRENT_SESSIONS = 5;
-export const MIN_MAX_CONCURRENT_SESSIONS = 1;
-export const MAX_MAX_CONCURRENT_SESSIONS = 20;
 /** The `token_use` a connector access token carries (mcp/auth/platform-token.ts); its sessions hold slots in the account's connector pool. */
 export const CONNECTOR_TOKEN_USE = 'mcp';
 
@@ -101,28 +104,6 @@ function wholeSeconds(value: unknown): number | null {
 
 function claimsOf(claims: unknown): SessionClaimLike {
   return claims && typeof claims === 'object' ? (claims as SessionClaimLike) : {};
-}
-
-/** Whole seconds held inside [MIN_IDLE_MINUTES, MAX_IDLE_MINUTES]; the default when the value is not a number. */
-function clampIdleSeconds(seconds: unknown): number {
-  if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return DEFAULT_IDLE_MINUTES * 60;
-  return Math.min(MAX_IDLE_MINUTES * 60, Math.max(MIN_IDLE_MINUTES * 60, Math.floor(seconds)));
-}
-
-/** The tenant's idle window in seconds from its settings object, clamped; the default when unset. */
-export function idleWindowSecondsOf(settings: unknown): number {
-  const security = (settings as { security?: { sessionTimeoutMinutes?: unknown } } | null | undefined)?.security;
-  const minutes = security?.sessionTimeoutMinutes;
-  if (typeof minutes !== 'number' || !Number.isFinite(minutes)) return DEFAULT_IDLE_MINUTES * 60;
-  return clampIdleSeconds(Math.floor(minutes) * 60);
-}
-
-/** The tenant's concurrent-session limit from its settings object, clamped; the default when unset. */
-export function maxConcurrentSessionsOf(settings: unknown): number {
-  const security = (settings as { security?: { maxConcurrentSessions?: unknown } } | null | undefined)?.security;
-  const limit = security?.maxConcurrentSessions;
-  if (typeof limit !== 'number' || !Number.isFinite(limit)) return DEFAULT_MAX_CONCURRENT_SESSIONS;
-  return Math.min(MAX_MAX_CONCURRENT_SESSIONS, Math.max(MIN_MAX_CONCURRENT_SESSIONS, Math.floor(limit)));
 }
 
 /** The idle window a token carries, else the default. */

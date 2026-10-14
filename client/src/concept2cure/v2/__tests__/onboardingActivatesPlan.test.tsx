@@ -35,6 +35,10 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
+vi.mock('@/utils/authToken', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/utils/authToken')>()), getOrgId: () => '7',
+}));
+
 import { Onboarding } from '../surfaces/Onboarding';
 import type { SurfaceViewProps } from '../surfaceViews';
 
@@ -64,7 +68,7 @@ const PROPS = {
 beforeEach(() => {
   sent = [];
   assigned = [];
-  responder = () => ({ ok: true, status: 200, body: {} });
+  responder = () => ({ ok: true, status: 200, body: { success: true } });
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
   // jsdom's location.assign is unimplemented and throws; the wizard calls it
@@ -84,9 +88,14 @@ afterEach(() => {
 /** Walk the wizard to the review step with `tierName` selected. */
 async function toReview(tierName: string) {
   render(<Onboarding {...PROPS} />);
+  await waitFor(() => expect(screen.queryByText('Loading saved setup…')).toBeNull());
   fireEvent.change(screen.getByLabelText('Organization name'), {
     target: { value: 'Bright Biosciences' },
   });
+  fireEvent.click(screen.getByText(/Continue/));                  // → pricing model
+  fireEvent.change(screen.getByLabelText('Company goals *'), { target: { value: 'Prepare our first regulatory submission.' } });
+  fireEvent.click(screen.getByLabelText('Prepare submissions'));
+  fireEvent.click(screen.getByText(/Continue/));                  // → project discovery
   fireEvent.click(screen.getByText(/Continue/));                  // → pricing model
   fireEvent.click(screen.getByText(/Continue/));                  // → choose plan
   const tile = Array.from(document.querySelectorAll('.ob-tier')).find((b) =>
@@ -99,6 +108,7 @@ async function toReview(tierName: string) {
   fireEvent.click(screen.getByText(/Continue/));                  // → agency accounts
   // The gateway account choice is offered at onboarding and can wait (D7, 2026-10-01).
   expect(screen.getByTestId('gateway-accounts-setting')).toBeTruthy();
+  fireEvent.click(screen.getByText(/Continue/));                  // → security & setup
   fireEvent.click(screen.getByText(/Continue/));                  // → review & activate
 }
 
@@ -136,7 +146,7 @@ describe('Onboarding — Request Enterprise onboarding', () => {
     responder = (url) =>
       url === '/api/auth/license-request'
         ? { ok: false, status: 429, body: {} }
-        : { ok: true, status: 200, body: {} };
+        : { ok: true, status: 200, body: { success: true } };
     await toReview('Enterprise');
     fireEvent.change(screen.getByLabelText('Contact email'), {
       target: { value: 'dana@bright.bio' },
@@ -163,7 +173,7 @@ describe('Onboarding — the free tier activates a plan', () => {
     responder = (url) =>
       url === '/api/billing/dtc-checkout'
         ? { ok: true, status: 200, body: { url: 'https://app.test/billing?checkout=success', sessionId: 'free' } }
-        : { ok: true, status: 200, body: {} };
+        : { ok: true, status: 200, body: { success: true } };
     await toReview('Researcher');
     expect(screen.getByText(/Activate workspace/)).toBeTruthy();
     fireEvent.click(screen.getByText(/Activate workspace/));
@@ -186,7 +196,7 @@ describe('Onboarding — the free tier activates a plan', () => {
     responder = (url) =>
       url === '/api/billing/dtc-checkout'
         ? { ok: false, status: 409, body: { error: 'This organization is already on the professional plan.' } }
-        : { ok: true, status: 200, body: {} };
+        : { ok: true, status: 200, body: { success: true } };
     await toReview('Researcher');
     fireEvent.click(screen.getByText(/Activate workspace/));
 

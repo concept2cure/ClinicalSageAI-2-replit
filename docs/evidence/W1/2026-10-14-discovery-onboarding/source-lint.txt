@@ -1,0 +1,29 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AdminAccess.tsx
+  107:8   warning  Function 'AdminAccess' has too many lines (544). Maximum allowed is 100  max-lines-per-function
+  107:8   warning  Function 'AdminAccess' has a complexity of 68. Maximum allowed is 15     complexity
+  196:52  warning  Async arrow function has a complexity of 17. Maximum allowed is 15       complexity
+  237:22  warning  'setRoleFilter' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+  652:1   warning  File has too many lines (590). Maximum allowed is 500                    max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/IdentityConsole.tsx
+  113:8  warning  Function 'IdentityConsole' has too many lines (229). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Onboarding.tsx
+   60:8   warning  Function 'Onboarding' has too many lines (943). Maximum allowed is 100     max-lines-per-function
+   60:8   warning  Function 'Onboarding' has a complexity of 95. Maximum allowed is 15        complexity
+  212:29  warning  Async arrow function has too many lines (199). Maximum allowed is 100      max-lines-per-function
+  212:29  warning  Async arrow function has a complexity of 43. Maximum allowed is 15         complexity
+  285:9   warning  The value assigned to 'profileSaved' is not used in subsequent statements  no-useless-assignment
+  638:1   warning  File has too many lines (976). Maximum allowed is 500                      max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Projects.tsx
+   108:8   warning  Function 'programTypeFor' has a complexity of 41. Maximum allowed is 15                                                                                                      complexity
+   186:8   warning  Function 'NewProjectWizard' has too many lines (551). Maximum allowed is 100                                                                                                 max-lines-per-function
+   186:8   warning  Function 'NewProjectWizard' has a complexity of 69. Maximum allowed is 15                                                                                                    complexity
+   290:29  warning  Async arrow function has a complexity of 35. Maximum allowed is 15                                                                                                           complexity
+   745:1   warning  File has too many lines (1015). Maximum allowed is 500                                                                                                                       max-lines
+   990:8   warning  Function 'Projects' has too many lines (330). Maximum allowed is 100                                                                                                         max-lines-per-function
+  1052:9   warning  The 'health' array makes the dependencies of useMemo Hook (at line 1152) change on every render. To fix this, wrap the initialization of 'health' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+✖ 19 problems (0 errors, 19 warnings)

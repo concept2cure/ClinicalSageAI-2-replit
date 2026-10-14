@@ -35,7 +35,7 @@ export function asSettings(value: unknown): Settings {
  * in an append-only chain can never be removed.
  */
 const VALUE_AUDITED: Readonly<Record<string, readonly string[]>> = {
-  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'ipRestrictions'],
+  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'maxConcurrentSessions', 'ipRestrictions'],
   qmp: ['auditTrailRetentionDays'],
   // Whether the organisation's members may use the connector for Claude, set by
   // its owner or administrator (P1-47, ADR-0014 §10; mcp/auth/connector-enablement.ts).

@@ -33,6 +33,7 @@ import { authService, useAuth, type AuthError, type AuthUser, type MfaSetup } fr
 import { I } from './icons';
 import { useDialog } from './useDialog';
 import { EmptyState, ErrorState } from './dataConnect';
+import { InvitationInbox } from './onboarding/InvitationInbox';
 
 type AccountRead =
   | { state: 'loading' }
@@ -514,6 +515,8 @@ function AccountBody({ account }: { account: ReturnType<typeof useAccountRead> }
   return (
     <>
       <ProfileSection user={read.user} />
+      <div className="acct-sep" />
+      <InvitationInbox />
       <div className="acct-sep" />
       <PasswordSection />
       <div className="acct-sep" />

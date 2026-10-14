@@ -23,8 +23,8 @@ import {
   inviteRoleToOrgRole,
   inviteNameFromEmail,
   checkoutRequestFor,
-} from '../surfaces/Onboarding';
-import { LIC_ARCHETYPES, LIC_ROLES } from '../fixtures/onboarding-data';
+} from '../activationPlan';
+import { LIC_ARCHETYPES, LIC_ROLES } from '../../fixtures/onboarding-data';
 
 /* Mirrors PRIMARY_INDUSTRY in server/routes/mdx-industry-context.ts. */
 const PRIMARY_INDUSTRY = [
