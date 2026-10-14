@@ -9,6 +9,7 @@ import {setTenantContextTx} from '../../server/services/tenant/governed-tenant-c
 import {getPool} from '../../server/db/runtime';
 import {listClientDocuments} from '../../server/services/clinical-regulatory-evidence/evidence-spine.service';
 import {summarizeSourceUsage,listChangedSourceUsages,listCitedSections} from '../../server/services/clinical-regulatory-evidence/source-usage.service';
+import {listCitationSources} from '../../server/services/clinical-regulatory-evidence/citation-source-read';
 import {getCurrentAuthoringReadScope} from '../../server/services/authoring/authoring-read-scope';
 import {assertAnaUploadAccess} from '../../server/services/ana/source-context-admission';
 import {readVaultPlacements,readVaultEstarUses,readVaultCmcEvidenceUses} from '../../server/services/vault/vault-where-used';
@@ -24,6 +25,7 @@ const files={} as Record<'unbound'|'ambiguous'|'artifact',string>;
 const docs={} as Record<'open'|'private',string>;
 const sections={} as Record<'open'|'private'|'otherSection',string>;
 let privatePermission:string;
+let bibliographyCitationId:string;
 
 async function asUser<T>(userId:number,work:(q:PoolClient)=>Promise<T>):Promise<T> {
   const q=await runtime.connect();
@@ -180,6 +182,46 @@ describe('source usage requires both current parent and canonical object ACL',()
     }};
     await expect(summarizeSourceUsage(interrupted,orgId,[sources.public],{userId:users.a})).rejects.toMatchObject({status:503});
   }));
+});
+
+describe('native bibliography admission uses the current original uploader',()=>{
+  it('resolves a recorded unbound source citation for its original uploader',async()=>{
+    bibliographyCitationId=randomUUID();
+    // Existing-record fixture: preserve a legacy citation through the actual
+    // store, independently of new-citation writer qualification.
+    await owner.query(`INSERT INTO authoring_citations
+      (id,section_id,source,reference_id,payload_sha256,citation_text,tenant_id,created_by)
+      VALUES($1,$2,'cre_evidence_source',$3,$4,'Native QA historical citation',$5,$6)`,
+    [bibliographyCitationId,sections.open,String(sources.unbound),sha('unbound'),orgId,String(users.a)]);
+    const resolved=await asUser(users.a,async q=>{
+      const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:users.a,documentId:docs.open});
+      expect(access.documentIds).toContain(docs.open);
+      return listCitationSources(orgId,[sources.unbound],{documentId:docs.open,sectionId:sections.open,userId:users.a},q);
+    });
+    expect(resolved).toEqual([expect.objectContaining({id:String(sources.unbound),title:`${TAG}-unbound`})]);
+  });
+  it('withholds that source metadata from a different permitted document reader without changing the citation or hash',async()=>{
+    const before=(await owner.query(`SELECT id,reference_id,payload_sha256,citation_text,created_by,created_at,frozen_at
+      FROM authoring_citations WHERE id=$1 AND tenant_id=$2`,[bibliographyCitationId,orgId])).rows;
+    expect(before).toEqual([expect.objectContaining({reference_id:String(sources.unbound),payload_sha256:sha('unbound')})]);
+    const grant=(await owner.query(`INSERT INTO doc_permissions(doc_id,section_id,tenant_id,principal_id,role,granted_by)
+      VALUES($1,NULL,$2,$3,'VIEWER',$4) RETURNING id`,[docs.open,orgId,String(users.reader),String(users.a)])).rows[0].id;
+    try {
+      const withheld=await asUser(users.reader,async q=>{
+        const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:users.reader,documentId:docs.open});
+        expect(access.documentIds).toContain(docs.open);expect(access.sectionIds).toContain(sections.open);
+        return listCitationSources(orgId,[sources.unbound],{documentId:docs.open,sectionId:sections.open,userId:users.reader},q);
+      });
+      expect(withheld).toEqual([]);
+      expect((await owner.query(`SELECT id,reference_id,payload_sha256,citation_text,created_by,created_at,frozen_at
+        FROM authoring_citations WHERE id=$1 AND tenant_id=$2`,[bibliographyCitationId,orgId])).rows).toEqual(before);
+      expect((await owner.query('SELECT checksum FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2',
+        [sources.unbound,orgId])).rows).toEqual([{checksum:sha('unbound')}]);
+    } finally {
+      await owner.query(`UPDATE doc_permissions SET revoked_at=now(),revoked_by=$2,
+        revoke_reason='Native bibliography fixture completed' WHERE id=$1 AND tenant_id=$3`,[grant,String(users.a),orgId]);
+    }
+  });
 });
 
 describe('current related-parent scope before where-used projection',()=>{

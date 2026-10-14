@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
 import multer from 'multer';
 import { parseDraftEnvelope } from './authoring-draft-envelope.js';
 import fs from 'fs';
@@ -14,6 +15,9 @@ import { expandRoleClaims, roleClaimsSatisfy } from '../middleware/auth';
 import { getTenantScope } from '../db/tenantStore';
 import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
 import { getPool } from '../db';
+import type { PoolClient } from 'pg';
+import { SourceReadAccessError } from '../services/clinical-regulatory-evidence/source-read-access';
+import { ProgramReadAccessError } from '../services/c2c/current-program-access';
 import { currentTenantOrgUuid, TenantKeyRequiredError } from '../db/currentTenant';
 import { writeChainedAuditRow } from '../services/auditService';
 import { isSigningAuthorized, signingAuthorityRoles } from '../services/part11/signing-authority.js';
@@ -3079,6 +3083,16 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
     }
 
     const citation = await inTransaction(async (client) => {
+      if (source === 'cre_evidence_source') {
+        const { citeSource } = await import('../services/clinical-regulatory-evidence/source-usage.service.js');
+        const cited = await citeSource(tenantId, { sectionId, sourceId: reference_id, anchor, citationText: citation_text, createdBy }, client);
+        if (cited.change) await auditCitationWrite(req, client, {
+          sectionId, operation: cited.created ? 'CITATION_ADDED' : 'CITATION_UPDATED', change: cited.change,
+          reason: cited.created ? 'Source cited' : 'Citation text changed',
+        });
+        const recorded = await client.query('SELECT * FROM authoring_citations WHERE id=$1 AND tenant_id=$2', [cited.citationId, tenantId]);
+        return recorded.rows[0];
+      }
       const result = await client.query(
         `INSERT INTO authoring_citations
          (id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id)
@@ -3101,6 +3115,8 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
       message: 'Citation added successfully',
     });
   } catch (error) {
+    const { SourceUsageError } = await import('../services/clinical-regulatory-evidence/source-usage.service.js');
+    if (error instanceof SourceUsageError) return res.status(400).json({ success: false, error: error.message });
     console.error('Error adding citation:', error);
     return serverError(res, logger, 'saving cite', error);
   }
@@ -3117,16 +3133,26 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
 
 // GET /api/authoring/sections/:sectionId/sources — what this section is written from
 router.get('/sections/:sectionId/sources', async (req: Request, res: Response) => {
+  let client: PoolClient | undefined;
   try {
     const tenantId = getTenantId(req);
     const { listSectionSources } = await import(
       '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
-    const usages = await listSectionSources(tenantId, String(req.params.sectionId));
+    client = await pool.connect();
+    const usages = await listSectionSources(tenantId, String(req.params.sectionId), {
+      executor: client, userId: Number(getActorId(req)),
+    });
     res.json({ success: true, sectionId: String(req.params.sectionId), sources: usages });
   } catch (error) {
+    if (error instanceof SourceReadAccessError || error instanceof ProgramReadAccessError) {
+      res.status(error.status).json({ success: false, error: error.code, message: error.message });
+      return;
+    }
     console.error('GET /sections/:sectionId/sources', error);
     res.status(500).json({ success: false, error: 'Failed to load section sources' });
+  } finally {
+    client?.release();
   }
 });
 
@@ -5551,13 +5577,17 @@ router.get('/docs/:docId/frozen', async (req: Request, res: Response) => {
 
 // GET all citations by doc (grouped)
 router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
+  let client: PoolClient | undefined;
   try {
     // Tenant-scoped like every other read in this router. This query carried
     // tenant_id in its SELECT list and nowhere in its WHERE, so any
     // authenticated user could enumerate another organization's citations —
     // source names, citation text, checksums — by guessing document UUIDs.
     const tenantId = getTenantId(req);
-    const { rows } = await pool.query(
+    // Pin the tenant-stamped connection for both the citation census and its
+    // current source admission. This router owns its existing pool scope.
+    client = await pool.connect();
+    const { rows } = await client.query(
       `
       SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code, s.title
       FROM authoring_citations c
@@ -5567,10 +5597,25 @@ router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
     `,
       [req.params.docId, tenantId]
     );
-    res.json(rows);
+    const { listCitationSources } = await import('../services/clinical-regulatory-evidence/source-usage.service.js');
+    const metadata = new Map<string, Awaited<ReturnType<typeof listCitationSources>>>();
+    for (const sectionId of new Set(rows.map(row => String(row.section_id)))) {
+      const ids = rows.filter(row => row.section_id === sectionId && row.source === 'cre_evidence_source').map(row => String(row.reference_id));
+      metadata.set(sectionId, await listCitationSources(tenantId, ids, {
+        documentId: String(req.params.docId), sectionId, userId: Number(getActorId(req)),
+      }, client));
+    }
+    res.json(rows.map(row => ({ ...row, source_details: row.source === 'cre_evidence_source'
+      ? metadata.get(String(row.section_id))?.find(source => source.id === String(row.reference_id)) ?? null : undefined })));
   } catch (e) {
+    if (e instanceof SourceReadAccessError || e instanceof ProgramReadAccessError) {
+      res.status(e.status).json({ error: e.code, message: e.message });
+      return;
+    }
     console.error('GET /docs/:docId/citations', e);
     res.status(500).json({ error: 'Failed to list citations' });
+  } finally {
+    client?.release();
   }
 });
 router.post('/docs/:docId/send-to-packager', async (req: Request, res: Response) => {
@@ -5718,14 +5763,7 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
 
     if (!outcome.ok) {
       const status = outcome.reason === 'not_found' ? 404 : 409;
-      const message =
-        outcome.reason === 'not_found'
-          ? 'Citation not found on this section. Nothing was changed.'
-          : outcome.reason === 'frozen'
-            ? 'This citation is frozen and cannot be re-resolved'
-            : outcome.reason === 'not_a_source_citation'
-              ? 'This citation does not reference a canonical source, so there is nothing to re-read. Nothing was changed.'
-              : 'The cited source no longer resolves in this organization. Nothing was changed.';
+      const message = citationRefreshRefusalMessage(outcome.reason);
       return res.status(status).json({ success: false, error: outcome.reason, message });
     }
 

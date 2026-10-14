@@ -37,7 +37,7 @@ import request from 'supertest';
 import type express from 'express';
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHOR, ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
 import { RECORDED_LINEAGE_STORES_DDL } from '../../services/document-data-disposition/__tests__/lineage-stores-fixture';
 
 type Exec = { query: (text: unknown, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }> };
@@ -54,8 +54,7 @@ const T = 180_000;
 /** The creator of the documents AUTHOR holds no grant on. */
 const OTHER_USER = '9';
 
-let jdb: JourneyDb;
-let app: express.Express;
+let jdb: JourneyDb; let app: express.Express;
 let author: (r: request.Test) => request.Test;
 
 /** Every statement, in order, with the executor that ran it. */
@@ -107,8 +106,7 @@ async function makeDoc(opts: { status?: string; createdBy?: string } = {}): Prom
   await q(
     `INSERT INTO authoring_documents (id, title, module, status, created_by, tenant_id)
      VALUES ($1, $2, 'M3', $3, $4, $5)`,
-    [id, `Doc ${id.slice(0, 8)}`, opts.status ?? 'draft', opts.createdBy ?? AUTHOR.id, ORG],
-  );
+    [id, `Doc ${id.slice(0, 8)}`, opts.status ?? 'draft', opts.createdBy ?? AUTHOR.id, ORG]);
   return id;
 }
 
@@ -117,17 +115,18 @@ async function makeSection(docId: string, code = '3.2.P.1'): Promise<string> {
   await q(
     `INSERT INTO authoring_sections (id, doc_id, code, title, content, tenant_id)
      VALUES ($1, $2, $3, $4, '<p>Original text.</p>', $5)`,
-    [id, docId, code, `Section ${code}`, ORG],
-  );
+    [id, docId, code, `Section ${code}`, ORG]);
   return id;
 }
 
-async function makeSource(checksum: string): Promise<number> {
+async function makeSource(checksum: string, uploadedBy = Number(AUTHOR.id)): Promise<number> {
+  const fileId = `file_${randomUUID()}`;
+  await q(`INSERT INTO file_uploads (id,organization_id,user_id,original_name,checksum_sha256,status)
+    VALUES ($1,$2,$3,'Recorded source.pdf',$4,'uploaded')`, [fileId, ORG, uploadedBy, checksum]);
   const r = await q(
-    `INSERT INTO cre_evidence_sources (organization_id, source_type, title, checksum)
-     VALUES ($1, 'client_document', $2, $3) RETURNING id`,
-    [ORG, `protocol ${checksum}`, checksum],
-  );
+    `INSERT INTO cre_evidence_sources (organization_id, source_type, title, checksum,provenance)
+     VALUES ($1, 'client_document', $2, $3,$4) RETURNING id`,
+    [ORG, `protocol ${checksum}`, checksum, JSON.stringify({ origin: 'chat_upload', fileUploadId: fileId })]);
   return Number(r.rows[0].id);
 }
 
@@ -141,8 +140,7 @@ async function insertCitation(sectionId: string, sourceId: number, checksum: str
     `INSERT INTO authoring_citations
        (id, section_id, source, citation_text, reference_id, created_by, tenant_id, payload_sha256)
      VALUES ($1, $2, 'cre_evidence_source', 'as cited', $3, $4, $5, $6)`,
-    [id, sectionId, String(sourceId), OTHER_USER, ORG, checksum],
-  );
+    [id, sectionId, String(sourceId), OTHER_USER, ORG, checksum]);
   return id;
 }
 
@@ -166,8 +164,7 @@ async function trail(docId: string, op?: string): Promise<TrailRow[]> {
        FROM authoring_audit_trail
       WHERE doc_id = $1 AND tenant_id = $2 AND ($3::text IS NULL OR operation_type = $3)
       ORDER BY created_at ASC`,
-    [docId, ORG, op ?? null],
-  );
+    [docId, ORG, op ?? null]);
   return r.rows as TrailRow[];
 }
 
@@ -187,31 +184,21 @@ async function withAuditRefused<T>(op: string, run: () => Promise<T>): Promise<T
 beforeAll(async () => {
   process.env.AUTH_ENFORCE_SECTION_PERMS = '1';
   jdb = await createJourneyDb({
-    prereqSql: PREREQ + RECORDED_LINEAGE_STORES_DDL,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + RECORDED_LINEAGE_STORES_DDL + `
+      ALTER TABLE concept2cure_artifacts ADD COLUMN metadata jsonb NOT NULL DEFAULT '{}';
+      INSERT INTO users (id,name,email,status) VALUES (9,'Other uploader','other-uploader@canvas.example','active');
+      INSERT INTO organization_users (organization_id,user_id,role) VALUES (${ORG},9,'member');
+    `,
     migrations: [
-      'db/migrations/20260725_authoring_document_loop_tables.sql',
-      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
-      'db/migrations/20260725_authoring_audit_trail.sql',
-      'db/migrations/20260813_audit_tamper_proof_log.sql',
-      'db/migrations/20260725_authoring_signatures_and_workflow.sql',
-      'db/migrations/20260725_authoring_signature_freeze_binding.sql',
-      'db/migrations/20260730_authoring_runtime_ddl.sql',
-      'db/migrations/20260730_authoring_comments_router_columns.sql',
-      'db/migrations/20260727_authoring_object_permissions.sql',
-      'db/migrations/20260803_document_span_lineage.sql',
-      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
-      'migrations/20260908_span_lineage_machine_draft.sql',
-      'migrations/20260728_authoring_comments_threading.sql',
-      'migrations/20260727_authoring_document_program_scope.sql',
-      'migrations/20260728_authoring_document_governed_binding.sql',
-      'migrations/20260814d_document_alias_map.sql',
-      'migrations/20260921_audit_logs_chain_seq.sql',
-      'migrations/20260921_authoring_document_provenance.sql',
+      'db/migrations/20260725_authoring_document_loop_tables.sql', 'db/migrations/20260817_doc_revisions_immutable_ledger.sql', 'db/migrations/20260725_authoring_audit_trail.sql', 'db/migrations/20260813_audit_tamper_proof_log.sql',
+      'db/migrations/20260725_authoring_signatures_and_workflow.sql', 'db/migrations/20260725_authoring_signature_freeze_binding.sql', 'db/migrations/20260730_authoring_runtime_ddl.sql', 'db/migrations/20260730_authoring_comments_router_columns.sql',
+      'db/migrations/20260727_authoring_object_permissions.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql',
+      'migrations/20260728_authoring_comments_threading.sql', 'migrations/20260727_authoring_document_program_scope.sql', 'migrations/20260728_authoring_document_governed_binding.sql', 'migrations/20260814d_document_alias_map.sql',
+      'migrations/20260921_audit_logs_chain_seq.sql', 'migrations/20260921_authoring_document_provenance.sql',
       // The canonical source registry and the citation back-reference index.
       'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
       // cre_evidence_sources.client_program_id: a citation is judged by its source's project (PF-11).
-      'migrations/20260726_cre_source_program_scope.sql',
-      'migrations/20260726_authoring_citation_source_usage.sql',
+      'migrations/20260726_cre_source_program_scope.sql', 'migrations/20260829_cre_source_versioning.sql', 'migrations/20260726_authoring_citation_source_usage.sql',
       // Citation eligibility reads this existing ledger and its write guards.
       'migrations/20261006_document_data_dispositions.sql',
     ],
@@ -417,6 +404,55 @@ describe('P11-A-1 / SEC-A-8 — every citation write is on the document trail, w
     expect(JSON.parse(String(rows[0].after_content))).toMatchObject({ id: res.body.citation.id, source: 'lims_result', reference_id: 'BATCH-9' });
     expect(where(/INSERT INTO authoring_citations/i)).toEqual(once);
     expect(where(/INSERT INTO authoring_audit_trail/i)).toEqual(once);
+  }, T);
+});
+
+describe('canonical source admission through the generic citation route', () => {
+  it('reads eligible recorded metadata for an unfiled document through the existing citation list', async () => {
+    const doc = await makeDoc(); const sec = await makeSection(doc); const src = await makeSource('sha-unfiled');
+    await author(request(app).post(`/api/authoring/sections/${sec}/cite-source`)).send({ source_id: src });
+    const res = await author(request(app).get(`/api/authoring/docs/${doc}/citations`));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([expect.objectContaining({ section_id: sec, reference_id: String(src), source_details: expect.objectContaining({ id: String(src) }) })]);
+    const rail = await author(request(app).get(`/api/authoring/sections/${sec}/sources`));
+    expect(rail.status).toBe(200);
+    expect(rail.body.sources).toEqual([expect.objectContaining({ citationId: res.body[0].id, citedChecksum: 'sha-unfiled', source: expect.objectContaining({ id: src, title: 'protocol sha-unfiled' }) })]);
+  }, T);
+  it('keeps another uploader’s unbound citation recorded without metadata on an unfiled document', async () => {
+    const doc = await makeDoc(); const sec = await makeSection(doc);
+    const src = await makeSource('sha-unfiled-other-uploader', Number(OTHER_USER));
+    const cite = await insertCitation(sec, src, 'sha-unfiled-other-uploader');
+    const res = await author(request(app).get(`/api/authoring/docs/${doc}/citations`));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([expect.objectContaining({ id: cite, section_id: sec, reference_id: String(src), created_by: OTHER_USER, source_details: null })]);
+    expect(JSON.stringify(res.body)).not.toContain('protocol sha-unfiled-other-uploader');
+    const rail = await author(request(app).get(`/api/authoring/sections/${sec}/sources`));
+    expect(rail.status).toBe(200);
+    expect(rail.body.sources).toEqual([expect.objectContaining({ citationId: cite, citedChecksum: 'sha-unfiled-other-uploader', source: null, state: 'unresolved' })]);
+    expect(await checksumOf(cite)).toBe('sha-unfiled-other-uploader');
+  }, T);
+  it('records the authoritative source checksum and one citation audit, preserving the existing response', async () => {
+    const doc = await makeDoc(); const sec = await makeSection(doc); const src = await makeSource('sha-generic-source');
+    const res = await author(request(app).post(`/api/authoring/sections/${sec}/cite`))
+      .send({ source: 'cre_evidence_source', reference_id: String(src), citation_text: 'Source paragraph' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body).toMatchObject({ success: true, message: 'Citation added successfully', citation: {
+      section_id: sec, source: 'cre_evidence_source', reference_id: String(src), payload_sha256: 'sha-generic-source',
+    } });
+    expect(await trail(doc, 'CITATION_ADDED')).toHaveLength(1);
+    expect(where(/INSERT INTO authoring_citations/i)).toEqual(once);
+    expect(where(/INSERT INTO authoring_audit_trail/i)).toEqual(once);
+  }, T);
+
+  it('refuses a superseded canonical source through the generic entry without a citation or audit', async () => {
+    const doc = await makeDoc(); const sec = await makeSection(doc); const src = await makeSource('sha-generic-retired');
+    await q('UPDATE cre_evidence_sources SET is_current=false WHERE id=$1', [src]);
+    const before = await trailTotal();
+    const res = await author(request(app).post(`/api/authoring/sections/${sec}/cite`))
+      .send({ source: 'cre_evidence_source', reference_id: String(src) });
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect((await q('SELECT id FROM authoring_citations WHERE section_id=$1', [sec])).rows).toEqual([]);
+    expect(await trailTotal()).toBe(before);
   }, T);
 });
 

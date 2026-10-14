@@ -1,0 +1,144 @@
+import {chromium} from '/opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs';
+import fs from 'node:fs';
+const repo='/workspace/ClinicalSageAI';
+const out=repo+'/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/citation-integration';
+fs.mkdirSync(out,{recursive:true});
+const catalog=JSON.parse(fs.readFileSync(repo+'/.visual-qa/editor-consistency/catalog.json','utf8'));
+const programId='11111111-1111-4111-8111-111111111111';
+const reports=[];
+const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const railSources=[{id:7,title:'Synthetic protocol',checksum:'ab'.repeat(32),extractionStatus:'extracted',extractionMethod:'text',dataEligible:true,originalFileAvailable:true},
+  {id:8,title:'Withdrawn synthetic source',extractionStatus:'extracted',dataEligible:false,originalFileAvailable:true},
+  {id:9,title:'Retained reference text',extractionStatus:'extracted',dataEligible:true,originalFileAvailable:false}].map(source=>({...source,isCurrent:true}));
+for(const scenario of [{mode:'rail',theme:'light',width:1440},{mode:'rail',theme:'dark',width:1440},{mode:'rail',theme:'light',width:390},{mode:'dialog',theme:'light',width:390},{mode:'dialog',theme:'dark',width:1440},{mode:'notice',theme:'dark',width:390},{mode:'remedy',theme:'dark',width:390},{mode:'conversation',theme:'light',width:1440},{mode:'conversation',theme:'light',width:390},{mode:'conversation',theme:'dark',width:1440}]){
+  if(process.env.EDITOR_UI_ONLY_MODE&&process.env.EDITOR_UI_ONLY_MODE!==scenario.mode)continue;
+  const page=await browser.newPage({viewport:{width:scenario.width,height:844},reducedMotion:'reduce',isMobile:scenario.width===390,hasTouch:scenario.width===390});
+  let citeAttempts=0;
+  const sources=scenario.mode==='conversation'?Array.from({length:201},(_,index)=>({id:index+1,title:'Source '+(index+1),extractionStatus:'extracted',isCurrent:index!==200,dataEligible:true,originalFileAvailable:true})):railSources;
+  const errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.route('**/api/**',async route=>{
+    const url=new URL(route.request().url());
+    let status=200; let body={success:true,data:{tree:[],documentCount:0}};
+    if(url.pathname.endsWith('/cite-source')&&route.request().method()==='POST'){citeAttempts++;status=citeAttempts===1?400:201;body=citeAttempts===1?{success:false,error:'Source no longer eligible'}:{success:true,created:true,citationId:'11111111-1111-4111-8111-111111111119',citedChecksum:'a'.repeat(64)};}
+    else if(url.pathname.includes('ind-document-catalog'))body={success:true,data:catalog};
+    else if(url.pathname.endsWith('/citations'))body=[{section_id:'11111111-1111-4111-8111-111111111114',source:'cre_evidence_source',reference_id:'201'},{section_id:'11111111-1111-4111-8111-111111111112',source:'cre_evidence_source',reference_id:'1'}];
+    else if(url.pathname.includes('/authoring/docs')){
+      const doc={id:'11111111-1111-4111-8111-111111111113',title:'Synthetic saved protocol',status:'draft',module:'M2',section_count:2,updated_at:'2026-10-13T12:00:00.000Z'};
+      if(url.pathname.endsWith('/sections'))body={sections:[{id:'11111111-1111-4111-8111-111111111114',doc_id:doc.id,code:'2.5.1',title:'First',content:'<p>First saved text.<a data-cite="201">Source 201</a></p>',order_index:0,updated_at:doc.updated_at},{id:'11111111-1111-4111-8111-111111111112',doc_id:doc.id,code:'2.5.2',title:'Target',content:'<p>Saved target text.<a data-cite="1">Source 1</a> and unregistered<a data-cite="201">Source 201</a></p>',order_index:1,updated_at:doc.updated_at}]};
+      else if(url.pathname.endsWith('/'+doc.id))body={document:doc};
+      else body={documents:scenario.mode==='conversation'?[doc]:[{id:'working-1',title:catalog.deliverables[0].title,status:'DRAFT'}]};
+    }
+    else if(url.pathname.match(/\/projects\/[^/]+\/sources$/)){const limit=Number(url.searchParams.get('limit')||200),offset=Number(url.searchParams.get('offset')||0);const rows=sources.slice(offset,offset+limit);body={projectId:programId,sources:rows,total:sources.length,currentTotal:sources.filter(s=>s.isCurrent).length,page:{limit,offset},window:{shown:rows.length,truncated:offset+rows.length<sources.length}};}
+    else if(url.pathname.includes('/sources'))body={sources:[]};
+    else if(url.pathname.includes('/import/source'))body={success:true,data:{doc:{id:'working-source-7',title:'Synthetic protocol working copy'},sections:[],origin:{kind:'data-room',id:7,programId,sha256:'ab'.repeat(32),conversion:'extracted-text'},warnings:['Review extracted text against the original.'],reused:false}};
+    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  });
+  await page.goto(`http://127.0.0.1:5174/.visual-qa/editor-consistency/index.html?mode=${scenario.mode}&theme=${scenario.theme}`);
+  await page.addScriptTag({path:'/workspace/scratch/editor-ui-tools/node_modules/axe-core/axe.min.js'});
+  const stageViolations=[];
+  const scanStage=async(stage)=>{
+    const audit=await page.evaluate(async()=>await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}}));
+    stageViolations.push(...audit.violations.map(v=>({stage,id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));
+  };
+  if(scenario.mode==='conversation'){
+    const composer=page.getByRole('textbox',{name:'Reply to AnA',exact:true});
+    await composer.waitFor({timeout:5000}).catch(async error=>{
+      fs.writeFileSync('/workspace/scratch/editor-ui-conversation-debug.json',JSON.stringify({errors,details:await page.evaluate(()=>({prefill:document.querySelector('textarea[aria-label="Reply to AnA"]')?.value,channel:window.C2C_CONVO,project:window.C2C_PROJECT,text:document.body.textContent.slice(0,1800)}))},null,2));
+      await page.screenshot({path:'/workspace/scratch/editor-ui-conversation-debug.png'});
+      throw error;
+    });
+    await page.waitForFunction(()=>document.querySelector('textarea[aria-label="Reply to AnA"]')?.value==='Review the saved target section.',null,{timeout:5000}).catch(async error=>{
+      fs.writeFileSync('/workspace/scratch/editor-ui-conversation-debug.json',JSON.stringify({errors,details:await page.evaluate(()=>({prefill:document.querySelector('textarea[aria-label="Reply to AnA"]')?.value,channel:window.C2C_CONVO,project:window.C2C_PROJECT,text:document.body.textContent.slice(0,1800)}))},null,2));
+      throw error;
+    });
+    if(await page.evaluate(()=>window.probeTurns.length)!==0)throw new Error('Handoff auto-sent');
+    if(scenario.width===390)await page.getByTestId('ct-ready-doc-open').waitFor();
+    else await page.locator('.tiptap').waitFor();
+    await composer.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(()=>window.probeTurns.length===1);
+    const turn=await page.evaluate(()=>window.probeTurns[0]);
+    if(turn.opts?.authoringContext?.sectionId!=='11111111-1111-4111-8111-111111111112')throw new Error('Lost saved section context');
+    if(scenario.width===390)await page.getByTestId('ct-ready-doc-open').click();
+    await page.locator('.tiptap').waitFor();
+    if(!await page.locator('.tiptap').textContent().then(text=>text.includes('Saved target text.')))throw new Error('Opened wrong section');
+    if(await page.locator('.tiptap').count()!==1)throw new Error('Duplicate native editor');
+    await page.locator('.tiptap [data-cite="1"]').filter({hasText:'[2]'}).waitFor();
+    if(!await page.locator('.tiptap [data-cite="201"]').textContent().then(text=>text.includes('Citation unresolved')))throw new Error('Unregistered current marker resolved from earlier section');
+    await page.getByRole('button',{name:/^Cite a source/}).click();
+    await page.getByRole('combobox',{name:'Source to cite'}).selectOption('2');
+    await page.getByRole('group',{name:'Cite a source',exact:true}).getByRole('button',{name:'Insert',exact:true}).click();
+    await page.getByRole('alert').filter({hasText:'Nothing was inserted'}).waitFor();
+    if(await page.locator('.tiptap [data-cite="2"]').count())throw new Error('Refused citation left marker');
+    await scanStage('citation refusal');
+    await page.getByRole('group',{name:'Cite a source',exact:true}).getByRole('button',{name:'Insert',exact:true}).click();
+    await page.locator('.tiptap [data-cite="2"]').waitFor();
+    await page.waitForFunction(()=>/\[\d+/.test(document.querySelector('.tiptap [data-cite="2"]')?.textContent||''));
+    if(await page.locator('.tiptap').count()!==1)throw new Error('Citation opened duplicate editor');
+    await page.locator('.tiptap').scrollIntoViewIfNeeded();
+    await page.screenshot({path:`${out}/citation-canvas-${scenario.theme}-${scenario.width}.png`});
+  }else if(scenario.mode==='rail'){
+    await page.getByRole('button',{name:'IND documents',exact:true}).click();
+    await page.getByText(`${catalog.deliverables.length} entries · showing 30.`).waitFor();
+    const first=page.locator('.pf-library-entry > summary').first();
+    await first.focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button',{name:/Open .* · Draft/}).waitFor();
+    const focused=await first.evaluate(el=>({outline:getComputedStyle(el).outlineStyle,outlineWidth:getComputedStyle(el).outlineWidth}));
+    if(focused.outline==='none'||focused.outlineWidth==='0px')throw new Error('Library summary lost focus ring');
+    await page.screenshot({path:`${out}/ind-${scenario.theme}-${scenario.width}.png`});
+    await scanStage('expanded IND entry');
+    await page.getByRole('button',{name:'Data room',exact:true}).click();
+    await page.getByText('Synthetic protocol',{exact:true}).waitFor();
+    await page.getByText('Synthetic protocol',{exact:true}).click();
+    await page.getByRole('button',{name:'Work on document',exact:true}).first().click();
+    const reason=page.getByLabel('Reason for creating a working copy');
+    await reason.fill('short');
+    if(await page.getByRole('button',{name:'Create working copy'}).isEnabled())throw new Error('Short reason admitted');
+    await reason.fill('Review the source in this project.');
+    await page.getByRole('button',{name:'Create working copy'}).click();
+    await page.getByRole('button',{name:'Open working copy'}).waitFor();
+    await scanStage('working-copy receipt');
+    await page.keyboard.press('Escape');
+    if(await page.getByTestId('source-import-dialog').count())throw new Error('Escape failed to dismiss completed source drawer');
+  }else if(scenario.mode==='dialog'){
+    await page.getByLabel('Reason for creating a working copy').waitFor();
+    await page.getByLabel('Reason for creating a working copy').focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Shift+Tab');
+    if(!await page.locator('[role="dialog"]').evaluate(el=>el.contains(document.activeElement)))throw new Error('Drawer focus escaped');
+    await page.screenshot({path:`${out}/source-drawer-${scenario.theme}-${scenario.width}.png`});
+  }else if(scenario.mode==='notice'){
+    await page.getByText('Original source and import limits',{exact:true}).focus();
+    await page.keyboard.press('Enter');
+    await page.getByText('Review against the original before approval or filing.').waitFor();
+    await page.screenshot({path:`${out}/source-notice-mobile-dark.png`});
+  }else{
+    await page.getByText('Review with AnA',{exact:true}).focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button',{name:'Review section',exact:true}).waitFor();
+    await page.getByText('What changed',{exact:true}).focus();
+    await page.keyboard.press('Enter');
+    await page.locator('del.rdl-del').waitFor();
+    await scanStage('expanded remedy redline');
+    await page.getByText('What changed',{exact:true}).click();
+    await page.screenshot({path:`${out}/ana-remedies-mobile-dark.png`});
+  }
+  const accessibility=await page.evaluate(async()=>await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}}));
+  const metrics=await page.evaluate(()=>({
+    overflow:document.documentElement.scrollWidth>innerWidth,
+    editorViewport:document.querySelector('.rse-body')?(()=>{const el=document.querySelector('.rse-body'),r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height,overflow:getComputedStyle(el).overflowY};})():null,
+    accent:getComputedStyle(document.querySelector('.c2c-v2')).getPropertyValue('--accent-100').trim(),
+    canvas:getComputedStyle(document.querySelector('.c2c-v2')).getPropertyValue('--bg-000').trim(),
+    ribbonNames:[...document.querySelectorAll('.rse-rb')].map(el=>({text:el.textContent.trim(),name:el.getAttribute('aria-label'),glyphHidden:el.firstElementChild?.getAttribute('aria-hidden')})),
+    targets:[...document.querySelectorAll('.cdl-scope-btn,.de-source-import .de-x,.de-source-import .de-btn,.authoring-oversight-action,.authoring-remedy-action,.authoring-oversight-toggle,.authoring-remedy-toggle,.ed-source-notice > summary')].filter(el=>el.getBoundingClientRect().height>0).map(el=>({label:el.textContent.trim()||el.getAttribute('aria-label'),height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width}))
+  }));
+  reports.push({scenario,errors,metrics,violations:[...stageViolations,...accessibility.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))]});
+  await page.close();
+}
+await browser.close();
+fs.writeFileSync(`${out}/citation-browser-results.json`,JSON.stringify(reports,null,2));
+const failures=reports.filter(r=>r.errors.length||r.metrics.overflow||r.violations.length||(r.scenario.width===390&&r.metrics.targets.some(t=>t.height<44||t.width<44)));
+process.stdout.write(JSON.stringify({scenarios:reports.length,failures:failures.length,results:reports.map(r=>({scenario:r.scenario,errors:r.errors,overflow:r.metrics.overflow,violations:r.violations}))},null,2)+'\n');
+if(failures.length)process.exitCode=1;

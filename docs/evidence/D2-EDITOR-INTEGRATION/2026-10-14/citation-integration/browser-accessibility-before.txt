@@ -1,0 +1,96 @@
+{
+  "scenarios": 2,
+  "failures": 2,
+  "results": [
+    {
+      "scenario": {
+        "mode": "conversation",
+        "theme": "light",
+        "width": 1440
+      },
+      "errors": [],
+      "overflow": false,
+      "violations": [
+        {
+          "stage": "citation refusal",
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "a[data-cite=\"1\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.96 (foreground color: #d97757, background color: #faf9f5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "a[data-cite=\"201\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.96 (foreground color: #d97757, background color: #faf9f5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "a[data-cite=\"2\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.96 (foreground color: #d97757, background color: #faf9f5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "a[data-cite=\"1\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.96 (foreground color: #d97757, background color: #faf9f5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "a[data-cite=\"201\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.96 (foreground color: #d97757, background color: #faf9f5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "mode": "conversation",
+        "theme": "light",
+        "width": 390
+      },
+      "errors": [],
+      "overflow": false,
+      "violations": [
+        {
+          "stage": "citation refusal",
+          "id": "target-size",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "input[type=\"checkbox\"]"
+              ],
+              "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 23px instead of at least 24px."
+            }
+          ]
+        },
+        {
+          "id": "target-size",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "input[type=\"checkbox\"]"
+              ],
+              "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 23px instead of at least 24px."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

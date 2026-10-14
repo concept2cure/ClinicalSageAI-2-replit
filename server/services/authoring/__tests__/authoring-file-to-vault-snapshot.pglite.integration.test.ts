@@ -83,6 +83,8 @@ type DocumentStatusRow = { status: string | null };
 
 async function workingDraft(): Promise<WorkingDraft> {
   const f = await harness.seed();
+  // The shared fixture already records active actor 42, current organization
+  // membership, and this programme's unique project anchor and sharing.
   const docId = randomUUID();
   const sections = [
     { id: randomUUID(), code: '12', title: 'Efficacy', content: '<p>Original endpoint result.</p>' },
@@ -154,7 +156,8 @@ describe('file-to-Vault records the same section snapshot it rendered', () => {
     await d.f.pg.query('UPDATE authoring_documents SET provenance=$1 WHERE id=$2 AND tenant_id=$3',
       [JSON.stringify({ source: 'import', moduleDefaulted: true, importSource: origin }), d.docId, d.f.org]);
     admit(d);
-    expect(await file(d)).toMatchObject({ kind: 'filed', vaultDocumentId: d.admittedId });
+    const outcome = await file(d);
+    expect(outcome, JSON.stringify(outcome)).toMatchObject({ kind: 'filed', vaultDocumentId: d.admittedId });
     const after = await facts(d);
     expect(after.history[0].metadata?.importSource).toEqual(origin);
     expect(after.vault.content_hash).not.toBe(origin.sha256);

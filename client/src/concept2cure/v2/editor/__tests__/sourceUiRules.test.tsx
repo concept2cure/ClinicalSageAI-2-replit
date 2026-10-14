@@ -13,6 +13,10 @@ import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 const programId = '11111111-1111-4111-8111-111111111111';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data });
 const source = { id: 9, title: 'Protocol source', extractionStatus: 'extracted', extractionMethod: 'text', dataEligible: true };
+const sourcePage = (sources: Array<typeof source & { originalFileAvailable?: boolean }>) => ({
+  projectId: programId, sources: sources.map(row => ({ isCurrent: true, originalFileAvailable: true, ...row })),
+  total: sources.length, currentTotal: sources.length, page: { limit: 50, offset: 0 }, window: { shown: sources.length, truncated: false },
+});
 beforeEach(() => { apiRequest.mockReset(); });
 afterEach(() => cleanup());
 
@@ -38,7 +42,7 @@ describe('source catalogue disclosures and availability', () => {
   it('shows exclusion before expansion and explains the disabled work and AnA actions', async () => {
     const user = userEvent.setup();
     const onAsk = vi.fn();
-    apiRequest.mockResolvedValue(ok({ total: 1, sources: [{ ...source, dataEligible: false }], window: { truncated: false } }));
+    apiRequest.mockResolvedValue(ok(sourcePage([{ ...source, dataEligible: false }])));
     render(<DataRoomSourcesPanel programId={programId} onAsk={onAsk} />);
     const title = await screen.findByText(source.title);
     const disclosure = title.closest('details') as HTMLElement;
@@ -61,7 +65,7 @@ describe('source catalogue disclosures and availability', () => {
   it('keeps retained readable text available to AnA when the original file is unavailable', async () => {
     const user = userEvent.setup();
     const onAsk = vi.fn();
-    apiRequest.mockResolvedValue(ok({ total: 1, sources: [{ ...source, originalFileAvailable: false }], window: { truncated: false } }));
+    apiRequest.mockResolvedValue(ok(sourcePage([{ ...source, originalFileAvailable: false }])));
     render(<DataRoomSourcesPanel programId={programId} onAsk={onAsk} />);
     await user.click(await screen.findByText(source.title));
     const work = screen.getByRole('button', { name: 'Work on document' }) as HTMLButtonElement;
@@ -73,8 +77,7 @@ describe('source catalogue disclosures and availability', () => {
   });
 
   it('recovers from no search matches by clearing the search rather than hiding project sources', async () => {
-    apiRequest.mockImplementation(async (_method: string, url: string) => ok({ total: url.includes('&q=') ? 0 : 1,
-      sources: url.includes('&q=') ? [] : [source], window: { truncated: false } }));
+    apiRequest.mockImplementation(async (_method: string, url: string) => ok(sourcePage(url.includes('&q=') ? [] : [source])));
     render(<DataRoomSourcesPanel programId={programId} />);
     await screen.findByText(source.title);
     const search = screen.getByLabelText('Search the data room catalogue') as HTMLInputElement;

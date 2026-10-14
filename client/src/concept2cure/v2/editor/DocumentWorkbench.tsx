@@ -81,10 +81,13 @@ import type {
   SuggestionDecision,
 } from './suggestions';
 import type { CommentAnchorPayload } from './commentAnchor';
-import { citedSourceIdsInHtml } from './citationNode';
+import { useProjectSourceCatalog } from './useProjectSourceCatalog';
+import { admittedCitationSources, admittedPrecedingSources, useDocumentCitationAdmission } from './citationAdmission';
+import { sourceCitationEligible, type ProjectSourceRecord } from './projectSourceCatalog';
 import { captionedObjectsInHtml } from './captionNumbering';
 import type { CaptionedObject } from '@shared/authoring/captions';
 import type { CitationSource } from '@shared/authoring/citations';
+import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
@@ -709,14 +712,7 @@ interface SectionSource {
 }
 
 /** A source in the project's Data Room, for the "add a source" picker. */
-export interface ProjectSource {
-  id: number;
-  title: string | null;
-  extractionStatus: string | null;
-  /** The source's content checksum — how the Project files rail tells that a
-   *  vault upload IS a data-room source (same bytes) and can be cited. */
-  checksum?: string | null;
-}
+export type ProjectSource = ProjectSourceRecord;
 
 /** How each citation state reads to an author. */
 function sourceStateLabel(s: SectionSource): {
@@ -1420,11 +1416,13 @@ export function DocumentWorkbench({
   // picker. Both are live reads; neither has a fixture fallback.
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
-  /* 2026-09-28 (GE-H-1, coverage-gap sweep): the data room's read state. A
-     failed read set the same [] as an empty data room, and the picker then told
-     the author to add documents to a data room that may already hold them. */
-  const [projectSourcesState, setProjectSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const projectCatalogue = useProjectSourceCatalog(programId);
+  const { sources: projectSources, state: projectSourcesState, retry: loadProjectSources } = projectCatalogue;
+  const citationAdmission = useDocumentCitationAdmission(activeDocId, programId);
+  const refreshCitationAdmission = citationAdmission.retry;
+  const citationScope = `${programId ?? ''}:${activeDocId ?? ''}:${activeSectionId ?? ''}`;
+  const citationScopeRef = useRef(citationScope);
+  citationScopeRef.current = citationScope;
   /** Citations the last document-wide re-read could NOT refresh, with the
    *  server's reason. Held rather than toasted away: "3 could not be re-read"
    *  is the finding, and a message that fades in four seconds is not where a
@@ -2491,26 +2489,6 @@ export function DocumentWorkbench({
     setSourcesState('ready');
   }, []);
 
-  /* ── The project's Data Room, for the picker ──
-     The project comes from window.C2C_PROJECT, the same runtime channel the
-     sibling surfaces use. With no project in context there is nothing to offer,
-     and the picker says so instead of listing every source in the org. */
-  const loadProjectSources = useCallback(async () => {
-    const pid = programId;
-    if (!pid) {
-      setProjectSources([]);
-      setProjectSourcesState('idle');
-      return;
-    }
-    setProjectSourcesState('loading');
-    const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
-      `/api/c2c/projects/${encodeURIComponent(pid)}/sources`
-    );
-    const read = ok && Array.isArray(body?.sources);
-    setProjectSources(read ? body!.sources! : []);
-    setProjectSourcesState(read ? 'ready' : 'error');
-  }, [programId]);
-
   /* ── Recompute the revision ledger server-side ──
      The server walks the section's revision chain oldest-first and recomputes
      every hash from stored content. "Verified" here is a computation result,
@@ -2532,6 +2510,10 @@ export function DocumentWorkbench({
   }, [activeSectionId]);
 
   useEffect(() => {
+    if (rail === 'sources') { loadProjectSources(); refreshCitationAdmission(); }
+  }, [rail, loadProjectSources, refreshCitationAdmission]);
+
+  useEffect(() => {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
     if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
@@ -2541,7 +2523,6 @@ export function DocumentWorkbench({
        list exist. The rail re-reads on open through the same callbacks. */
     if (activeSectionId) {
       void loadSources(activeSectionId);
-      void loadProjectSources();
     }
   }, [
     rail,
@@ -2551,51 +2532,17 @@ export function DocumentWorkbench({
     loadComments,
     loadAudit,
     loadSources,
-    loadProjectSources,
   ]);
 
-  /* ── The source library the editor's citation picker offers ──
-     The sources this section already cites, then the rest of the project's Data
-     Room. Merged rather than kept apart because a writer citing mid-sentence is
-     choosing a source, not choosing between two lists; de-duplicated on the
-     source's identity so a source already cited appears once.
-
-     Only the id and the title travel here. That is all the canvas needs — the
-     picker's label and the node's cached name — and the reference list a
-     reviewer reads is assembled server-side at export, where the source
-     registry's sponsor, date and identifier are available. Nothing here is
-     invented to fill a field the client cannot see. */
-  const citationLibrary = useMemo<CitationSource[]>(() => {
-    const out: CitationSource[] = [];
-    const seen = new Set<string>();
-    const add = (id: unknown, title: string | null | undefined) => {
-      if (id == null) return;
-      const key = String(id);
-      if (seen.has(key)) return;
-      seen.add(key);
-      out.push({ id: key, title: title ?? null });
-    };
-    for (const s of sources) if (s.source) add(s.source.id, s.source.title);
-    for (const p of projectSources) add(p.id, p.title);
-    return out;
-  }, [sources, projectSources]);
-
-  /* ── Where this section's citation numbering continues from ──
-     A citation's number is its position in the DOCUMENT's reference list, and
-     the editor holds one section. Without the sources cited above it, the canvas
-     would number from 1 and show "[1]" for a claim the filed document prints as
-     "[7]" — a plausible-looking wrong number, which is the failure the whole
-     design exists to remove. Read from the sections' SAVED content, in the
-     document's own order, which is what the export will read too. */
-  const precedingSourceIds = useMemo<string[]>(() => {
-    if (!activeSectionId) return [];
-    const ids: string[] = [];
-    for (const sec of sections) {
-      if (sec.id === activeSectionId) break;
-      ids.push(...citedSourceIdsInHtml(sec.content ?? ''));
-    }
-    return ids;
-  }, [sections, activeSectionId]);
+  /* The catalogue supplies metadata, while exact recorded associations admit
+     each section's references. Previous sections advance the same registry. */
+  const citationLibrary = useMemo<CitationSource[]>(() => admittedCitationSources(projectSources, citationAdmission.admissions, activeSectionId),
+    [projectSources, citationAdmission.admissions, activeSectionId]);
+  const precedingCitations = useMemo(() => admittedPrecedingSources(sections, activeSectionId, projectSources, citationAdmission.admissions),
+    [sections, activeSectionId, projectSources, citationAdmission.admissions]);
+  const citationChoices = useMemo(() => projectSources.filter(sourceCitationEligible).map(source => ({ id: String(source.id), title: source.title })), [projectSources]);
+  const citationResolutionState = projectSourcesState === 'error' || citationAdmission.state === 'error' ? 'error'
+    : projectSourcesState === 'loading' || citationAdmission.state === 'loading' ? 'loading' : 'ready';
 
   /* ── The document's tables and figures, either side of the open section ──
      A caption's number is the object's POSITION among the document's tables
@@ -2630,7 +2577,9 @@ export function DocumentWorkbench({
   /* ── Record that this section is drafted from a source ── */
   const citeSource = useCallback(
     async (sourceId: number) => {
-      if (!activeSectionId) return;
+      if (!activeSectionId || citationResolutionState !== 'ready'
+        || !projectSources.some(source => source.id === sourceId && sourceCitationEligible(source))) return false;
+      const scope = citationScope;
       try {
         const res = await apiRequest(
           'POST',
@@ -2640,22 +2589,25 @@ export function DocumentWorkbench({
           }
         );
         const json = await res.json().catch(() => null);
-        if (!res.ok) {
+        if (citationScopeRef.current !== scope) return false;
+        if (!res.ok || !json || json.success !== true) {
           fireToast(
             'Couldn’t record the source — ' +
               (serverMessage(json) ?? 'the server refused it') +
               '. Nothing was saved.',
             'error'
           );
-          return;
+          return false;
         }
+        const created = json.created === true;
         fireToast(
-          (json as any)?.created
+          created
             ? 'Source recorded — this section now cites it, with the source’s current checksum.'
-            : 'Source re-resolved against its current content.'
+            : 'This section already records the source; its original citation checksum is retained.'
         );
+        citationAdmission.admit(activeSectionId, sourceId);
         setPicking(false);
-        if ((json as any)?.created) {
+        if (created) {
           // Same staleness as the comment count: the section row is the only
           // source of the rail button's number.
           setSections(ss =>
@@ -2663,14 +2615,17 @@ export function DocumentWorkbench({
           );
         }
         void loadSources(activeSectionId);
+        return true;
       } catch (e) {
+        if (citationScopeRef.current !== scope) return false;
         fireToast(
           'Couldn’t record the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
+        return false;
       }
     },
-    [activeSectionId, fireToast, loadSources]
+    [activeSectionId, citationScope, citationResolutionState, projectSources, citationAdmission, fireToast, loadSources]
   );
 
   /* ── Stop citing a source ── */
@@ -2696,6 +2651,7 @@ export function DocumentWorkbench({
           fireToast('Couldn’t remove the citation — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
           return;
         }
+        citationAdmission.retry();
         fireToast('Citation removed.');
         void loadSources(activeSectionId);
       } catch (e) {
@@ -2705,7 +2661,7 @@ export function DocumentWorkbench({
         );
       }
     },
-    [activeSectionId, fireToast, loadSources]
+    [activeSectionId, fireToast, loadSources, citationAdmission]
   );
 
   /* ── Re-read the source and record what it says now ──
@@ -5024,20 +4980,14 @@ export function DocumentWorkbench({
                        recorded lineage cannot drift apart. */
                     citationsApi={{
                       sources: citationLibrary,
-                      precedingSourceIds,
-                      onCite: (sourceId: string) => {
-                        /* Only when the link is not already recorded: citing
-                           the same source a second time in the prose is not a
-                           new fact about this section's lineage, and re-posting
-                           it would announce a record that did not change. */
-                        const already = sources.some(
-                          s => s.source && String(s.source.id) === sourceId
-                        );
-                        const numeric = Number(sourceId);
-                        if (!already && Number.isInteger(numeric) && numeric > 0) {
-                          void citeSource(numeric);
-                        }
-                      },
+                      choices: citationChoices,
+                      precedingSources: precedingCitations.sources,
+                      precedingSourceIds: precedingCitations.ids,
+                      resolutionState: citationResolutionState,
+                      resolutionError: projectCatalogue.error ?? citationAdmission.error,
+                      onRetry: () => { loadProjectSources(); citationAdmission.retry(); },
+                      scopeKey: citationScope,
+                      onCite: sourceId => citeSource(Number(sourceId)),
                     }}
                     collab={
                       liveCoedit && activeDoc
@@ -5456,7 +5406,7 @@ export function DocumentWorkbench({
               </div>
               {skippedRefreshes.slice(0, 8).map(sk => (
                 <div key={sk.cite_id} style={{ marginTop: 4 }}>
-                  {sk.reason}
+                  {citationRefreshRefusalMessage(sk.reason)}
                 </div>
               ))}
               {skippedRefreshes.length > 8 && (
@@ -5533,11 +5483,11 @@ export function DocumentWorkbench({
                         key={ps.id}
                         className="nda-open"
                         style={{ textAlign: 'left' }}
-                        disabled={ps.extractionStatus !== 'extracted'}
+                        disabled={!sourceCitationEligible(ps)}
                         title={
-                          ps.extractionStatus === 'extracted'
+                          sourceCitationEligible(ps)
                             ? 'Record this section as drafted from this source'
-                            : 'This source has no readable text, so it cannot ground a draft'
+                            : 'Only current sources with eligible readable text can ground a draft'
                         }
                         onClick={() => void citeSource(ps.id)}
                       >
@@ -5641,7 +5591,7 @@ export function DocumentWorkbench({
             programName={programName(program)}
             sectionOpen={activeSection != null && !docSealed}
             sectionCode={activeSection?.code ?? null}
-            projectSources={projectSources}
+            projectSources={projectSources.filter(sourceCitationEligible)}
             onCite={(sourceId) => editorRef.current?.insertCitation(sourceId) ?? false}
             onInsertReference={(text) => editorRef.current?.insertReference(text) ?? false}
             onOpenDocument={(docId) => void openPulledDocument(docId)}

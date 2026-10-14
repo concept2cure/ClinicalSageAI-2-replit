@@ -1,0 +1,8 @@
+    +1  client/src/concept2cure/v2/editor/DocumentWorkbench.tsx  (13 -> 14)
+         client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:2513:6  react-hooks/exhaustive-deps  React Hook useEffect has a missing dependency: 'citationAdmission'. Either include it or remove the dependency array.
+
+[ci:eslint-warning-ratchet] net +1 warning(s) across the files changed since 920b230bd1509a41347fe653605babdabea2ae78.
+  Those lines are what the ratchet is refusing. Fix them -- do not regenerate
+  the baseline to make room.
+
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 1 warning(s) (listed above).

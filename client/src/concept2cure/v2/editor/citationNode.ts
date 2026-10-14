@@ -68,6 +68,9 @@ export const CITATION_NODE = 'citation';
 export interface CitationOptions {
   /** Reads the host's CURRENT source library. Null disables resolution. */
   lookup: (() => CitationLookup | null) | null;
+  insertionLookup: (() => CitationLookup | null) | null;
+  precedingLookup: (() => CitationLookup | null) | null;
+  resolutionState: (() => string) | null;
   /** Reads the source ids cited by the sections above this one, in order. */
   preceding: (() => readonly string[]) | null;
   /** Live node views, re-rendered when the numbering could have changed. */
@@ -124,15 +127,16 @@ export function citationNumbers(
   doc: PMNode,
   lookup: CitationLookup | null,
   preceding: readonly string[],
+  precedingLookup: CitationLookup | null = lookup,
 ): Map<string, number> {
-  const registry = makeCitationRegistry(lookup);
-  for (const id of preceding) registry.cite(id);
+  const registry = makeCitationRegistry(id => lookup?.(id) ?? precedingLookup?.(id) ?? null);
+  for (const id of preceding) if (resolveCitation(id, precedingLookup).found) registry.cite(id);
   doc.descendants((node) => {
-    if (node.type.name === CITATION_NODE) registry.cite(String(node.attrs.source ?? ''));
+    if (node.type.name === CITATION_NODE && resolveCitation(String(node.attrs.source ?? ''), lookup).found) registry.cite(String(node.attrs.source ?? ''));
     return true;
   });
   const out = new Map<string, number>();
-  for (const entry of registry.entries()) out.set(entry.source.id, entry.number);
+  for (const entry of registry.entries()) if (resolveCitation(entry.source.id, lookup).found) out.set(entry.source.id, entry.number);
   return out;
 }
 
@@ -160,7 +164,7 @@ export const Citation = Node.create<CitationOptions>({
   draggable: false,
 
   addOptions() {
-    return { lookup: null, preceding: null, repaint: null };
+    return { lookup: null, insertionLookup: null, precedingLookup: null, resolutionState: null, preceding: null, repaint: null };
   },
 
   addAttributes() {
@@ -218,7 +222,7 @@ export const Citation = Node.create<CitationOptions>({
         ({ commands }) => {
           const source = (attrs.source ?? '').trim();
           if (!source) return false;
-          const lookup = this.options.lookup?.() ?? null;
+          const lookup = this.options.insertionLookup?.() ?? this.options.lookup?.() ?? null;
           const resolved = resolveCitation(source, lookup);
           /* A citation is only ever inserted against a source that exists right
              now — the picker offers the live library, so an unresolvable insert
@@ -248,10 +252,18 @@ export const Citation = Node.create<CitationOptions>({
       const paint = () => {
         const sourceId = String(node.attrs.source ?? '');
         const lookup = this.options.lookup?.() ?? null;
+        const state = this.options.resolutionState?.() ?? 'ready';
+        if (state !== 'ready' && state !== 'idle') {
+          dom.dataset.missing = '1';
+          dom.textContent = '[Citation being checked]';
+          dom.title = 'The source catalogue and recorded section citations must be read before this reference can be numbered.';
+          return;
+        }
         const numbers = citationNumbers(
           editor.state.doc,
           lookup,
           this.options.preceding?.() ?? [],
+          this.options.precedingLookup?.() ?? lookup,
         );
         const number = numbers.get(sourceId);
         if (number != null) {

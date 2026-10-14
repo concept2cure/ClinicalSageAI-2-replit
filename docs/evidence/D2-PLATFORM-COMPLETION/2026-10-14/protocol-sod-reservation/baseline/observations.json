@@ -1,0 +1,142 @@
+{
+  "tag": "protocol-sod-native-112027-mv7hissd-21ac65d0",
+  "scope": "Native pre-fix baseline; genuine isolated synthetic protocol/audit/signature only",
+  "maxSignatureRequestsInProbe": 1,
+  "signatureRequestsStarted": 1,
+  "preserved": {
+    "before": "7eace726652f9c6aea6d7d06c880070cdddea479743a5ea49ab02e5372ad6c89",
+    "after": "7eace726652f9c6aea6d7d06c880070cdddea479743a5ea49ab02e5372ad6c89",
+    "unchanged": true
+  },
+  "cases": {
+    "writerFirstSignerSecond": {
+      "documentId": 86,
+      "sectionId": 103,
+      "holderPid": 6494,
+      "writerWait": {
+        "pid": 6490,
+        "query": "SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE",
+        "wait_event": "transactionid",
+        "blocking_pids": [
+          6494
+        ]
+      },
+      "signerWait": {
+        "pid": 6495,
+        "query": "SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE",
+        "wait_event": "tuple",
+        "blocking_pids": [
+          6490
+        ]
+      },
+      "authorsBefore": {
+        "modelled": true,
+        "authors": [
+          1770269
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "authorsBeforeRelease": {
+        "modelled": true,
+        "authors": [
+          1770269
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "writerStatus": 201,
+      "signerStatus": 201,
+      "signerErrorCode": null,
+      "authorsAfter": {
+        "modelled": true,
+        "authors": [
+          1342039,
+          1770269
+        ],
+        "sources": [
+          "protocol content",
+          "protocol creator",
+          "protocol edit ledger"
+        ]
+      },
+      "currentIndependenceRefusal": "SEPARATION_OF_DUTIES",
+      "document": {
+        "status": "finalized",
+        "version": "1.0"
+      },
+      "changedProseRetained": true,
+      "sectionStatus": "complete",
+      "signerEditAction": {
+        "id": "act_55d597e0e5354d0eb55e1ee5ecf33cd2",
+        "command": "update",
+        "target": "protocol-section:103",
+        "proposed_by": 1342039,
+        "proposed_at": "2026-10-14T02:22:39.224Z",
+        "payload": {
+          "status": "complete"
+        }
+      },
+      "lineageRows": 5,
+      "signatures": [
+        {
+          "id": 22,
+          "signerId": 1342039,
+          "meaning": "approval",
+          "basis": "protocol-document-content-sha256",
+          "authenticationMethod": "password",
+          "digestMatchesCurrent": true
+        }
+      ],
+      "versionCount": 1,
+      "signActionIds": [
+        "act_a7b4ae72ba524753ae3a3b65cddb1a90"
+      ]
+    }
+  },
+  "runtime": {
+    "database": "platform_test",
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "enforcement": "on"
+  },
+  "stores": [
+    {
+      "relname": "c2c_ana_actions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "electronic_signatures",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "protocol_versions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "organizationId": 1538506,
+  "actorIds": {
+    "author": 1770269,
+    "approver": 1342039
+  }
+}

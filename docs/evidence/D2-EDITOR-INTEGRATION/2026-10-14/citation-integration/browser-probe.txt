@@ -1,0 +1,47 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import '../../design-system/colors_and_type.css';
+import '../../client/src/concept2cure/v2/styles/app-v2.css';
+import '../../client/src/concept2cure/v2/styles/journey-v2.css';
+import '../../client/src/concept2cure/v2/styles/coverage-v2.css';
+import '../../client/src/concept2cure/v2/styles/authoring-v2.css';
+import '../../client/src/concept2cure/v2/styles/misc-surfaces-v2.css';
+import '../../client/src/concept2cure/v2/styles/surface-text-ramp.css';
+import { ProjectFilesPanel } from '../../client/src/concept2cure/v2/editor/ProjectFilesPanel';
+import { SourceImportDialog } from '../../client/src/concept2cure/v2/editor/SourceImportDialog';
+import { AuthoringRemedies } from '../../client/src/concept2cure/v2/editor/AuthoringRemedies';
+import { AuthoringOversightActions } from '../../client/src/concept2cure/v2/editor/AuthoringOversightActions';
+import { ImportSourceNotice } from '../../client/src/concept2cure/v2/editor/ImportSourceNotice';
+import { ConversationThread } from '../../client/src/concept2cure/v2/surfaces/ConversationThread';
+import { prefillConversation } from '../../client/src/concept2cure/v2/editor/askAnaToDraft';
+import { AuthProvider } from '../../client/src/services/portal/authService';
+
+const params = new URLSearchParams(location.search);
+const programId='11111111-1111-4111-8111-111111111111';
+const docId='11111111-1111-4111-8111-111111111113';
+const sectionId='11111111-1111-4111-8111-111111111112';
+const savedAt='2026-10-13T12:00:00.000Z';
+window.C2C_PROJECT={id:programId};
+window.probeTurns=[];
+window.probeOpens=[];
+if(params.get('mode')==='conversation')prefillConversation('Review the saved target section.',{
+  surfaceId:'document-authoring',label:'Authoring',authoringContext:{projectId:programId,workflowStage:'section-workspace',artifactId:docId,sectionId,sectionUpdatedAt:savedAt},
+  authoringDocument:{docId,programId,sectionId},moduleContext:{surface:'document-authoring',documentId:docId,sectionId,savedRecordOnly:true},
+},()=>{});
+const shellChat={messages:[],isStreaming:false,isLoadingThread:false,threadId:'thread-1',runStatus:null,pendingSteers:[],
+  send:async(text,files,opts)=>{window.probeTurns.push({text,opts});},reset:()=>{},loadThread:async()=>{},stop:()=>{},pause:async()=>true,resume:async()=>true,interject:async()=>true};
+const queryClient=new QueryClient({defaultOptions:{queries:{retry:false}}});
+const remedy = {sectionId:'11111111-1111-4111-8111-111111111112', baseSha256:'ab'.repeat(32), baseUpdatedAt:'2026-10-13T12:00:00.000Z',
+  quote:'Recorded text requiring review. '.repeat(30),replacement:'Proposed replacement requiring review. '.repeat(30), reason:'Clarify the source attribution and identify the remaining evidence gap.'};
+const text = 'Review the proposed source correction.\n```authoring-remedy\n'+JSON.stringify(remedy)+'\n```';
+createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><AuthProvider><div data-theme={params.get('theme')==='dark'?'dark':'light'} className={`c2c-v2 ${params.get('theme')==='dark'?'dark':''}`} style={{height:'100vh',overflow:'hidden'}}>
+  <main style={{height:'100%',maxWidth:['rail','vaultsearch'].includes(params.get('mode')??'')?'320px':params.get('mode')==='conversation'?'100%':'600px',margin:'0 auto',display:'flex',flexDirection:'column',minHeight:0,padding:'var(--space-3)',overflowY:params.get('mode')==='remedy'?'auto':'hidden'}}>
+    {params.get('mode')==='conversation' ? <ConversationThread surface={{id:'conversation-thread',label:'Conversation'}} segment="biotech" onNav={()=>{}} shellChat={shellChat} />
+      :params.get('mode')==='dialog' ? <SourceImportDialog programId="11111111-1111-4111-8111-111111111111" source={{kind:'data-room',sourceId:7}} title="Synthetic protocol for browser validation" onClose={()=>{}} onOpenDocument={()=>{}} />
+      :params.get('mode')==='notice' ? <ImportSourceNotice source={{fileName:'Synthetic protocol.docx',sha256:'ab'.repeat(32),reason:'Review the source in this project.',conversion:'extracted-text',warnings:['Page layout requires review against the original.']}} />
+      :params.get('mode')==='remedy' ? <><AuthoringOversightActions projectOpen documentOpen sectionOpen dirty onAsk={()=>{}} />
+        <AuthoringRemedies text={text} settled record={{status:'recorded',id:'synthetic-record'}} unfinished={false} target={{editable:true,sectionId:'11111111-1111-4111-8111-111111111112',sectionCode:'2.5',propose:async()=>({ok:true})}} /></>
+      : <ProjectFilesPanel programId="11111111-1111-4111-8111-111111111111" programName="Synthetic IND project" fireToast={()=>{}} onAsk={()=>{}} onOpenDocument={id=>window.probeOpens.push(id)} />}
+  </main>
+</div></AuthProvider></QueryClientProvider>);

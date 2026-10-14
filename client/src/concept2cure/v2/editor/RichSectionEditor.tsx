@@ -203,7 +203,7 @@ export interface RichSectionEditorHandle {
    * in source mode, on a read-only section, or when the source is not in the
    * live library; nothing is inserted in any of those cases.
    */
-  insertCitation: (sourceId: string, locator?: string | null) => boolean;
+  insertCitation: (sourceId: string, locator?: string | null) => boolean | Promise<boolean>;
   /**
    * Insert plain reference text at the caret (a vault document's title and
    * content hash, for a document that is NOT a citable data-room source).
@@ -345,8 +345,14 @@ export interface RichSectionEditorProps {
    */
   citationsApi?: {
     sources: CitationSource[];
+    choices?: CitationSource[];
+    precedingSources?: CitationSource[];
     precedingSourceIds: readonly string[];
-    onCite?: (sourceId: string) => void | Promise<void>;
+    resolutionState?: 'idle' | 'loading' | 'ready' | 'error';
+    resolutionError?: string | null;
+    onRetry?: () => void;
+    scopeKey?: string;
+    onCite?: (sourceId: string) => boolean | void | Promise<boolean | void>;
   } | null;
   /** Live co-editing over the server's /collab Hocuspocus socket. */
   collab?: {
@@ -758,6 +764,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        changes — and not on every keystroke, which is what the order key is
        for. */
     const citationSources = citationsApi?.sources ?? null;
+    const citationChoices = citationsApi?.choices ?? citationSources;
+    const citationApiRef = useRef(citationsApi);
+    citationApiRef.current = citationsApi;
     const citationKeyOfSources = citationSources
       ? citationSources
           .map((src) => `${src.id}\u0000${citationSourceName(src)}`)
@@ -770,6 +779,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     );
     const citationLookupRef = useRef<CitationLookup | null>(citationLookup);
     citationLookupRef.current = citationLookup;
+    const insertionLookupRef = useRef<CitationLookup | null>(null);
+    insertionLookupRef.current = citationChoices ? citationLookupFor(citationChoices) : null;
+    const precedingLookupRef = useRef<CitationLookup | null>(null);
+    precedingLookupRef.current = citationsApi?.precedingSources ? citationLookupFor(citationsApi.precedingSources) : citationLookup;
+    const precedingSourcesKey = (citationsApi?.precedingSources ?? []).map(source => `${source.id}:${citationSourceName(source)}`).join('\u0001');
 
     /** The sources cited above this section — where this section's numbering
      *  continues from. Read through a ref for the same reason the lookup is. */
@@ -782,7 +796,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [citationOrder, setCitationOrder] = useState('');
     useEffect(() => {
       for (const paint of citationRepaint.current) paint();
-    }, [citationKeyOfSources, precedingKey, citationOrder]);
+    }, [citationKeyOfSources, precedingSourcesKey, precedingKey, citationOrder, citationsApi?.resolutionState]);
 
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
@@ -858,6 +872,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         }),
         Citation.configure({
           lookup: () => citationLookupRef.current,
+          insertionLookup: () => insertionLookupRef.current,
+          precedingLookup: () => precedingLookupRef.current,
+          resolutionState: () => citationApiRef.current?.resolutionState ?? 'ready',
           preceding: () => precedingRef.current,
           repaint: citationRepaint.current,
         }),
@@ -1523,6 +1540,37 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     }, [editor]);
 
     /* ── Imperative handle ── */
+    const citationPending = useRef(false);
+    const citationAlive = useRef(true);
+    const [citePending, setCitePending] = useState(false);
+    useEffect(() => { citationAlive.current = true; return () => { citationAlive.current = false; }; }, []);
+    const citationInsertionAvailable = useCallback((id: string) => Boolean(editor && !editor.isDestroyed && editor.isEditable && boot.mode === 'rich'
+      && !citationPending.current && id && insertionLookupRef.current?.(id)
+      && (!citationApiRef.current?.resolutionState || citationApiRef.current.resolutionState === 'ready')), [editor, boot.mode]);
+    const registerCitation = useCallback((sourceId: string, locator?: string | null, stillOpen: () => boolean = () => true): boolean | Promise<boolean> => {
+      const api = citationApiRef.current;
+      const id = sourceId.trim();
+      if (!editor || !citationInsertionAvailable(id)) return false;
+      const doc = editor.state.doc;
+      const selection = editor.state.selection;
+      const scope = api?.scopeKey;
+      const insert = (confirmed: boolean | void) => {
+        if (confirmed === false || !citationAlive.current || editor.isDestroyed || !editor.isEditable || !stillOpen()) return false;
+        if (citationApiRef.current?.scopeKey !== scope || editor.state.doc !== doc || !editor.state.selection.eq(selection)) return false;
+        return editor.chain().focus().insertCitation({ source: id, locator: locator ?? null }).run();
+      };
+      try {
+        const confirmation = api?.onCite?.(id);
+        if (!confirmation || typeof confirmation !== 'object' || !('then' in confirmation)) return insert(confirmation);
+        citationPending.current = true;
+        setCitePending(true);
+        return Promise.resolve(confirmation).then(insert, () => false).finally(() => {
+          citationPending.current = false;
+          if (citationAlive.current) setCitePending(false);
+        });
+      } catch { return false; }
+    }, [editor, citationInsertionAvailable]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -1586,21 +1634,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         },
         openFind,
         focus: () => editor?.commands.focus(),
-        insertCitation: (sourceId: string, locator?: string | null) => {
-          if (!editor || editor.isDestroyed) return false;
-          if (boot.mode !== 'rich' || !editor.isEditable) return false;
-          const id = String(sourceId ?? '').trim();
-          if (!id) return false;
-          const inserted = editor
-            .chain()
-            .focus()
-            .insertCitation({ source: id, locator: locator ?? null })
-            .run();
-          if (!inserted) return false;
-          /* The same section→source record the picker keeps — see applyCite. */
-          void citationsApi?.onCite?.(id);
-          return true;
-        },
+        insertCitation: registerCitation,
         insertReference: (text: string) => {
           if (!editor || editor.isDestroyed) return false;
           if (boot.mode !== 'rich' || !editor.isEditable) return false;
@@ -1614,7 +1648,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           return editor.chain().focus().insertContent({ type: 'text', text: clean }).run();
         },
       }),
-      [doSave, editor, boot.mode, sourceText, serialize, openFind, citationsApi, acceptedStore],
+      [doSave, editor, boot.mode, sourceText, serialize, openFind, registerCitation, acceptedStore],
     );
 
     /* Mirror the plugin's matches into the counter — on every transaction
@@ -1771,19 +1805,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [citeSource, setCiteSource] = useState('');
     const [citeLocator, setCiteLocator] = useState('');
     const [citeError, setCiteError] = useState<string | null>(null);
+    const citeSession = useRef(0);
     const citeSelectRef = useRef<HTMLSelectElement>(null);
 
     const openCite = useCallback(() => {
       setCiteError(null);
-      setCiteSource((cur) => cur || citationSources?.[0]?.id || '');
+      citeSession.current += 1;
+      setCiteSource((cur) => citationChoices?.some(source => source.id === cur) ? cur : citationChoices?.[0]?.id || '');
       setCiteOpen(true);
-    }, [citationSources]);
+    }, [citationChoices]);
 
     useEffect(() => {
       if (citeOpen) citeSelectRef.current?.focus();
     }, [citeOpen]);
 
     const closeCite = useCallback(() => {
+      citeSession.current += 1;
       setCiteOpen(false);
       setCiteError(null);
     }, []);
@@ -1794,30 +1831,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setCiteError('Choose the source to cite.');
         return;
       }
-      const inserted = editor
-        .chain()
-        .focus()
-        .insertCitation({ source: citeSource, locator: citeLocator })
-        .run();
-      if (!inserted) {
-        /* The picker offers the live library, so a refusal means it moved under
-           the writer. Inserting a citation that is already broken is not
-           something to do quietly. */
-        setCiteError(
-          'That source is no longer available to this document. Nothing was inserted.',
-        );
-        return;
-      }
-      /* Record the section→source link the platform already keeps, so the
-         Sources rail and the prose cannot drift apart — and so this citation
-         participates in the change report when the source's content moves.
-         Fire-and-forget: the citation is in the canvas either way, and the host
-         reports its own failure. */
-      void citationsApi?.onCite?.(citeSource);
-      setCiteLocator('');
-      setCiteOpen(false);
-      setCiteError(null);
-    }, [editor, citeSource, citeLocator, citationsApi]);
+      const session = citeSession.current;
+      const finish = (inserted: boolean) => {
+        if (!citationAlive.current || citeSession.current !== session) return;
+        if (!inserted) { setCiteError('The source or current selection could not be confirmed. Nothing was inserted.'); return; }
+        setCiteLocator(''); setCiteOpen(false); setCiteError(null);
+      };
+      const result = registerCitation(citeSource, citeLocator, () => citeSession.current === session);
+      if (typeof result === 'boolean') finish(result);
+      else void result.then(finish);
+    }, [editor, citeSource, citeLocator, registerCitation]);
 
     /* ── Caption bar ──
        The one place a table's or a figure's caption can be written. It is
@@ -2663,7 +2686,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             }}
           >
             <span className="rse-find-label">Cite</span>
-            {citationSources && citationSources.length > 0 ? (
+            {citationsApi.resolutionState === 'loading' ? <span className="rse-find-note" role="status">Reading the complete source catalogue…</span>
+              : citationsApi.resolutionState === 'error' ? <span className="rse-find-err" role="alert">{citationsApi.resolutionError || 'Source references could not be checked.'}
+                {citationsApi.onRetry && <button type="button" className="rse-link" onClick={citationsApi.onRetry}>Try again</button>}</span>
+              : citationChoices && citationChoices.length > 0 ? (
               <>
                 <select
                   ref={citeSelectRef}
@@ -2671,6 +2697,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                   style={{ flex: '0 1 320px', height: 24 }}
                   aria-label="Source to cite"
                   value={citeSource}
+                  disabled={citePending}
                   onChange={(e) => {
                     setCiteSource(e.target.value);
                     setCiteError(null);
@@ -2682,7 +2709,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                     }
                   }}
                 >
-                  {citationSources.map((src) => (
+                  {citationChoices.map((src) => (
                     <option key={src.id} value={src.id}>
                       {citationSourceName(src) || 'Untitled source'}
                     </option>
@@ -2703,8 +2730,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                     }
                   }}
                 />
-                <button type="button" className="rse-link" onClick={applyCite}>
-                  Insert
+                <button type="button" className="rse-link" disabled={citePending} onClick={applyCite}>
+                  {citePending ? 'Recording…' : 'Insert'}
                 </button>
               </>
             ) : (
