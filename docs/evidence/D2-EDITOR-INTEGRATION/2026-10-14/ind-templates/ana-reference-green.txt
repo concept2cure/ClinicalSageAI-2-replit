@@ -1,0 +1,180 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 1ms
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-14T03:53:55.984Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:53:55.986Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-14T03:53:55.987Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-template-preparation.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/document-template-preparation.test.ts
+{
+  "timestamp": "2026-10-14T03:53:56.408Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > registered tool exposes the prepared outline and stays read-only 74ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > new named builds are discoverable without a second tool or renderer 293ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > pages through CSR sections without truncation or skipping headings 67ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns the repaired region-specific trial outline and its limitations 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > reports available and unavailable existing types in a regional coverage page 4ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — regional preparation reaches real Anna paths > returns catalog summaries and a continuation, not a truncated whole library 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > explicit prepare:false returns an outline-only page even with a confirmed registry id 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"CTA","prepare":false} 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > outline-only cannot bypass the registry and market scope checks: {"registry_id":"EU_CTA","market":"US","prepare":false} 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > registry-only components receive their document-specific inquiry profile 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps k510_summary available as an outline but refuses medicinal preparation 66ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps gspr_checklist available as an outline but refuses medicinal preparation 63ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps ivdr_gspr_checklist available as an outline but refuses medicinal preparation 59ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > keeps performance_evaluation_report available as an outline but refuses medicinal preparation 64ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > preserves an exact device registry outline without allowing a drug preparation plan 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted smpc build, including outline-only 266ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted impd build, including outline-only 268ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted risk_management_plan build, including outline-only 267ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > requires EU scope for a targeted rmp build, including outline-only 263ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"market":"UK"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"registry_id":"CTA"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":-1} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"offset":null} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":0} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"limit":null} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"prepare":"yes"} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"discussed_topics":["approved"]} 0ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"missing"} 30ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > rejects invalid scope without a successful build claim: {"template_id":"protocol","registry_id":"CA_CTA","market":"EU"} 28ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > exposes the preparation fields in Anna’s actual schema 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > passes preparation instructions and the correct region to drafting rather than only the ICH generic prompt 1ms
+ ✓ server/services/ana/__tests__/document-template-preparation.test.ts > existing template tool — scope checks and reference lookups > makes the same preparation rule available to conversation 1ms
+stdout | server/services/ana/__tests__/ind-template-reference.test.ts
+{
+  "timestamp": "2026-10-14T03:54:05.065Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:54:05.066Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-template-reference.test.ts
+{
+  "timestamp": "2026-10-14T03:54:05.066Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ind-template-reference.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > accepts the exact builtin template UUID discovered in the IND catalogue 72ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > pages complete reference requirements and headings without omitting middle entries 1145ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"market":"EU"} 38ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"family":"ctis"} 70ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"registry_id":"US_NDA"} 35ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > refuses conflicting scope or invalid page {"offset":999999} 36ms
+ ✓ server/services/ana/__tests__/ind-template-reference.test.ts > AnA reads the same editor-loadable IND templates > makes every section and deliverable template ID discoverable through the existing IND requirement pages 402ms
+stdout | server/services/ana/__tests__/regulatory-knowledge-tools.test.ts
+{
+  "timestamp": "2026-10-14T03:54:08.097Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:54:08.099Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-tools.test.ts
+{
+  "timestamp": "2026-10-14T03:54:08.099Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/regulatory-knowledge-tools.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed
+{
+  "timestamp": "2026-10-14T03:54:08.382Z",
+  "level": "error",
+  "message": "[regulatory-knowledge-tools] plan_submission_from_database_lock failed",
+  "context": {
+    "err": "relation \"vault.documents\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > answers a CSR heading, a CTD section and a document type from the canonical record 5ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > says what it does not index, and lists what it does 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > get_document_section_requirements > fits the result budget for every section, document type and E3 heading it knows 24ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > without a project, gives the plan and says there is no standing 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > with an organization but no open project, says so rather than reading another project 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > reads the open project’s Vault, scoped by organization and program, and decides the standing 7ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a step the Vault cannot hold is never reported missing, and never as what a step waits on 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a failed Vault read is a failure, not a project with nothing filed 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > a read cut short says so, and claims nothing is missing 25ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > gives one step in full, with its checked sources 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock > fits the result budget, with and without a standing 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > reads the folder and kind the Vault records, sees a CSR filed in Module 5 without a section, and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > says in its description and step detail that it matches by kind and reports misfiling 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > plan_submission_from_database_lock reads the Vault’s filing vocabulary > fits the result budget with many misfiled, unspecific and noted documents 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > lists every rule in brief with what the platform checks, and what FDA has said about Elsa 2ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the pdf rules in full, each with its source 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the ectd rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the study-data rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > gives the content rules in full, each with its source 0ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > offers the labeling area and answers it with the PLR format rules 1ms
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts > list_fda_technical_rules > refuses an area it does not have 0ms
+
+ Test Files  4 passed (4)
+      Tests  70 passed (70)
+   Start at  03:53:51
+   Duration  16.49s (transform 6.49s, setup 139ms, import 11.91s, tests 3.74s, environment 1ms)

@@ -1,0 +1,79 @@
+IND template existing-editor browser evaluation
+
+Scope: W1 / D2. Evaluation only. No production or test files were edited by this session.
+Source contract: docs/design/IND_TEMPLATE_EDITOR_EXPANSION_2026-10-14.md
+Branch: concept2cure-v2
+
+The saved api-contract.json is generated directly from getIndAuthoringTemplates() and
+buildIndDocumentCatalog(), with 200 templates (102 sections, 93 deliverables, five
+module outlines) and 2,725 initially empty working sections. It is a browser fixture
+snapshot; it is not inserted into production or treated as source evidence.
+
+The fixture renders the real IndDocumentLibrary, DocumentCanvas, DocumentWorkbench
+and RichSectionEditor/TipTap. It imports existing component styles and uses the
+existing canvas pane portal host. The library stays mounted to exercise the native
+receipt state when an open callback is held/canceled and when a copy is reopened.
+A fixture callback flag holds the first create/open callback. The real workbench
+section unsaved-work guard is separately exercised by typing, switching section,
+canceling, checking the preserved body, and leaving without saving.
+
+All /api/** requests are intercepted by Playwright. Unknown endpoints return a
+synthetic 404 and fail the run. No AnA, model provider, live API, or database is
+called. Mock docs are unbound DRAFTs with exact template/module/project identities,
+empty content, and guidance resolved from their saved template and section codes.
+The browser evaluates client behavior; server authorization/persistence and the
+complete 200-template creation path are validated by separate server/database evidence.
+
+Reproduction in this workspace:
+1. Copy probe.tsx, index.html, generate.ts, and api-contract.json from this folder
+   to /workspace/ClinicalSageAI/.visual-qa/ind-template-eval/.
+2. Optionally regenerate current JSON from /workspace/ClinicalSageAI:
+   PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH node node_modules/tsx/dist/cli.mjs .visual-qa/ind-template-eval/generate.ts
+3. Start server.mjs with the Node 22 toolchain (port 5175, strict):
+   PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH node server.mjs
+4. In another process, run browser.mjs using the same Node toolchain.
+   It uses /usr/bin/chromium, Playwright core at
+   /opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs and axe-core at
+   /workspace/scratch/editor-ui-tools/node_modules/axe-core/axe.min.js.
+5. Stop the server's known PID after the run. Never stop unrelated services.
+
+The runner saves browser-summary.json, one detailed browser-<context>.json per
+context, and screenshots for all five module refs plus expanded guidance and empty
+editor per representative. Contexts: 1440x1000 desktop and 390x844 touch, light/dark.
+WCAG axe tags: wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa. Incomplete rules remain
+recorded as manual-review items; an automated pass is not a complete WCAG audit.
+
+Representative CTD types:
+M1: Form FDA 1571 (preparation worksheet)
+M2: Clinical Overview
+M3: General Information / Nomenclature
+M4: Single-Dose Toxicity / report title page
+M5: Controlled Clinical Study Reports / ICH E3 title page
+
+Checks: full catalogue count, all five module-outline refs, module filter, native
+exact-ID POST and receipt, one empty editor, no filing binding, section selection,
+saved guidance/checklists/reference basis/original-form limits, no duplicate create
+when an open callback is held and a created working copy is reopened, actual
+unsaved-section cancel preservation, console/page errors, page horizontal overflow,
+visible editable viewport, expanded-guidance and empty-editor accessibility.
+
+The before accessibility failure is preserved separately under
+browser-before-accessibility/. It is the existing empty “Draft with AnA” .rse-link
+button measuring 88.8x18 px, failing WCAG 2.2 target-size. Only the lead session
+owns the production correction; the final matrix rerun determines its result.
+
+Final rerun completed 2026-10-14 04:39 UTC with the lead's existing-control sizing
+correction and the refreshed GLP manual-preparation classification. All four
+contexts passed: 20 exact native creates, 20 separate saved-guidance checks, 20
+empty-editor/reopen checks, all five module-outline refs in each context, and all
+four real unsaved-section cancel checks. Zero axe A/AA violations, zero console or
+page errors, zero unknown API paths, zero page horizontal overflow. The clipped
+visible editable viewport was 1104x320 px desktop and 298x242 px touch. The final
+snapshot SHA-256 is recorded in browser-summary.json and matches api-contract.json.
+44 final screenshots accompany the four detailed JSON reports. Before accessibility
+JSON and the failing target screenshot remain in browser-before-accessibility/.
+The original known Vite PID 56382 was stopped. At the lead's follow-up request,
+the same isolated server was restarted as PID 60646 on port 5175 and remains
+available for combined verification after canonical synchronization. No commits,
+pushes, production edits, test edits, real provider/API calls, or database writes
+were performed by this evaluation session.

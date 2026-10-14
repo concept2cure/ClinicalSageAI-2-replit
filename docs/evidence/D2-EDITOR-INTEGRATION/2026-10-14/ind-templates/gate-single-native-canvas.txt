@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:single-native-canvas
+> node scripts/ci/check-single-native-canvas.mjs
+
+[single-native-canvas] ok — @napi-rs/canvas 0.1.80: one copy

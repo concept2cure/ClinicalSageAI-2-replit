@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "apiContractSha256": "ee58e2b7a35a7f075111acd4cd6f09878dd31e22957ecf7593c14a1bb048009f",
+  "contexts": 4,
+  "representativeNativeCreates": 20,
+  "moduleOutlineRefsInspected": 20,
+  "expandedGuidanceChecks": 20,
+  "emptyEditorChecks": 20,
+  "heldCallbackChecks": 4,
+  "actualUnsavedSectionCancelChecks": 4,
+  "reopenNoDuplicateChecks": 20,
+  "additionalGlpOriginalRecordLimitChecks": 4,
+  "axeViolations": 0,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "unknownApiRequests": 0,
+  "visibleEditableViewport": {
+    "desktop": {
+      "width": 1104,
+      "height": 320
+    },
+    "touch": {
+      "width": 298,
+      "height": 242
+    }
+  },
+  "screenshots": 44,
+  "stoppedFixturePid": 56382,
+  "fixturePort": 5175,
+  "fixturePortListening": true,
+  "productionEdits": false,
+  "testEdits": false,
+  "commits": false,
+  "pushes": false,
+  "allApisSynthetic": true,
+  "restartedFixturePid": 60646,
+  "awaitingCombinedCanonicalVerification": true
+}

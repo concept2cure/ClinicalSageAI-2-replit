@@ -73,6 +73,7 @@ import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { ImportSourceNotice } from './ImportSourceNotice';
+import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
 import type {
   ProposeRefusal,
@@ -1886,20 +1887,23 @@ export function DocumentWorkbench({
      a document with none, or a failed read, gets no origin line rather than a
      guessed one. Doc-scoped like the other loaders. */
   const provenanceDocRef = useRef<string | null>(null);
+  const [docTemplateId, setDocTemplateId] = useState<string | null>(null);
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocTemplateId(null);
     setDocFigures(null);
     setDocClaims(null);
     setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
-    void readJson<{ document?: { provenance?: unknown }; access?: unknown }>(
+    void readJson<{ document?: { provenance?: unknown; template_id?: unknown }; access?: unknown }>(
       `/api/authoring/docs/${encodeURIComponent(wanted)}`,
     ).then(({ ok, body }) => {
       if (provenanceDocRef.current !== wanted) return;
       if (!ok || !body?.document) return;
       setDocProvenance(describeProvenance(body.document.provenance));
+      setDocTemplateId(typeof body.document.template_id === 'string' ? body.document.template_id : null);
       setDocFigures(describeFigureCheck(body.document.provenance));
       setDocClaims(describeClaimsCheck(body.document.provenance));
       /* GE-P-3: the same read carries the caller's access. */
@@ -4584,6 +4588,7 @@ export function DocumentWorkbench({
                   <ImportSourceNotice source={docProvenance?.importSource} />
                   {docFigures && <DraftFigureLine check={docFigures} />}
                   {docClaims && <DraftClaimsLine check={docClaims} />}
+                  {docTemplateId && <TemplateGuidance key={activeSection.id} sectionId={activeSection.id} />}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
