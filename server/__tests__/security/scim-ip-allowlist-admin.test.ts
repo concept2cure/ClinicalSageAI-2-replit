@@ -36,7 +36,9 @@ const { queryMock, grantLookup, state } = vi.hoisted(() => {
 vi.mock('../../db', () => ({
   query: (sql: string, params?: unknown[]) =>
     /FROM platform_role_grants/.test(sql) ? grantLookup(params) : queryMock(sql, params),
+  transaction: async (callback: (client: unknown) => Promise<unknown>) => callback({ query: (sql: string, params?: unknown[]) => queryMock(sql, params) }),
 }));
+vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: vi.fn(async () => undefined) }));
 vi.mock('../../auth', () => ({
   authMiddleware: (req: { user?: unknown; userId?: number }, _res: unknown, next: () => void) => {
     (req as { user?: unknown }).user = { id: 1, role: state.role, roles: [state.role], organizationId: 1 };
@@ -74,9 +76,9 @@ describe('admin SCIM IP-allowlist API', () => {
   });
 
   it('creates a rule with a valid CIDR (201)', async () => {
-    queryMock.mockResolvedValue({
-      rows: [{ id: 3, organization_id: 7, cidr: '203.0.113.0/24', label: 'Okta egress', enabled: true }],
-    });
+    queryMock.mockImplementation(async (sql: string) => /SELECT id FROM organizations/.test(sql)
+      ? { rows: [{ id: 7 }] }
+      : { rows: [{ id: 3, organization_id: 7, cidr: '203.0.113.0/24', label: 'Okta egress', enabled: true }] });
     const res = await request(app)
       .post('/api/admin/scim-ip-allowlist')
       .send({ organizationId: 7, cidr: '203.0.113.0/24', label: 'Okta egress' });
@@ -123,7 +125,7 @@ describe('admin SCIM IP-allowlist API', () => {
   });
 
   it('deletes a rule (204), 404 when missing', async () => {
-    queryMock.mockResolvedValueOnce({ rows: [{ id: 3 }] });
+    queryMock.mockResolvedValueOnce({ rows: [{ id: 3, organization_id: 7, cidr: '10.0.0.0/8', label: null, enabled: true }] });
     const ok = await request(app).delete('/api/admin/scim-ip-allowlist/3');
     expect(ok.status).toBe(204);
 

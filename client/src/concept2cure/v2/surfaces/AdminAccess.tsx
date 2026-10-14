@@ -4,15 +4,16 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { ceremonyOpen } from '../ceremony';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
-import { AdminMemberActions, ROLE_OPTIONS, setupLinkHandover, type InvitationReply } from './AdminMemberActions';
+import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
 import { AdminApiKeyCreate } from './AdminApiKeyCreate';
 import { AdminApiKeyUsage } from './AdminApiKeyUsage';
 import { AdminPlatformGrants } from './AdminPlatformGrants';
+import { OnboardingInvitations, invitationOutcome, type OnboardingInvitationOutcome } from './OnboardingInvitations';
 import '../styles/admin-access.css';
 
 /**
@@ -134,6 +135,10 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      stored them. */
   const [toast, fireToast] = useToast();
   const [inviting, setInviting] = useState(false);
+  const [invitationResults, setInvitationResults] = useState<OnboardingInvitationOutcome[]>([]);
+  const rememberInvitation = (result: OnboardingInvitationOutcome) => setInvitationResults(previous => [
+    ...previous.filter(item => item.email.toLowerCase() !== result.email.toLowerCase()), result,
+  ]);
   const [creatingKey, setCreatingKey] = useState(false);
   const [keyUsage, setKeyUsage] = useState<{ keyId: number; name: string } | null>(null);
 
@@ -196,10 +201,11 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
   const invite = async (v: Record<string, string>) => {
     setInviting(false);
+    const email = (v.email || '').trim();
     try {
       const res = await apiRequest('POST', '/api/tenant-users', {
         name: (v.name || '').trim(),
-        email: (v.email || '').trim(),
+        email,
         role: v.role,
         title: (v.title || '').trim() || undefined,
         department: (v.department || '').trim() || undefined,
@@ -208,45 +214,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         // AuthProvider just to name it. Reading it from useAuth here broke
         // every AdminAccess test, which render the surface standalone.
       });
-      if (!res.ok) {
-        const b = await res.json().catch(() => null);
-        fireToast(
-          'Member not invited — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
-          'error',
-        );
-        return;
-      }
-      // The server says how the invitee gets their setup link. When this
-      // deployment has no email delivery, the link comes back once, here, and
-      // the admin hands it over — so put it on the clipboard and say so.
-      const body = (await res.json().catch(() => null)) as { invitation?: InvitationReply; reissued?: boolean; role?: string } | null;
-      const inv = body && typeof body === 'object' ? body.invitation : undefined;
-      const who = (v.name || '').trim();
-      if (body?.reissued === true) {
-        /* The address belongs to a member who never set a password: the
-           invitation route issued them a new setup link instead (QA
-           2026-10-08, j9). Their role is the stored one, not the form's. */
-        const role = String(body.role ?? '');
-        fireToast(
-          `${who} was invited before and has not set a password, so a new setup link was issued and the previous one no longer works. ` +
-            `Their role is unchanged (${role.charAt(0).toUpperCase() + role.slice(1)}). ${await setupLinkHandover(inv)}`,
-        );
-      } else if (inv && inv.delivery === 'failed') {
-        fireToast(
-          `${who} was added as ${v.role}, but no activation link could be issued — they cannot sign in yet. Ask them to use "Forgot password", or retry the invitation.`,
-          'error',
-        );
-      } else if (inv && inv.delivery === 'link' && inv.setupUrl) {
-        fireToast(`${who} invited as ${v.role}. ${await setupLinkHandover(inv)}`);
-      } else {
-        fireToast(`${who} invited as ${v.role}. An invitation email with their password setup link was sent.`);
-      }
-      setAdminEpoch((n) => n + 1);
+      const result = invitationOutcome(email, res.status, await res.json().catch(() => null));
+      rememberInvitation(result);
+      fireToast(result.recorded ? 'Invitation recorded. Review its delivery and any setup link below.' : result.note,
+        result.recorded ? undefined : 'error');
+      if (result.recorded) reload();
     } catch (e) {
-      fireToast(
-        'Member not invited — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was created.',
-        'error',
-      );
+      const result = e instanceof ApiRequestError
+        ? invitationOutcome(email, e.status, e.payload)
+        : invitationOutcome(email, 0, null);
+      rememberInvitation(result);
+      fireToast(result.note, 'error');
     }
   };
 
@@ -539,7 +517,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                     {/* Role change and removal call the membership routes directly
                         (QA 2026-10-08, j9 finding 1): a reason, a confirmation, and
                         the server's own answer. */}
-                    <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} />
+                    <AdminMemberActions key={member.id} member={member} organizationId={a?.organizationId} onChanged={reload} toast={fireToast} onInvitationOutcome={rememberInvitation} />
                   </div>
                 </aside>
               )}
@@ -742,6 +720,11 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         </>
       )}
 
+      {/* Handover remains mounted while the real roster reloads. A link is never copied automatically. */}
+      {invitationResults.length > 0 && <section className="section" aria-label="Member invitation handover">
+        <OnboardingInvitations invitations={invitationResults} />
+        <button type="button" className="btn ghost small" onClick={() => setInvitationResults([])}>Dismiss invitation handover</button>
+      </section>}
       {inviting && (
         <C2CForm
           config={INVITE_FORM}

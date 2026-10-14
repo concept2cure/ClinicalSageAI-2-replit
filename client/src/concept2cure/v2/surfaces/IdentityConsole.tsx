@@ -23,7 +23,7 @@
  * surfaced as "requires a platform administrator"). The one-time token is shown
  * exactly once from the server's response and never persisted client-side.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -36,6 +36,17 @@ import { C2CToast, useToast } from '../toast';
 
 interface ScimTenant { id: number; organizationId: number; label: string | null; enabled: boolean; createdAt?: string; updatedAt?: string; }
 interface ScimRule { id: number; organizationId: number; cidr: string; label: string | null; enabled: boolean; }
+interface RuleChange { rule: ScimRule; action: 'toggle' | 'delete' }
+
+function ruleChangeFormFor(change: RuleChange | null): C2CFormConfig | null {
+  if (!change) return null;
+  const act = change.action === 'delete' ? 'Delete' : change.rule.enabled ? 'Disable' : 'Enable';
+  return {
+    eyebrow: 'SCIM provisioning · IP allowlist', title: `${act} allowlist rule ${change.rule.cidr}?`,
+    governed: 'This changes which source addresses may provision users for the rule’s organization. If no enabled rules remain for an organization, any source address with a valid SCIM token may provision users. Deleting a rule removes it permanently.',
+    submitLabel: `${act} rule`, fields: [{ key: 'reason', label: 'Reason for the allowlist change', type: 'textarea', required: true, rows: 3, desc: '3–500 characters, recorded with the policy change.' }],
+  };
+}
 
 interface RawResult<T> { ok: boolean; status: number; body: T | null; message: string | null }
 type ReadState = 'loading' | 'ready' | 'forbidden' | 'error';
@@ -87,6 +98,7 @@ const RULE_FORM: C2CFormConfig = {
     { key: 'organizationId', label: 'Organization id', type: 'number', required: true, half: true },
     { key: 'cidr', label: 'CIDR / address', type: 'text', required: true, half: true, placeholder: 'e.g. 203.0.113.0/24' },
     { key: 'label', label: 'Label', type: 'text', placeholder: 'e.g. Okta egress range' },
+    { key: 'reason', label: 'Reason for the allowlist change', type: 'textarea', required: true, rows: 3, desc: '3–500 characters, recorded with the policy change.' },
   ],
 };
 
@@ -109,6 +121,8 @@ export function IdentityConsole(_props: SurfaceViewProps) {
      18 and 110). */
   const [ruleState, setRuleState] = useState<ReadState>('loading');
   const [dialog, setDialog] = useState<'token' | 'rule' | null>(null);
+  const [ruleChange, setRuleChange] = useState<RuleChange | null>(null);
+  const changingRule = useRef(false);
   // One-time secrets, shown exactly once from the server response.
   const [revealed, setRevealed] = useState<{ id: number; token: string } | null>(null);
   const [toast, fireToast] = useToast();
@@ -168,7 +182,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
   const addRule = useCallback(async (v: Record<string, string>) => {
     const added = await rawJson<ScimRule>('POST', '/api/admin/scim-ip-allowlist', {
-      organizationId: Number(v.organizationId), cidr: v.cidr, label: v.label || undefined,
+      organizationId: Number(v.organizationId), cidr: v.cidr, label: v.label || undefined, reason: v.reason,
     });
     const { ok, status, body } = added;
     if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : failText(added, 'add the rule'), 'error'); return; }
@@ -176,6 +190,31 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     fireToast('Allowlist rule added · ' + body.cidr);
     void load();
   }, [load, fireToast]);
+
+  const changeRule = async (values: Record<string, string>) => {
+    if (!ruleChange || changingRule.current) return;
+    changingRule.current = true;
+    const { rule, action } = ruleChange;
+    try {
+      const result = action === 'delete'
+        ? await rawJson('DELETE', `/api/admin/scim-ip-allowlist/${rule.id}`, { reason: values.reason.trim() })
+        : await rawJson<ScimRule>('PATCH', `/api/admin/scim-ip-allowlist/${rule.id}`, { enabled: !rule.enabled, reason: values.reason.trim() });
+      if (!result.ok) {
+        fireToast(failText(result, action === 'delete' ? 'delete the allowlist rule' : 'change the allowlist rule'), 'error');
+        return;
+      }
+      const body = result.body as ScimRule | null;
+      const confirmed = action === 'delete' ? result.status === 204 : body?.id === rule.id && body.enabled === !rule.enabled;
+      if (!confirmed) {
+        fireToast('The allowlist change was not confirmed by the response. Reload the list before retrying.', 'error');
+        return;
+      }
+      setRuleChange(null);
+      fireToast(action === 'delete' ? 'Allowlist rule deleted.' : `Allowlist rule ${rule.enabled ? 'disabled' : 'enabled'}.`);
+      void load();
+    } finally { changingRule.current = false; }
+  };
+  const ruleChangeForm = ruleChangeFormFor(ruleChange);
 
   const copy = useCallback((text: string, what: string) => {
     void navigator.clipboard?.writeText(text).then(
@@ -288,11 +327,15 @@ export function IdentityConsole(_props: SurfaceViewProps) {
             : ruleState === 'forbidden' ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="You don’t have access to the allowlist" hint="Its rules could not be read with this account, so nothing is said here about whether the allowlist is enforced." /></div>
             : ruleState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the allowlist" hint="The rules could not be read, so nothing is said here about whether the allowlist is enforced." retry={() => void load()} /></div>
             : rules.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No allowlist rules" hint="Restrict SCIM provisioning to your IdP’s egress addresses. With no rules, the allowlist is not enforced." /></div>
-            : <table className="reg-tbl"><thead><tr><th>Id</th><th>Organization</th><th>CIDR</th><th>Label</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
+            : <table className="reg-tbl"><thead><tr><th>Id</th><th>Organization</th><th>CIDR</th><th>Label</th><th style={{ textAlign: 'right' }}>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{rules.map((r) => (
                 <tr key={r.id}>
                   <td className="mono">#{r.id}</td><td className="mono">{r.organizationId}</td><td className="mono">{r.cidr}</td><td>{r.label ?? '—'}</td>
                   <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (r.enabled ? 'ok' : 'dim')}>{r.enabled ? 'enabled' : 'disabled'}</span></td>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <button className="nda-open" onClick={() => setRuleChange({ rule: r, action: 'toggle' })} aria-label={`${r.enabled ? 'Disable' : 'Enable'} SCIM rule ${r.cidr}`}>{r.enabled ? 'Disable' : 'Enable'}</button>
+                    <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setRuleChange({ rule: r, action: 'delete' })} aria-label={`Delete SCIM rule ${r.cidr}`}>Delete</button>
+                  </td>
                 </tr>))}</tbody></table>}
         </div>
       </div>
@@ -319,6 +362,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
       {dialog === 'token' && <C2CForm config={TOKEN_FORM} onCancel={() => setDialog(null)} onSubmit={issueToken} />}
       {dialog === 'rule' && <C2CForm config={RULE_FORM} onCancel={() => setDialog(null)} onSubmit={addRule} />}
+      {ruleChangeForm && <C2CForm config={ruleChangeForm} onCancel={() => { if (!changingRule.current) setRuleChange(null); }} onSubmit={(values) => void changeRule(values)} />}
       <C2CToast msg={toast} />
     </div>
   );

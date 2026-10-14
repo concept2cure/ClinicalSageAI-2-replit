@@ -99,3 +99,12 @@ This work supplies implementation and local validation evidence. The session
 has no production runtime or deployment credentials. It does not establish
 hosted availability, successful live SMTP/SSO/payment delivery, or complete the
 production launch rows that require those proofs.
+
+## Consolidation with concurrent setup safeguards
+
+The final canonical-branch integration retains this revisioned discovery and
+account/admin implementation while adding named invitation consent, effective
+session policy and transaction-bound SCIM IP-rule audit controls. Parallel
+discovery and API-key UI implementations were migrated and removed. Final
+merged verification and replacement paths are recorded in
+[the W1/D2 consolidation evidence](../../W1/2026-10-14-discovery-onboarding/README.md).

@@ -36,6 +36,7 @@ import {
   getCompleteness,
   snapshotVersionTx,
   finalizeProtocolTx,
+  lockProtocolForSignatureTx,
   listProtocolDocuments,
   getProtocolDocument,
 } from '../services/protocol-development/protocol-development-service';
@@ -545,6 +546,9 @@ router.post('/documents/:id/finalize', signingAttempts, async (req, res) => {
       reauth: parsed.data.reauth,
       ipAddress: signerIpAddress(req),
       role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
+      prepare: async (client) => {
+        await lockProtocolForSignatureTx(client, orgId, id);
+      },
       write: async (client) => {
         const result = await finalizeProtocolTx(client, orgId, userId, id);
         return { act: { finalized: true, protocolVersion: result.version }, body: { documentId: id, ...result } };

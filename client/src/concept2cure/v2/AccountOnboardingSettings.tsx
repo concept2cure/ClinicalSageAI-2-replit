@@ -71,6 +71,7 @@ function Outcome({ text }: { text: string | null }) {
 interface Invitation {
   id: number;
   organizationId: number;
+  organizationName?: string | null;
   email: string;
   role: string;
   status: 'pending';
@@ -78,8 +79,17 @@ interface Invitation {
 function isInvitationList(v: unknown): v is Invitation[] {
   return Array.isArray(v) && v.every(row => isObject(row) && positiveId(row.id) && positiveId(row.organizationId) &&
     typeof row.email === 'string' && row.email.trim() && row.status === 'pending' &&
-    (ASSIGNABLE_ORG_ROLES as readonly unknown[]).includes(row.role)) &&
+    (ASSIGNABLE_ORG_ROLES as readonly unknown[]).includes(row.role) &&
+    (row.organizationName == null || typeof row.organizationName === 'string')) &&
     new Set(v.map(row => String(row.id))).size === v.length;
+}
+const invitationName = (invitation: Invitation) => invitation.organizationName?.trim() || null;
+function invitationResponseAllowed(invitation: Invitation, action: 'accept' | 'decline', locked: boolean): boolean {
+  return !locked && (action !== 'accept' || Boolean(invitationName(invitation)));
+}
+function invitationResponseNote(invitation: Invitation, action: 'accept' | 'decline'): string {
+  const name = invitationName(invitation);
+  return `Invitation ${action === 'accept' ? 'accepted' : 'declined'}${name ? ` for ${name}` : ''}. Your current workspace remains active.`;
 }
 
 function InvitationsSection({ userId, onMembershipChange }: { userId: string; onMembershipChange: () => void }) {
@@ -91,7 +101,7 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
   const [error, setError] = React.useState<string | null>(null);
   const [note, setNote] = React.useState<string | null>(null);
   const respond = async (invitation: Invitation, action: 'accept' | 'decline') => {
-    if (lock.current) return;
+    if (!invitationResponseAllowed(invitation, action, lock.current)) return;
     lock.current = true;
     setBusy(invitation.id);
     setError(null);
@@ -107,7 +117,7 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
         throw new Error('The server did not confirm membership for this invitation. Reload invitations before trying again.');
       }
       setConfirm(null);
-      setNote(`Invitation ${action === 'accept' ? 'accepted' : 'declined'} for organisation ${invitation.organizationId}.`);
+      setNote(invitationResponseNote(invitation, action));
       if (action === 'accept') onMembershipChange();
       await load();
     } catch (failure) {
@@ -128,8 +138,9 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
       {read.state === 'ready' && (read.data.length === 0 ? <p className="de-desc">No pending invitations.</p> : read.data.map(invitation => (
         <div className="de-field" key={invitation.id}>
           <div className="de-quote">
-            <div className="de-label">Organisation {invitation.organizationId}</div>
+            <div className="de-label">{invitationName(invitation) ?? 'Organization name unavailable'}</div>
             <p className="de-desc">Invited as {invitation.role} · {invitation.email}</p>
+            {!invitationName(invitation) && <p className="de-desc">The inviting organization could not be identified by name. Contact the inviting administrator before accepting.</p>}
             {confirm === invitation.id ? (
               <>
                 <p className="de-desc">Declining this invitation does not create membership. The invitation response remains recorded.</p>
@@ -140,10 +151,10 @@ function InvitationsSection({ userId, onMembershipChange }: { userId: string; on
               </>
             ) : (
               <>
-                <button type="button" className="de-btn ghost" aria-label={`Accept invitation to organisation ${invitation.organizationId}`} disabled={busy !== null} onClick={() => void respond(invitation, 'accept')}>
+                <button type="button" className="de-btn ghost" aria-label={`Accept invitation${invitationName(invitation) ? ` to ${invitationName(invitation)}` : ''}`} disabled={busy !== null || !invitationName(invitation)} onClick={() => void respond(invitation, 'accept')}>
                   {busy === invitation.id ? 'Accepting…' : 'Accept invitation'}
                 </button>{' '}
-                <button type="button" className="de-btn ghost" aria-label={`Decline invitation to organisation ${invitation.organizationId}`} disabled={busy !== null} onClick={() => { setConfirm(invitation.id); setError(null); }}>Decline</button>
+                <button type="button" className="de-btn ghost" aria-label={`Decline invitation${invitationName(invitation) ? ` to ${invitationName(invitation)}` : ''}`} disabled={busy !== null} onClick={() => { setConfirm(invitation.id); setError(null); }}>Decline</button>
               </>
             )}
           </div>

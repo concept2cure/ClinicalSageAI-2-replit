@@ -22,7 +22,8 @@
  *      on runs here too
  *   3. §11.200 re-authentication (verifyReauth: the password, and the second
  *      factor whenever the signer has one enrolled), before anything is written
- *   4. BEGIN, then the meaning checked against authorship on that client,
+ *   4. BEGIN, reserve the domain target when supplied, then the meaning
+ *      checked against authorship on that client,
  *      before the act writes anything (the canonical order: SoD before
  *      writeMutation): an `authorship` signature only from an author; any other
  *      meaning only from someone independent of the authors. Checked after the
@@ -83,6 +84,13 @@ export interface GovernedSignatureInput {
   ipAddress: string | null;
   /** The signer's org role, for the permission gate. */
   role: string;
+  /**
+   * Server-owned reservation of the authoritative target before authorship is
+   * read. Runs on this transaction after tenant setup; it must not write
+   * content, versions or actions that could make the signer an author.
+   * Throwing refuses the ceremony before its domain write or signature.
+   */
+  prepare?: (client: PoolClient, meaning: CeremonySignMeaning) => Promise<void>;
   /**
    * The domain write. Runs inside the transaction after the authorship check;
    * throw to refuse. `act` is what was decided (a reviewer's approve or reject,
@@ -162,6 +170,15 @@ async function checkMeaningAgainstAuthorship(
   }
 }
 
+async function reserveTargetAndCheckMeaning(
+  client: PoolClient,
+  input: GovernedSignatureInput,
+  meaning: CeremonySignMeaning,
+): Promise<void> {
+  await input.prepare?.(client, meaning);
+  await checkMeaningAgainstAuthorship(client, input, meaning);
+}
+
 export async function signGovernedAct(input: GovernedSignatureInput): Promise<Record<string, unknown>> {
   const { orgId, userId, target, reason } = input;
 
@@ -205,7 +222,7 @@ export async function signGovernedAct(input: GovernedSignatureInput): Promise<Re
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, orgId);
-    await checkMeaningAgainstAuthorship(client, input, meaning);
+    await reserveTargetAndCheckMeaning(client, input, meaning);
     const { act = {}, body } = await input.write(client, meaning);
 
     const signedPayload = { ...act, meaning };

@@ -16,13 +16,15 @@ export function deviceDraftKey(ownerId: string | number | null | undefined, stor
   return `${DEVICE_DRAFT_PREFIX}${ownerId ?? 'anonymous'}::${storageKey}`;
 }
 
-/** Remove every device draft on this browser, whatever key shape wrote it. */
-export function purgeDeviceDrafts(): void {
+/** A refused workspace switch may retain only its current account's recovery cache. */
+export function purgeDeviceDrafts(preserveOwnerId?: string): void {
+  const preservePrefix = preserveOwnerId && /^[1-9]\d*$/.test(preserveOwnerId) && Number.isSafeInteger(Number(preserveOwnerId))
+    ? `${DEVICE_DRAFT_PREFIX}${preserveOwnerId}::` : null;
   try {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith(DEVICE_DRAFT_PREFIX)) keys.push(key);
+      if (key?.startsWith(DEVICE_DRAFT_PREFIX) && !(preservePrefix && key.startsWith(preservePrefix))) keys.push(key);
     }
     for (const key of keys) localStorage.removeItem(key);
   } catch {

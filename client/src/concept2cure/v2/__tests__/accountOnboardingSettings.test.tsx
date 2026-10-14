@@ -24,7 +24,7 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
   status, headers: { 'Content-Type': 'application/json' },
 });
 const invitation = {
-  id: 52, organizationId: 71, email: 'ada.rowe@c2c.test', role: 'reviewer', status: 'pending',
+  id: 52, organizationId: 71, organizationName: 'Inviting sponsor', email: 'ada.rowe@c2c.test', role: 'reviewer', status: 'pending',
   createdAt: '2026-10-12T08:00:00.000Z', invitedById: 8,
 };
 const routes = new Map<string, () => Response | Promise<Response>>();
@@ -68,10 +68,10 @@ describe('self-service onboarding in Account', () => {
       return json(200, { success: true, data: { invitationId: 52, organizationId: 71, userId: 33, role: 'reviewer', status: 'accepted' } });
     });
     open();
-    expect(await screen.findByText('Organisation 71')).toBeTruthy();
+    expect(await within(section('Invitations')).findByText('Inviting sponsor')).toBeTruthy();
     expect(screen.queryByText(/Northwind|Demo|Concept2Cure/)).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Accept invitation to organisation 71' }));
-    expect(await screen.findByText(/Invitation accepted for organisation 71/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept invitation to Inviting sponsor' }));
+    expect(await screen.findByText(/Invitation accepted for Inviting sponsor/)).toBeTruthy();
     expect(await screen.findByText('No pending invitations.')).toBeTruthy();
     expect(await screen.findByRole('option', { name: 'Inviting sponsor' })).toBeTruthy();
     expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/accept', undefined);
@@ -83,13 +83,13 @@ describe('self-service onboarding in Account', () => {
     routes.set(`GET ${INBOX}`, () => json(200, [invitation]));
     routes.set('POST /api/tenant-users/invitations/52/decline', () => json(200, { success: true }));
     open();
-    fireEvent.click(await screen.findByRole('button', { name: 'Decline invitation to organisation 71' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Decline invitation to Inviting sponsor' }));
     expect(mocks.request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel decline' }));
     expect(screen.queryByRole('button', { name: 'Confirm decline' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Decline invitation to organisation 71' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Decline invitation to Inviting sponsor' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm decline' }));
-    expect(await screen.findByText(/Invitation declined for organisation 71/)).toBeTruthy();
+    expect(await screen.findByText(/Invitation declined for Inviting sponsor/)).toBeTruthy();
     expect(mocks.request).toHaveBeenCalledWith('POST', '/api/tenant-users/invitations/52/decline', undefined);
   });
 
@@ -99,10 +99,10 @@ describe('self-service onboarding in Account', () => {
       success: false, error: 'QUOTA_EXCEEDED', message: 'This organisation has reached its user limit.',
     }));
     open();
-    fireEvent.click(await screen.findByRole('button', { name: 'Accept invitation to organisation 71' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept invitation to Inviting sponsor' }));
     expect(await within(section('Invitations')).findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('user limit'));
     expect(screen.queryByText(/Invitation accepted for/)).toBeNull();
-    expect(screen.getByRole('button', { name: 'Accept invitation to organisation 71' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Accept invitation to Inviting sponsor' })).toBeTruthy();
   });
 
   it('keeps an inbox read error distinct from no pending invitations and retries it', async () => {
@@ -123,6 +123,24 @@ describe('self-service onboarding in Account', () => {
     expect(await within(section('Invitations')).findByRole('alert')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Accept invitation/ })).toBeNull();
     expect(screen.queryByText('No pending invitations.')).toBeNull();
+  });
+
+  it('does not accept an invitation until the inviting organization is identified by name', async () => {
+    routes.set(`GET ${INBOX}`, () => json(200, [{ ...invitation, organizationName: null }]));
+    open();
+    expect(await screen.findByText('Organization name unavailable')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Accept invitation' })).toHaveProperty('disabled', true);
+    expect(mocks.request.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+
+  it('retains a pending named invitation when the server does not confirm acceptance', async () => {
+    routes.set(`GET ${INBOX}`, () => json(200, [invitation]));
+    routes.set('POST /api/tenant-users/invitations/52/accept', () => json(200, { success: false, message: 'This invitation is no longer pending.' }));
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept invitation to Inviting sponsor' }));
+    expect(await within(section('Invitations')).findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('no longer pending'));
+    expect(screen.getByRole('button', { name: 'Accept invitation to Inviting sponsor' })).toBeTruthy();
+    expect(mocks.user?.organizationId).toBe('1');
   });
 
 });

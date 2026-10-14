@@ -20,6 +20,8 @@ const h = vi.hoisted(() => ({
   sod: null as unknown,
   sigFail: null as unknown,
   finalizeFail: null as unknown,
+  prepareFail: null as unknown,
+  afterReservation: null as (() => void) | null,
   dispositionFail: null as unknown,
   authors: [11] as number[],
   role: 'member',
@@ -47,7 +49,7 @@ vi.mock('../../db/requestDb', () => ({ requestPgClient: () => client }));
 vi.mock('../../middleware/signing-attempt-limiter', () => ({
   signingAttemptLimiter: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
-vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn(async () => undefined) }));
+vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn(async () => { h.log.push('TENANT'); }) }));
 vi.mock('../../services/protocol-development-metrics', () => ({
   recordProtocolDocCreated: vi.fn(), recordProtocolSectionUpdated: vi.fn(), recordProtocolObjectiveAdded: vi.fn(),
   recordProtocolEligibilityAdded: vi.fn(), recordProtocolVisitAdded: vi.fn(), recordProtocolVersionSnapshot: vi.fn(),
@@ -88,8 +90,8 @@ vi.mock('../../services/part11/signature-persistence', async (orig) => ({
 }));
 
 const assertSignerIsNotAuthor = vi.fn(async () => {
-  if (h.sod) throw h.sod;
   h.log.push('SOD');
+  if (h.sod) throw h.sod;
   return { checked: true, reason: 'ok' };
 });
 const resolveTargetAuthors = vi.fn(async () => {
@@ -102,6 +104,12 @@ vi.mock('../../services/governance/separation-of-duties', async (orig) => ({
   resolveTargetAuthors: (...a: unknown[]) => resolveTargetAuthors(...(a as [])),
 }));
 
+const lockProtocolForSignatureTx = vi.fn(async (_client: unknown, _orgId: number, _docId: number) => {
+  h.log.push('RESERVE');
+  if (h.prepareFail) throw h.prepareFail;
+  h.afterReservation?.();
+  return { kind: 'clinical', status: 'draft', version: '0.3' };
+});
 const finalizeProtocolTx = vi.fn(async () => {
   if (h.finalizeFail) throw h.finalizeFail;
   h.log.push('FINALIZE');
@@ -109,6 +117,7 @@ const finalizeProtocolTx = vi.fn(async () => {
 });
 vi.mock('../../services/protocol-development/protocol-development-service', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
+  lockProtocolForSignatureTx: (...a: unknown[]) => lockProtocolForSignatureTx(...(a as [unknown, number, number])),
   finalizeProtocolTx: (...a: unknown[]) => finalizeProtocolTx(...(a as [])),
 }));
 
@@ -126,6 +135,7 @@ import protocolDevelopment from '../protocol-development';
 import protocolReviews from '../protocol-reviews';
 import { SeparationOfDutiesError, SeparationOfDutiesUnverifiedError } from '../../services/governance/separation-of-duties';
 import { ProtocolReviewError } from '../../services/protocol-reviews/protocol-reviews-service';
+import { ProtocolDevError } from '../../services/protocol-development/protocol-development-service';
 
 const app = express();
 app.use(express.json());
@@ -150,6 +160,8 @@ beforeEach(() => {
   h.sod = null;
   h.sigFail = null;
   h.finalizeFail = null;
+  h.prepareFail = null;
+  h.afterReservation = null;
   h.dispositionFail = null;
   h.authors = [11];
   h.role = 'member';
@@ -222,13 +234,15 @@ describe('POST /documents/:id/finalize is a real electronic signature: refused b
 });
 
 describe('POST /documents/:id/finalize is a real electronic signature: the signing transaction', () => {
-  it('finalizes, checks independence, and writes the ledger AND the signature row in one transaction', async () => {
+  it('reserves before checking authorship, then finalizes and writes the ledger AND signature row in one transaction', async () => {
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     // Authorship is checked before the finalization writes anything, so the
     // act's own rows cannot make the signer an author of what they sign.
     expect(h.log).toEqual([
       'BEGIN',
+      'TENANT',
+      'RESERVE',
       'AUTHORS',
       'FINALIZE',
       'LEDGER:sign:protocol-document:5',
@@ -236,6 +250,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
       'COMMIT',
     ]);
     expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH);
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(client, 2, 5);
     // An authorship signature is checked against the recorded authors, on the
     // signing transaction's own client.
     expect(resolveTargetAuthors).toHaveBeenCalledWith('protocol-document:5', 2, client);
@@ -277,21 +292,56 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status).toBe(403);
     expect(r.body.error.code).toBe('NOT_AN_AUTHOR');
-    expect(h.log).toEqual(['BEGIN', 'AUTHORS', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'AUTHORS', 'ROLLBACK']);
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 
   it('an approval is checked for independence on the signing client', async () => {
     await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(client, 2, 5);
     expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client });
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'FINALIZE', 'LEDGER:sign:protocol-document:5', 'SIGNATURE:protocol-document:5', 'COMMIT']);
   });
 
   it('an author approving their own protocol is refused before the finalization runs', async () => {
     h.sod = new SeparationOfDutiesError('you are an author of this record');
     const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
     expect(r.status).toBe(403);
-    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'ROLLBACK']);
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();
+  });
+
+  it('checks independence after reservation when authorship changed while the signer waited', async () => {
+    // Ordered preparation seam: the native sibling proves independent-connection waits.
+    h.afterReservation = () => { h.sod = new SeparationOfDutiesError('You authored this protocol before the reservation completed.'); };
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(r.body.error.code).toBe('SEPARATION_OF_DUTIES');
+    expect(lockProtocolForSignatureTx).toHaveBeenCalledWith(client, 2, 5);
+    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client });
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'ROLLBACK']);
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    [new ProtocolDevError('NOT_FOUND', 'No current protocol target.'), 404],
+    [new ProtocolDevError('INVALID_STATE', 'Protocol changed while reservation waited.'), 409],
+  ] as const)('a refused target reservation rolls back before authorship or signature work (%s)', async (error, status) => {
+    h.prepareFail = error;
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(status);
+    expect(r.body.error.code).toBe(error.code);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'ROLLBACK']);
+    expect(resolveTargetAuthors).not.toHaveBeenCalled();
+    expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
+    expect(finalizeProtocolTx).not.toHaveBeenCalled();
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+    expect(client.release).toHaveBeenCalledOnce();
   });
 
   it('an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned', async () => {
@@ -303,7 +353,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     expect(r.body.error.message).toMatch(/could not be verified, so nothing was signed/);
     expect(JSON.stringify(r.body)).not.toMatch(/57P01|database error/);
     expect(err).toHaveBeenCalled();
-    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'RESERVE', 'SOD', 'ROLLBACK']);
     err.mockRestore();
   });
 
@@ -339,6 +389,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
     expect(setDispositionTx).toHaveBeenCalledWith(client, 2, 9, { disposition: 'approve', signerId: 11, meaning: 'review' });
     expect(h.log).toEqual([
       'BEGIN',
+      'TENANT',
       'SOD',
       'DISPOSITION',
       'LEDGER:sign:protocol-review-assignment:9',
@@ -346,6 +397,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
       'COMMIT',
     ]);
     expect(r.body).toMatchObject({ assignmentId: 9, disposition: 'approve', signatureId: 314, meaning: 'review' });
+    expect(lockProtocolForSignatureTx).not.toHaveBeenCalled();
     // The decision is on the signature row, not only in the ledger payload: an
     // inspector reading electronic_signatures sees what the reviewer signed.
     const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
@@ -356,7 +408,7 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
     h.dispositionFail = new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user.');
     const r = await disposition({ disposition: 'approve', reason: REASON, meaning: 'review', reauth: REAUTH });
     expect(r.status).toBe(403);
-    expect(h.log).toEqual(['BEGIN', 'SOD', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'TENANT', 'SOD', 'ROLLBACK']);
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 

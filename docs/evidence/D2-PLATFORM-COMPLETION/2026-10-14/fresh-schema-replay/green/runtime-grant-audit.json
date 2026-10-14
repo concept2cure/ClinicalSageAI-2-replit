@@ -1,0 +1,20 @@
+{
+  "role": "app_service",
+  "attrs": {
+    "rolname": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "rolcanlogin": true
+  },
+  "auditedAt": "2026-10-14T04:59:40.892Z",
+  "database": "platform_ci_fresh_verify_20261014_beb73055",
+  "connectedAs": "postgres",
+  "relations": 1299,
+  "deniedCount": 0,
+  "denied": [],
+  "deniedDetail": [],
+  "excess": [],
+  "ownedAppendOnly": [],
+  "ownedInOverrideSchemas": 0,
+  "schemasWithoutUsage": []
+}

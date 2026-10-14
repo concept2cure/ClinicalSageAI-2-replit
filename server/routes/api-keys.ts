@@ -24,7 +24,8 @@ import {
   getApiKeyUsage,
 } from '../services/api-key-service.js';
 import { API_KEY_SCOPES } from '../../shared/schema/api-keys.js';
-import auditService, { writeChainedAuditRow } from '../services/auditService';
+import { writeChainedAuditRow } from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { transaction } from '../db/runtime';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -76,7 +77,7 @@ async function auditApiKeyEvent(entry: {
   userAgent?: string;
   outcome: 'success' | 'failure';
   reason?: string;
-}, client?: Pick<PoolClient, 'query'>): Promise<void> {
+}, client?: Pick<PoolClient, 'query'>): Promise<AuditRowOutcome> {
   const auditEntry = {
     tenantId: entry.organizationId,
     userId: entry.userId,
@@ -95,15 +96,9 @@ async function auditApiKeyEvent(entry: {
   };
   if (client) {
     await writeChainedAuditRow(client, auditEntry);
-    return;
+    return { persisted: true, chained: true };
   }
-  const apiKeyAudit = await auditService.logAction(auditEntry);
-  if (!apiKeyAudit.persisted) {
-    log.warn('API-key audit write failed (non-fatal)', {
-      err: apiKeyAudit.error ?? 'no durable store accepted the row',
-      action: entry.action,
-    });
-  }
+  return recordAuditRow(auditEntry);
 }
 
 // ============================================================================
@@ -160,6 +155,7 @@ router.post('/', async (req: Request, res: Response) => {
       name,
       scopes,
       expiresAt: parsedExpiry || null,
+      auditTrail: { persisted: true, chained: true },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -225,7 +221,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
       // or belongs to another tenant — still an event worth recording.
       // revokeApiKey itself scopes by organizationId so a foreign-
       // tenant id naturally returns false here.
-      await auditApiKeyEvent({
+      const auditTrail = await auditApiKeyEvent({
         action: 'api_key_revoked',
         organizationId,
         userId,
@@ -237,10 +233,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
       });
       return res.status(404).json({
         error: 'API key not found or already revoked',
+        auditTrail,
       });
     }
 
-    return res.json({ message: 'API key revoked successfully', keyId });
+    return res.json({ message: 'API key revoked successfully', keyId, auditTrail: { persisted: true, chained: true } });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     log.error('Failed to revoke API key', { err: message });

@@ -1,0 +1,18 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+   550:3   warning  Function 'RichSectionEditor' has too many lines (1842). Maximum allowed is 100  max-lines-per-function
+   550:3   warning  Function 'RichSectionEditor' has a complexity of 190. Maximum allowed is 15     complexity
+   941:1   warning  File has too many lines (2102). Maximum allowed is 500                          max-lines
+  1043:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+
+/workspace/ClinicalSageAI-2-replit/client/src/services/portal/authService.tsx
+   256:7   warning  'screen' is not defined                                                      no-undef
+   257:7   warning  'screen' is not defined                                                      no-undef
+   257:28  warning  'screen' is not defined                                                      no-undef
+   275:3   warning  Static method 'getDeviceInfo' has a complexity of 31. Maximum allowed is 15  complexity
+   449:3   warning  Async method 'request' has a complexity of 21. Maximum allowed is 15         complexity
+   715:1   warning  File has too many lines (980). Maximum allowed is 500                        max-lines
+  1276:28  warning  'React' is not defined                                                       no-undef
+
+✖ 11 problems (0 errors, 11 warnings)
+

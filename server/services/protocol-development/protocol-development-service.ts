@@ -103,7 +103,7 @@ function assertEditable(status: string): void {
   if (status === 'finalized' || status === 'superseded') throw new ProtocolDevError('INVALID_STATE', `Protocol is ${status}; create a new version to edit.`);
 }
 
-/** Lock-only API for a future protocol signature preparation hook. Review may
+/** Lock-only API for the protocol signature preparation hook. Review may
  * sign an already-finalized record; this is deliberately distinct from the
  * editable-content reservation below. Calling it does not establish review,
  * independence, source qualification or any signature authority. */

@@ -1,0 +1,59 @@
+# Canonical platform integration checkpoint
+
+W1 / D2, `concept2cure-v2`, 2026-10-14. Publication and final release gates are
+pending. This is a working integration record, not a production qualification.
+
+The control tower preserved Claude's reporting-persona, account, organization,
+authoring-access and governed onboarding changes through canonical merges. The
+later consolidation at `3412596c16283567c34b3d900bdbb0ef5eef0497` merged cleanly
+after the first onboarding merge checkpoint `caa39331f`.
+
+The root changes reserve a protocol's authoritative parent before reading
+authorship for a signature, and reserve an open editor before a tenant switch
+can spend its bearer. Reporting personalization remains separate from access
+authorization. Unavailable permission details do not assert that a member or
+section was removed.
+
+## Verified increments
+
+* [Protocol reservation](../protocol-sod-reservation/green/README.md): three
+  actual native API cases pass, with the retained red fixture unchanged. The
+  independent approver and author positive controls retain genuine content
+  bindings. The separate native regression lane passes 89 cases.
+* [Protocol route neighbours](../protocol-signature-preparation/README.md):
+  85 cases pass, including post-reservation independence and rollback controls.
+* [Editor and session guard](../auth-org-consistency/README.md): the first
+  bounded repair passes 97 cases across 11 files. The separate
+  [startup-probe and revocation follow-up](../auth-org-consistency-followup/README.md)
+  passes 121 cases across 12 files, including those regressions. Logout retains
+  server revocation of the exact original or settled credential pair; delayed
+  work in a held editor retains the existing browser discard guard.
+* [Latest Claude consolidation](../latest-claude-consolidation/delta-focused-tests/README.md):
+  219 cases across 21 exact delta files pass without fixture edits.
+* [Fresh schema replay](../fresh-schema-replay/README.md): strict installation,
+  deploy replay, report index, tenant policy coverage and 1,299 runtime relation
+  grants pass on a new isolated database. Existing roles and credentials remain
+  unchanged. The first installation's missing-tool-path failure is preserved.
+
+These counts describe separate runs, including overlapping regressions; they
+must not be added as a unique whole-suite total. Previously filed browser and
+SQL evidence retain their original source and execution qualifications.
+
+The first whole TypeScript run after this merge found two test geometry-shim
+typing errors. Its raw log is retained at
+`/tmp/project-vault-current-merged-typecheck-final.txt`; the zero-error baseline
+is unchanged. The production build passes on the frozen follow-up source.
+Final compile, lint, history scan, branch publication and remote checks will be
+recorded after their gates finish.
+
+## Next reporting increment
+
+[Complete retained report-pack PDF](../../../../design/RETAINED_REPORT_PACK_PDF.md)
+is the approved next implementation. It will expose full saved report bodies
+and evidence alongside the current manifest action, using canonical renderers
+and exact-byte audited delivery. Implementation has not begun.
+
+No result here establishes scientific validity, agency acceptance, full
+IND/BLA/CTD coverage, model PQ, production audit-chain assurance or a production
+deployment. Those qualifications require their own authoritative evidence and
+release procedures.

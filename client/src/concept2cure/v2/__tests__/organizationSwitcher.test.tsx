@@ -7,6 +7,28 @@ import { authService } from '@/services/portal/authService';
 import { queryClient } from '@/lib/queryClient';
 import { OrganizationSwitcher } from '../OrganizationSwitcher';
 import { publishShellProject } from '../shellProject';
+import { RichSectionEditor } from '../editor/RichSectionEditor';
+import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { isSessionChangeHeld } from '@/lib/sessionChangeGuard';
+import type { Editor } from '@tiptap/core';
+
+for (const proto of [Range.prototype, Element.prototype, Text.prototype]) {
+  if (!('getClientRects' in proto)) Object.defineProperty(proto, 'getClientRects', { value: () => [] });
+  if (!('getBoundingClientRect' in proto)) Object.defineProperty(proto, 'getBoundingClientRect', { value: () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 }) });
+}
+function canvas(): Editor {
+  const element = document.querySelector('.rse-body .tiptap') as (HTMLElement & { editor?: Editor }) | null;
+  if (!element?.editor) throw new Error('Editor has not mounted');
+  return element.editor;
+}
+const edit = (content: string) => act(() => { canvas().commands.setContent(`<p>${content}</p>`); });
+async function editorAndAccount() {
+  const ref = React.createRef<React.ComponentRef<typeof RichSectionEditor>>();
+  render(<><RichSectionEditor ref={ref} value="<p>Saved narrative.</p>" onSave={vi.fn(async () => undefined)} storageKey="switch-section" /><OrganizationSwitcher userId="33" organizationId="1" navigate={navigate} onClose={onClose} /></>);
+  await waitFor(() => expect(document.querySelector('.rse-body .tiptap')).toBeTruthy());
+  await choose();
+  return ref;
+}
 
 const LIST = '/api/organizations?membershipOnly=true';
 const SELECT = '/api/auth/enterprise/select-organization';
@@ -62,7 +84,7 @@ describe('verified account workspace switching', () => {
     expect(await screen.findByRole('option', { name: 'First sponsor (current)' })).toBeTruthy();
     expect(calls[0]).toMatchObject({ method: 'GET', path: LIST, auth: 'Bearer old-workspace-token' });
     await choose();
-    expect(screen.getByText(/Unsaved changes on this page are discarded/)).toBeTruthy();
+    expect(screen.getByText(/Save or resolve unsaved work before switching/)).toBeTruthy();
     expect(calls.some(call => call.method === 'POST')).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel switch' }));
     expect(screen.queryByRole('button', { name: 'Confirm switch' })).toBeNull();
@@ -135,6 +157,170 @@ describe('verified account workspace switching', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+});
+
+describe('workspace switching holds the existing editor before spending the bearer', () => {
+  it('refuses dirty preflight without rotating, purging drafts or asking a second confirmation', async () => {
+    const editor = await editorAndAccount();
+    edit('Unsaved medical narrative');
+    const ownDraft = localStorage.getItem(deviceDraftKey('33', 'switch-section'));
+    expect(ownDraft).toContain('Unsaved medical narrative');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Nothing was switched'));
+    expect(calls.some(call => call.path === SELECT)).toBe(false);
+    expect(localStorage.getItem(deviceDraftKey('33', 'switch-section'))).toBe(ownDraft);
+    expect(authService.getUser()?.organizationId).toBe('1');
+    expect(canvas().isEditable).toBe(true);
+    await act(async () => { await editor.current!.save(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledOnce());
+    expect(canvas().isEditable).toBe(false);
+    expect(isSessionChangeHeld()).toBe(true);
+  });
+
+  it('holds editing while SELECT waits and restores it after a definite membership refusal', async () => {
+    let finish!: (response: Response) => void;
+    routes.set(`POST ${SELECT}`, () => new Promise(resolve => { finish = resolve; }));
+    const editor = await editorAndAccount();
+    const key = deviceDraftKey('33', 'closed-section');
+    localStorage.setItem(key, 'Previously cached same-account text');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(calls.some(call => call.path === SELECT)).toBe(true));
+    expect(canvas().isEditable).toBe(false);
+    expect(editor.current!.insertSuggestion('Late suggested prose', { id: 'ana', name: 'AnA' })).toBe(false);
+    await act(async () => { finish(json(403, { error: 'ORG_ACCESS_DENIED', message: 'Membership refused' })); });
+    await screen.findByRole('alert');
+    expect(isSessionChangeHeld()).toBe(false);
+    expect(canvas().isEditable).toBe(true);
+    expect(localStorage.getItem(key)).toBe('Previously cached same-account text');
+    expect(authService.getUser()?.organizationId).toBe('1');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the old editor held after assign returns until the current document unloads', async () => {
+    await editorAndAccount();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/concept2cure/projects'));
+    expect(authService.getUser()?.organizationId).toBe('71');
+    expect(canvas().isEditable).toBe(false);
+    expect(isSessionChangeHeld()).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Save section' })).toBeNull();
+  });
+
+  it('holds the raw source textarea without rewriting the device recovery cache', async () => {
+    let finish!: (response: Response) => void;
+    routes.set(`POST ${SELECT}`, () => new Promise(resolve => { finish = resolve; }));
+    const key = deviceDraftKey('33', 'source-section');
+    const cached = '<figure><figcaption>Recovered source draft</figcaption></figure>';
+    localStorage.setItem(key, cached);
+    render(<><RichSectionEditor value="<figure><img src='/api/authoring/images/file_1_a'><figcaption>Saved figure</figcaption></figure>" onSave={vi.fn()} storageKey="source-section" /><OrganizationSwitcher userId="33" organizationId="1" navigate={navigate} onClose={onClose} /></>);
+    const textarea = await screen.findByRole('textbox', { name: 'Section source' }) as HTMLTextAreaElement;
+    await choose();
+    expect(textarea.readOnly).toBe(false);
+    expect(localStorage.getItem(key)).toBe(cached);
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(calls.some(call => call.path === SELECT)).toBe(true));
+    expect(textarea.readOnly).toBe(true);
+    expect(localStorage.getItem(key)).toBe(cached);
+    await act(async () => { finish(json(403, { error: 'ORG_ACCESS_DENIED', message: 'Membership refused' })); });
+    await screen.findByRole('alert');
+    expect(textarea.readOnly).toBe(false);
+    expect(localStorage.getItem(key)).toBe(cached);
+  });
+});
+
+describe('workspace switching waits for an existing editor write to settle', () => {
+  it('refuses preflight during a save even when typing returns the buffer to its old baseline', async () => {
+    let finish!: () => void;
+    const saving = new Promise<void>(resolve => { finish = resolve; });
+    const ref = React.createRef<React.ComponentRef<typeof RichSectionEditor>>();
+    render(<><RichSectionEditor ref={ref} value="<p>Saved narrative.</p>" onSave={vi.fn(() => saving)} storageKey="pending-write" /><OrganizationSwitcher userId="33" organizationId="1" navigate={navigate} onClose={onClose} /></>);
+    await waitFor(() => expect(document.querySelector('.rse-body .tiptap')).toBeTruthy());
+    await choose();
+    edit('A submitted save');
+    let pending!: Promise<boolean>;
+    act(() => { pending = ref.current!.save(); });
+    edit('Saved narrative.');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Nothing was switched'));
+    expect(calls.some(call => call.path === SELECT)).toBe(false);
+    expect(authService.getUser()?.organizationId).toBe('1');
+    await act(async () => { finish(); await pending; });
+    await act(async () => { await ref.current!.save(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledOnce());
+    expect(isSessionChangeHeld()).toBe(true);
+    expect(canvas().isEditable).toBe(false);
+    expect(await ref.current!.save()).toBe(false);
+  });
+});
+
+describe('a pending switch cannot adopt over newly unsaved work or a replacement sign-in', () => {
+  it.each(['select', 'probe'])('rechecks after %s, expires the spent bearer and preserves only the original account recovery cache', async phase => {
+    let finish!: (response: Response) => void;
+    const endpoint = phase === 'select' ? `POST ${SELECT}` : `GET ${SESSION}`;
+    routes.set(endpoint, () => new Promise(resolve => { finish = resolve; }));
+    await editorAndAccount();
+    localStorage.setItem(deviceDraftKey('34', 'another-person'), 'Other account cache');
+    localStorage.setItem('dc::legacy-section', 'Old unscoped cache');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(calls.some(call => call.path === (phase === 'select' ? SELECT : SESSION))).toBe(true));
+    expect(canvas().isEditable).toBe(false);
+    // A delayed programmatic editor command can still change a held TipTap instance.
+    edit('Unexpected late unsaved narrative');
+    const key = deviceDraftKey('33', 'switch-section');
+    const cached = localStorage.getItem(key);
+    expect(cached).toContain('Unexpected late unsaved narrative');
+    await act(async () => { finish(phase === 'select'
+      ? json(200, { success: true, token: 'new-workspace-token', organization: { id: '71' } })
+      : json(200, { authenticated: true, user: user('71') })); });
+    await screen.findByRole('button', { name: 'Sign in again' });
+    expect(authService.isAuthenticated()).toBe(false);
+    expect(localStorage.getItem('trialsage_access_token')).toBeNull();
+    expect(sessionStorage.getItem('trialsage_access_token')).toBeNull();
+    expect(localStorage.getItem(key)).toBe(cached);
+    expect(localStorage.getItem(deviceDraftKey('34', 'another-person'))).toBeNull();
+    expect(localStorage.getItem('dc::legacy-section')).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(isSessionChangeHeld()).toBe(false);
+  });
+
+  it.each(['select', 'probe'])('does not end an unrelated new sign-in while %s was pending', async phase => {
+    let finish!: (response: Response) => void;
+    const endpoint = phase === 'select' ? `POST ${SELECT}` : `GET ${SESSION}`;
+    routes.set(endpoint, () => new Promise(resolve => { finish = resolve; }));
+    await editorAndAccount();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(calls.some(call => call.path === (phase === 'select' ? SELECT : SESSION))).toBe(true));
+    act(() => { authService.setToken('replacement-login', user('72', '34'), 'replacement-refresh', 3600); });
+    await act(async () => { finish(phase === 'select'
+      ? json(200, { success: true, token: 'new-workspace-token', organization: { id: '71' } })
+      : json(200, { authenticated: true, user: user('71') })); });
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('session has changed'));
+    expect(authService.getUser()).toMatchObject({ id: '34', organizationId: '72' });
+    expect(localStorage.getItem('trialsage_access_token')).toBe('replacement-login');
+    expect(navigate).not.toHaveBeenCalled();
+    expect(isSessionChangeHeld()).toBe(true);
+    expect(canvas().isEditable).toBe(false);
+  });
+
+  it('preserves a replacement sign-in for the same account and organization while SELECT waits', async () => {
+    let finish!: (response: Response) => void;
+    routes.set(`POST ${SELECT}`, () => new Promise(resolve => { finish = resolve; }));
+    await editorAndAccount();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm switch' }));
+    await waitFor(() => expect(calls.some(call => call.path === SELECT)).toBe(true));
+    act(() => { authService.setToken('same-identity-replacement', user(), 'replacement-refresh', 3600); });
+    await act(async () => { finish(json(200, { success: true, token: 'new-workspace-token', organization: { id: '71' } })); });
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('session has changed'));
+    expect(calls.some(call => call.path === SESSION)).toBe(false);
+    expect(authService.getUser()).toMatchObject({ id: '33', organizationId: '1' });
+    expect(localStorage.getItem('trialsage_access_token')).toBe('same-identity-replacement');
+    expect(isSessionChangeHeld()).toBe(true);
+    expect(canvas().isEditable).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });
 
 describe('workspace switch refusals and request safety', () => {

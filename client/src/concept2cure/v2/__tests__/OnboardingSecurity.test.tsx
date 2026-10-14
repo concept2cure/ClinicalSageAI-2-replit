@@ -7,6 +7,9 @@ import { useOnboardingDiscovery } from '../useOnboardingDiscovery';
 import { completeDiscovery } from './onboardingDiscoveryFixtures';
 
 const { request } = vi.hoisted(() => ({ request: vi.fn() }));
+const auth = vi.hoisted(() => ({ user: { roles: ['admin'] } }));
+vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => auth.user }));
+vi.mock('../onboarding/SessionPolicySetting', () => ({ SessionPolicySetting: () => <section aria-label="Session security policy" /> }));
 vi.mock('@/lib/queryClient', () => ({ apiRequest: request, redactInternals: (message: string) => message }));
 vi.mock('@/utils/authToken', () => ({ getOrgId: () => 7 }));
 vi.mock('../AccountPanel', () => ({ AccountPanel: ({ onClose }: { onClose: () => void }) => <button onClick={onClose}>Close Account</button> }));
@@ -18,6 +21,7 @@ function Harness() {
   return <OnboardingSecurity discovery={discovery} onNav={navigate} />;
 }
 beforeEach(() => {
+  auth.user = { roles: ['admin'] };
   request.mockReset(); navigate.mockReset();
   session = { authenticated: true, user: { mfaEnabled: false } };
   request.mockImplementation(async (_method: string, path: string) => path === '/api/onboarding/discovery'
@@ -49,5 +53,17 @@ describe('security onboarding guidance', () => {
     session = { authenticated: true, user: { mfaEnabled: true } };
     fireEvent.click(screen.getByRole('button', { name: 'Close Account' }));
     await waitFor(() => expect(screen.getByText('Enrolled.')).toBeTruthy());
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open Account and security' }));
+  });
+  it('mounts the runtime-backed session policy only for an organization administrator', async () => {
+    auth.user = { roles: ['reviewer'] };
+    const view = render(<Harness />);
+    await screen.findByText('Not enrolled. Sign-in uses an email code.');
+    expect(screen.queryByRole('region', { name: 'Session security policy' })).toBeNull();
+    view.unmount();
+    auth.user = { roles: ['admin'] };
+    render(<Harness />);
+    await screen.findByText('Not enrolled. Sign-in uses an email code.');
+    expect(screen.getByRole('region', { name: 'Session security policy' })).toBeTruthy();
   });
 });

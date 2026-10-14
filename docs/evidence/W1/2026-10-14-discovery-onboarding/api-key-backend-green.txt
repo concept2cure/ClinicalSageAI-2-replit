@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > preserves metadata/expiry/rate normalization and stores the trimmed creation reason in both audit fields 271ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > legacy callers may omit reason; tenant/user spoofing never changes the authenticated generation or audit actor 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a blank supplied reason before generating or auditing a key 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too short after trimming supplied reason before generating or auditing a key 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too long supplied reason before generating or auditing a key 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a null supplied reason before generating or auditing a key 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 3-character reason boundary 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 500-character reason boundary 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > reports a tamper-proof-only audit as persisted but not chained 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a lost audit still returns the already-created key once with 201 and a safe warning 3ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a rejected audit still returns the already-created key once with 201 and a safe warning 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a later list never returns the raw key, including after a rejected creation audit 4ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a chained audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a tamper-proof-only audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a lost audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a rejected audit remains scoped and 200 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a chained audit remains 404 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a tamper-proof-only audit remains 404 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a lost audit remains 404 2ms
+ ✓ server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a rejected audit remains 404 2ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  03:21:14
+   Duration  626ms (transform 107ms, setup 56ms, import 121ms, tests 315ms, environment 0ms)

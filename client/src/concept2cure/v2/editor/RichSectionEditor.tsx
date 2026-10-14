@@ -44,6 +44,7 @@ import React, {
   forwardRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -62,6 +63,7 @@ import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { redactInternals } from '@/lib/queryClient';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { isSessionChangeHeld, registerSessionChangeGuard } from '@/lib/sessionChangeGuard';
 import { authService } from '@/services/portal/authService';
 import { Mapping } from '@tiptap/pm/transform';
 import type { Transaction } from '@tiptap/pm/state';
@@ -552,7 +554,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       onSave,
       autosaveMs = null,
       onDirtyChange,
-      readOnly = false,
+      readOnly: suppliedReadOnly = false,
       placeholder,
       storageKey = null,
       ariaLabel,
@@ -576,7 +578,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        current buffer — a number wrong in a way the author cannot see. */
     const [savedRevision, setSavedRevision] = useState(0);
 
-    const [dirty, setDirty] = useState(false);
+    const [dirty, setDirtyState] = useState(false);
+    const dirtyRef = useRef(false);
+    const pendingSaveCount = useRef(0);
+    const setDirty = useCallback((value: boolean) => {
+      dirtyRef.current = value;
+      setDirtyState(value);
+    }, []);
+    const [sessionChangeHeld, setSessionChangeHeld] = useState(isSessionChangeHeld);
+    const readOnly = suppliedReadOnly || sessionChangeHeld;
     /* Inline attribution painting (ledger L179, Phase 6a). The spans come from
        the bar's read rather than a second fetch of the same thing: two reads
        can disagree, and the one painted over the words would not be the one the
@@ -1151,6 +1161,20 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       if (editor.isEditable !== shouldEdit) editor.setEditable(shouldEdit);
     }, [editor, readOnly, boot.mode, collabRuntime, collabSynced]);
 
+    useLayoutEffect(() => registerSessionChangeGuard({
+      hasUnsavedWork: () => (!suppliedReadOnly && dirtyRef.current) || pendingSaveCount.current > 0 || pendingAutosaveRef.current !== null,
+      hold: held => {
+        // Hold synchronously before SELECT; React then hides the existing editing controls.
+        if (editor && !editor.isDestroyed) {
+          const editable = !held && !suppliedReadOnly && boot.mode === 'rich' && (!collabRuntime || collabSynced);
+          if (editor.isEditable !== editable) editor.setEditable(editable, false);
+        }
+        const source = editorHostRef.current?.querySelector('textarea');
+        if (source) source.readOnly = held || suppliedReadOnly;
+        setSessionChangeHeld(held);
+      },
+    }), [editor, suppliedReadOnly, boot.mode, collabRuntime, collabSynced]);
+
     /* Seed a first-ever collab doc from the stored content once synced. */
     useEffect(() => {
       if (!collabRuntime || !editor) return;
@@ -1244,7 +1268,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         editor.commands.setContentUntracked(html);
       }
       setRestoreOffer(null);
-    }, [restoreOffer, editor, boot.mode, format]);
+    }, [restoreOffer, editor, boot.mode, format, setDirty]);
 
     const discardCached = useCallback(() => {
       if (storageKey) {
@@ -1259,6 +1283,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
 
     /* ── The one save path ── */
     const doSave = useCallback(async (systemReason?: string): Promise<boolean> => {
+      if (isSessionChangeHeld()) return false;
       const serialized =
         boot.mode === 'source' ? sourceTextRef.current : editor ? serialize(editor) : null;
       if (serialized == null) return false;
@@ -1276,6 +1301,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         return true;
       }
       setSaveState('saving');
+      ++pendingSaveCount.current;
       try {
         await onSave(serialized, systemReason);
         lastSavedRef.current = serialized;
@@ -1297,8 +1323,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // the state truthfully: not persisted, still cached on this device.
         setSaveState('error');
         return false;
+      } finally {
+        --pendingSaveCount.current;
       }
-    }, [boot.mode, editor, serialize, onSave, onDirtyChange, cacheDraft]);
+    }, [boot.mode, editor, serialize, onSave, onDirtyChange, cacheDraft, setDirty]);
 
     useEffect(() => {
       onDirtyChange?.(dirty);
@@ -1315,7 +1343,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        host surface. Armed only while genuinely dirty: a page that always
        refuses to close teaches people to click through the dialog. */
     useEffect(() => {
-      if (!dirty || readOnly) return;
+      if (!dirty || suppliedReadOnly) return;
       const onBeforeUnload = (e: BeforeUnloadEvent) => {
         e.preventDefault();
         // Older engines show the prompt only when returnValue is set; the
@@ -1325,7 +1353,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       };
       window.addEventListener('beforeunload', onBeforeUnload);
       return () => window.removeEventListener('beforeunload', onBeforeUnload);
-    }, [dirty, readOnly]);
+    }, [dirty, suppliedReadOnly]);
 
     /* ── A pending autosave must not die with the mount ──
        Hosts that pass `autosaveMs` (the MDX dossier drawer) debounce their
@@ -1346,7 +1374,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         }
         const pending = pendingAutosaveRef.current;
         pendingAutosaveRef.current = null;
-        if (pending != null && pending !== lastSavedRef.current) {
+        if (pending != null && pending !== lastSavedRef.current && !isSessionChangeHeld()) {
           void (async () => {
             try {
               await onSaveRef.current(pending);

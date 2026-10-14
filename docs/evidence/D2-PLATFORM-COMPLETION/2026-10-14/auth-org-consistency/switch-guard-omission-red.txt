@@ -1,0 +1,860 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > lists actual memberships, requires a calm confirmation, and can cancel without rotating the session
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > adopts the server-verified scoped session, clears predecessor context and opens a fresh shell without a program deep link
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > keeps a membership refusal visible and keeps the existing session
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends the spent session and offers sign-in if the replacement session cannot be verified
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not store a replacement token whose verified user or organization differs from the requested membership
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not retain a new session if fresh-shell navigation fails
+ × client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > refuses dirty preflight without rotating, purging drafts or asking a second confirmation 5828ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rse-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Formatting"[39m
+        [33mclass[39m=[32m"rse-ribbon"[39m
+        [33mrole[39m=[32m"toolbar"[39m
+      [36m>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"Paragraph style"[39m
+          [33mclass[39m=[32m"rse-sel"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"p"[39m
+          [36m>[39m
+            [0mParagraph[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h1"[39m
+          [36m>[39m
+            [0mHeading 1[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h2"[39m
+          [36m>[39m
+            [0mHeading 2[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h3"[39m
+          [36m>[39m
+            [0mHeading 3[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h4"[39m
+          [36m>[39m
+            [0mHeading 4[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h5"[39m
+          [36m>[39m
+            [0mHeading 5[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bold (⌘B)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bold"[39m
+          [33mtitle[39m=[32m"Bold (⌘B)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0mB[0m
+          [36m</b>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Italic (⌘I)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-italic"[39m
+          [33mtitle[39m=[32m"Italic (⌘I)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<i>[39m
+            [0mI[0m
+          [36m</i>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Underline (⌘U)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-underline"[39m
+          [33mtitle[39m=[32m"Underline (⌘U)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"text-decoration: underline;"[39m
+          [36m>[39m
+            [0mU[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Superscript (⌘.) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-superscript"[39m
+          [33mtitle[39m=[32m"Superscript (⌘.)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sup>[39m
+              [0m2[0m
+            [36m</sup>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Subscript (⌘,) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-subscript"[39m
+          [33mtitle[39m=[32m"Subscript (⌘,)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sub>[39m
+              [0m2[0m
+            [36m</sub>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Highlight — ab"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-highlight"[39m
+          [33mtitle[39m=[32m"Highlight"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"rse-hl-glyph"[39m
+          [36m>[39m
+            [0mab[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bullet-list"[39m
+          [33mtitle[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-list"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 18h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 6h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 12h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 18h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 6h13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-numbered-list"[39m
+          [33mtitle[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rse-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Formatting"[39m
+        [33mclass[39m=[32m"rse-ribbon"[39m
+        [33mrole[39m=[32m"toolbar"[39m
+      [36m>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"Paragraph style"[39m
+          [33mclass[39m=[32m"rse-sel"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"p"[39m
+          [36m>[39m
+            [0mParagraph[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h1"[39m
+          [36m>[39m
+            [0mHeading 1[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h2"[39m
+          [36m>[39m
+            [0mHeading 2[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h3"[39m
+          [36m>[39m
+            [0mHeading 3[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h4"[39m
+          [36m>[39m
+            [0mHeading 4[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h5"[39m
+          [36m>[39m
+            [0mHeading 5[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bold (⌘B)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bold"[39m
+          [33mtitle[39m=[32m"Bold (⌘B)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0mB[0m
+          [36m</b>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Italic (⌘I)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-italic"[39m
+          [33mtitle[39m=[32m"Italic (⌘I)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<i>[39m
+            [0mI[0m
+          [36m</i>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Underline (⌘U)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-underline"[39m
+          [33mtitle[39m=[32m"Underline (⌘U)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"text-decoration: underline;"[39m
+          [36m>[39m
+            [0mU[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Superscript (⌘.) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-superscript"[39m
+          [33mtitle[39m=[32m"Superscript (⌘.)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sup>[39m
+              [0m2[0m
+            [36m</sup>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Subscript (⌘,) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-subscript"[39m
+          [33mtitle[39m=[32m"Subscript (⌘,)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sub>[39m
+              [0m2[0m
+            [36m</sub>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Highlight — ab"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-highlight"[39m
+          [33mtitle[39m=[32m"Highlight"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"rse-hl-glyph"[39m
+          [36m>[39m
+            [0mab[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bullet-list"[39m
+          [33mtitle[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-list"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 18h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 6h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 12h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 18h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 6h13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-numbered-list"[39m
+          [33mtitle[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+        ...
+ × client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds editing while SELECT waits and restores it after a definite membership refusal 241ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > keeps the old editor held after assign returns until the current document unloads 262ms
+   → expected true to be false // Object.is equality
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds the raw source textarea without rewriting the device recovery cache
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after select, expires the spent bearer and preserves only the original account recovery cache
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > rechecks after probe, expires the spent bearer and preserves only the original account recovery cache
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while select was pending
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > does not end an unrelated new sign-in while probe was pending
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > a pending switch cannot adopt over newly unsaved work or a replacement sign-in > preserves a replacement sign-in for the same account and organization while SELECT waits
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > ends an expired access-token session rather than allowing another switch attempt
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > requires sign-in when the select request has an unknown outcome after a network failure
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > prevents duplicate session rotations while a switch request is pending
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > shows a membership read error with retry rather than pretending there are no organizations
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > renders the organization identifier when the backend has no name
+ ↓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > refuses a stale account identity before dispatching an organization change
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > refuses dirty preflight without rotating, purging drafts or asking a second confirmation
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rse-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Formatting"[39m
+        [33mclass[39m=[32m"rse-ribbon"[39m
+        [33mrole[39m=[32m"toolbar"[39m
+      [36m>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"Paragraph style"[39m
+          [33mclass[39m=[32m"rse-sel"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"p"[39m
+          [36m>[39m
+            [0mParagraph[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h1"[39m
+          [36m>[39m
+            [0mHeading 1[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h2"[39m
+          [36m>[39m
+            [0mHeading 2[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h3"[39m
+          [36m>[39m
+            [0mHeading 3[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h4"[39m
+          [36m>[39m
+            [0mHeading 4[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h5"[39m
+          [36m>[39m
+            [0mHeading 5[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bold (⌘B)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bold"[39m
+          [33mtitle[39m=[32m"Bold (⌘B)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0mB[0m
+          [36m</b>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Italic (⌘I)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-italic"[39m
+          [33mtitle[39m=[32m"Italic (⌘I)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<i>[39m
+            [0mI[0m
+          [36m</i>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Underline (⌘U)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-underline"[39m
+          [33mtitle[39m=[32m"Underline (⌘U)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"text-decoration: underline;"[39m
+          [36m>[39m
+            [0mU[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Superscript (⌘.) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-superscript"[39m
+          [33mtitle[39m=[32m"Superscript (⌘.)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sup>[39m
+              [0m2[0m
+            [36m</sup>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Subscript (⌘,) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-subscript"[39m
+          [33mtitle[39m=[32m"Subscript (⌘,)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sub>[39m
+              [0m2[0m
+            [36m</sub>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Highlight — ab"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-highlight"[39m
+          [33mtitle[39m=[32m"Highlight"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"rse-hl-glyph"[39m
+          [36m>[39m
+            [0mab[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bullet-list"[39m
+          [33mtitle[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-list"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 18h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 6h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 12h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 18h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 6h13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-numbered-list"[39m
+          [33mtitle[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rse-root"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Formatting"[39m
+        [33mclass[39m=[32m"rse-ribbon"[39m
+        [33mrole[39m=[32m"toolbar"[39m
+      [36m>[39m
+        [36m<select[39m
+          [33maria-label[39m=[32m"Paragraph style"[39m
+          [33mclass[39m=[32m"rse-sel"[39m
+        [36m>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"p"[39m
+          [36m>[39m
+            [0mParagraph[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h1"[39m
+          [36m>[39m
+            [0mHeading 1[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h2"[39m
+          [36m>[39m
+            [0mHeading 2[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h3"[39m
+          [36m>[39m
+            [0mHeading 3[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h4"[39m
+          [36m>[39m
+            [0mHeading 4[0m
+          [36m</option>[39m
+          [36m<option[39m
+            [33mvalue[39m=[32m"h5"[39m
+          [36m>[39m
+            [0mHeading 5[0m
+          [36m</option>[39m
+        [36m</select>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bold (⌘B)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bold"[39m
+          [33mtitle[39m=[32m"Bold (⌘B)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0mB[0m
+          [36m</b>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Italic (⌘I)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-italic"[39m
+          [33mtitle[39m=[32m"Italic (⌘I)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<i>[39m
+            [0mI[0m
+          [36m</i>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Underline (⌘U)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-underline"[39m
+          [33mtitle[39m=[32m"Underline (⌘U)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mstyle[39m=[32m"text-decoration: underline;"[39m
+          [36m>[39m
+            [0mU[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Superscript (⌘.) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-superscript"[39m
+          [33mtitle[39m=[32m"Superscript (⌘.)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sup>[39m
+              [0m2[0m
+            [36m</sup>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Subscript (⌘,) — x2"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-subscript"[39m
+          [33mtitle[39m=[32m"Subscript (⌘,)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mx[0m
+            [36m<sub>[39m
+              [0m2[0m
+            [36m</sub>[39m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Highlight — ab"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-highlight"[39m
+          [33mtitle[39m=[32m"Highlight"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"rse-hl-glyph"[39m
+          [36m>[39m
+            [0mab[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"rse-sep"[39m
+        [36m/>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-bullet-list"[39m
+          [33mtitle[39m=[32m"Bullet list (⌘⇧8)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-list"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 18h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 6h.01"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 12h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 18h13"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 6h13"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"rse-rb"[39m
+          [33mdata-testid[39m=[32m"rse-rb-numbered-list"[39m
+          [33mtitle[39m=[32m"Numbered list (⌘⇧7)"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+        ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx:169:25
+    167|     expect(ownDraft).toContain('Unsaved medical narrative');
+    168|     fireEvent.click(screen.getByRole('button', { name: 'Confirm switch…
+    169|     expect(await screen.findByRole('alert')).toHaveProperty('textConte…
+       |                         ^
+    170|     expect(calls.some(call => call.path === SELECT)).toBe(false);
+    171|     expect(localStorage.getItem(deviceDraftKey('33', 'switch-section')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > holds editing while SELECT waits and restores it after a definite membership refusal
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx:189:33
+    187|     fireEvent.click(screen.getByRole('button', { name: 'Confirm switch…
+    188|     await waitFor(() => expect(calls.some(call => call.path === SELECT…
+    189|     expect(canvas().isEditable).toBe(false);
+       |                                 ^
+    190|     expect(editor.current!.insertSuggestion('Late suggested prose', { …
+    191|     await act(async () => { finish(json(403, { error: 'ORG_ACCESS_DENI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switching holds the existing editor before spending the bearer > keeps the old editor held after assign returns until the current document unloads
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx:205:33
+    203|     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/concep…
+    204|     expect(authService.getUser()?.organizationId).toBe('71');
+    205|     expect(canvas().isEditable).toBe(false);
+       |                                 ^
+    206|     expect(isSessionChangeHeld()).toBe(true);
+    207|     expect(screen.queryByRole('button', { name: 'Save section' })).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 18 skipped (21)
+   Start at  04:55:08
+   Duration  9.82s (transform 1.53s, setup 241ms, import 1.93s, tests 6.34s, environment 927ms)
+

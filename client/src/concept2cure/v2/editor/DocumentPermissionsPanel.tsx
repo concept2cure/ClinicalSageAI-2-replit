@@ -138,12 +138,12 @@ async function changeAccess(request: ChangeRequest, docId: string): Promise<Chan
   }
 }
 function personLabel(p: PermissionRow, labels: Map<string, string>): string {
-  return labels.get(p.principal_id) ?? p.email ?? 'Member no longer in the roster';
+  return labels.get(p.principal_id) ?? p.email ?? 'Member details unavailable';
 }
 function scopeLabel(p: PermissionRow, sections: SectionChoice[]): string {
   if (p.section_id === null) return 'Whole document';
   const section = sections.find(s => s.id === p.section_id);
-  return section ? `${section.code} · ${section.title}` : 'Section no longer in the outline';
+  return section ? `${section.code} · ${section.title}` : 'Section details unavailable';
 }
 function confirmation(act: Act, row: PermissionRow, labels: Map<string, string>): string {
   const result = act.kind === 'grant' ? `grant recorded for ${personLabel(row, labels)}. ${grantState(row) === 'Active' ? 'Access is active.' : 'This grant is not active; check its dates.'}`

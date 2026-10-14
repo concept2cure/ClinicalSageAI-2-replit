@@ -10,6 +10,13 @@
  *   api_key_created, api_key_revoked     routes/api-keys.ts (auditService.logAction)
  *   api_key_expired                      services/api-key-service.ts
  *   user_invited                         services/tenant/invitation-delivery.ts
+ *   organization_invitation_accepted / organization_invitation_declined
+ *                                        atomicQuotaService.js / tenant-users.ts,
+ *                                        chained in the consent transaction
+ *   scim_ip_rule_created / scim_ip_rule_updated / scim_ip_rule_deleted
+ *                                        services/scim-ip-policy.ts, for
+ *                                        routes/admin/scim-ip-allowlist.ts,
+ *                                        scim_ip_allowlist, chained in the rule transaction
  *   member_role_changed, member_removed  services/tenant/membership-change.ts, for
  *                                        routes/tenant-users.ts PATCH and DELETE
  *                                        /:organizationId/:userId and, for
@@ -63,6 +70,11 @@ export const ADMINISTRATIVE_ACTIONS: readonly string[] = [
   'api_key_revoked',
   'api_key_expired',
   'user_invited',
+  'organization_invitation_accepted',
+  'organization_invitation_declined',
+  'scim_ip_rule_created',
+  'scim_ip_rule_updated',
+  'scim_ip_rule_deleted',
   'member_role_changed',
   'member_removed',
   'tenant_settings_changed',
@@ -139,7 +151,7 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
 export const administrativeChanges: ReportDefinition = {
   id: 'administrative-changes',
   title: 'Administrative and privileged changes',
-  purpose: 'Lists the security-relevant changes made to this organisation in the period: API keys, invitations, member role changes and removals, second-factor changes, lifecycle overrides, cross-organisation access attempts, organisation profile, settings and configuration, and SCIM account provisioning.',
+  purpose: 'Lists the security-relevant changes made to this organisation in the period: API keys, invitations, member role changes and removals, second-factor changes, lifecycle overrides, cross-organisation access attempts, organisation profile, settings and configuration, and SCIM account provisioning and IP allow-list rules.',
   basis: ['21 CFR 11.10(d)', '21 CFR 11.10(e)', '21 CFR 11.10(g)', 'SOC 2 CC6.2', 'SOC 2 CC8.1', 'EU GMP Annex 11 §12'],
   period: 'range',
   sections: [
@@ -163,12 +175,12 @@ export const administrativeChanges: ReportDefinition = {
     },
   ],
   notRecorded: [
-    'Acceptance of an invitation is not recorded.',
+    'Invitation acceptances and declines made before the product began recording consent transactions were not recorded.',
     'A role change that arrives through a SCIM group is listed with the role before and after; it has no person as actor, and its reason names the group. Those made before the product began recording them were not recorded.',
-    'Tenant configuration changes and resets are recorded by section and by the names of the fields changed. Values before and after are recorded only for the security settings (the second-factor requirement, password policy, session timeout and IP restrictions) and the audit-trail retention period; other values, which include webhook addresses, are not recorded.',
+    'Tenant configuration changes and resets are recorded by section and by the names of the fields changed. Values before and after are recorded only for the security settings (the second-factor requirement, password policy, session timeout, concurrent-session limit and IP restrictions) and the audit-trail retention period; other values, which include webhook addresses, are not recorded.',
     'Member role changes and removals made by an administrator, and tenant configuration changes, made before the product began recording them were not recorded.',
     'Changes to the organisation settings are recorded by section name only, without the values before or after the change.',
-    'Administration of SCIM tokens and of the IP allow-list is not recorded.',
+    'Administration of SCIM tokens is not recorded. IP allow-list changes made before the product began recording them were not recorded.',
     'SAML single sign-on is configured from the server environment, so its configuration has no change record.',
     "Suspensions by the platform operator and grants of platform roles are recorded in the platform's records, not the organisation's, so they do not appear here.",
   ],

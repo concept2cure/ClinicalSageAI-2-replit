@@ -3,6 +3,7 @@ import React from 'react';
 import { apiRequest, extractApiError, queryClient, redactInternals } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
+import { hasUnsavedSessionWork, reserveSessionChange } from '@/lib/sessionChangeGuard';
 import { ErrorState, useLiveData, type DataState } from './dataConnect';
 
 const LIST = '/api/organizations?membershipOnly=true';
@@ -27,6 +28,10 @@ function sessionMatches(userId: string, organizationId: string): boolean {
   const caller = authService.getUser();
   return !!getAuthToken() && String(caller?.id) === userId && String(caller?.organizationId) === organizationId;
 }
+const unchangedSession = (token: string | null, userId: string, organizationId: string) =>
+  getAuthToken() === token && sessionMatches(userId, organizationId);
+const replacementBearer = (current: string | null, original: string | null, successor: string | null) =>
+  Boolean(current && current !== original && current !== successor);
 async function selectSession(organizationId: string): Promise<string> {
   const response = await apiRequest('POST', SELECT, { organizationId });
   const answer = await response.json() as { success?: boolean; token?: unknown; organization?: { id?: unknown } };
@@ -72,7 +77,7 @@ function OrganizationChoice({ organizations, organizationId, selected, chosen, f
       {organizations.map(org => <option key={org.id} value={org.id}>{label(org)}{org.id === organizationId ? ' (current)' : ''}</option>)}
     </select>
     {confirming && chosen ? <>
-      <p className="de-desc">Switch to {label(chosen)}? Your saved records remain in their organisation. Unsaved changes on this page are discarded.</p>
+      <p className="de-desc">Switch to {label(chosen)}? Your saved records remain in their organisation. Save or resolve unsaved work before switching.</p>
       <button type="button" className="de-btn ghost" disabled={busy} onClick={onSwitch}>{busy ? 'Switching…' : 'Confirm switch'}</button>{' '}
       <button type="button" className="de-btn ghost" disabled={busy} onClick={onCancel}>Cancel switch</button>
     </> : <button type="button" className="de-btn ghost" disabled={busy || !chosen || selected === organizationId} onClick={onConfirm}>Switch organisation</button>}
@@ -106,24 +111,35 @@ export function OrganizationSwitcher({ userId, organizationId, revision = 0, onC
   const failClosed = (message: string) => {
     setRequiresSignIn(true);
     setError(message);
-    authService.endSession(null);
+    // Preserve only this account's recoverable device text; every bearer still ends.
+    authService.endSession(null, true);
   };
   const change = async () => {
     if (lock.current || !chosen || selected === organizationId) return;
     if (!sessionMatches(userId, organizationId)) {
-      setError('Your session has changed. Close Account and open it again before switching organisations.');
+      setError('Your session has changed. Reload this page before continuing.');
+      return;
+    }
+    const release = reserveSessionChange();
+    if (!release) {
+      setError('Save or resolve your unsaved work before switching organisations. Nothing was switched.');
       return;
     }
     lock.current = true;
     setBusy(true);
     setError(null);
     let rotated = false;
+    let keepHeld = false;
+    const originalToken = getAuthToken();
+    let successorToken: string | null = null;
     try {
       const token = await selectSession(selected);
       // The route spends the previous access token before it answers success.
       rotated = true;
+      successorToken = token;
+      if (!unchangedSession(originalToken, userId, organizationId) || hasUnsavedSessionWork()) throw new Error('The session or unsaved work changed while the organisation switch was pending.');
       const persistent = !sessionStorage.getItem('trialsage_access_token') && Boolean(localStorage.getItem('trialsage_access_token'));
-      const user = await authService.adoptSession(token, persistent, { userId, organizationId: selected });
+      const user = await authService.adoptSession(token, persistent, { userId, organizationId: selected }, () => !hasUnsavedSessionWork());
       if (!user) throw new Error('The new organisation session could not be verified. Sign in again before continuing.');
       // The current program is a tab mirror. Never restore it into a different
       // tenant; a fresh document also discards conversation and entitlement state.
@@ -131,12 +147,22 @@ export function OrganizationSwitcher({ userId, organizationId, revision = 0, onC
       delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
       queryClient.clear();
       navigate(DESTINATION);
+      // assign() may return before unload. Keep the old editor held through that interval.
+      keepHeld = true;
       onClose?.();
     } catch (failure) {
+      const currentToken = getAuthToken();
+      if (replacementBearer(currentToken, originalToken, successorToken)) {
+        // A different sign-in owns this bearer. Keep the old document held until unload.
+        keepHeld = true;
+        setError('Your session has changed. Reload this page before continuing.');
+        return;
+      }
       const refusal = switchFailure(failure, rotated);
       if (refusal.requiresSignIn) failClosed(refusal.message);
       else setError(refusal.message);
     } finally {
+      if (!keepHeld) release();
       lock.current = false;
       setBusy(false);
     }

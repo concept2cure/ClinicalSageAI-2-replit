@@ -155,6 +155,19 @@ describe('document access changes and refusals', () => {
     expect((screen.getByRole('button', { name: 'Grant access' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('reports unavailable member and section details without claiming either was removed', async () => {
+    rows = [{ ...REVIEWER, email: null }];
+    apiRequest.mockImplementation(async (_method, url) => {
+      if (url === PATH) return ok({ success: true, docId: DOC, permissions: rows });
+      throw new ApiRequestError('Organization access required', 403);
+    });
+    render(<DocumentPermissionsPanel {...props} sections={[]} />);
+    expect(await screen.findByText('Member details unavailable')).toBeTruthy();
+    expect(screen.getByText('Section details unavailable')).toBeTruthy();
+    expect(screen.queryByText(/no longer in the roster|no longer in the outline/)).toBeNull();
+    expect(screen.getByText('Medical review', { exact: false })).toBeTruthy();
+  });
+
 });
 
 describe('document access history and uncertain outcomes', () => {

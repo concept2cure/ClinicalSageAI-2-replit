@@ -1,0 +1,143 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 105ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session 2ms
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not let an old account read replace the adopted organization 60ms
+   → expected true to be false // Object.is equality
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > refuses account and policy refreshes begun while adoption is awaiting verification 2ms
+   → expected true to be false // Object.is equality
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not complete an adoption after the browser session has ended 3ms
+   → expected { id: '7', …(3) } to be null
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not complete an adoption after a different account has signed in 4ms
+   → expected { id: '7', …(3) } to be null
+ × client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > keeps the newest of overlapping session adoption attempts 3ms
+   → expected { id: '7', …(3) } to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not let an old account read replace the adopted organization
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:143:40
+    141|     expect(await service.adoptSession('sso-1')).toBeTruthy();
+    142|     late.resolve(session('1'));
+    143|     expect((await refreshing).success).toBe(false);
+       |                                        ^
+    144|     expect(service.getUser()?.organizationId).toBe('42');
+    145|     expect(JSON.parse(localStorage.getItem('trialsage_user')!).organiz…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > refuses account and policy refreshes begun while adoption is awaiting verification
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:158:51
+    156|     const updated = vi.fn();
+    157|     service.on('user_updated', updated);
+    158|     expect((await service.refreshUser()).success).toBe(false);
+       |                                                   ^
+    159|     expect(await service.refreshToken()).toBe(false);
+    160|     expect(await service.refreshSessionPolicy()).toMatchObject({ idleM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not complete an adoption after the browser session has ended
+AssertionError: expected { id: '7', …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "email": "alice@acme.test",
+  "id": "7",
+  "organizationId": "42",
+  "roles": [
+    "manager",
+  ],
+}
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:174:28
+    172|     service.endSession(null);
+    173|     probe.resolve(session('42'));
+    174|     expect(await adopting).toBeNull();
+       |                            ^
+    175|     expect(service.isAuthenticated()).toBe(false);
+    176|     expect(localStorage.getItem('trialsage_access_token')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > does not complete an adoption after a different account has signed in
+AssertionError: expected { id: '7', …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "email": "alice@acme.test",
+  "id": "7",
+  "organizationId": "42",
+  "roles": [
+    "manager",
+  ],
+}
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:189:28
+    187|     expect((await service.login({ email: 'bob@acme.test', password: 't…
+    188|     probe.resolve(session('42'));
+    189|     expect(await adopting).toBeNull();
+       |                            ^
+    190|     expect(service.getUser()).toMatchObject({ id: '8', organizationId:…
+    191|     expect(await service.getValidAccessToken()).toBe('new-login');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-adopt-session.test.ts > deferred session adoption and account refresh > keeps the newest of overlapping session adoption attempts
+AssertionError: expected { id: '7', …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "email": "alice@acme.test",
+  "id": "7",
+  "organizationId": "42",
+  "roles": [
+    "manager",
+  ],
+}
+
+ ❯ client/src/services/portal/__tests__/authService-adopt-session.test.ts:202:25
+    200|     expect(await service.adoptSession('second')).toMatchObject({ organ…
+    201|     older.resolve(session('42'));
+    202|     expect(await first).toBeNull();
+       |                         ^
+    203|     expect(service.getUser()?.organizationId).toBe('9');
+    204|     expect(await service.getValidAccessToken()).toBe('second');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 5 passed (10)
+   Start at  04:43:49
+   Duration  1.11s (transform 176ms, setup 158ms, import 22ms, tests 190ms, environment 557ms)
+
