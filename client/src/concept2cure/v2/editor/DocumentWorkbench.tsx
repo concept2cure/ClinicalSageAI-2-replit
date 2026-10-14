@@ -73,6 +73,7 @@ import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/Authorin
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
+import { readSavedTemplateContext, savedTemplateFacts, type SavedTemplateContext } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { TemplateGuidance } from './TemplateGuidance';
@@ -1355,6 +1356,7 @@ export function DocumentWorkbench({
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
+  const [docTemplateContext, setDocTemplateContext] = useState<SavedTemplateContext | null>(null);
   /* S5a: the save's check of the draft's figures against its cited sources. */
   const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
   const [docClaims, setDocClaims] = useState<ClaimsCheckSummary | null>(null);
@@ -1797,6 +1799,7 @@ export function DocumentWorkbench({
       sectionTitle: activeSection?.title ?? null,
       sectionUpdatedAt: activeSection?.updated_at ?? null,
       savedRecordOnly: true,
+      ...savedTemplateFacts(docTemplateContext, activeDocId),
       evidenceSourceIds: sources.flatMap(s => s.source ? [String(s.source.id)] : []),
       evidenceSourcesRead: sourcesState,
       ...(docProvenance?.importSource ? { importSource: {
@@ -1818,7 +1821,7 @@ export function DocumentWorkbench({
        rather than sending an empty claim. */
     const screenActions = advertisedScreenActions('document-authoring');
     return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
-  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance]);
+  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance, docTemplateContext]);
   editorModuleContextRef.current = moduleContext;
   usePublishSurfaceContext('document-authoring', embedded ? null : {
     summary: activeDoc ? 'A saved authoring document is open.' : 'Authoring documents for the open project.',
@@ -1902,6 +1905,7 @@ export function DocumentWorkbench({
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocTemplateContext(null);
     setDocTemplateId(null);
     setDocFigures(null);
     setDocClaims(null);
@@ -1912,8 +1916,13 @@ export function DocumentWorkbench({
       `/api/authoring/docs/${encodeURIComponent(wanted)}`,
     ).then(({ ok, body }) => {
       if (provenanceDocRef.current !== wanted) return;
-      if (!ok || !body?.document) return;
-      setDocProvenance(describeProvenance(body.document.provenance));
+      if (!ok || !body?.document) {
+        setDocTemplateContext({ documentId: wanted, templateId: null, templateSourceState: 'unavailable' });
+        return;
+      }
+      const template = readSavedTemplateContext(wanted, body.document);
+      setDocTemplateContext(template);
+      setDocProvenance(describeProvenance(body.document.provenance, { templateId: template.templateId }));
       setDocTemplateId(typeof body.document.template_id === 'string' ? body.document.template_id : null);
       setDocFigures(describeFigureCheck(body.document.provenance));
       setDocClaims(describeClaimsCheck(body.document.provenance));

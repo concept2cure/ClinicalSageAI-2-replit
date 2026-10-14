@@ -74,13 +74,13 @@ export const VERIFY_REVISION: AnaTool = {
 export const CRITIQUE_DOCUMENT: AnaTool = {
   name: 'critique_document',
   description:
-    'Critique a whole multi-section document for precision and cross-section coherence. Prefer document_id for the complete saved authoring document in the conversation’s open project: current project and whole-document view permission are required. Read-only and deterministic; no model or write. Pending insertions are excluded and proposed deletions retained; pending suggestions and unavailable/unregistered stored citations are reported. The writing score does not verify evidence or approve a document. Findings and exact saved section identities are paged: follow every nextOffset with expected_snapshot and unchanged options; changed snapshots refuse. Alternatively provide sections for caller-supplied text, which cannot establish saved-document coverage. Provide exactly one of document_id or sections.',
+    'Critique a whole multi-section document for precision and cross-section coherence. Prefer document_id for the complete saved authoring document in the conversation’s open project: current project and whole-document view permission are required. Read-only and deterministic; no model or write. Pending insertions are excluded and proposed deletions retained; pending suggestions and unavailable/unregistered stored citations are reported. Saved template identity, original-record limits and exact section guidance are separate reference context, never scored prose or checklist completion. The writing score does not verify evidence, original records, regulatory completeness or approval. Findings, section coverage and complete template references are paged: follow every nextOffset with expected_snapshot and unchanged options; saved content, reference or option drift refuses. Alternatively provide sections for caller-supplied text, which cannot establish saved-document coverage. Provide exactly one of document_id or sections.',
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'string', description: 'Exact saved authoring document UUID from screen context. Scope comes from the authorized open project, never from tool input. Use instead of sections.' },
-      offset: { type: 'number', description: 'Finding/section coverage offset; start at 0 and follow every nextOffset.' },
-      expected_snapshot: { type: 'string', description: 'snapshotSha256 returned by the first saved review. Required for continuation; changed saved content, citations or options refuse.' },
+      offset: { type: 'number', description: 'Finding, section coverage and template reference offset; start at 0 and follow every nextOffset, including reference text parts.' },
+      expected_snapshot: { type: 'string', description: 'snapshotSha256 returned by the first saved review. Required for continuation; changed saved content, citations, template identity/limits/guidance or options refuse.' },
       sections: {
         type: 'array',
         minItems: 1,
