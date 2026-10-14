@@ -1209,6 +1209,7 @@ export function DocumentWorkbench({
   // document, and it now follows the selected section instead of a dropdown
   // that defaulted every filing type to "M3".
   const [module, setModule] = useState('M3');
+  const [creationNoticeContainer, setCreationNoticeContainer] = useState<HTMLDivElement | null>(null);
 
   /* ── The project's governed filing outline ──
      The tree this canvas navigates by. A project's structure is fixed at
@@ -1614,20 +1615,32 @@ export function DocumentWorkbench({
   }, [pendingProgramSwitch]);
   const openProgramRef = useRef(programId);
   openProgramRef.current = programId;
+  // Replacing this token also detects A → B → A round trips while a read is pending.
+  const creationScopeKey = `${programId}:${activeDocId}:${programSwitchHeld}:${status}:${pinnedDocId}`;
+  const creationScopeRef = useRef({ key: creationScopeKey });
+  if (creationScopeRef.current.key !== creationScopeKey) creationScopeRef.current = { key: creationScopeKey };
+  const aliveRef = useRef(true);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
 
   const openPulledDocument = useCallback(async (docId: string) => {
+    if (programSwitchHeld || openProgramRef.current !== programId) return;
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
     // A pinned canvas cannot switch documents; a narrowed list may exclude
     // the new draft. Both use the same exact-id handoff after the leave guard.
     if (pinnedDocId || status !== 'all') {
-      requestLeave({ kind: 'external-document', id: docId });
+      requestLeaveRef.current({ kind: 'external-document', id: docId });
       return;
     }
     await reloadDocs();
-    if (openProgramRef.current !== programId) return;
+    if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return;
     // The author can type while the list refreshes; consult the guard from
     // the current render so those new unsaved changes are held as well.
     requestLeaveRef.current({ kind: 'document', id: docId });
-  }, [pinnedDocId, status, reloadDocs, requestLeave, programId]);
+  }, [pinnedDocId, status, reloadDocs, programId, programSwitchHeld]);
 
   /* The host asking for a section (the conversation canvas: "Ask AnA to draft"
      opens the editor at it). Through requestLeave, so unsaved text in the open
@@ -1943,13 +1956,16 @@ export function DocumentWorkbench({
   /** Document-level structural findings from GET …/sections. */
   const [structure, setStructure] = useState<SectionStructure | null>(null);
   const sectionsDocRef = useRef<string | null>(null);
-  const loadSections = useCallback(async (docId: string) => {
+  const sectionsReadSequence = useRef(0);
+  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void) => {
+    const scope = creationScopeRef.current;
+    const sequence = ++sectionsReadSequence.current;
     sectionsDocRef.current = docId;
     setSectionsState('loading');
     const { ok, body } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
-    if (sectionsDocRef.current !== docId) return;
+    if (!aliveRef.current || creationScopeRef.current !== scope || sectionsDocRef.current !== docId || sectionsReadSequence.current !== sequence) return;
     if (!ok || !body) {
       setSectionsState('error');
       setSections([]);
@@ -1977,8 +1993,31 @@ export function DocumentWorkbench({
       if (landTarget) return target!.sectionId;
       return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
     });
+    afterRead?.(list);
   }, []);
   sectionLoaderRef.current = loadSections;
+
+  const openCreatedSection = useCallback(async (section: { id: string; code: string }) => {
+    if (!activeDocId || programSwitchHeld) return;
+    const sequence = navigationSequence.current;
+    await loadSections(activeDocId, rows => {
+      if (navigationSequence.current === sequence && rows.some(row => row.id === section.id)) {
+        requestLeaveRef.current({ kind: 'section', id: section.id });
+      }
+    });
+  }, [activeDocId, programSwitchHeld, loadSections]);
+
+  const checkCreation = useCallback(async (kind: 'document' | 'section') => {
+    if (programSwitchHeld || openProgramRef.current !== programId) return;
+    if (kind === 'section') {
+      if (activeDocId) await loadSections(activeDocId);
+    } else if (pinnedDocId) {
+      requestLeaveRef.current({ kind: 'external-document', id: pinnedDocId });
+    } else {
+      onStatusChange?.('all');
+      await reloadDocs();
+    }
+  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, reloadDocs]);
 
   useEffect(() => {
     if (!activeDocId) {
@@ -1988,7 +2027,7 @@ export function DocumentWorkbench({
       return;
     }
     void loadSections(activeDocId);
-  }, [activeDocId, loadSections]);
+  }, [activeDocId, loadSections, creationScopeKey]);
 
   /* F4: a click on an outline node with no section here starts it — created
      through POST /api/authoring/sections, opened, the cursor put in it — but
@@ -2021,13 +2060,6 @@ export function DocumentWorkbench({
      a dep-change cleanup would cancel the in-flight search the moment the
      state write re-ran the effect. `aliveRef` guards only real unmount. */
   const targetAttemptedRef = useRef(false);
-  const aliveRef = useRef(true);
-  useEffect(() => {
-    aliveRef.current = true;
-    return () => {
-      aliveRef.current = false;
-    };
-  }, []);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
     const sequence = navigationSequence.current;
@@ -4097,20 +4129,13 @@ export function DocumentWorkbench({
               docTitle={activeDoc?.title ?? null}
               docStatus={activeDoc?.status ?? null}
               module={module}
+              programId={programId}
+              programSwitchHeld={programSwitchHeld}
+              noticeContainer={creationNoticeContainer}
               fireToast={fireToast}
-              onDocCreated={d => {
-                // Adopt the server's document: refetch the tree and open it.
-                // Through the leave guard — creating a document is a deliberate
-                // act, but it must not be the thing that discards the paragraph
-                // the author had half-written in the section they were in.
-                void loadDocs().then(() => requestLeave({ kind: 'document', id: d.id }));
-              }}
-              onSectionCreated={s => {
-                if (activeDocId)
-                  void loadSections(activeDocId).then(() =>
-                    requestLeave({ kind: 'section', id: s.id })
-                  );
-              }}
+              onDocCreated={d => openPulledDocument(d.id)}
+              onSectionCreated={openCreatedSection}
+              onCheckCreation={checkCreation}
               /* A confirmed export record re-baselines this document, so the Exports
                  rail's "changed since the last export" verdict is now stale. */
               onExported={() => setExportsEpoch(e => e + 1)}
@@ -4365,6 +4390,7 @@ export function DocumentWorkbench({
             )}
           </div>
         </header>
+        <div ref={setCreationNoticeContainer} data-testid="authoring-creation-notices" />
         <AuthoringOversightActions projectOpen={!!programId} sectionOpen={!!activeSection} documentOpen={!!activeDocId} dirty={dirty} onAsk={askAna} />
 
         {/* ── The deep-link's honest miss ──

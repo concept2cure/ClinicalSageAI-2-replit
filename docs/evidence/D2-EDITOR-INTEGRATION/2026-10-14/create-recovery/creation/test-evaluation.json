@@ -1,0 +1,188 @@
+{
+  "workstream": "W1 / D2",
+  "branch": "concept2cure-v2",
+  "baseCommitAtEvidence": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+  "qualification": "Synthetic transport only. Actual existing AuthoringCreateExport and actual C2CForm in all 81 new tests; the 26 preserved legacy tests retain their existing form stub. No server persistence, provider, credential, agency, or deployed-environment claim.",
+  "runs": [
+    {
+      "artifact": "initial-red.txt",
+      "actualExitCode": 1,
+      "totalDiscovered": 7,
+      "passed": 0,
+      "failed": 7,
+      "skipped": 0,
+      "rawLogSha256": "ed3c1ea811f9eef677d4439e8d2f60c1053be7273c93ef80cf79785c51f2a6c3",
+      "artifactSha256": "b6ab7078d20d8e35d2cbaf96832b7b3de86e73c16c8e17ec876f09b0f386b721"
+    },
+    {
+      "artifact": "expanded-red.txt",
+      "actualExitCode": 1,
+      "totalDiscovered": 65,
+      "passed": 4,
+      "failed": 61,
+      "skipped": 0,
+      "rawLogSha256": "eaee8b0bc658455dcc56b8d2cd2261d941f86f2f3d082aa8624db7675edf9de9",
+      "artifactSha256": "bb79d190d29b41a0147abc1580305a8acbe8d0831b29f57c971812ee3b92a1d3"
+    },
+    {
+      "artifact": "first-integration.txt",
+      "actualExitCode": 1,
+      "totalDiscovered": 101,
+      "passed": 96,
+      "failed": 5,
+      "skipped": 0,
+      "rawLogSha256": "29040d503a0037bfe55c6c0cc11b362a3205caed57e9520eba6b409d7ea1ba35",
+      "artifactSha256": "5d74ab88cad316b4fbf1c0bb9744548ea315728050190fa01ea0b9295e12fa13"
+    },
+    {
+      "artifact": "intermediate-green-101.txt",
+      "actualExitCode": 0,
+      "totalDiscovered": 101,
+      "passed": 101,
+      "failed": 0,
+      "skipped": 0,
+      "rawLogSha256": "df9c530c524eb2e412af7fd8139fd9626cfa35710517616ac47839dc36614e6e",
+      "artifactSha256": "78b41d38cbcc1f1b7537c48fc37bda784f87580cf3e68c273de66c325280e85e"
+    },
+    {
+      "artifact": "stale-check-supplement.txt",
+      "actualExitCode": 0,
+      "totalDiscovered": 79,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 75,
+      "rawLogSha256": "1e6cbb205f810907aa8b3bea8d62ff4f31e010a8fc1dee8b145a1ae27a48e592",
+      "artifactSha256": "985f7e625ab6d6f6ce5064462e6303fe7bb1dc75012117e234c055c6d86cc6f9"
+    },
+    {
+      "artifact": "intermediate-green-105.txt",
+      "actualExitCode": 0,
+      "totalDiscovered": 105,
+      "passed": 105,
+      "failed": 0,
+      "skipped": 0,
+      "rawLogSha256": "46b65b90965c03d645353febfe44bda80d2b21563a34e1bf026486d422c754a8",
+      "artifactSha256": "334fa80e9de2a37092675e040e877840c8df8e927d90a50a499b95286d84fd87"
+    },
+    {
+      "artifact": "unsuccessful-receipt-red.txt",
+      "actualExitCode": 1,
+      "totalDiscovered": 81,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 79,
+      "rawLogSha256": "c92bbd9fbd4a23c94954194f7ab7fc6617dd3ea5ec2c3770a8ae14c669ee1b50",
+      "artifactSha256": "c397c6b49c39238acbb721ccba1439719caeeb5115ff0806ac36dfca69c24bce"
+    },
+    {
+      "artifact": "pre-notice-placement-green-107.txt",
+      "actualExitCode": 0,
+      "totalDiscovered": 107,
+      "passed": 107,
+      "failed": 0,
+      "skipped": 0,
+      "rawLogSha256": "8b5e0e89c84a4f8baba7b22e19c06a462871a2ee9a07ae822573c020289361cc",
+      "artifactSha256": "027ac8dd947198569dec9a1e38acb3e1a5f5e1d1bbc09563c2d8608e84f1de8c"
+    },
+    {
+      "artifact": "final-green.txt",
+      "actualExitCode": 0,
+      "totalDiscovered": 107,
+      "passed": 107,
+      "failed": 0,
+      "skipped": 0,
+      "rawLogSha256": "c4be1b69b5dce74432a4e48b34c9b9d7b0c9567cb54d481fff94c9659d9bc3f7",
+      "artifactSha256": "ff94c5df0e81e08c8e135098d7d6d8c6ae3fe000ae53f8549d11f653a9f08f18",
+      "qualification": "Current optional noticeContainer portal and extracted documentReceipt helper, with unchanged test assertions."
+    }
+  ],
+  "finalSourcePins": {
+    "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx": "46a0c14aa83125f876dffbdae36f44bf3439c1c2ef6c7cf29090db8f37a74f41",
+    "client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx": "13d852782f869eaaf81b2bb5ed12a88089ef3b0c9d5ecbdf307befc486d2abc7",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "ef3884db3e24de05b3ab5d53fcd74d0f95ce007fc604b720ac476c29beb93400",
+    "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "8746f8c0c65db27b724dcada76d51ee24c4c0a3cf361733b7f7d9d185283aded",
+    "client/src/concept2cure/v2/C2CForm.tsx": "6d70e9b895364a167219a8fd970a6f278302bf1ea59bad27ab8b9fbee47f3721",
+    "client/src/concept2cure/v2/shellProject.ts": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30",
+    "client/src/concept2cure/v2/newDocumentAction.ts": "52a069ea721bdcf067b8d92b842efcb2587f56b42531ecdb017b50d87aff0712"
+  },
+  "redExpandedSourcePin": {
+    "artifact": "expanded-red-suite.tsx.txt",
+    "sha256": "5c0860ebc3c1042321117915b1a802db6046c8ad6dd8b8e7ddc2a0d503d9bd36",
+    "productionComponentSha256": "3be263b16fc5e49dc378ca7c96b3431438a0784986308812a550ae4030e332c7"
+  },
+  "lint": {
+    "newFile": {
+      "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH ./node_modules/.bin/eslint client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx --max-warnings=0",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0
+    },
+    "legacyFile": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "baselineRule": "max-lines-per-function",
+      "unchangedLines": 147
+    },
+    "strictCombinedAttempt": {
+      "exitCode": 1,
+      "reason": "Existing unchanged legacy max-lines-per-function warning; no new warning or lint error."
+    },
+    "finalStrictTargets": {
+      "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH ./node_modules/.bin/eslint client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx client/src/concept2cure/v2/editor/useAuthoringCreation.ts --max-warnings=0",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "finalCommand": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH ./node_modules/.bin/vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx",
+  "finalResult": {
+    "files": 2,
+    "newRealFormCases": 81,
+    "preservedLegacyCases": 26,
+    "passed": 107,
+    "failed": 0,
+    "durationSeconds": 28.13,
+    "newTestReactActWarnings": 0,
+    "legacyDiagnostics": "Existing legacy act warnings and JSDOM navigation-not-implemented download notices remain visible in final-green.txt."
+  },
+  "testCalibrations": [
+    "An initial label query incorrectly required exact text including the required marker; corrected to accessible textbox names before captured initial-red.txt.",
+    "Two first-integration tests required reopening a pending drawer; clarified intended UX keeps New disabled while pending. Revised cancellation tests still prove the guard and one POST, then reopen only after confirmation.",
+    "The newer-pending test moved its second request into a different current project rather than trying another request in a retained-unknown old project.",
+    "The stale-check supplement filename contains red for historical scratch naming, but its actual result is GREEN 4 passed / 75 skipped; no failing run is claimed for this supplement."
+  ],
+  "logNormalization": "ANSI color escapes and trailing whitespace removed from readable text artifacts; raw input log hashes retained.",
+  "historicalSnapshotPins": {
+    "expanded-red-suite.tsx.txt": "5c0860ebc3c1042321117915b1a802db6046c8ad6dd8b8e7ddc2a0d503d9bd36",
+    "unsuccessful-receipt-red-suite.tsx.txt": "46a0c14aa83125f876dffbdae36f44bf3439c1c2ef6c7cf29090db8f37a74f41",
+    "unsuccessful-receipt-red-hook.ts.txt": "9c43655883603f2015fa7ae0545e5dedea8dee794dcd4bfe7758eab4471373c4"
+  },
+  "previousVerificationSnapshots": [
+    {
+      "qualification": "107 passing cases before the optional notice portal and documentReceipt extraction. Retained unchanged; superseded by final-green.txt for current source.",
+      "artifact": "pre-notice-placement-green-107.txt",
+      "sourcePins": {
+        "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx": "46a0c14aa83125f876dffbdae36f44bf3439c1c2ef6c7cf29090db8f37a74f41",
+        "client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx": "13d852782f869eaaf81b2bb5ed12a88089ef3b0c9d5ecbdf307befc486d2abc7",
+        "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx": "4513363a8bd44e41316db97a5859284f5517cf545c4ff39bc6a1a81fdc343e8d",
+        "client/src/concept2cure/v2/editor/useAuthoringCreation.ts": "d0da81d83d590098a4bcf98d28441cefc34cf89bd4446557e518d811b7fda01a",
+        "client/src/concept2cure/v2/C2CForm.tsx": "6d70e9b895364a167219a8fd970a6f278302bf1ea59bad27ab8b9fbee47f3721",
+        "client/src/concept2cure/v2/shellProject.ts": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30",
+        "client/src/concept2cure/v2/newDocumentAction.ts": "52a069ea721bdcf067b8d92b842efcb2587f56b42531ecdb017b50d87aff0712"
+      },
+      "result": {
+        "files": 2,
+        "newRealFormCases": 81,
+        "preservedLegacyCases": 26,
+        "passed": 107,
+        "failed": 0,
+        "durationSeconds": 11.07,
+        "newTestReactActWarnings": 0,
+        "legacyDiagnostics": "Existing legacy act warnings and JSDOM navigation-not-implemented download notices remain visible in final-green.txt."
+      }
+    }
+  ],
+  "finalVerificationChange": "Optional noticeContainer portal into the existing Workbench notice area, shorter persistent creation notice while preserving full toast, and pure documentReceipt extraction. Tests unchanged. Host placement is independently tested by the Workbench evaluator."
+}

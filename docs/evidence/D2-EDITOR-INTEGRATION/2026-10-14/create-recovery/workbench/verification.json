@@ -1,0 +1,179 @@
+{
+  "workstream": "W1 / D2",
+  "baseCommit": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+  "baselineWorkbenchSha256": "14bbbd12d8795a456c0c52744516785d0011d9cc775a92af0c3cc5ee0daf102c",
+  "initialRedTestSha256": "d4023d139a0a738e68a133b26152721d04ee85245ff05b24bcee09a67d52b5d5",
+  "finalPins": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "6d55f18aacf3cfe3b8683a7573338801e8dfbe323fbc393c0c577e65acbc8528",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx": "4e04ec13f1d2db962df4238f9cdce00a36901f94ac90eb17841bd1a9e93207f8",
+    "client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx": "8865a8fa94f73d30c33e90314dc9e8d7514472eabf7ffb649fbad79a1ec1401c"
+  },
+  "results": {
+    "actualInitialRed": {
+      "files": 1,
+      "failed": 10,
+      "passed": 2,
+      "total": 12,
+      "exitCode": 1
+    },
+    "intermediateScopeEdge": {
+      "files": 1,
+      "failed": 1,
+      "passed": 14,
+      "total": 15,
+      "exitCode": 1,
+      "qualification": "A new test exposed a scope-guard regression in the first implementation. The host-scope change now restarts the section read."
+    },
+    "finalFocusedGreen": {
+      "files": 1,
+      "passed": 19,
+      "failed": 0,
+      "exitCode": 0,
+      "log": "typed-fixture-after.txt"
+    },
+    "relatedRegressionGreen": {
+      "files": 5,
+      "passed": 55,
+      "failed": 0,
+      "exitCode": 0,
+      "qualification": "Includes the then-15-case new suite plus 40 existing source-import, unsaved-work, remedy navigation and conversation-handoff cases. Final 18-case rerun follows returning the helper promises directly from the two host callbacks."
+    },
+    "lint": {
+      "newTestErrors": 0,
+      "newTestWarnings": 0,
+      "workbenchErrors": 0,
+      "workbenchWarningsBefore": 13,
+      "workbenchWarningsAfter": 13
+    },
+    "earlierFocusedGreen": {
+      "files": 1,
+      "passed": 18,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "noticeHostRed": {
+      "files": 1,
+      "failed": 1,
+      "skipped": 18,
+      "exitCode": 1,
+      "log": "notice-host-before.txt"
+    },
+    "compilerBefore": {
+      "errors": 8,
+      "tscExitCode": 2,
+      "log": "compiler-before.txt",
+      "qualification": "All eight diagnostics pointed to the new test fixture missing required AuthDoc.product_code and section_count. Supplied actual required fields without casts; root owns compiler rerun. No compiler-green claim here."
+    },
+    "legacyFixtureCorrection": {
+      "rootRun": {
+        "files": 78,
+        "passedFiles": 77,
+        "failedFiles": 1,
+        "passedTests": 916,
+        "failedTests": 1
+      },
+      "targetedAfter": {
+        "files": 1,
+        "passedTests": 4,
+        "failedTests": 0,
+        "exitCode": 0
+      },
+      "baselineTestSha256": "402265778154f556fa62fd32fbb1445f950d6ba0747e9ab3ea17b7dd2ca36e45",
+      "qualification": "No full 78-file green rerun is claimed. The fixture now uses real unresolved_source/frozen service reason codes. Assertions independently retain both actionable meanings and reject the generic fallback. No production reason rendering changed.",
+      "lint": {
+        "errors": 0,
+        "warningsBefore": 1,
+        "warningsAfter": 1,
+        "existingWarning": "unused @typescript-eslint/no-explicit-any disable"
+      }
+    }
+  },
+  "fixtureBoundary": "Actual DocumentWorkbench, TipTap editor, leave dialogs and editorTarget. Creation component is replaced with a callback-capture test double; apiRequest/fetch return explicit synthetic records. No server/provider/deployment or 305-template coverage is claimed by this suite.",
+  "logs": {
+    "before.txt": {
+      "sourceSha256": "8018a5aebf20c138a709ed424a75fefb985a67577651a4a2e758af826d3b0c47",
+      "evidenceSha256": "fc81a7d4396ac228f5a588d2719dc9293330d9e3dc6b50b3790a8cfedee5b553",
+      "preWhitespaceNormalizationEvidenceSha256": "fb6e4fe8d9e61fbc60d0df728ee910d290023a98535a42a6bd23491a3b92eadc"
+    },
+    "intermediate-edge-before.txt": {
+      "sourceSha256": "f55c7a8bf7d7c023e4960a8c3d845914fe2daf69728fdfb842b4e43f72b90a6a",
+      "evidenceSha256": "e65d9d5f287d13ba14378f0856cf11b8cef4b1e62bcf87cf20356cd64656f568",
+      "preWhitespaceNormalizationEvidenceSha256": "4a34cbdd572500e4022a4d519dc7a4df94c1ea783724f35407bdeeeda601cb67"
+    },
+    "after.txt": {
+      "sourceSha256": "4deb0d4d56d9f5918913d96d8c4e56af48b5262c145266ca9746e0b1a9c1f60b",
+      "evidenceSha256": "75fbd7bd1341b0d1febdecde2351bd02e5273c8364391139d2b4fca9778da864",
+      "preWhitespaceNormalizationEvidenceSha256": "4deb0d4d56d9f5918913d96d8c4e56af48b5262c145266ca9746e0b1a9c1f60b"
+    },
+    "related-regressions.txt": {
+      "sourceSha256": "b4ebed8012d3d6af3b8ad10c929db4400a3d83972d5fcf13e38875648c065839",
+      "evidenceSha256": "3f5f22b6b33ba6c2139e8596ad4494b3ed0a640afb72518227a29de41cafbdbf",
+      "preWhitespaceNormalizationEvidenceSha256": "b4ebed8012d3d6af3b8ad10c929db4400a3d83972d5fcf13e38875648c065839"
+    },
+    "lint-before.json": {
+      "sourceSha256": "298e7b72939f050ba54fe64547326f720c122bc2952f63ade2708893329b5848",
+      "evidenceSha256": "298e7b72939f050ba54fe64547326f720c122bc2952f63ade2708893329b5848"
+    },
+    "lint-after.json": {
+      "sourceSha256": "219a612815e6f3d9181f67cebf421eccae75ee41d425ed81047f3cadfb2694bb",
+      "evidenceSha256": "219a612815e6f3d9181f67cebf421eccae75ee41d425ed81047f3cadfb2694bb"
+    },
+    "notice-host-before.txt": {
+      "sourceSha256": "3fdadd9199b8ac5a94c8290537214a22bf95b8882b8a6e955749fd84d2b8f8db",
+      "evidenceSha256": "01b5119bdbefa263683ce1e1c6568e54a49d343c0395baa5a7da84d9614af946",
+      "preWhitespaceNormalizationEvidenceSha256": "9e5b864741717795adff6782a177131eb21ee2c68ce57b623e6ced03af9bcb33"
+    },
+    "after-notice-host.txt": {
+      "sourceSha256": "40c0673e3045be0d474b7f50202f0e1db2bcfd80a6e3245498164da27b349bb9",
+      "evidenceSha256": "7981d9025e49bf12068b2c965fbcb25601abb9ff58f773b5c4e2f99c1f45eed6",
+      "preWhitespaceNormalizationEvidenceSha256": "40c0673e3045be0d474b7f50202f0e1db2bcfd80a6e3245498164da27b349bb9"
+    },
+    "typed-fixture-after.txt": {
+      "sourceSha256": "c8ea55471d36be03948c72c98e83bf8897404d97a058e050cf83979eebe9dc69",
+      "evidenceSha256": "5ca266ecd549c8a4fae0be4f0d1cb2eb6b245db3af7b6bbfa63f50769f156b66",
+      "preWhitespaceNormalizationEvidenceSha256": "c8ea55471d36be03948c72c98e83bf8897404d97a058e050cf83979eebe9dc69"
+    },
+    "typed-fixture-lint.json": {
+      "sourceSha256": "819cef525d7770ec4caf9bc93884ea12a3971031b67f00d56567c57703f8aa31",
+      "evidenceSha256": "819cef525d7770ec4caf9bc93884ea12a3971031b67f00d56567c57703f8aa31"
+    },
+    "compiler-before.txt": {
+      "sourceSha256": "1252dd60f89e31b2d7e2cf5033f75bc9c64323dc234ddfcc4c121c22a90f621c",
+      "evidenceSha256": "1252dd60f89e31b2d7e2cf5033f75bc9c64323dc234ddfcc4c121c22a90f621c"
+    },
+    "legacy-refresh-all-after.txt": {
+      "sourceSha256": "8f3847c8db87517d8abebe17abf2fd5bdae769d705f5293d22af75d0416250c5",
+      "evidenceSha256": "5e5735ae122bd9ac6808f9d86497bb78f8da7d4872f73a2fdcf2d0b712334126",
+      "preWhitespaceNormalizationEvidenceSha256": "8f3847c8db87517d8abebe17abf2fd5bdae769d705f5293d22af75d0416250c5"
+    },
+    "legacy-refresh-all-lint.json": {
+      "sourceSha256": "9a0aef5f4f5065530a84028ce18f11c9c223d1b0dfa051c276052c31d9dd3fc1",
+      "evidenceSha256": "9a0aef5f4f5065530a84028ce18f11c9c223d1b0dfa051c276052c31d9dd3fc1"
+    },
+    "legacy-refresh-all-lint-before.json": {
+      "sourceSha256": "65f557fc9f67298a0dab1f8ee121f8849bbf7ff8991d56ee0ecb0b23c6c031ee",
+      "evidenceSha256": "65f557fc9f67298a0dab1f8ee121f8849bbf7ff8991d56ee0ecb0b23c6c031ee"
+    },
+    "legacy-refresh-all-before.txt": {
+      "rootFullLogSha256": "73f37bb7ab4677d7322058a24980a1d5dce755820ce3d248c0ce2ed2013fadfa",
+      "evidenceSha256": "d07a66a126ac1a14bd5788c02269ea0589721789140266f4bde3a7ee05d29cbd",
+      "qualification": "Exact failure and summary excerpt from actual root 78-file run; unchanged test fixture before this correction.",
+      "preWhitespaceNormalizationEvidenceSha256": "fa8195e1736eb55f492afd4e31144b62b3b22e9188f29043f7e3643aa6a7199a"
+    }
+  },
+  "noticeHostFollowup": "Existing notices receive a host immediately after the editor header, outside its horizontally scrolling actions. The parent creation component owns rendering the same notices into this host. No CSS or new notice pattern.",
+  "receiptWhitespaceNormalization": {
+    "operation": "Strip trailing whitespace from every line and retain exactly one final newline. Original raw scratch-log hashes remain unchanged; evidenceSha256 identifies normalized stored bytes. Production/test source pins are unchanged.",
+    "files": [
+      "after-notice-host.txt",
+      "after.txt",
+      "before.txt",
+      "intermediate-edge-before.txt",
+      "legacy-refresh-all-after.txt",
+      "legacy-refresh-all-before.txt",
+      "notice-host-before.txt",
+      "related-regressions.txt",
+      "typed-fixture-after.txt"
+    ]
+  }
+}
