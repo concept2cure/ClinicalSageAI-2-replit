@@ -82,6 +82,11 @@ the shared editor integration. Final command logs are `typecheck-final.txt`,
 `lint-ratchet-final.txt`, `client-gates-final.txt`, and
 `test-presence-check.txt`.
 
+The pre-push SQL guard also required its legal-hold interpolation allowance to
+shrink from three to two after the list moved to the tenant-parameterized query
+constant. The baseline was lowered, preserving the guard's smaller budget; no
+new interpolation exception or bypass was added.
+
 ## Limits
 
 No new dependency, database migration, model call or production capability flag
