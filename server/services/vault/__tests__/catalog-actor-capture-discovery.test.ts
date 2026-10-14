@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { RequestSqlClient } from '../../../db/requestDb';
 const h = vi.hoisted(() => ({ access: vi.fn(), q: { query: vi.fn() } }));
 vi.mock('../../ana/source-context-admission.js', () => ({ assertAnaUploadAccess: h.access }));
 import { AnaProjectScopeError } from '../../ana/project-scope-admission.js';
@@ -135,7 +136,13 @@ function installCaptureParentFixture(): void {
     h.access.mockImplementation(realUploadAccess);
   });
 }
-  async function list(q = fixture.db) {
+function captureSqlClient(): RequestSqlClient {
+  return { query: async (sql: string, params?: unknown[]) => {
+    const result = await fixture.pg.query<Record<string, unknown>>(sql, params);
+    return { rows: result.rows };
+  } };
+}
+  async function list(q: RequestSqlClient = captureSqlClient()) {
     const { admitAnaSourceReadScope } = await import('../../ana/source-read-scope');
     const admitted = await admitAnaSourceReadScope(q, { organizationId: fixture.org, userId: 43 });
     return listChatUploadsInReadScope(q, admitted, { limit: 1 });
@@ -146,7 +153,7 @@ function installCaptureParentFixture(): void {
   async function canonicalSelectedParent() {
     const { admitRecordedCreSourceScope } = await import('../../clinical-regulatory-evidence/source-read-access');
     const source = await fixture.pg.query('SELECT * FROM cre_evidence_sources WHERE id=$1', [fixture.capture]);
-    return admitRecordedCreSourceScope(fixture.db, { organizationId: fixture.org, userId: 43 }, source.rows[0]);
+    return admitRecordedCreSourceScope(captureSqlClient(), { organizationId: fixture.org, userId: 43 }, source.rows[0]);
   }
 
 describe('actor capture discovery uses recorded workspace and artifact parents (PGlite)', () => {
@@ -206,8 +213,9 @@ describe('actor capture discovery uses recorded workspace and artifact parents (
     expect(h.access).toHaveBeenCalledTimes(1);
   });
   it('final canonical upload admission refuses parent revocation after the counted page loaded', async () => {
-    const q = { ...fixture.db, query: async (sql: string, params?: unknown[]) => {
-      const result = await fixture.db.query(sql, params);
+    const client = captureSqlClient();
+    const q: RequestSqlClient = { query: async (sql: string, params?: unknown[]) => {
+      const result = await client.query(sql, params);
       if (sql.includes('COUNT(*) OVER () AS scope_total')) {
         await fixture.pg.query("UPDATE project_members SET status='revoked' WHERE organization_id=$1 AND user_id=43", [fixture.org]);
       }
