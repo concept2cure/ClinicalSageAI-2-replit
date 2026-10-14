@@ -154,4 +154,3 @@ stderr | server/routes/c2c/__tests__/project-access-guard-unavailable.test.ts > 
       Tests  31 passed (31)
    Start at  03:42:35
    Duration  28.95s (transform 8.17s, setup 168ms, import 16.66s, tests 11.54s, environment 0ms)
-

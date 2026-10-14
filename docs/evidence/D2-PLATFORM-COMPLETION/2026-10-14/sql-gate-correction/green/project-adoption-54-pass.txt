@@ -325,4 +325,3 @@ stderr | server/routes/c2c/__tests__/project-vault-parent-access.pglite.integrat
       Tests  54 passed (54)
    Start at  03:48:16
    Duration  23.09s (transform 5.43s, setup 325ms, import 11.07s, tests 10.41s, environment 0ms)
-

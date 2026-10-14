@@ -97,6 +97,69 @@
     "PGlite actual SQL and policy fixtures; scoped HTTP route tests",
     "Adoption storage bytes, capture writer and audit sealing retain the pre-existing explicit seams",
     "No native RLS, independent-connection concurrency, provider/storage performance or regulatory/scientific acceptance qualification",
-    "No SQL baseline expansion by this workstream; final whole gate checked separately by lead agent"
+    "No SQL baseline expansion by this workstream; final whole gate checked separately by lead agent",
+    "Only these new SQL-gate evidence logs have trailing whitespace and extra EOF blank lines normalized; exact raw execution files remain unchanged in /tmp and are separately pinned. Source hashes and older sealed evidence are unchanged."
+  ],
+  "evidence": [
+    {
+      "path": "green/project-adoption-54-pass.txt",
+      "bytes": 22410,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f3bdb3de2b12459c7a08e359ebda29ab8a17735bfe467dd584ed05c30069da88",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-project-adoption-final.txt",
+        "bytes": 22411,
+        "digestAlgorithm": "SHA-256",
+        "digest": "0a8762c5a83adac0f04d0d83166627a1777f54172719092a20cf90a43e5f6c9a"
+      }
+    },
+    {
+      "path": "green/source-admission-31-pass.txt",
+      "bytes": 12126,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4006c0164e78b2f6135a3a53ee414337ffa8589665bb5f9db2d5ee792217d6ee",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-source-access-focused.txt",
+        "bytes": 12127,
+        "digestAlgorithm": "SHA-256",
+        "digest": "b40df23e6a6845345815556b4fb04f876a82db98bd9cac3e390778193df93669"
+      }
+    },
+    {
+      "path": "red/adoption-canonical-fields-18-pass-1-fail.txt",
+      "bytes": 13699,
+      "digestAlgorithm": "SHA-256",
+      "digest": "349578d0261391b767d7ab28f4d004ac6b3de44b52dd7c9c61d601f801de7d7d",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-adoption-fixture-repair.txt",
+        "bytes": 13700,
+        "digestAlgorithm": "SHA-256",
+        "digest": "2d03117782d465794844684b9c327abff68305f36706b53a09df07afb4227029"
+      }
+    },
+    {
+      "path": "red/project-adoption-19-failures.txt",
+      "bytes": 27971,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1a9ef64308619398aa5974c2251a1253325286ec3a58a417f418d9a383366a68",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-project-route-focused.txt",
+        "bytes": 27972,
+        "digestAlgorithm": "SHA-256",
+        "digest": "ba2b981cd227366efb8704b976860d65b1d9eeaf66dee1d7bce6ba1226120d19"
+      }
+    },
+    {
+      "path": "green/owned-source-fixture-eslint.txt",
+      "bytes": 0,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw": {
+        "path": "/tmp/project-vault-sql-hook-access-adoption-lint-final.txt",
+        "bytes": 0,
+        "digestAlgorithm": "SHA-256",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
   ]
 }
