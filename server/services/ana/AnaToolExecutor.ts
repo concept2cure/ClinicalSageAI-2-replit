@@ -15,6 +15,7 @@
  */
 
 import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { frameToolOutput } from './tool-output-frame.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
@@ -291,6 +292,8 @@ export interface ToolContext {
   modelCalls?: 'refuse';
   organizationId?: number | null;
   userId?: number | null;
+  /** Server-supplied request executor. Never populated from model/browser input. */
+  sqlClient?: RequestSqlClient;
   projectId?: number | null;
   /**
    * Aborted when the person stops the run.
@@ -949,8 +952,11 @@ registerToolHandler('project_knowledge_search_multi', async (input, ctx) => {
 // cold: latest thread working-memory summary + most important project/client
 // atoms (query-independent) + AnA's own recent lessons for this org/project.
 registerToolHandler('recall_session_context', async (input, ctx) => {
-  if (!ctx?.organizationId) {
-    return JSON.stringify({ error: 'recall_session_context requires tenant context (organizationId).' });
+  if (!ctx?.organizationId || !Number.isSafeInteger(ctx.userId) || !ctx.userId || ctx.userId <= 0) {
+    return JSON.stringify({ code: 'PROJECT_ACTOR_REQUIRED', error: 'recall_session_context requires a current tenant actor.' });
+  }
+  if (!ctx.sqlClient) {
+    return JSON.stringify({ code: 'REQUEST_DB_CONTEXT_REQUIRED', error: 'recall_session_context requires its server-provided database context.' });
   }
   const threadId = typeof input.thread_id === 'string' && input.thread_id.trim() ? input.thread_id.trim() : undefined;
   const atomLimit =
@@ -959,8 +965,11 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
   try {
     const { buildSessionBootstrapContext } = await import('../ana-session-bootstrap.js');
     const context = await buildSessionBootstrapContext({
+      db: ctx.sqlClient,
+      userId: ctx.userId,
       organizationId: ctx.organizationId,
       projectId: ctx.projectId ?? undefined,
+      projectRef: ctx.projectRef,
       threadId,
       atomLimit,
     });

@@ -51,6 +51,8 @@ import {
 import { stepPresentationOf } from './tool-authorization.js';
 import { agentEndedByHoldExpiry, agentResultSummary } from './sub-agent-result.js';
 import { refusalOf } from './tool-trace.js';
+import type { ToolContext } from './AnaToolExecutor.js';
+import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
 /**
  * How a step ended, as the stream knows it.
@@ -407,22 +409,20 @@ export function stepUsedModel(
   return ranElsewhere ? null : false;
 }
 
-interface TitleScopeContext {
-  organizationId?: number | null;
-  projectId?: number | null;
-  projectRef?: string | null;
-}
+type TitleScopeContext = Pick<ToolContext, 'organizationId' | 'userId' | 'projectId' | 'projectRef' | 'sqlClient'>;
+type TitleReadScope = Exclude<Awaited<ReturnType<typeof import('./catalog-scope.js').catalogScope>>, { error: string }>;
 
 interface TitleDeps {
-  query?: (sql: string, params: unknown[]) => Promise<{ rows: Array<{ id: string; document_title: string | null }> }>;
-  scope?: (ctx: TitleScopeContext, orgId: number) => Promise<{ programId: string | null } | { error: string }>;
+  query?: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
+  scope?: (ctx: TitleScopeContext, orgId: number) => Promise<TitleReadScope | { error: string }>;
+  recheck?: typeof requireProgramScopeStillCurrent;
 }
 
 /**
  * The Vault titles of the round's documents, resolved before the steps are
  * announced so a read names its document from the start. One query, scoped the
- * way documentScopeRefusal scopes the handler: the organisation, and the open
- * project's program when one is open. A document of another project, another
+ * way the handler scopes its read: the current actor's accessible programmes,
+ * constrained to the open project when one is open. A document of another project, another
  * organisation, a deleted one or one whose data was removed gets no title, and
  * a scope that refuses (a project with no program) gets none at all.
  */
@@ -447,17 +447,20 @@ export async function resolveStepDocumentTitles(
     const scope = await (deps.scope ?? defaultScope)(ctx, orgId);
     if ('error' in scope) return new Map();
     const { vaultDataEligibleSql } = await import('../document-data-disposition/eligibility.js');
-    const programClause = scope.programId ? ' AND d.program_id = $3::uuid' : '';
     const sql =
       `SELECT d.id::text AS id, d.document_title FROM vault.documents d
-        WHERE d.id = ANY($1::uuid[]) AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
+        WHERE d.id = ANY($1::uuid[]) AND d.organization_id = $2 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+          AND d.program_id = ANY($3::uuid[])
           AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2)`;
-    const params = scope.programId ? [ids, orgId, scope.programId] : [ids, orgId];
-    const { rows } = await (deps.query ?? defaultQuery)(sql, params);
+    const params = [ids, orgId, scope.accessibleScope.programIds];
+    const { rows } = await (deps.query ?? ((text, values) => scope.executor.query(text, values)))(sql, params);
+    await (deps.recheck ?? requireProgramScopeStillCurrent)(scope.executor, {
+      organizationId: orgId, userId: scope.accessibleScope.actor.userId, programId: scope.programId,
+    }, scope.accessibleScope);
     const titles = new Map<string, string>();
     for (const row of rows) {
       const title = cleanStepText(row.document_title);
-      if (title) titles.set(row.id, title);
+      if (title && typeof row.id === 'string') titles.set(row.id, title);
     }
     return titles;
   } catch {
@@ -468,10 +471,5 @@ export async function resolveStepDocumentTitles(
 
 async function defaultScope(ctx: TitleScopeContext, orgId: number) {
   const { catalogScope } = await import('./catalog-scope.js');
-  return catalogScope(ctx as never, orgId, null, 'read');
-}
-
-async function defaultQuery(sql: string, params: unknown[]) {
-  const { pool } = await import('../../db.js');
-  return pool.query(sql, params) as unknown as Promise<{ rows: Array<{ id: string; document_title: string | null }> }>;
+  return catalogScope(ctx, orgId, null, 'read');
 }

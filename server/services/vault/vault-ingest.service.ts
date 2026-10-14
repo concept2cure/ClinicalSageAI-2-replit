@@ -43,6 +43,8 @@
 import { createHash } from 'node:crypto';
 import { DEFAULT_RETENTION_YEARS } from '../../../shared/schema/vault';
 import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import type { Queryable } from './document-catalog.service.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
 import { writeChainedAuditRow } from '../auditService.js';
@@ -63,7 +65,8 @@ import {
   isFolderInView,
   folderLabel,
 } from './vault-filing.service.js';
-import { programInOrganization } from '../c2c/program-access';
+import { ProgramReadAccessError, readCurrentProgramActor, requireCurrentProgramAccess } from '../c2c/current-program-access';
+import { AnaProjectScopeError } from '../ana/project-scope-admission';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -113,6 +116,11 @@ export interface VaultIngestArgs {
    * document it became. Set only by vault-data-room-filing.ts.
    */
   dataRoomSourceId?: number;
+  /** Server-owned request executor; existing generated-file callers choose the tenant pool. */
+  executor?: Queryable & { connect(): Promise<Queryable & { release(): void }> };
+  /** Source admission is independent of target permission. Commit runs inside BEGIN,
+   * before ingest child locks, so the caller can reserve the exact source identity. */
+  assertSourceAccess?: (q: RequestSqlClient, phase: 'preview' | 'commit') => Promise<void>;
 }
 
 export interface VaultIngestFiling {
@@ -154,6 +162,31 @@ export type VaultIngestResult =
   /** VERSION_CONTENT_CONFLICT: the current version at that code, which a check-in adds to. */
   | { ok: false; status: number; code: string; message: string; headDocumentId?: string; headVersion?: string };
 
+function accessRefusal(error: unknown): Extract<VaultIngestResult, { ok: false }> {
+  if (error instanceof ProgramReadAccessError || error instanceof AnaProjectScopeError) {
+    return { ok: false, status: error.status, code: error.code, message: error.message };
+  }
+  return { ok: false, status: 503, code: 'VAULT_SOURCE_ACCESS_UNAVAILABLE',
+    message: 'Current source access could not be verified. No document was admitted.' };
+}
+
+async function ingestTargetRefusal(q: RequestSqlClient, args: VaultIngestArgs, orgId: number,
+  forShare = false): Promise<Extract<VaultIngestResult, { ok: false }> | null> {
+  try {
+    const actor = await readCurrentProgramActor(q, { organizationId: orgId, userId: args.userId ?? undefined, forShare });
+    const roleRefusal = vaultWriteRefusal(actor.role);
+    if (roleRefusal) return roleRefusal;
+    const access = await requireCurrentProgramAccess(q, { organizationId: orgId, userId: actor.userId, programId: args.programId, forShare });
+    return vaultWriteRefusal(access.actor.role);
+  } catch (error) { return accessRefusal(error); }
+}
+
+async function ingestSourceRefusal(q: RequestSqlClient, args: VaultIngestArgs,
+  phase: 'preview' | 'commit'): Promise<Extract<VaultIngestResult, { ok: false }> | null> {
+  try { await args.assertSourceAccess?.(q, phase); return null; }
+  catch (error) { return accessRefusal(error); }
+}
+
 /**
  * Admit a document into the governed vault. Must be called inside the acting
  * organization's tenant scope (see the module header).
@@ -192,10 +225,6 @@ async function admitVaultDocument(
   args: VaultIngestArgs,
   stored: StoredUpload,
 ): Promise<VaultIngestResult> {
-  // Role first, as requireEditorAccess orders it: a caller who may not write
-  // is told so before anything is stored, checked or disclosed.
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal;
   // A filing the uploader names is held to the vocabulary before any byte is
   // stored (VR-04). Only a named folder's kind and section are written; without
   // one the classifier's proposal is, so those are not the caller's to break.
@@ -217,20 +246,9 @@ async function admitVaultDocument(
     return { ok: false, status: 403, code: 'NO_ORG_CONTEXT',
       message: 'An authenticated organization context is required to ingest documents.' };
   }
-  try {
-    if (!(await programInOrganization(pool, args.programId, orgId))) {
-      logger.warn('Vault ingest denied: program not owned by caller organization', {
-        programId: args.programId,
-        orgId,
-      });
-      return { ok: false, status: 403, code: 'PROGRAM_FORBIDDEN',
-        message: 'Program not found or not owned by your organization.' };
-    }
-  } catch (ownErr: any) {
-    logger.error('Vault ingest program-ownership check failed', { err: ownErr?.message });
-    return { ok: false, status: 500, code: 'OWNERSHIP_CHECK_FAILED',
-      message: 'Could not verify program ownership.' };
-  }
+  const db = args.executor ?? pool;
+  const targetRefusal = await ingestTargetRefusal(db, args, orgId);
+  if (targetRefusal) return targetRefusal;
 
   const fileName = args.fileName || 'document';
   const mimeType = args.mimeType || 'application/octet-stream';
@@ -263,7 +281,7 @@ async function admitVaultDocument(
   // A check-in is planned before any byte is stored, so a refusal stores
   // nothing, and again under the head's row lock in the transaction below.
   const checkIn = args.supersedesDocumentId
-    ? await planCheckIn(pool, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
+    ? await planCheckIn(db, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
     : null;
   if (checkIn && !checkIn.ok) return checkIn;
   // What this version is recorded as: a check-in's are the server's.
@@ -306,6 +324,10 @@ async function admitVaultDocument(
   let storageVersionId: string;
   let storageProvider: string;
   let storageFileId: string;
+  const sourceRefusal = await ingestSourceRefusal(db, args, 'preview');
+  if (sourceRefusal) return sourceRefusal;
+  const currentTargetRefusal = await ingestTargetRefusal(db, args, orgId);
+  if (currentTargetRefusal) return currentTargetRefusal;
   try {
     const written = await getStorageProvider().put({
       orgId,
@@ -482,9 +504,15 @@ async function admitVaultDocument(
      takes `FOR UPDATE` on the chain tip and deliberately does not manage its
      own BEGIN/COMMIT, so the audit entry and the document it describes commit
      together or not at all. */
-  const client = await pool.connect();
+  const client = await db.connect();
   try {
     await client.query('BEGIN');
+    const currentRefusal = await ingestTargetRefusal(client, args, orgId, true) ??
+      await ingestSourceRefusal(client, args, 'commit');
+    if (currentRefusal) {
+      await client.query('ROLLBACK');
+      return currentRefusal;
+    }
     // A check-in holds its head's row lock from here to COMMIT: a concurrent
     // check-in waits, then finds this version and is refused, naming it.
     const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash }, checkIn));

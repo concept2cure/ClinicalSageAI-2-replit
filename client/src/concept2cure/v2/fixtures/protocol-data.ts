@@ -74,6 +74,8 @@ export interface PdevSignature {
  *  could not be read, which is never to be shown as unsigned. */
 export type PdevSignatureFacet =
   | { state: 'signed' | 'revoked'; signature: PdevSignature }
+  | { state: 'changed'; signature: PdevSignature; historicalIntegrity: 'verified' }
+  | { state: 'unverified'; signature: PdevSignature; historicalIntegrity: 'verified' | 'unverified' }
   | { state: 'none' }
   | { state: 'unavailable' };
 export interface PdevReview {

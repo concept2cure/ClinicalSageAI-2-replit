@@ -8,6 +8,22 @@
 
 BEGIN;
 
+-- Also declared by shared/schema.ts. A fresh drizzle push can create the
+-- sealed-record table without this index; the replayed Report OS foundation
+-- must establish the required tenant query path before install verification.
+DO $sealed_report_tenant_index$
+BEGIN
+  IF to_regclass('public.irr_org_idx') IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM pg_index i JOIN pg_attribute a ON a.attrelid=i.indrelid AND a.attnum=i.indkey[0]
+      WHERE i.indexrelid=to_regclass('public.irr_org_idx') AND i.indrelid='public.immutable_report_records'::regclass
+        AND a.attname='organization_id' AND i.indisvalid AND i.indisready AND i.indpred IS NULL
+  ) THEN
+    RAISE EXCEPTION 'REPORT_TENANT_INDEX_RECONCILIATION_REQUIRED: irr_org_idx has a conflicting or invalid definition; no index or report was changed.';
+  END IF;
+END
+$sealed_report_tenant_index$;
+CREATE INDEX IF NOT EXISTS irr_org_idx ON public.immutable_report_records(organization_id);
+
 CREATE TABLE IF NOT EXISTS report_program_groups (
   id serial PRIMARY KEY,
   group_uuid uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,

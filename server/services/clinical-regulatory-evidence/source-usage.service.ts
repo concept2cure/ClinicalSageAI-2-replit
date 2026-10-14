@@ -51,7 +51,11 @@
 import { randomUUID } from 'node:crypto';
 
 import { pool } from '../../db';
-import { visibleOrgClause } from './evidence-spine.service';
+import { visibleOrgClause, visibleSourceOrgClause } from './evidence-spine.service';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent } from '../authoring/authoring-read-scope';
+import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent } from './source-read-access';
+import { adaptUsageRow } from './source-usage-projection';
 import type { Queryable } from './span-lineage.service';
 import { citesAcrossProjects, readCitationEnds } from './citation-ends';
 import { capturedDataEligibleSql } from '../document-data-disposition/eligibility';
@@ -180,29 +184,6 @@ function numericIds(ids: Array<number | string>): number[] {
   return out;
 }
 
-function usageState(
-  citedChecksum: string | null,
-  currentChecksum: string | null,
-  resolved: boolean,
-  sourceIsCurrent: boolean | null,
-): UsageState {
-  if (!resolved) return 'unresolved';
-  // SUPERSEDED OUTRANKS THE CHECKSUM COMPARISON, and has to.
-  //
-  // A source's checksum is never rewritten: a revised document is ingested as a
-  // NEW row and the old row keeps its bytes and its hash forever. So the cited
-  // and current checksums still MATCH on a source that has been replaced, and
-  // this would report 'current' — "content unchanged since cited" — for exactly
-  // the citation a reviewer most needs to look at.
-  //
-  // `is_current = FALSE` is the fact that says otherwise, recorded by the ingest
-  // path when it links a successor. NULL means the column was not read, or no
-  // successor is known; neither is evidence of supersession, so both fall
-  // through rather than being treated as one.
-  if (sourceIsCurrent === false) return 'superseded';
-  if (!citedChecksum || !currentChecksum) return 'unverified';
-  return citedChecksum === currentChecksum ? 'current' : 'changed';
-}
 
 /**
  * Record that a section was drafted from a source.
@@ -379,7 +360,7 @@ export async function listSectionSources(orgId: number, sectionId: string): Prom
        FROM authoring_citations c
        LEFT JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
-             AND (src.organization_id IS NULL OR src.organization_id = $2)
+             AND (src.organization_id = $2 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
              AND src.deleted_at IS NULL
       WHERE c.section_id = $1 AND c.tenant_id = $2 AND c.source = $3
       ORDER BY c.created_at ASC`,
@@ -426,7 +407,7 @@ export async function listCitationSources(
 ): Promise<CitationSource[]> {
   const ids = numericIds(sourceIds);
   if (ids.length === 0) return [];
-  const c = visibleOrgClause(orgId, 2);
+  const c = visibleSourceOrgClause(orgId, 2);
   const { rows } = await pool.query(
     `SELECT id, title, sponsor, source_type, document_date,
             COALESCE(NULLIF(source_record_identifier, ''),
@@ -450,21 +431,24 @@ export async function listCitationSources(
  * Backward direction — for each requested source, how many sections and documents
  * cite it, and how many of those citations are against superseded content.
  *
- * Sources with no usage are simply ABSENT from the map. The caller reports that as
- * "not cited yet", which is a real and useful state: an uploaded document nothing
- * was written from is exactly what a reviewer wants to notice.
+ * Sources with no accessible usage are absent from the map. This is the current
+ * actor's permitted view, not a claim that no private document cites the source.
  *
  * One query for a whole page of sources rather than one per row.
  */
 export async function summarizeSourceUsage(
+  q: RequestSqlClient,
   orgId: number,
   sourceIds: Array<number | string>,
+  opts: {userId:number | undefined},
 ): Promise<Map<number, SourceUsageSummary>> {
   const ids = numericIds(sourceIds);
   const out = new Map<number, SourceUsageSummary>();
+  const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:opts.userId});
+  const sources=await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId,sourceIds:ids});
   if (ids.length === 0) return out;
 
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT src.id AS source_id,
             COUNT(DISTINCT c.section_id)                        AS sections,
             COUNT(DISTINCT sec.doc_id)                          AS documents,
@@ -478,13 +462,16 @@ export async function summarizeSourceUsage(
               ON c.reference_id = src.id::text
              AND c.tenant_id = $2
              AND c.source = $3
-       LEFT JOIN authoring_sections sec
+       JOIN authoring_sections sec
               ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
+       JOIN authoring_documents doc ON doc.id=sec.doc_id AND doc.tenant_id=c.tenant_id
       WHERE src.id = ANY($1::int[])
-        AND (src.organization_id IS NULL OR src.organization_id = $2)
+        AND sec.id=ANY($4::uuid[])
+        AND doc.id=ANY($5::uuid[])
+        AND (src.organization_id = $2 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
         AND src.deleted_at IS NULL
       GROUP BY src.id`,
-    [ids, orgId, CRE_SOURCE_CITATION],
+    [sources.sourceIds, orgId, CRE_SOURCE_CITATION, access.sectionIds, access.sectionDocumentIds],
   );
 
   for (const r of rows as Array<Record<string, unknown>>) {
@@ -495,6 +482,8 @@ export async function summarizeSourceUsage(
       changedSections: Number(r.changed_sections) || 0,
     });
   }
+  await requireAuthoringReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},access);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},sources);
   return out;
 }
 
@@ -511,10 +500,15 @@ export async function summarizeSourceUsage(
  * Scope to a project with `programId` to answer "what in this project is stale?".
  */
 export async function listChangedSourceUsages(
+  q: RequestSqlClient,
   orgId: number,
-  opts: { programId?: string | null; sourceId?: number | string | null; limit?: number } = {},
+  opts: { userId:number | undefined; programId?: string | null; sourceId?: number | string | null; limit?: number },
 ): Promise<ChangedSourceUsage[]> {
-  const args: unknown[] = [orgId, CRE_SOURCE_CITATION];
+  const [requestedSource]=numericIds(opts.sourceId==null ? [] : [opts.sourceId]);
+  const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId});
+  const sources=await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId,
+    ...(requestedSource ? {sourceIds:[requestedSource]} : {})});
+  const args: unknown[] = [orgId, CRE_SOURCE_CITATION, access.sectionIds, sources.sourceIds];
   let scope = '';
   /* Scoped by the CITING document's project (PF-11): this answers "which of the
      project's documents cite a source that changed". It was scoped by the
@@ -532,7 +526,7 @@ export async function listChangedSourceUsages(
   }
   args.push(Math.min(Math.max(opts.limit ?? 100, 1), 500));
 
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT c.id, c.section_id, c.payload_sha256, c.created_at,
             sec.code AS section_code, sec.title AS section_title, sec.doc_id,
             doc.title AS document_title,
@@ -541,14 +535,15 @@ export async function listChangedSourceUsages(
        FROM authoring_citations c
        JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
-             AND (src.organization_id IS NULL OR src.organization_id = $1)
+             AND (src.organization_id = $1 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
              AND src.deleted_at IS NULL
-       LEFT JOIN authoring_sections sec
+       JOIN authoring_sections sec
               ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
-       LEFT JOIN authoring_documents doc
+       JOIN authoring_documents doc
               ON doc.id = sec.doc_id AND doc.tenant_id = c.tenant_id
       WHERE c.tenant_id = $1
         AND c.source = $2
+        AND sec.id=ANY($3::uuid[]) AND src.id=ANY($4::int[])
         AND c.payload_sha256 IS NOT NULL
         AND src.checksum IS NOT NULL
         AND src.checksum <> c.payload_sha256
@@ -558,6 +553,8 @@ export async function listChangedSourceUsages(
     args,
   );
 
+  await requireAuthoringReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId},access);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},sources);
   return (rows as Array<Record<string, unknown>>).map((r) => ({
     citationId: String(r.id),
     sectionId: String(r.section_id),
@@ -687,10 +684,13 @@ export interface CitedSection {
  * as its contract rather than padding the list.
  */
 export async function listCitedSections(
+  q: RequestSqlClient,
   orgId: number,
-  opts: { documentId?: string | null; limit?: number } = {},
+  opts: { userId:number | undefined; documentId?: string | null; limit?: number },
 ): Promise<CitedSection[]> {
-  const args: unknown[] = [orgId, CRE_SOURCE_CITATION];
+  const access=await getCurrentAuthoringReadScope(q,{organizationId:orgId,userId:opts.userId,documentId:opts.documentId});
+  const sources=await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId});
+  const args: unknown[] = [orgId, CRE_SOURCE_CITATION, access.sectionIds, sources.sourceIds];
   let scope = '';
   if (opts.documentId) {
     args.push(opts.documentId);
@@ -698,7 +698,7 @@ export async function listCitedSections(
   }
   args.push(Math.min(Math.max(opts.limit ?? 500, 1), 2000));
 
-  const { rows } = await pool.query(
+  const { rows } = await q.query(
     `SELECT c.id, c.section_id, c.created_at, c.created_by, c.citation_text, c.payload_sha256,
             sec.code AS section_code, sec.title AS section_title,
             doc.id AS document_id, doc.title AS document_title,
@@ -712,9 +712,10 @@ export async function listCitedSections(
        JOIN authoring_documents doc ON doc.id = sec.doc_id AND doc.tenant_id = c.tenant_id
        LEFT JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
-             AND (src.organization_id IS NULL OR src.organization_id = $1)
+             AND (src.organization_id = $1 OR (src.organization_id IS NULL AND src.visibility_class = 'global_public'))
              AND src.deleted_at IS NULL
-      WHERE c.tenant_id = $1 AND c.source = $2${scope}
+             AND src.id=ANY($4::int[])
+      WHERE c.tenant_id = $1 AND c.source = $2 AND sec.id=ANY($3::uuid[])${scope}
       ORDER BY doc.title ASC NULLS LAST, sec.code ASC NULLS LAST, c.created_at ASC
       LIMIT $${args.length}`,
     args,
@@ -739,39 +740,7 @@ export async function listCitedSections(
     }
     entry.sources.push(adaptUsageRow(r));
   }
+  await requireAuthoringReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId,documentId:opts.documentId},access);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},sources);
   return [...bySection.values()];
-}
-
-/** The joined source, or null when the reference did not resolve for this caller. */
-function adaptUsageSource(r: Record<string, unknown>): SectionSourceUsage['source'] {
-  if (r.source_id == null) return null;
-  return {
-    id: Number(r.source_id),
-    title: (r.title as string) ?? null,
-    checksum: (r.checksum as string) ?? null,
-    sourceType: (r.source_type as string) ?? null,
-    ingestionStatus: (r.ingestion_status as string) ?? null,
-    extractionStatus: (r.extraction_status as string) ?? null,
-    mimeType: (r.mime_type as string) ?? null,
-    fileUploadId: (r.file_upload_id as string) ?? null,
-    updatedAt: r.source_updated_at ? new Date(r.source_updated_at as string).toISOString() : null,
-  };
-}
-
-function adaptUsageRow(r: Record<string, unknown>): SectionSourceUsage {
-  return {
-    citationId: String(r.id),
-    sectionId: String(r.section_id),
-    citedAt: r.created_at ? new Date(r.created_at as string).toISOString() : null,
-    citedBy: (r.created_by as string) ?? null,
-    citationText: (r.citation_text as string) ?? null,
-    citedChecksum: (r.payload_sha256 as string) ?? null,
-    state: usageState(
-      (r.payload_sha256 as string) ?? null,
-      (r.checksum as string) ?? null,
-      r.source_id != null,
-      r.source_is_current == null ? null : Boolean(r.source_is_current),
-    ),
-    source: adaptUsageSource(r),
-  };
 }

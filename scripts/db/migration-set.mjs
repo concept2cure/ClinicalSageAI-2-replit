@@ -2156,10 +2156,10 @@ export const C2C_MIGRATION_FILES = [
   // creates it; 20260821 reconciles its columns; 20260823 adds the placement
   // columns) and after regulatory_programs exists to backfill from.
   //
-  // Purely additive: no policy, no FORCE, no NOT NULL. Neither isolation sweep
-  // will pick it up — the integer sweep is public-only and the non-public one is
-  // an explicit uuid-keyed list — which is stated in the migration's own header
-  // so nobody reads the column as isolation it does not provide.
+  // Also converges FORCE on the existing program policies after the canonical
+  // resolver is installed. No policy/grant/owner/NOT NULL replacement; nullable
+  // unattributable rows stay quarantined. Neither tenant sweep covers this
+  // integer-keyed Vault table, so the creator and durable amendment both do it.
   'migrations/20260905_vault_documents_organization_id.sql',
 
   // Full-text index over vault.documents, plus the one named definition of "the

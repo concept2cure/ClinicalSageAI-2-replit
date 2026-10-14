@@ -12,6 +12,7 @@
  * absence narrows the search and is reported; it never empties it.
  */
 import { searchVaultDocuments } from './vault-search.js';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -45,17 +46,20 @@ export interface AssistantSearchResult {
 
 export async function searchVaultForAssistant(
   db: Queryable,
-  p: { organizationId: number; programId: string | null; query: string; limit: number; catalogEnabled: boolean },
+  p: { organizationId: number; userId: number; programId: string | null; query: string; limit: number; catalogEnabled: boolean },
 ): Promise<AssistantSearchResult> {
+  const identity = {organizationId:p.organizationId,userId:p.userId,programId:p.programId};
+  const scope = await getCurrentAccessibleProgramScope(db,identity);
   const text = await searchVaultDocuments(db, {
     organizationId: p.organizationId,
+    userId: p.userId,
     programId: p.programId,
     q: p.query,
     limit: p.limit,
     offset: 0,
     includeSuperseded: false,
     match: 'any',
-  });
+  },scope);
   const hits = new Map<string, AssistantSearchHit>();
   for (const r of text.results) {
     hits.set(r.id, {
@@ -72,11 +76,14 @@ export async function searchVaultForAssistant(
   }
 
   if (!p.catalogEnabled) {
+    await requireProgramScopeStillCurrent(db,identity,scope);
     return { hits: [...hits.values()], textMatches: text.total, semantic: { available: false, reason: 'catalog_off' } };
   }
   const { searchCatalog, CatalogSearchUnavailableError } = await import('./document-catalog-search.js');
   try {
-    const result = await searchCatalog(p.organizationId, p.query, { limit: p.limit, programId: p.programId });
+    const result = await searchCatalog(db, p.organizationId, p.query, {
+      userId: p.userId, limit: p.limit, programId: p.programId,
+    },scope);
     for (const c of result.hits) {
       const recorded = {
         documentKind: c.documentKind,
@@ -104,6 +111,7 @@ export async function searchVaultForAssistant(
             },
       );
     }
+    await requireProgramScopeStillCurrent(db,identity,scope);
     return {
       hits: [...hits.values()].slice(0, p.limit),
       textMatches: text.total,
@@ -111,6 +119,7 @@ export async function searchVaultForAssistant(
     };
   } catch (err) {
     if (!(err instanceof CatalogSearchUnavailableError)) throw err;
+    await requireProgramScopeStillCurrent(db,identity,scope);
     return {
       hits: [...hits.values()],
       textMatches: text.total,

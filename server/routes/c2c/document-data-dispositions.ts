@@ -4,6 +4,7 @@ import { governedActorId, requireEditorAccess } from '../../middleware/orgMember
 import { createDocumentDispositionService, DispositionError, type DispositionScope } from '../../services/document-data-disposition/service';
 import type { DocumentDispositionTargetType } from '../../../shared/document-data-disposition';
 import { createDefaultDocumentDispositionService } from '../../services/document-data-disposition/production-adapter';
+import { installProjectRouteAccess } from './project-route-access';
 export { createDefaultDocumentDispositionService, documentDispositionsEnabled, DOCUMENT_DISPOSITIONS_ENABLED_ENV } from '../../services/document-data-disposition/production-adapter';
 
 type Service = ReturnType<typeof createDocumentDispositionService>;
@@ -21,6 +22,7 @@ function failure(res: Response, err: unknown) {
 }
 export default function createDocumentDataDispositionRoutes(service?: Service): Router {
   const router = Router();
+  installProjectRouteAccess(router, 'projects');
   const current = () => service ?? createDefaultDocumentDispositionService();
   router.get('/:id/document-dispositions/preview', async (req: Request,res: Response) => {
     try {

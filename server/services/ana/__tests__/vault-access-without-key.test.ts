@@ -29,6 +29,15 @@ const h = vi.hoisted(() => ({
 
 class Unavailable extends Error {}
 
+const access = vi.hoisted(() => ({ scope: vi.fn(), final: vi.fn(), db: { query: vi.fn() } }));
+// Key/provider behavior is isolated here; actual admission is independently
+// exercised against canonical SQL and the native runtime role.
+vi.mock('../../c2c/current-program-access.js', async (original) => ({
+  ...await original<typeof import('../../c2c/current-program-access.js')>(),
+  getCurrentAccessibleProgramScope: access.scope,
+  requireProgramScopeStillCurrent: access.final,
+}));
+
 vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../c2c/program-access.js')>()),
   resolveOpenProgram: vi.fn(async () => null),
@@ -59,7 +68,7 @@ import { CATALOG_GATED_TOOLS } from '../document-tools-shared.js';
 type Handler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
 const handlers = new Map<string, Handler>();
 registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
-const ORG: ToolContext = { organizationId: 42, userId: 7 };
+const ORG: ToolContext = { organizationId: 42, userId: 7, sqlClient: access.db };
 const call = async (tool: string, input: Record<string, unknown>) => JSON.parse(await handlers.get(tool)!(input, ORG));
 
 const STABILITY = {
@@ -84,6 +93,11 @@ beforeEach(() => {
   h.text.mockResolvedValue({ total: 1, results: [STABILITY] });
   h.semantic.mockReset();
   h.semantic.mockResolvedValue({ hits: [], searchedCount: 0, unsearchableCount: 0 });
+  access.scope.mockImplementation(async (_q, input) => ({ scope: 'verified-accessible-programs',
+    actor: { userId: input.userId, role: 'member' },
+    programIds: [STABILITY.program.id], reconciliationRequired: false,
+  }));
+  access.final.mockReset().mockResolvedValue(undefined);
 });
 
 describe('AnA reaches the Vault with no key and the catalog off', () => {
@@ -100,7 +114,8 @@ describe('AnA reaches the Vault with no key and the catalog off', () => {
     expect(out.hits[0]).toMatchObject({ documentId: STABILITY.id, title: STABILITY.title, matchedBy: ['text'] });
     expect(out.hits[0].snippet).toContain('specification');
     // A question matches on ANY of its terms; requiring all of them answers nothing.
-    expect(h.text.mock.calls[0][1]).toMatchObject({ organizationId: 42, programId: null, match: 'any' });
+    expect(h.text.mock.calls[0][0]).toBe(access.db);
+    expect(h.text.mock.calls[0][1]).toMatchObject({ organizationId: 42, userId: 7, programId: null, match: 'any' });
     expect(h.semantic).not.toHaveBeenCalled();
   });
 

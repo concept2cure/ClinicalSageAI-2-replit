@@ -9,9 +9,17 @@
  * organisation as $1, for a project search and for the library search.
  */
 import { describe, it, expect, vi } from 'vitest';
+const scope = vi.hoisted(() => vi.fn());
+vi.mock('../../c2c/current-program-access.js', async (original) => ({
+  ...await original<typeof import('../../c2c/current-program-access.js')>(),
+  getCurrentAccessibleProgramScope: scope,
+}));
 import { searchVaultDocuments } from '../vault-search';
 
 function capture() {
+  scope.mockImplementation(async (_db, input) => ({ scope: 'verified-accessible-programs',
+    actor: { userId: input.userId, role: 'member' }, programIds: input.programId ? [input.programId] : [PROGRAM],
+    reconciliationRequired: false }));
   const calls: Array<{ sql: string; params: unknown[] }> = [];
   const db = {
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
@@ -28,23 +36,24 @@ const PROGRAM = '11111111-1111-4111-8111-111111111111';
 describe('searchVaultDocuments', () => {
   it('the library search names the organisation in the count and in the page', async () => {
     const { db, calls } = capture();
-    await searchVaultDocuments(db, { organizationId: ORG, programId: null, q: 'stability', limit: 25, offset: 0, includeSuperseded: false });
+    await searchVaultDocuments(db, { organizationId: ORG, userId: 7, programId: null, q: 'stability', limit: 25, offset: 0, includeSuperseded: false });
     expect(calls).toHaveLength(2);
     for (const c of calls) {
       expect(c.params[0]).toBe(ORG);
       expect(c.sql).toMatch(/rp\.organization_id = \$1/);
-      expect(c.sql).not.toMatch(/d\.program_id = \$/);
+      expect(c.sql).toContain('d.program_id = ANY($3::uuid[])');
+      expect(c.params[2]).toEqual([PROGRAM]);
     }
     expect(calls[1].sql).toMatch(/prog\.organization_id = \$1/);
   });
 
   it('a project search adds the project, and keeps the organisation', async () => {
     const { db, calls } = capture();
-    await searchVaultDocuments(db, { organizationId: ORG, programId: PROGRAM, q: 'stability', limit: 25, offset: 0, includeSuperseded: true });
+    await searchVaultDocuments(db, { organizationId: ORG, userId: 7, programId: PROGRAM, q: 'stability', limit: 25, offset: 0, includeSuperseded: true });
     for (const c of calls) {
       expect(c.sql).toMatch(/rp\.organization_id = \$1/);
-      expect(c.sql).toMatch(/d\.program_id = \$3::uuid/);
-      expect(c.params.slice(0, 3)).toEqual([ORG, 'stability', PROGRAM]);
+      expect(c.sql).toContain('d.program_id = ANY($3::uuid[])');
+      expect(c.params.slice(0, 3)).toEqual([ORG, 'stability', [PROGRAM]]);
     }
     // Earlier versions were asked for, so the count filters none out.
     expect(calls[0].sql).not.toMatch(/vault\.documents succ/);
@@ -62,10 +71,10 @@ describe('any-term matching (AnA asks in sentences)', () => {
 
   it("'any' sends the OR query; the default keeps the search box's every-term meaning", async () => {
     const { db, calls } = capture();
-    await searchVaultDocuments(db, { organizationId: ORG, programId: null, q: 'stability batch', limit: 5, offset: 0, includeSuperseded: false, match: 'any' });
+    await searchVaultDocuments(db, { organizationId: ORG, userId: 7, programId: null, q: 'stability batch', limit: 5, offset: 0, includeSuperseded: false, match: 'any' });
     expect(calls[0].params[1]).toBe('stability or batch');
     const plain = capture();
-    await searchVaultDocuments(plain.db, { organizationId: ORG, programId: null, q: 'stability batch', limit: 5, offset: 0, includeSuperseded: false });
+    await searchVaultDocuments(plain.db, { organizationId: ORG, userId: 7, programId: null, q: 'stability batch', limit: 5, offset: 0, includeSuperseded: false });
     expect(plain.calls[0].params[1]).toBe('stability batch');
   });
 });

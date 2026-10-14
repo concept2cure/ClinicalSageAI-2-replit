@@ -20,6 +20,14 @@ const model = vi.hoisted(() => ({ requests: [] as Array<Array<{ role: string; co
 
 const harnessModule = vi.hoisted(() => () => import('./support/stream-route-harness.js'));
 const vaultModule = vi.hoisted(() => () => import('../../../services/ana/__tests__/support/read-delivery-vault.js'));
+// Delivery/receipt cases begin after actor admission; native and current-access
+// suites prove that admission. Preserve the real conversation boundary.
+vi.mock('../../../services/ana/catalog-scope.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../../services/ana/catalog-scope.js')>(),
+  catalogScope: async (ctx: { userId: number }) => ({ programId: null,
+    executor: { query: vi.fn() }, accessibleScope: { actor: { userId: ctx.userId, role: 'member' }, programIds: [] },
+  }),
+}));
 vi.mock('../../../db.js', async () => (await harnessModule()).mocks.db());
 // The harness's gateway plays a fixed script; this one reads the results it is sent.
 vi.mock('../shared.js', async importOriginal => ({

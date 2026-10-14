@@ -41,6 +41,14 @@ vi.mock('../../ai-gateway/gateway', () => ({
 }));
 
 const vaultModule = vi.hoisted(() => () => import('./support/read-delivery-vault.js'));
+// Delivery/receipt cases begin after actor admission; native and current-access
+// suites prove that admission. Preserve the real conversation boundary.
+vi.mock('../catalog-scope.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../catalog-scope.js')>(),
+  catalogScope: async (ctx: { userId: number }) => ({ programId: null,
+    executor: { query: vi.fn() }, accessibleScope: { actor: { userId: ctx.userId, role: 'member' }, programIds: [] },
+  }),
+}));
 vi.mock('../../vault/document-catalog.service.js', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ...(await vaultModule()).serviceMock(),

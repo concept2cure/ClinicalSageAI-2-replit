@@ -47,7 +47,18 @@ vi.mock('../../../services/ana-ri-metrics.js', async () => (await harnessModule(
 vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule()).mocks.anthropicFiles());
 // The open project's scope, as catalogScope decides it for the read handler.
 vi.mock('../../../services/ana/catalog-scope.js', () => ({
-  catalogScope: async () => scope.value,
+  catalogScope: async (ctx: { sqlClient?: import('../../../db/requestDb').RequestSqlClient; userId?: number }, organizationId: number) => {
+    if ('error' in scope.value) return scope.value;
+    if (!ctx.sqlClient) return { error: 'Request SQL context is required.' };
+    const { getCurrentAccessibleProgramScope } = await import('../../../services/c2c/current-program-access.js');
+    return {
+      ...scope.value,
+      executor: ctx.sqlClient,
+      accessibleScope: await getCurrentAccessibleProgramScope(ctx.sqlClient, {
+        organizationId, userId: ctx.userId, programId: scope.value.programId,
+      }),
+    };
+  },
   documentScopeRefusal: async () => null,
 }));
 
@@ -70,6 +81,7 @@ const shown = (e: SseEvent | undefined) => JSON.stringify({ label: e?.label, pre
 
 /** The title query's SQL and parameters, and the rows the Vault holds for this organisation and project. */
 const titleQueries: Array<{ sql: string; params: unknown[] }> = [];
+const fixtureQuery = pool.query.bind(pool);
 const VAULT_TITLES: Record<string, { title: string; program: string }> = {
   [IN_PROJECT]: { title: 'Stability report 2025', program: PROGRAM },
   [OTHER_PROJECT]: { title: 'Other project protocol', program: 'bbbbbbbb-0000-4000-8000-00000000000b' },
@@ -89,19 +101,20 @@ beforeEach(() => {
   scope.value = { programId: PROGRAM };
   titleQueries.length = 0;
   // Stands in for Postgres on the one title query: rows of the organisation, in
-  // the program the SQL binds ($3) when it binds one. The SQL's own scoping is
-  // proven against a real schema in step-document-titles.pglite.test.ts.
+  // the evaluated program IDs the SQL binds ($3). Current actor/anchor/sharing
+  // admission and final recheck use the existing public-project harness rows;
+  // title SQL eligibility itself runs against PGlite in its dedicated suite.
   vi.spyOn(pool as { query: (...a: unknown[]) => unknown }, 'query').mockImplementation(async (...args: unknown[]) => {
     const [sql, params = []] = args as [string, unknown[]];
     if (typeof sql === 'string' && sql.includes('FROM vault.documents d')) {
       titleQueries.push({ sql, params });
-      const [ids, org, program] = params as [string[], number, string | undefined];
+      const [ids, org, programs] = params as [string[], number, string[]];
       const rows = ids
-        .filter(id => VAULT_TITLES[id] && org === 7 && (!program || VAULT_TITLES[id].program === program))
+        .filter(id => VAULT_TITLES[id] && org === 7 && programs.includes(VAULT_TITLES[id].program))
         .map(id => ({ id, document_title: VAULT_TITLES[id].title }));
       return { rows, rowCount: rows.length };
     }
-    return { rows: [], rowCount: 0 };
+    return fixtureQuery(sql, params);
   });
   h.handlers.search_project_documents = async () => JSON.stringify({ ok: true, totalMatches: 3, results: [{}, {}, {}] });
   h.handlers.read_project_document = async () =>
@@ -139,7 +152,7 @@ describe('S3 through the stream route', () => {
     expect(plan).toEqual([{ tool: 'read_project_document', label: 'Reading "Stability report 2025"' }]);
     // One query, for the organisation and the open project's program.
     expect(titleQueries).toHaveLength(1);
-    expect(titleQueries[0].params).toEqual([[IN_PROJECT], 7, PROGRAM]);
+    expect(titleQueries[0].params).toEqual([[IN_PROJECT], 7, [PROGRAM]]);
   });
 
   it('5. a document id outside the open project yields no title', async () => {

@@ -28,6 +28,7 @@
  */
 
 import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../report-os/segment.js';
 import { validateSectionCode } from '../../../shared/regulatory/placement-vocabulary.js';
@@ -491,18 +492,18 @@ export function folderLabel(view: VaultViewId, folderId: string | null): string 
  * SAME derivation the project-vault read-model shipped with — moved here so the
  * ingest path and the read path cannot drift.
  */
-export async function resolveVaultView(programId: string, orgId: number): Promise<VaultViewId> {
+export async function resolveVaultView(programId: string, orgId: number, executor: RequestSqlClient = pool): Promise<VaultViewId> {
   try {
-    const projRes = await pool.query(
+    const projRes = await executor.query(
       `SELECT product_type FROM regulatory_programs
         WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
         LIMIT 1`,
       [programId, orgId],
     );
-    const productType: string | null = projRes.rows[0]?.product_type ?? null;
+    const productType = typeof projRes.rows[0]?.product_type === 'string' ? projRes.rows[0].product_type : null;
     const projSegs = productType ? productTypesToSegments([productType]) : [];
     if (projSegs.length > 0) return projSegs[0];
-    return await resolveOrgVaultView(orgId);
+    return await resolveOrgVaultView(orgId, executor);
   } catch (err) {
     // A missing regulatory_programs table (fresh env) degrades to the service
     // view — the classifier still runs, it just files against TMF folders.
@@ -518,15 +519,15 @@ export async function resolveVaultView(programId: string, orgId: number): Promis
 
 /** The org-level vault view (union of its programs' product types) — for
  *  captures that arrive without a program scope. */
-export async function resolveOrgVaultView(orgId: number): Promise<VaultViewId> {
+export async function resolveOrgVaultView(orgId: number, executor: RequestSqlClient = pool): Promise<VaultViewId> {
   try {
-    const orgTypesRes = await pool.query(
+    const orgTypesRes = await executor.query(
       `SELECT DISTINCT product_type FROM regulatory_programs
         WHERE organization_id = $1 AND product_type IS NOT NULL`,
       [orgId],
     );
     const orgSegs = productTypesToSegments(
-      orgTypesRes.rows.map((r: { product_type: string }) => r.product_type),
+      orgTypesRes.rows.map(r => r.product_type).filter((value): value is string => typeof value === 'string'),
     );
     return orgSegs[0] ?? 'service';
   } catch (err) {

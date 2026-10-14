@@ -23,6 +23,7 @@ import { frameToolOutput } from '../../services/ana/tool-output-frame.js';
 import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   resolveEffortLevel,
@@ -1028,6 +1029,7 @@ export function mountStreamRoute(router: Router): void {
           if (!handler) throw new Error('answer_intelligence_question handler not registered');
           const fastStart = Date.now();
           const resultStr = await handler(payload, {
+            sqlClient: requestPgClient(req),
             organizationId: orgId,
             userId: userId || null,
             projectId: admittedProject.projectId,
@@ -1492,9 +1494,13 @@ export function mountStreamRoute(router: Router): void {
          loader's own fault tolerance would swallow into "this project has no
          memory". This used to normalize 'proj_7' and '7' here and drop a program
          UUID, so a v2 project's atoms never loaded; a program now loads through
-         its linked project. With no linked project, the org-level half of the
-         rehydration (client atoms, lessons, the vault files) still lands. */
+         its linked project. Catalog recall keeps the original project reference
+         too, so a missing numeric anchor cannot widen an open project into the
+         library. */
       const streamBootstrapBlock = await sessionBootstrapBlockFor({
+        db: requestPgClient(req),
+        userId: Number(userId),
+        projectRef: admittedProject.projectRef,
         priorMessageCount: streamPriorTurns,
         organizationId: orgId ? Number(orgId) : null,
         projectId: streamProjectIdNumber ?? undefined,
@@ -2492,6 +2498,8 @@ export function mountStreamRoute(router: Router): void {
           // read names its document from the start; scoped like the handler
           // (step-presentation.ts resolveStepDocumentTitles).
           const roundTitles = await resolveStepDocumentTitles(calls, {
+            sqlClient: requestPgClient(req),
+            userId: userId || null,
             organizationId: orgId,
             ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
           });
@@ -2604,6 +2612,7 @@ export function mountStreamRoute(router: Router): void {
                   const toolWork = runCapturingGenerations(generated, () =>
                     runWithRunScope({ runId }, () =>
                     handler(toolUse.input, {
+                      sqlClient: requestPgClient(req),
                       organizationId: orgId,
                       userId: userId || null,
                       // The project, and the conversation, turn and model this

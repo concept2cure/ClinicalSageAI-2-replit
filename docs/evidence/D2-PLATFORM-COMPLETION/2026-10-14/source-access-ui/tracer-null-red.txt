@@ -1,0 +1,10 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: null 5042ms
+ FAIL  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx > SourceTracer — recorded lineage > does not turn an unverified/malformed read into an accessible zero: null
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx:169:25
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed | 9 skipped (13)
+   Start at  01:05:38
+   Duration  6.47s (transform 500ms, setup 156ms, import 607ms, tests 5.08s, environment 484ms)

@@ -96,3 +96,15 @@ describe('the export’s status line and signature block', () => {
     expect(lines).toContain('- Recorded on behalf of: Dr Iyer');
   });
 });
+
+
+describe('historical signatures never attest to changed or unverified current content', () => {
+  it.each(['changed', 'unverified'] as const)('qualifies the %s record as historical if the pure renderer is called directly', (state) => {
+    const facet: PdevSignatureFacet = { state, signature: SIGNED.signature, historicalIntegrity: 'verified' };
+    const lines = signatureSection(markdown('finalized', facet));
+    expect(lines[0]).toContain('HISTORICAL');
+    expect(lines[0]).toContain('no current attestation');
+    expect(lines).toContain('- Historically recorded signer: Dana Approver');
+    expect(lines).not.toContain('- Signed by: Dana Approver');
+  });
+});

@@ -2,6 +2,8 @@
  * current access has been checked. No titles, extracted text or bytes here. */
 import type { RequestSqlClient } from '../../db/requestDb';
 import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
+import { admitRecordedCreSourceScope, SourceReadAccessError } from '../clinical-regulatory-evidence/source-read-access';
+import { requireCurrentProgramAccess, ProgramReadAccessError } from '../c2c/current-program-access';
 import { AUTHORING_IMAGE_URL_PREFIX, isGovernedImageRef } from '../../../shared/authoring/figure-refs';
 import { exportImageSrcs, imageReadingsDiffer } from '../authoring/authoring-html-sanitizer';
 import type { StoredTrailRow } from '../authoring/authoring-evidence';
@@ -101,25 +103,28 @@ async function activeActor(q: RequestSqlClient, actor: SourceActor): Promise<{ o
   return { organizationId: actor.organizationId, userId: actor.userId };
 }
 
-async function admitRecordedScope(q: RequestSqlClient, actor: SourceActor, row: Record<string, unknown>): Promise<void> {
-  const programId = row.client_program_id;
-  const projectId = row.client_workspace_id ?? row.project_id;
-  if (programId != null) {
-    // Both recorded spaces must agree when both are present. Never silently
-    // prefer a visible program over another recorded private project.
-    await admitAnaProjectScope(q, { ...actor, projectRef: programId, ...(projectId == null ? {} : { projectId }) });
-  } else if (projectId != null) {
-    await admitAnaProjectScope(q, { ...actor, projectId });
-  } else {
-    throw new AnaProjectScopeError(409, 'ANA_SOURCE_SCOPE_UNRESOLVED', 'This selected source needs a verified project relationship before AnA can read it.');
-  }
-  const provenance = row.provenance;
-  if (provenance && typeof provenance === 'object' && !Array.isArray(provenance) &&
-      'origin' in provenance && provenance.origin === 'authoring_image_upload') {
-    const { admitAuthoringImageDocument } = await import('../authoring/authoring-image-import');
-    const documentId = 'authoringDocumentId' in provenance ? provenance.authoringDocumentId : undefined;
-    if (typeof programId !== 'string') throw new AnaProjectScopeError(409, 'ANA_IMAGE_SCOPE_UNRESOLVED', 'The figure needs a verified original document relationship.');
-    await admitAuthoringImageDocument(q, { ...actor, documentId, action: 'view', expectedProgramId: programId });
+async function admitRecordedScope(q: RequestSqlClient, actor: {organizationId:number;userId:number}, row: Record<string, unknown>): Promise<void> {
+  try {
+    if (row.scope_kind==='artifact') {
+      // Actual artifacts record projects.id in project_id; this is not a workspace field.
+      if (!positiveId(Number(row.project_id))) throw new SourceReadAccessError(409,'SOURCE_PARENT_UNRESOLVED','The artifact needs a verified recorded project.');
+      const admitted=await admitAnaProjectScope(q,{...actor,projectId:Number(row.project_id)});
+      if (!admitted.programId) throw new SourceReadAccessError(409,'SOURCE_PARENT_UNRESOLVED','The artifact needs a verified program relationship.');
+      const current=await requireCurrentProgramAccess(q,{...actor,programId:admitted.programId});
+      if (current.projectId!==Number(row.project_id)) throw new SourceReadAccessError(409,'SOURCE_PARENT_UNRESOLVED','The artifact project relationship is ambiguous.');
+      return;
+    }
+    // source.client_workspace_id is compared with the recorded anchor workspace,
+    // or resolved through its exact immutable chat artifact association. Never
+    // pass it as projectId simply because both columns happen to be integers.
+    await admitRecordedCreSourceScope(q,actor,row);
+  } catch(error) {
+    if (error instanceof SourceReadAccessError || error instanceof ProgramReadAccessError) {
+      if (error.status===503) return unavailable();
+      if (error.status===409) throw new AnaProjectScopeError(409,'ANA_SOURCE_SCOPE_UNRESOLVED','This selected source needs a verified recorded parent before AnA can read it.');
+      return deny();
+    }
+    throw error;
   }
 }
 
@@ -137,7 +142,9 @@ export async function admitAnaSelectedSources(q: RequestSqlClient, input: Source
   if (!ids.length) return;
   try {
     const actor = await activeActor(q, input);
-    const { rows } = await q.query(`SELECT id, organization_id, visibility_class, client_program_id, client_workspace_id, provenance
+    const { rows } = await q.query(`SELECT id, organization_id, visibility_class, source_type, client_program_id, client_workspace_id,
+        jsonb_build_object('origin',provenance->>'origin','fileUploadId',provenance->>'fileUploadId','authoringDocumentId',provenance->>'authoringDocumentId') AS provenance,
+        jsonb_build_object('artifactId',metadata->>'artifactId') AS metadata
       FROM cre_evidence_sources WHERE id = ANY($1::int[]) AND deleted_at IS NULL
         AND (organization_id = $2 OR (organization_id IS NULL AND visibility_class = 'global_public'))`, [ids, actor.organizationId]);
     if (rows.length !== ids.length) return deny();
@@ -161,10 +168,12 @@ export async function assertAnaUploadAccess(q: RequestSqlClient, input: SourceAc
     const actor = await activeActor(q, input);
     const { rows } = await q.query(`SELECT id, user_id FROM file_uploads WHERE organization_id = $1 AND id = ANY($2::text[])`, [actor.organizationId, ids]);
     if (rows.length !== ids.length) return deny();
-    const scopes = await q.query(`SELECT provenance->>'fileUploadId' AS file_id, client_program_id, client_workspace_id, NULL::int AS project_id, provenance
+    const scopes = await q.query(`SELECT provenance->>'fileUploadId' AS file_id, client_program_id, client_workspace_id, NULL::int AS project_id,
+        jsonb_build_object('origin',provenance->>'origin','fileUploadId',provenance->>'fileUploadId','authoringDocumentId',provenance->>'authoringDocumentId') AS provenance,
+        jsonb_build_object('artifactId',metadata->>'artifactId') AS metadata,source_type,'cre'::text AS scope_kind
       FROM cre_evidence_sources WHERE organization_id = $1 AND provenance->>'fileUploadId' = ANY($2::text[])
       UNION ALL
-      SELECT metadata->>'fileId' AS file_id, NULL::uuid AS client_program_id, NULL::int AS client_workspace_id, project_id, NULL::jsonb AS provenance
+      SELECT metadata->>'fileId' AS file_id, NULL::uuid AS client_program_id, NULL::int AS client_workspace_id, project_id, NULL::jsonb AS provenance,NULL::jsonb AS metadata,NULL::text AS source_type,'artifact'::text AS scope_kind
       FROM concept2cure_artifacts WHERE organization_id = $1 AND metadata->>'fileId' = ANY($2::text[])`, [actor.organizationId, ids]);
     for (const upload of rows) {
       const recorded = scopes.rows.filter(scope => scope.file_id === upload.id);

@@ -37,7 +37,7 @@ beforeAll(async()=>{
     CREATE TABLE electronic_signatures(id int,organization_id int,signed_target text,signer_name text,signed_at timestamptz,signature_meaning text,signature_purpose text,is_valid boolean,superseded_by int,verification_status text,signature_manifest jsonb,signature_type text);
     CREATE TABLE csr_build_jobs(id int PRIMARY KEY,organization_id int,project_id int,study_id text,status text,sections_to_generate text[],study_info_snapshot jsonb);
     CREATE TABLE csr_section_outputs(id int PRIMARY KEY,organization_id int,project_id int,job_id int,section_number text,content text,content_hash text,ai_generated boolean,model text,lineage jsonb,generated_at timestamptz);
-    CREATE TABLE document_span_lineage(organization_id int,document_table text,document_id text,char_start int,char_end int,span_text_sha256 text,provenance_kind text,machine_author_id text,asserted_by text,asserted_at timestamptz,signature_id text,created_by text,deleted_at timestamptz);
+    CREATE TABLE document_span_lineage(organization_id int,document_table text,document_id text,char_start int,char_end int,span_text_sha256 text,provenance_kind text,machine_author_id text,asserted_by text,asserted_at timestamptz,signature_id text,created_by text,deleted_at timestamptz,usage text NOT NULL DEFAULT 'derived',confidence numeric);
   `);
 });
 afterAll(async()=>{await database?.close();});
@@ -76,11 +76,10 @@ describe('stored protocol materialization',()=>{
     expect(result.origin.sectionOrigins.every(s=>s.originalAuthorship==='unknown'&&s.model===null)).toBe(true);
     expect(result.origin.sectionOrigins.find(s=>s.code==='background')).toMatchObject({sourceRowId:'protocol_sections:101',contentSha256:hash('Scientific source content')});
   });
-  it('keeps ordinary signed export manifestations while caller-executor content-only export excludes them',async()=>{
-    const signed=await getProtocolExport(7,1,{executor:q});
-    expect(signed.markdown).toContain('Source Signer');
-    expect(signed.markdown).toContain('Optional: If clinically indicated');
+  it('holds an unverified controlled export while caller-executor content-only export excludes signature authority',async()=>{
+    await expect(getProtocolExport(7,1,{executor:q})).rejects.toMatchObject({code:'SIGNATURE_UNREADABLE'});
     const copy=await getProtocolExport(7,1,{executor:q,contentOnly:true});
+    expect(copy.markdown).toContain('Optional: If clinically indicated');
     expect(copy.markdown).not.toContain('Electronic signature');
     expect(copy.markdown).not.toContain('Source Signer');
   });

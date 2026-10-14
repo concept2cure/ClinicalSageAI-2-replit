@@ -198,7 +198,8 @@ describe('DocumentAuthoring — the Sources rail', () => {
     // the first is the one worth surfacing.
     mockApi({ sections: () => ok({ sources: [citation({ state: 'unresolved', source: null })] }) });
     await openSourcesRail();
-    expect(await screen.findByText('Source no longer available')).toBeTruthy();
+    expect(await screen.findByText('Source unavailable with current access')).toBeTruthy();
+    expect(screen.queryByText(/may have been deleted/)).toBeNull();
   });
 
   it('distinguishes a failed read from a section that cites nothing', async () => {

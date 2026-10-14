@@ -399,9 +399,17 @@ interface HistoryShape {
   truncated?: boolean;
 }
 
+function isHistoryEntry(value: unknown): value is HistoryEntry {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return ['id', 'event', 'actor', 'at', 'hash'].every(key => typeof entry[key] === 'string') &&
+    [entry.when, entry.version, entry.reason].every(field => field == null || typeof field === 'string');
+}
+
 /** A body without an entries list and a chain verdict is a failed read, not an empty history. */
 const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
   !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
+  (v as HistoryShape).entries.every(isHistoryEntry) &&
   !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
 
 /** Where the chain breaks, as this organization may be told it. */
@@ -451,14 +459,14 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
       </div>
     );
   } else if (st.data.entries.length === 0) {
-    body = <div className="vd-d-idx">No recorded events for this document.</div>;
+    body = <div className="vd-d-idx">No history events are available to you for this document.</div>;
   } else {
     body = (
       <>
         <ChainVerdict chain={st.data.chain} />
         {st.data.truncated === true ? (
           <div className="vd-d-idx" role="status">
-            Only the newest {st.data.entries.length} entries are shown. Older entries exist and are not shown here.
+            Only the newest {st.data.entries.length} accessible entries are shown. This is a limited history window.
           </div>
         ) : null}
         <div className="vd-vers">
@@ -720,6 +728,14 @@ interface VaultSearchShape {
   offset: number;
   results: VaultSearchHit[];
 }
+
+const isVaultSearchShape: ShapeGuard<VaultSearchShape> = (value): value is VaultSearchShape => {
+  if (!value || typeof value !== 'object') return false;
+  const read = value as Partial<VaultSearchShape>;
+  return Array.isArray(read.results) && Number.isSafeInteger(read.total) &&
+    typeof read.total === 'number' && read.total >= read.results.length &&
+    read.results.every(hit => hit && typeof hit.id === 'string' && typeof hit.title === 'string');
+};
 
 /** A search hit rendered in the same row component the tree uses. */
 function searchHitToDoc(h: VaultSearchHit): VaultDoc {
@@ -1153,7 +1169,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   /* Current versions only unless asked (VR-09): an earlier version is the same
      document, and listing it beside its successor reads as two. */
   const [includeEarlier, setIncludeEarlier] = useState(false);
-  /* Library search (plan critique 15): every project's Vault. While it is on,
+  /* Library search: accessible projects' Vaults. While it is on,
      the project search does not run; VaultLibraryResults reads the library. */
   const [allProjects, setAllProjects] = useState(false);
   const libraryMode = Boolean(trimmedQ) && allProjects;
@@ -1161,10 +1177,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     projectId && trimmedQ && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
       '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
       (includeEarlier ? '&includeSuperseded=true' : '') : null;
-  const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath]);
+  const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath], isVaultSearchShape);
+  const verifiedSearch = !searchState.loading && !searchState.error && searchState.data !== null;
+  const searchUnavailable = searching && !libraryMode && !searchState.loading && !verifiedSearch;
 
   const results = searching
-    ? (searchState.data?.results ?? []).map(searchHitToDoc)
+    ? (verifiedSearch ? searchState.data?.results ?? [] : []).map(searchHitToDoc)
     : folderDocs;
   /* The vault document currently being filed into a submission, if any. The
      tree id is `up-<uuid>`; the uuid is what a leaf names. */
@@ -1184,11 +1202,12 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     if (id === undefined) return undefined;
     const leaf = allDocs.find((d) => d.id === id);
     const hit = searching ? results.find((d) => d.id === id) : undefined;
+    if (searching && !hit) return undefined;
     if (!leaf) return hit;
     // While searching, the excerpt that matched is what the reader needs to see.
     return hit?.preview ? { ...leaf, preview: hit.preview } : leaf;
   };
-  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || allDocs[0] || null;
+  const sel = pick(selId ?? undefined) || pick(results[0]?.id) || (searching ? null : allDocs[0]) || null;
 
   /* What AnA can see of this screen.
      Until now she knew the user was on "vault" and nothing else — not which
@@ -1209,6 +1228,25 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         summary:
           'The document vault could not be read, so this screen is showing no documents because of a failure, not because there are none.',
         availableActions: ['Retry the vault read'],
+      };
+    }
+    if (libraryMode) {
+      return {
+        summary: `An accessible-project search for "${trimmedQ}" is open. Its separate library panel must be read before describing matches; this context does not verify its result count.`,
+        facts: { searchQuery: trimmedQ, requestedSearchScope: 'accessible-projects' },
+      };
+    }
+    if (searching && searchState.loading) {
+      return {
+        summary: `The vault search is still loading for "${trimmedQ}"; no match count or selection is verified.`,
+        facts: { searchQuery: trimmedQ, searchState: 'loading' },
+      };
+    }
+    if (searchUnavailable) {
+      return {
+        summary: `The vault search for "${trimmedQ}" could not be verified; this is a failed read, not a result of zero matches.`,
+        facts: { searchQuery: trimmedQ, searchState: 'unavailable' },
+        availableActions: ['Retry the vault search'],
       };
     }
     const shown = results.length;
@@ -1267,7 +1305,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         'Confirm or move an upload’s suggested filing (governed, audited)',
       ],
     };
-  }, [vaultState.loading, vaultState.error, results.length, folder, searching, q, sel, vault]);
+  }, [vaultState.loading, vaultState.error, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, q, sel, vault]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -1648,7 +1686,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                   <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
                   <span className="vd-crumb cur">
                     Search &quot;{q}&quot;
-                    {searchState.data && searchState.data.total > results.length
+                    {!libraryMode && verifiedSearch && searchState.data && searchState.data.total > results.length
                       ? ` — ${results.length} of ${searchState.data.total}`
                       : ''}
                   </span>
@@ -1683,19 +1721,19 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                   checked={allProjects}
                   onChange={(e) => setAllProjects(e.target.checked)}
                 />{' '}
-                All projects
+                Accessible projects
               </label>
             </div>
-            {searching && searchState.error && (
+            {searchUnavailable && (
               /* An error is not an empty result. Without this the screen reads
                  "no documents match your search", which is a different and
                  believable claim. */
               <div className="scaf-note" role="alert" style={{ margin: '8px 0 0', color: 'var(--error)' }}>
-                The vault could not be searched, so nothing was searched — this is
-                not a result of zero matches. {redactInternals(searchState.error, 'The search did not complete.')}
+                The vault search could not be verified — this is not a result of zero matches.
+                {' '}{redactInternals(searchState.error ?? '', 'The search did not complete.')}
               </div>
             )}
-            {searching && searchState.loading && !searchState.error && (
+            {searching && !libraryMode && searchState.loading && (
               <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }}>
                 Searching…
               </div>
@@ -1754,7 +1792,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                 </button>
               ))}
-              {results.length === 0 && (
+              {results.length === 0 && (!searching || verifiedSearch) && (
                 <div className="vd-empty">
                   No documents
                   {searching ? ' match your search' : ' in this folder'}.

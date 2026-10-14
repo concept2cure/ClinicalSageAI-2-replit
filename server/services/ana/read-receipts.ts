@@ -24,6 +24,7 @@
  * @module server/services/ana/read-receipts
  */
 
+import type { RequestSqlClient } from '../../db/requestDb.js';
 import { RESULT_BUDGET, type ToolResultEntry } from './agentic-loop.js';
 import { computeCoverage, type Span, type SpanCoverageReport } from '../vault/document-catalog-core.js';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -31,6 +32,8 @@ import { createScopedLogger } from '../../utils/logger.js';
 const logger = createScopedLogger('read-receipts');
 
 export interface DeferredReadReceipt {
+  /** Server request executor retained until the host settles delivery. */
+  executor?: RequestSqlClient;
   documentId: string;
   contentHash: string;
   span: Span;
@@ -117,6 +120,7 @@ async function vaultReceiptWriter(): Promise<ReceiptWriter> {
       contentHash: receipt.contentHash,
       span: receipt.span,
       readBy: receipt.readBy,
+      executor: receipt.executor,
     });
 }
 

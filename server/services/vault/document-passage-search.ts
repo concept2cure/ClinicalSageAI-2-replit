@@ -36,7 +36,8 @@
  * @module server/services/vault/document-passage-search
  */
 
-import { pool } from '../../db.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, ProgramReadAccessError, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
 
 export class PassageSearchUnavailableError extends Error {
@@ -126,11 +127,15 @@ export interface PassageSearchResult {
 const UNFILED_UPLOAD_PROBE = 20;
 
 export async function getPassageCoverage(
+  db: RequestSqlClient,
   organizationId: number,
-  /** One program's documents (the open project, PF-10 S7); null = the organization's. */
-  programId: string | null = null,
+  opts: {userId:number;programId?:string|null},
+  verifiedScope?: CurrentAccessibleProgramScope,
 ): Promise<PassageCoverage> {
-  const { rows } = await pool.query(
+  const identity = {organizationId,userId:opts.userId,programId:opts.programId ?? null};
+  if (verifiedScope) assertVerifiedProgramScope(db,identity,verifiedScope);
+  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
+  const { rows } = await db.query(
     `SELECT COUNT(*)::int AS total,
             COUNT(*) FILTER (WHERE c.chunk_status = 'chunked' AND COALESCE(c.chunk_count, 0) > 0)::int AS indexed,
             COUNT(*) FILTER (WHERE c.chunk_status IS NULL OR c.chunk_status = 'pending')::int AS pending,
@@ -145,8 +150,9 @@ export async function getPassageCoverage(
        JOIN regulatory_programs p ON p.id = d.program_id
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
       WHERE p.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
-        AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
-    [organizationId, programId],
+        AND d.organization_id = $1
+        AND p.deleted_at IS NULL AND d.program_id = ANY($2::uuid[])`,
+    [organizationId, scope.programIds],
   );
   const r = rows[0] ?? {};
   /* The uploads outside the corpus, through the one definition of "the chat
@@ -159,7 +165,7 @@ export async function getPassageCoverage(
   let unfiledUploadsMore = false;
   try {
     const { listChatUploads } = await import('./document-catalog.service.js');
-    const page = await listChatUploads(organizationId, null, UNFILED_UPLOAD_PROBE);
+    const page = await listChatUploads(db,organizationId,{userId:opts.userId,programId:opts.programId ?? null,limit:UNFILED_UPLOAD_PROBE});
     unfiledUploads = page.uploads.length;
     unfiledUploadsMore = page.hasMore;
   } catch {
@@ -173,19 +179,26 @@ export async function getPassageCoverage(
     indexed: Number(r.indexed ?? 0),
     pending: Number(r.pending ?? 0),
     failed: Number(r.failed ?? 0),
-    failureReasons: Array.isArray(r.failure_reasons) ? r.failure_reasons.filter(Boolean) : [],
+    failureReasons: Array.isArray(r.failure_reasons) ? r.failure_reasons.filter((reason):reason is string => typeof reason === 'string' && reason.length > 0) : [],
   };
 }
 
 /* Coverage is context for the answer, not the answer. A ledger read that
    fails must not take the search down with it — but it must not quietly
    become "all indexed" either, so it becomes null and the caller says so. */
-async function coverageOrUnknown(organizationId: number, programId: string | null): Promise<PassageCoverage | null> {
+async function coverageOrUnknown(db:RequestSqlClient,organizationId:number,userId:number,programId:string|null,scope:CurrentAccessibleProgramScope): Promise<PassageCoverage | null> {
   try {
-    return await getPassageCoverage(organizationId, programId);
-  } catch {
+    return await getPassageCoverage(db,organizationId,{userId,programId},scope);
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) throw error;
     return null;
   }
+}
+
+/** An evaluated empty allowed set and a positively empty index need no
+ * provider request. Unknown coverage still permits the scoped retrieval. */
+function hasNoSearchablePassages(scope:CurrentAccessibleProgramScope,coverage:PassageCoverage|null): boolean {
+  return scope.programIds.length === 0 || (coverage !== null && coverage.total > 0 && coverage.indexed === 0);
 }
 
 /** How retrieval ranked what it returned (see PassageSearchResult.ranking). */
@@ -199,7 +212,7 @@ export interface PassageSearchOptions {
   /**
    * One program's passages only: the open project (PF-10 S7). Pushed into the
    * vault SQL, so a passage of the open project that ranks below another
-   * project's is still found; null = the organization's.
+   * project's is still found; null = the actor's verified accessible library.
    */
   programId?: string | null;
 }
@@ -215,8 +228,10 @@ export interface PassageSearchOptions {
  * catalog exists to stop.
  */
 export async function searchDocumentPassages(
+  db: RequestSqlClient,
   args: {
     organizationId: number;
+    userId: number;
     organizationUuid: string | null | undefined;
     query: string;
   },
@@ -237,7 +252,9 @@ export async function searchDocumentPassages(
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
 
   const programId = opts.programId ?? null;
-  const coverage = await coverageOrUnknown(args.organizationId, programId);
+  const identity = {organizationId:args.organizationId,userId:args.userId,programId};
+  const scope = await getCurrentAccessibleProgramScope(db,identity);
+  const coverage = await coverageOrUnknown(db,args.organizationId,args.userId,programId,scope);
 
   /* NOTHING IS INDEXED — answer without embedding anything.
      The two feature flags are independent, and catalog-on/chunking-off is the
@@ -251,7 +268,8 @@ export async function searchDocumentPassages(
      Checked against `indexed`, not `total`: an organization with no documents
      at all is a different (also honest) message the caller composes from the
      same coverage. */
-  if (coverage && coverage.total > 0 && coverage.indexed === 0) {
+  if (hasNoSearchablePassages(scope,coverage)) {
+    await requireProgramScopeStillCurrent(db,identity,scope);
     return { hits: [], coverage, ranking: null };
   }
 
@@ -265,6 +283,7 @@ export async function searchDocumentPassages(
       organizationUuid: args.organizationUuid,
       limit,
       filters: programId ? { programId } : undefined,
+      vaultRead:{sqlClient:db,...identity,verifiedScope:scope},
       /* Two deliberate departures from the regulatory_qa defaults, both because
          this runs INSIDE an agent turn rather than behind a request a person is
          waiting on once.
@@ -286,11 +305,13 @@ export async function searchDocumentPassages(
     });
     documents = ctx?.documents ?? [];
   } catch (err) {
+    if (err instanceof ProgramReadAccessError) throw err;
     throw new PassageSearchUnavailableError(
       err instanceof Error ? err.message : String(err),
     );
   }
 
+  await requireProgramScopeStillCurrent(db,identity,scope);
   const hits: PassageHit[] = documents.slice(0, limit).map(d => ({
     documentId: d.documentId ?? null,
     documentTitle: d.title || 'Untitled',

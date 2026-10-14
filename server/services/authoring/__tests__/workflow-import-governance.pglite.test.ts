@@ -15,6 +15,7 @@ import { computeAuthoringSignatureDigest, renderAuthoringExport, sectionsDigest 
 import { WORKFLOW_IMPORT_AUTHOR_ID } from '../revision-ledger';
 import { hashPayload } from '../../audit/chain';
 import { workflowCopySectionContent } from '../workflow-copy-content';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 
 const ORG = 77;
 const PROGRAM = '10000000-0000-4000-8000-000000000077';
@@ -35,8 +36,9 @@ beforeAll(async () => {
     INSERT INTO organizations VALUES(77,'Test');
     CREATE TABLE users(id integer PRIMARY KEY,email text,status text);
     INSERT INTO users VALUES(8,'reviewer@example.test','active'),(9,'author@example.test','active');
-    CREATE TABLE authoring_documents(id uuid PRIMARY KEY);
-    CREATE TABLE audit_logs(tenant_id integer,record_id text,action text,new_values json,payload_hash text);`);
+    CREATE TABLE authoring_documents(id uuid PRIMARY KEY);`);
+  await pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  await pg.exec('ALTER TABLE audit_logs ALTER COLUMN id SET DEFAULT gen_random_uuid()::text');
   for (const file of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
     'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql',
     'migrations/20260908_span_lineage_machine_draft.sql', 'db/migrations/20260725_authoring_audit_trail.sql',

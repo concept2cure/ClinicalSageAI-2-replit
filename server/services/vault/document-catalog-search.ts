@@ -16,9 +16,11 @@
  * stop.
  */
 
-import { pool } from '../../db.js';
+import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { supersededSql } from './vault-version-family.js';
+
+type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
 export class CatalogSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -60,10 +62,10 @@ export interface CatalogSearchResult {
 }
 
 /** The query as a pgvector literal; a provider failure is the search being unavailable. */
-async function embedQuery(query: string): Promise<string> {
+async function embedQuery(db: Queryable, query: string): Promise<string> {
   try {
     const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
-    const { embedding } = await getEmbeddingService(pool as any).embed(query, 'text-embedding-3-small');
+    const { embedding } = await getEmbeddingService(db).embed(query, 'text-embedding-3-small');
     return `[${embedding.join(',')}]`;
   } catch (err) {
     throw new CatalogSearchUnavailableError(
@@ -73,22 +75,31 @@ async function embedQuery(query: string): Promise<string> {
 }
 
 /**
- * Cosine search over vault.document_catalog.embedding, org-checked through
- * regulatory_programs like every other vault read.
+ * Cosine search over vault.document_catalog.embedding, restricted to verified
+ * current program access before embedding, counts and similarity ranking.
  */
 export async function searchCatalog(
+  db: Queryable,
   organizationId: number,
   query: string,
-  /** programId: one program's documents only (the open project, PF-10 S7); absent or null = the organization's. */
-  opts: { limit?: number; minSimilarity?: number; programId?: string | null } = {},
+  /** programId: one permitted program; absent or null = the actor's accessible library. */
+  opts: { userId: number; limit?: number; minSimilarity?: number; programId?: string | null },
+  verifiedScope?: CurrentAccessibleProgramScope,
 ): Promise<CatalogSearchResult> {
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
   const minSimilarity = opts.minSimilarity ?? 0.15;
-  const programId = opts.programId ?? null;
-  const vectorLiteral = await embedQuery(query);
+  // Access failures remain typed refusals, before any provider work or corpus reads.
+  const identity = {organizationId,userId:opts.userId,programId:opts.programId ?? null};
+  if (verifiedScope) assertVerifiedProgramScope(db,identity,verifiedScope);
+  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
+  if (scope.programIds.length === 0) {
+    await requireProgramScopeStillCurrent(db,identity,scope);
+    return { hits: [], searchedCount: 0, unsearchableCount: 0 };
+  }
+  const vectorLiteral = await embedQuery(db, query);
 
   try {
-    const counts = await pool.query(
+    const counts = await db.query(
       `SELECT
          COUNT(*) FILTER (WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged') AS searchable,
          COUNT(*) FILTER (WHERE c.embedding IS NULL OR c.catalog_status IS DISTINCT FROM 'cataloged') AS unsearchable
@@ -96,11 +107,12 @@ export async function searchCatalog(
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
       WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+        AND d.organization_id = $1
         AND NOT ${supersededSql('d')}
-        AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
-      [organizationId, programId],
+        AND d.program_id = ANY($2::uuid[])`,
+      [organizationId, scope.programIds],
     );
-    const res = await pool.query(
+    const res = await db.query(
       `SELECT d.id, d.program_id, rp.name AS program_name, d.file_name, d.document_title,
               d.folder_id, d.ctd_section, d.placement_status,
               c.document_kind, c.purpose, c.summary, c.key_data,
@@ -110,13 +122,14 @@ export async function searchCatalog(
          JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL AND c.content_hash = d.content_hash
          JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
         WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged'
+          AND d.organization_id = $1
           AND ${vaultDataEligibleSql('d')}
           AND NOT ${supersededSql('d')}
           AND 1 - (c.embedding <=> $2::vector) >= $3
-          AND ($5::uuid IS NULL OR d.program_id = $5::uuid)
+          AND d.program_id = ANY($5::uuid[])
         ORDER BY c.embedding <=> $2::vector
         LIMIT $4`,
-      [organizationId, vectorLiteral, minSimilarity, limit, programId],
+      [organizationId, vectorLiteral, minSimilarity, limit, scope.programIds],
     );
     return {
       hits: res.rows.map((r: any) => ({

@@ -165,6 +165,7 @@ function childContext(ctx: ToolContext, signal: AbortSignal): ToolContext {
     organizationId: ctx.organizationId,
     organizationUuid: ctx.organizationUuid ?? null,
     userId: ctx.userId ?? null,
+    sqlClient: ctx.sqlClient,
     projectId: ctx.projectId ?? null,
     projectRef: ctx.projectRef ?? null,
     agentDepth: 1,

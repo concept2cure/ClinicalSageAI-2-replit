@@ -20,7 +20,7 @@ import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, OTHER_ORG } 
 import { resolveStepDocumentTitles } from '../step-presentation';
 
 let jdb: JourneyDb;
-const query = (sql: string, params: unknown[]) => jdb.pool.query(sql, params) as Promise<{ rows: Array<{ id: string; document_title: string | null }> }>;
+const query = (sql: string, params: unknown[] = []) => jdb.pglite.query<{ id: string; document_title: string | null }>(sql, params);
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
@@ -54,7 +54,14 @@ async function doc(title: string, program: string, opts: { deleted?: boolean } =
 }
 
 const reads = (...ids: string[]) => ids.map(id => ({ name: 'read_project_document', input: { document_id: id } }));
-const inProject = { scope: async () => ({ programId: PROGRAM }), query };
+// This fixture proves actual title SQL eligibility, not actor admission; the
+// current-access and native suites exercise canonical actor/parent checks.
+const titleScope = (programIds: string[], programId: string | null) => ({
+  programId, executor: { query }, accessibleScope: { scope: 'verified-accessible-programs' as const,
+    actor: { userId: 1, role: 'viewer' }, programIds, reconciliationRequired: false },
+});
+const recheck = async () => undefined;
+const inProject = { scope: async () => titleScope([PROGRAM], PROGRAM), query, recheck };
 
 describe('resolveStepDocumentTitles', () => {
   it('names a document of the open project', async () => {
@@ -72,15 +79,15 @@ describe('resolveStepDocumentTitles', () => {
 
   it('gives no title to another organisation\'s document, even with no project open', async () => {
     const theirs = await doc('Their protocol', OTHER_PROGRAM);
-    const orgWide = { scope: async () => ({ programId: null }), query };
+    const orgWide = { scope: async () => titleScope([PROGRAM, PROGRAM_B], null), query, recheck };
     const titles = await resolveStepDocumentTitles(reads(theirs), { organizationId: ORG }, orgWide);
     expect(titles.size).toBe(0);
   });
 
-  it('with no project open, names any document of the organisation (as the read allows)', async () => {
+  it('with no project open, names documents in the evaluated accessible programme set', async () => {
     const a = await doc('A', PROGRAM);
     const b = await doc('B', PROGRAM_B);
-    const orgWide = { scope: async () => ({ programId: null }), query };
+    const orgWide = { scope: async () => titleScope([PROGRAM, PROGRAM_B], null), query, recheck };
     const titles = await resolveStepDocumentTitles(reads(a, b), { organizationId: ORG }, orgWide);
     expect(titles.get(a)).toBe('A');
     expect(titles.get(b)).toBe('B');

@@ -164,3 +164,21 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:49
 6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:52
 6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:56
+
+# status: not a secret
+# reason: seven SHA-256 source-file checksums in platform evidence manifests.
+#   Each 64-character value was recomputed from the exact historical file bytes
+#   named by that manifest at its original commit; all seven match. The two
+#   manifests with explicit base/head pins also match those captured revisions.
+#   Paths containing Api, credential, auth or access let generic-api-key read
+#   these deterministic file digests as keys. They are source identity pins,
+#   not credentials. Only these reviewed commit/path/rule/line fingerprints
+#   are dispositioned. Scanner rules and all live-history notices stay intact.
+#   Evidence: docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/ci-security-proof/.
+6095ed7a13a982933348a2f3eab99a00d16b8295:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/browser-final/source-digests.json:generic-api-key:19
+0e4ccf46f437af463a52f580c0775c8f4f02197f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/ci-followup-38463370149/manifest.json:generic-api-key:59
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/native-source-digests.json:generic-api-key:26
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:12
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:17
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:19
+83fe486112450a3508dfbf4fbe49e5bb77b9478f:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/project-vault-parent-access/native-probe-source-digests.json:generic-api-key:20

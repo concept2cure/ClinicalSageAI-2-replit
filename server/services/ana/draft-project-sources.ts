@@ -49,15 +49,15 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext): 
   let remaining = 48000;
   for (const documentId of ids) {
     // Check project ownership before fetching extracted text, not after serving it.
-    const meta = await loadDocumentForOrg(documentId, ctx.organizationId, { currentOnly: true });
+    const meta = await loadDocumentForOrg(documentId, ctx.organizationId, { executor: scope.executor, userId: scope.accessibleScope.actor.userId, programId: scope.programId, currentOnly: true });
     if (!meta || meta.programId.toLowerCase() !== scope.programId.toLowerCase()) throw new Error('SOURCE_UNAVAILABLE');
     if (remaining === 0) throw new Error('SOURCE_UNAVAILABLE');
-    const doc = readableVersion(await loadDocumentForOrg(documentId, ctx.organizationId, { includeText: true, currentOnly: true }), meta, scope.programId);
+    const doc = readableVersion(await loadDocumentForOrg(documentId, ctx.organizationId, { executor: scope.executor, userId: scope.accessibleScope.actor.userId, programId: scope.programId, includeText: true, currentOnly: true }), meta, scope.programId);
     const text = doc.extractedText.slice(0, Math.min(12000, remaining));
     remaining -= text.length;
     sources.push({
       documentId: doc.id, programId: scope.programId, contentHash: doc.contentHash,
-      title: doc.documentTitle || doc.fileName,
+      title: doc.documentTitle || doc.fileName || '',
       extractionMethod: doc.catalog.extractionMethod, extractionConfidence: doc.catalog.extractionConfidence,
       ...sourceAvailabilityPresentation(doc),
       span: { start: 0, end: text.length, totalChars: doc.extractedText.length },

@@ -9,6 +9,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ToolContext } from '../AnaToolExecutor.js';
 
 const vaultModule = vi.hoisted(() => () => import('./support/read-delivery-vault.js'));
+// Actor admission is covered by current-access/native suites. These handler
+// cases isolate delivery budgets and receipts after a successful admission.
+vi.mock('../catalog-scope.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../catalog-scope.js')>(),
+  catalogScope: async (ctx: { userId: number }) => ({
+  programId: null, executor: { query: vi.fn() }, accessibleScope: { actor: { userId: ctx.userId, role: 'viewer' }, programIds: [] },
+}) }));
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(async () => ({ rows: [] })) }, getPool: () => ({}), db: {} }));
 vi.mock('../../vault/document-catalog.service.js', async () => (await vaultModule()).serviceMock());
 vi.mock('../document-tools-shared.js', async importOriginal => (await vaultModule()).gatesMock(await importOriginal<Record<string, unknown>>()));

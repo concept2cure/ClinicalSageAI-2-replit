@@ -21,12 +21,17 @@ export interface CsrScopeExecutor {
 
 /** Read membership now, on the same connection used for the project policy.
  * A queued job must not inherit the creator's old session role after revocation. */
-export async function readCsrProjectActor(database: Pick<RequestDb, 'select'> | CsrScopeExecutor, organizationId: number, userId: number | undefined): Promise<ReportProjectActor> {
+export async function readCsrProjectActor(database: Pick<RequestDb, 'select'> | CsrScopeExecutor, organizationId: number, userId: number | undefined, options: { forShare?: boolean } = {}): Promise<ReportProjectActor> {
   if (!Number.isSafeInteger(userId) || !userId || userId <= 0) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'Current project access could not be established for the CSR actor.');
   if (!('select' in database)) {
-    const { rows } = await database.query(`SELECT ou.role FROM organization_users ou
-      JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
-      WHERE ou.organization_id = $1 AND ou.user_id = $2 AND u.status = 'active' AND o.status = 'active'`, [organizationId, userId]);
+    const statement = options.forShare
+      ? `SELECT ou.role FROM organization_users ou
+         JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
+         WHERE ou.organization_id=$1 AND ou.user_id=$2 AND u.status='active' AND o.status='active' FOR SHARE OF ou,u,o`
+      : `SELECT ou.role FROM organization_users ou
+         JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
+         WHERE ou.organization_id=$1 AND ou.user_id=$2 AND u.status='active' AND o.status='active'`;
+    const { rows } = await database.query(statement,[organizationId,userId]);
     if (rows.length !== 1 || typeof rows[0].role !== 'string' || !rows[0].role.trim()) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'The CSR actor is no longer an active member of this organization.');
     return { userId, role: rows[0].role.trim().toLowerCase() };
   }

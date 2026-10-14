@@ -5,17 +5,18 @@ vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForOrg: moc
 import { loadDraftProjectSources, draftSourcePrompt } from '../draft-project-sources';
 const id = '10000000-0000-4000-8000-000000000001';
 const program = '20000000-0000-4000-8000-000000000001';
-const ctx = { organizationId: 7, userId: 3, projectRef: program };
+const executor = { query: vi.fn() };
+const ctx = { organizationId: 7, userId: 3, projectRef: program, sqlClient: executor };
 const doc = () => ({ id, programId: program, contentHash: 'a'.repeat(64), documentTitle: 'Study A CSR',
   fileName: 'csr.pdf', extractedText: 'Prespecified primary endpoint: 12 of 30 subjects.',
   catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
-beforeEach(() => { vi.clearAllMocks(); mocks.scope.mockResolvedValue({ programId: program }); mocks.load.mockResolvedValue(doc()); });
+beforeEach(() => { vi.clearAllMocks(); mocks.scope.mockResolvedValue({ programId: program, executor, accessibleScope: { actor: { userId: 3, role: 'viewer' }, programIds: [program] } }); mocks.load.mockResolvedValue(doc()); });
 describe('processed project sources for regulatory drafting', () => {
   it('loads saved text, binds source identity/version/span, and deduplicates IDs', async () => {
     const result = await loadDraftProjectSources([id, id], ctx);
     expect(mocks.load).toHaveBeenCalledTimes(2);
-    expect(mocks.load).toHaveBeenNthCalledWith(1, id, 7, { currentOnly: true });
-    expect(mocks.load).toHaveBeenNthCalledWith(2, id, 7, { includeText: true, currentOnly: true });
+    expect(mocks.load).toHaveBeenNthCalledWith(1, id, 7, { executor, userId: 3, programId: program, currentOnly: true });
+    expect(mocks.load).toHaveBeenNthCalledWith(2, id, 7, { executor, userId: 3, programId: program, includeText: true, currentOnly: true });
     expect(result).toMatchObject({ status: 'loaded', sources: [{ documentId: id, contentHash: 'a'.repeat(64), completeText: true }] });
     expect(result.sources[0].text).toContain('12 of 30');
   });

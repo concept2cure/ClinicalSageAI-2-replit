@@ -1,0 +1,102 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T00:57:05.331Z","pid":97385,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T00:57:05.333Z","pid":97385,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T00:57:05.333Z","pid":97385,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T00:57:06.341Z', poolSize: 1 }
+
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/project-vault-parent-access.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T00:57:09.686Z', poolSize: 2 }
+
+stdout | tests/db/project-vault-parent-access.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T00:57:09.726Z', poolSize: 3 }
+
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > proves actual runtime app_service, non-owner NOSUPERUSER/NOBYPASSRLS and FORCE RLS 5ms
+ × tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > has native FORCE RLS on Vault after canonical migration repair without changing table ownership 11ms
+   → expected { relrowsecurity: true, …(2) } to match object { relrowsecurity: true, …(1) }
+(1 matching property omitted from actual)
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > proves the same real sharing policy admits public/owner/member and refuses an unassigned private actor 11ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > serves authorized public, private owner and explicitly assigned member detail through real authentication 98ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > serves the authorized public document search and relationship to an actor with both parents 121ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read  49ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /workstreams 47ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /drafts 37ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /team 41ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /evidence 35ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /activity 38ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /records 63ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /conversation-files 35ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /vault-structure 50ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /sources 119ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /source-changes 84ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /versions 247ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /compare 110ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /history 99ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /catalog 56ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /relationships 40ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /annotations 131ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /text 31ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault tree and separately mounted disposition preview 153ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > denies private bytes before filesystem reads or a download audit, then serves the exact authorized bytes 31ms
+ × tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > retains a genuinely global_public source under restricted runtime RLS 81ms
+   → expected [] to include 12
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > admits creator-only unbound conversation adoption and preserves same-target idempotence 268ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > shows only Authoring documents with a whole-document grant in accessible project records 131ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > refuses malformed or nonexistent parent identities without exposing metadata 21ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > requires reconciliation for missing or deleted anchors and preserves archived retained reads 38ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > retains the canonical native uniqueness constraint rather than selecting a second anchor 17ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses an unassigned actor before private project metadata 15ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses an unassigned actor before private Vault snippets or identity 15ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > pages the accessible portfolio rather than a newer private project 40ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > counts and pages only accessible library documents 37ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > rechecks current organization membership for a previously authenticated public reader 32ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > denies a now-viewer lead mutation despite the retained member JWT and lead identity 37ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > does not return a private counterpart from an accessible public document relationship 129ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > rechecks current write eligibility after request admission and before the real adoption transaction 25ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses a privately bound source selected into an owned target through conversation adoption 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > has native FORCE RLS on Vault after canonical migration repair without changing table ownership
+AssertionError: expected { relrowsecurity: true, …(2) } to match object { relrowsecurity: true, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "relforcerowsecurity": true,
++   "relforcerowsecurity": false,
+    "relrowsecurity": true,
+  }
+
+ ❯ tests/db/project-vault-parent-access.dbtest.ts:180:17
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > retains a genuinely global_public source under restricted runtime RLS
+AssertionError: expected [] to include 12
+ ❯ tests/db/project-vault-parent-access.dbtest.ts:271:73
+    269|     const publicSources = await get(actors.unassigned, `/api/c2c/proje…
+    270|     expect(publicSources.status, JSON.stringify(publicSources.body)).t…
+    271|     expect(publicSources.body.unscoped.map((row: {id:number})=>row.id)…
+       |                                                                         ^
+    272|   });
+    273|   it('admits creator-only unbound conversation adoption and preserves …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 38 passed (40)
+   Start at  00:57:02
+   Duration  10.24s (transform 4.28s, setup 97ms, import 2.72s, tests 7.10s, environment 0ms)

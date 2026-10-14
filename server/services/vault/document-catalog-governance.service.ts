@@ -26,7 +26,9 @@
 import { pool } from '../../db.js';
 import { requireGovernedReason } from '../../routes/governed-reason.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { vaultWriteRefusal } from './vault-write-authority.js';
+import { vaultWriteRefusal, requireCurrentVaultProgramWrite } from './vault-write-authority.js';
+import type { RequestSqlClient } from '../../db/requestDb.js';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access.js';
 import { filingVocabularyRefusal } from './vault-filing.service.js';
 import { vaultDocKindLabel } from '../../../shared/constants/domain/vault-taxonomy.js';
 
@@ -89,7 +91,7 @@ export interface CatalogSuggestion {
   contentHash: string;
   organizationId: number;
   programId: string;
-  documentTitle: string;
+  documentTitle: string | null;
   documentKind: string;
   purpose: string;
   summary: string;
@@ -171,12 +173,16 @@ export async function writeCatalogSuggestion(s: CatalogSuggestion): Promise<Sugg
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const identity = { organizationId: s.organizationId, userId: s.userId ?? undefined, programId: s.programId };
+    await requireCurrentVaultProgramWrite(client, identity);
     const found = await client.query(
       `SELECT c.catalog_state, c.document_kind, c.purpose, c.summary, c.confirmed_at
-         FROM vault.document_catalog c
-        WHERE c.document_id = $1 AND c.content_hash = $2
-        FOR UPDATE`,
-      [s.documentId, s.contentHash],
+         FROM vault.document_catalog c JOIN vault.documents d ON d.id = c.document_id
+        WHERE c.document_id = $1 AND c.content_hash = $2 AND d.content_hash = $2
+          AND d.program_id = $3::uuid AND d.deleted_at IS NULL
+          AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $4)
+        FOR UPDATE OF c, d`,
+      [s.documentId, s.contentHash, s.programId, s.organizationId],
     );
     const before = found.rows[0] ? { ...found.rows[0], state: catalogStateOf(found.rows[0]) } : undefined;
     const refusal = !before ? VERSION_CHANGED : personDecided(before);
@@ -193,10 +199,12 @@ export async function writeCatalogSuggestion(s: CatalogSuggestion): Promise<Sugg
       resourceId: s.documentId,
       details: suggestionAuditDetails(s, before),
     });
+    await requireCurrentVaultProgramWrite(client, identity);
     await client.query('COMMIT');
     return { ok: true, embeddingStatus };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof ProgramReadAccessError) return { ok: false, refusal: err.message };
     throw err;
   } finally {
     client.release();
@@ -266,8 +274,6 @@ function correctionFields(args: ReviewCatalogArgs): Partial<CatalogFields> | Rev
 
 /** The checks that need no database: role, ids, reason and fields. */
 function reviewPreflight(args: ReviewCatalogArgs): { reason: string | null; fields: Partial<CatalogFields> } | ReviewCatalogResult {
-  const roleRefusal = vaultWriteRefusal();
-  if (roleRefusal) return roleRefusal;
   if (!UUID_RE.test(args.programId) || !UUID_RE.test(args.documentId)) {
     return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
   }
@@ -371,6 +377,8 @@ export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<Revi
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const identity = { organizationId: args.organizationId, userId: args.userId ?? undefined, programId: args.programId };
+    await requireCurrentVaultProgramWrite(client, identity);
     const row = await lockRecord(client, args);
     if ('ok' in row) {
       await client.query('ROLLBACK');
@@ -421,10 +429,12 @@ export async function reviewCatalogRecord(args: ReviewCatalogArgs): Promise<Revi
         description: describeReview(state, changes),
       },
     });
+    await requireCurrentVaultProgramWrite(client, identity);
     await client.query('COMMIT');
     return { ok: true, state, changes };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof ProgramReadAccessError) return refuse(err.status, err.code, err.message);
     throw err;
   } finally {
     client.release();
@@ -456,12 +466,12 @@ export interface CatalogRecordView {
 }
 
 /** A row of the read, as the panel shows it. */
-function toRecordView(r: Record<string, any>): CatalogRecordView {
+function toRecordView(r: Record<string, any>, currentRole: string): CatalogRecordView {
   const iso = (v: unknown) => (v ? new Date(String(v)).toISOString() : null);
   return {
     contentHash: String(r.content_hash),
     revision: r.revision ?? null,
-    canWrite: vaultWriteRefusal() === null,
+    canWrite: vaultWriteRefusal(currentRole) === null,
     state: catalogStateOf(r),
     documentKind: r.document_kind ?? null,
     documentKindLabel: r.document_kind ? vaultDocKindLabel(r.document_kind) : null,
@@ -480,12 +490,16 @@ function toRecordView(r: Record<string, any>): CatalogRecordView {
 
 /** The current version's record, for a document of this project; null when it is not one. */
 export async function readCatalogRecord(args: {
+  executor: RequestSqlClient;
+  userId: number | undefined;
   programId: string;
   documentId: string;
   organizationId: number;
 }): Promise<CatalogRecordView | null> {
   if (!UUID_RE.test(args.programId) || !UUID_RE.test(args.documentId)) return null;
-  const { rows } = await pool.query(
+  const identity = { organizationId: args.organizationId, userId: args.userId, programId: args.programId };
+  await requireCurrentProgramAccess(args.executor, identity);
+  const { rows } = await args.executor.query(
     `SELECT d.content_hash, c.catalog_status, c.catalog_state,
             c.document_kind, c.purpose, c.summary, c.key_data, c.proposed_by, c.proposed_model,
             c.cataloged_at, c.confirmed_by, u.name AS confirmed_by_name, c.confirmed_at, c.correction_reason,
@@ -498,5 +512,6 @@ export async function readCatalogRecord(args: {
                      WHERE rp.id = d.program_id AND rp.organization_id = $3 AND rp.deleted_at IS NULL)`,
     [args.documentId, args.programId, args.organizationId],
   );
-  return rows[0] ? toRecordView(rows[0]) : null;
+  const current = await requireCurrentProgramAccess(args.executor, identity);
+  return rows[0] ? toRecordView(rows[0], current.actor.role) : null;
 }

@@ -85,6 +85,7 @@ export const AUTHORING_ACCESS_DDL = `
   ALTER TABLE users ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active';
   ALTER TABLE organizations ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active';
   ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_workspace_id integer;
+  ALTER TABLE projects ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'planning';
   ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id integer;
   ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by_id integer;
   ALTER TABLE projects ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}';

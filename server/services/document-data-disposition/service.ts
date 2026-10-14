@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { DocumentDispositionPreview, DocumentDispositionRecord } from '../../../shared/document-data-disposition';
 import { DOCUMENT_DISPOSITION_REASON_MIN, DOCUMENT_DISPOSITION_REASON_MAX } from '../../../shared/document-data-disposition';
-import { programInOrganization, canMutateProgram } from '../c2c/program-access';
+import { canCreateProgram, canMutateProgram } from '../c2c/program-access';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { DispositionError, DISPOSITION_UUID as UUID, DISPOSITION_HASH as HASH, type DispositionPreviewInput, type DispositionApplyInput, type DispositionQueryable, type DispositionServiceDependencies, type Snapshot } from './types';
 import { createDispositionTokenCodec, hashSnapshot } from './tokens';
@@ -63,10 +64,18 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
   }
   async function scoped(q: DispositionQueryable, input: DispositionPreviewInput, write: boolean) {
     await setTenantContextTx(q, input.organizationId, input.orgRole);
-    if (!await programInOrganization(q, input.programId, input.organizationId)) throw new DispositionError(404, 'NOT_FOUND', 'Project or source not found.');
+    let access;
+    try { access = await requireCurrentProgramAccess(q, { organizationId: input.organizationId, userId: input.actorId, programId: input.programId, forShare: write }); }
+    catch (error) {
+      if (error instanceof ProgramReadAccessError) {
+        const hidden = !write && error.status === 403 || error.status === 404;
+        throw new DispositionError(hidden ? 404 : error.status, hidden ? 'PROJECT_NOT_FOUND' : error.code, hidden ? 'Project or source not found.' : error.message);
+      }
+      throw error;
+    }
     if (write) {
       const program = await q.query('SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2', [input.programId,input.organizationId]);
-      if (!canMutateProgram({ actor: { userId: input.actorId, orgRole: input.orgRole }, program: { leadUserId: program.rows[0]?.lead_user_id ?? null } })) {
+      if (!canCreateProgram({ orgRole: access.actor.role }) || !canMutateProgram({ actor: { userId: input.actorId, orgRole: access.actor.role }, program: { leadUserId: program.rows[0]?.lead_user_id ?? null } })) {
         throw new DispositionError(403, 'FORBIDDEN', 'Only a project lead or organization manager can withdraw this source.');
       }
     }

@@ -24,6 +24,7 @@
  * pglite suites flake under combined load.
  */
 
+import { seedSourceReadParents } from './source-read-fixture';
 import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -34,10 +35,10 @@ import { fileURLToPath } from 'node:url';
 let pglite: PGlite;
 const pool = {
   query: async (sql: string, params?: unknown[]) => {
-    const r = await pglite.query(sql, params as unknown[]);
+    const r = await pglite.query<Record<string, unknown>>(sql, params);
     return {
-      rows: r.rows as unknown[],
-      rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length,
+      rows: r.rows,
+      rowCount: (r as { affectedRows?: number }).affectedRows ?? r.rows.length,
     };
   },
 };
@@ -65,7 +66,7 @@ const ORG_A = 511;
 const ORG_B = 622;
 const PROGRAM_A = '33333333-3333-4333-8333-333333333333';
 const PROGRAM_B = '44444444-4444-4444-8444-444444444444';
-const ACTOR = 'user-1';
+const ACTOR = '1';
 
 function migration(rel: string): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -114,6 +115,7 @@ async function makeSection(
 beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
+  await seedSourceReadParents(pglite, [ORG_A, ORG_B], [PROGRAM_A, PROGRAM_B]);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
@@ -121,6 +123,7 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
   // authoring_documents.client_program_id: a document's project, which a citation is judged by (PF-11).
   await pglite.exec(migration('migrations/20260727_authoring_document_program_scope.sql'));
+  await pglite.exec(migration('db/migrations/20260727_authoring_object_permissions.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
   await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
   // Four real migrations into a cold WASM Postgres exceeds the 10s default hook
@@ -278,7 +281,7 @@ describe('change propagation', () => {
     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
     await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-prop-2' WHERE id = $1`, [src.id]);
 
-    const changes = await usage.listChangedSourceUsages(ORG_A, { programId: PROGRAM_A, sourceId: src.id });
+    const changes = await usage.listChangedSourceUsages(pool, ORG_A, { userId: 1, programId: PROGRAM_A, sourceId: src.id });
     expect(changes).toHaveLength(1);
     expect(changes[0].sectionId).toBe(sectionId);
     expect(changes[0].sectionCode).toBe('Q.1');
@@ -287,19 +290,20 @@ describe('change propagation', () => {
     expect(changes[0].currentChecksum).toBe('sha-prop-2');
 
     // Another project's scope must not surface it.
-    expect(
-      await usage.listChangedSourceUsages(ORG_A, { programId: PROGRAM_B, sourceId: src.id }),
-    ).toHaveLength(0);
+    await expect(usage.listChangedSourceUsages(pool, ORG_A, { userId: 1, programId: PROGRAM_B, sourceId: src.id }))
+      .rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' });
   });
 
   it("an organization-wide source cited by the project's document is the project's change too (PF-11)", async () => {
     // Scoped by the source's project, this was never listed for the project
     // whose document cites it: the source names no project.
     const src = await spine.createSource(ORG_A, clientDoc('sha-orgwide-1', { visibilityClass: 'tenant_private', clientProgramId: null }));
+    await pool.query(`INSERT INTO file_uploads(id,organization_id,user_id,checksum_sha256,status)
+      VALUES('file_sha-orgwide-1',$1,1,'sha-orgwide-1','uploaded')`, [ORG_A]);
     const { sectionId } = await makeSection(ORG_A, 'Module 2.3', 'QOS.1');
     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
     await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-orgwide-2' WHERE id = $1`, [src.id]);
-    const changes = await usage.listChangedSourceUsages(ORG_A, { programId: PROGRAM_A, sourceId: src.id });
+    const changes = await usage.listChangedSourceUsages(pool, ORG_A, { userId: 1, programId: PROGRAM_A, sourceId: src.id });
     expect(changes.map((c) => c.sectionId)).toEqual([sectionId]);
   });
 
@@ -307,7 +311,7 @@ describe('change propagation', () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-stable'));
     const { sectionId } = await makeSection(ORG_A, 'Stable doc', 'T.1');
     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
-    expect(await usage.listChangedSourceUsages(ORG_A, { sourceId: src.id })).toHaveLength(0);
+    expect(await usage.listChangedSourceUsages(pool, ORG_A, { userId: 1, sourceId: src.id })).toHaveLength(0);
   });
 
   it("does not leak another tenant's changed citations", async () => {
@@ -316,8 +320,9 @@ describe('change propagation', () => {
     await usage.citeSource(ORG_B, { sectionId, sourceId: src.id, createdBy: ACTOR });
     await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-b-2' WHERE id = $1`, [src.id]);
 
-    expect(await usage.listChangedSourceUsages(ORG_A, { sourceId: src.id })).toHaveLength(0);
-    expect(await usage.listChangedSourceUsages(ORG_B, { sourceId: src.id })).toHaveLength(1);
+    await expect(usage.listChangedSourceUsages(pool, ORG_A, { userId: 1, sourceId: src.id }))
+      .rejects.toMatchObject({ status: 404, code: 'SOURCE_NOT_FOUND' });
+    expect(await usage.listChangedSourceUsages(pool, ORG_B, { userId: 1, sourceId: src.id })).toHaveLength(1);
   });
 });
 
@@ -329,7 +334,7 @@ describe('the back-reference', () => {
     await usage.citeSource(ORG_A, { sectionId: one.sectionId, sourceId: src.id, createdBy: ACTOR });
     await usage.citeSource(ORG_A, { sectionId: two.sectionId, sourceId: src.id, createdBy: ACTOR });
 
-    const summary = await usage.summarizeSourceUsage(ORG_A, [src.id]);
+    const summary = await usage.summarizeSourceUsage(pool, ORG_A, [src.id], { userId: 1 });
     expect(summary.get(src.id)).toEqual({
       sourceId: src.id,
       sections: 2,
@@ -347,14 +352,14 @@ describe('the back-reference', () => {
     const fresh = await makeSection(ORG_A, 'Written after', 'M.2');
     await usage.citeSource(ORG_A, { sectionId: fresh.sectionId, sourceId: src.id, createdBy: ACTOR });
 
-    const summary = await usage.summarizeSourceUsage(ORG_A, [src.id]);
+    const summary = await usage.summarizeSourceUsage(pool, ORG_A, [src.id], { userId: 1 });
     expect(summary.get(src.id)?.sections).toBe(2);
     expect(summary.get(src.id)?.changedSections).toBe(1);
   });
 
   it('leaves an uncited source out of the map, so "not cited yet" is visible', async () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-orphan'));
-    expect((await usage.summarizeSourceUsage(ORG_A, [src.id])).has(src.id)).toBe(false);
+    expect((await usage.summarizeSourceUsage(pool, ORG_A, [src.id], { userId: 1 })).has(src.id)).toBe(false);
   });
 
   it("does not count another tenant's citations of the same source id", async () => {
@@ -362,11 +367,12 @@ describe('the back-reference', () => {
     const { sectionId } = await makeSection(ORG_A, 'Mine', 'S.9');
     await usage.citeSource(ORG_A, { sectionId, sourceId: mine.id, createdBy: ACTOR });
 
-    expect(await usage.summarizeSourceUsage(ORG_B, [mine.id])).toEqual(new Map());
+    await expect(usage.summarizeSourceUsage(pool, ORG_B, [mine.id], { userId: 1 }))
+      .rejects.toMatchObject({ status: 404, code: 'SOURCE_NOT_FOUND' });
   });
 
   it('drops non-numeric ids rather than casting them', async () => {
-    expect(await usage.summarizeSourceUsage(ORG_A, ['abc', '-1', '0', ''])).toEqual(new Map());
+    expect(await usage.summarizeSourceUsage(pool, ORG_A, ['abc', '-1', '0', ''], { userId: 1 })).toEqual(new Map());
   });
 });
 
@@ -554,7 +560,7 @@ describe('the Source Tracer read (listCitedSections)', () => {
     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
     await usage.citeSource(ORG_A, { sectionId, sourceId: other.id, createdBy: ACTOR });
 
-    const cited = await usage.listCitedSections(ORG_A, { documentId: docId });
+    const cited = await usage.listCitedSections(pool, ORG_A, { userId: 1, documentId: docId });
     expect(cited).toHaveLength(1);
     expect(cited[0].sectionCode).toBe('TR.1');
     expect(cited[0].documentTitle).toBe('Tracer doc');
@@ -568,7 +574,7 @@ describe('the Source Tracer read (listCitedSections)', () => {
     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
     await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-tracer-move-2' WHERE id = $1`, [src.id]);
 
-    const cited = await usage.listCitedSections(ORG_A, { documentId: docId });
+    const cited = await usage.listCitedSections(pool, ORG_A, { userId: 1, documentId: docId });
     expect(cited[0].sources[0].state).toBe('changed');
     // The recorded checksum is preserved as evidence, not advanced.
     expect(cited[0].sources[0].citedChecksum).toBe('sha-tracer-move-1');
@@ -576,7 +582,7 @@ describe('the Source Tracer read (listCitedSections)', () => {
 
   it('omits sections with no recorded citations — that is the surface contract', async () => {
     const { docId } = await makeSection(ORG_A, 'Uncited doc', 'TR.3');
-    expect(await usage.listCitedSections(ORG_A, { documentId: docId })).toHaveLength(0);
+    expect(await usage.listCitedSections(pool, ORG_A, { userId: 1, documentId: docId })).toHaveLength(0);
   });
 
   it("does not serve another tenant's citations", async () => {
@@ -584,8 +590,9 @@ describe('the Source Tracer read (listCitedSections)', () => {
     const { docId, sectionId } = await makeSection(ORG_B, 'Their tracer doc', 'TR.4', PROGRAM_B);
     await usage.citeSource(ORG_B, { sectionId, sourceId: src.id, createdBy: ACTOR });
 
-    expect(await usage.listCitedSections(ORG_A, { documentId: docId })).toHaveLength(0);
-    expect(await usage.listCitedSections(ORG_B, { documentId: docId })).toHaveLength(1);
+    await expect(usage.listCitedSections(pool, ORG_A, { userId: 1, documentId: docId }))
+      .rejects.toMatchObject({ status: 404, code: 'AUTHORING_DOCUMENT_NOT_FOUND' });
+    expect(await usage.listCitedSections(pool, ORG_B, { userId: 1, documentId: docId })).toHaveLength(1);
   });
 
   it('lists an unresolvable source rather than dropping the citation', async () => {
@@ -594,7 +601,7 @@ describe('the Source Tracer read (listCitedSections)', () => {
     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
     await pool.query(`UPDATE cre_evidence_sources SET deleted_at = NOW() WHERE id = $1`, [src.id]);
 
-    const cited = await usage.listCitedSections(ORG_A, { documentId: docId });
+    const cited = await usage.listCitedSections(pool, ORG_A, { userId: 1, documentId: docId });
     expect(cited).toHaveLength(1);
     expect(cited[0].sources[0].state).toBe('unresolved');
     expect(cited[0].sources[0].source).toBeNull();

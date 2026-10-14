@@ -35,6 +35,10 @@
 
 import { Router, Request, Response } from 'express';
 
+import { requestPgClient } from '../db/requestDb';
+import { ProgramReadAccessError } from '../services/c2c/current-program-access';
+import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
+import { SourceReadAccessError } from '../services/clinical-regulatory-evidence/source-read-access';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('source-tracer-routes');
@@ -89,7 +93,10 @@ export default function createSourceTracerRoutes(): Router {
       const { listCitedSections } = await import(
         '../services/clinical-regulatory-evidence/source-usage.service.js'
       );
-      const cited = await listCitedSections(organizationId, { documentId: documentFilter });
+      const rawUserId=req.user?.id ?? req.user?.userId;
+      const userId=Number(rawUserId);
+      const cited = await listCitedSections(requestPgClient(req),organizationId,
+        {userId:Number.isSafeInteger(userId) && userId>0 ? userId : undefined,documentId:documentFilter});
 
       // Shape for the surface: one card per section, its recorded sources with
       // their standing. `state` comes from the service (current / changed /
@@ -115,8 +122,12 @@ export default function createSourceTracerRoutes(): Router {
         })),
       }));
 
-      return res.json({ success: true, data: { sections, total: sections.length } });
+      return res.json({ success: true, data: { sections, total: sections.length, scope:'verified-accessible-authoring-sections' } });
     } catch (error: any) {
+      if (error instanceof ProgramReadAccessError || error instanceof AuthoringReadScopeError || error instanceof SourceReadAccessError) {
+        const denied=error instanceof ProgramReadAccessError && error.code==='PROJECT_PERMISSION_DENIED';
+        return res.status(denied ? 404 : error.status).json({success:false,error:denied ? 'PROJECT_NOT_FOUND' : error.code});
+      }
       // Fail-closed if the authoring/citation tables are not provisioned
       // (42P01 undefined_table / 42703 undefined_column) — never fabricate.
       if (error?.code === '42P01' || error?.code === '42703') {

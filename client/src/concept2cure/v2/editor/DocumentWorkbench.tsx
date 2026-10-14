@@ -753,9 +753,9 @@ function sourceStateLabel(s: SectionSource): {
       };
     case 'unresolved':
       return {
-        text: 'Source no longer available',
+        text: 'Source unavailable with current access',
         tone: 'warn',
-        hint: 'The citation is recorded but the source does not resolve in this organization — it may have been deleted.',
+        hint: 'This recorded citation’s source could not be resolved within your current access. The citation remains recorded.',
       };
     default:
       return {

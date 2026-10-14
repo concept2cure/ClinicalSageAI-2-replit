@@ -44,7 +44,7 @@ export interface ReviewPaneProps {
 function facetOf(v: unknown): PdevSignatureFacet | null {
   const f = v as { state?: unknown; signature?: unknown } | null | undefined;
   if (f?.state === 'none' || f?.state === 'unavailable') return f as PdevSignatureFacet;
-  if ((f?.state === 'signed' || f?.state === 'revoked') && f.signature && typeof f.signature === 'object') return f as PdevSignatureFacet;
+  if ((f?.state === 'signed' || f?.state === 'revoked' || f?.state === 'changed' || f?.state === 'unverified') && f.signature && typeof f.signature === 'object') return f as PdevSignatureFacet;
   return null;
 }
 
@@ -68,7 +68,7 @@ export function SignatureLine({ facet, expected, style }: { facet: unknown; expe
   const s = f.signature;
   return (
     <span className="pde-review-meta" style={style}>
-      {f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
+      {f.state === 'changed' ? 'Content changed after signing · historical signer ' : f.state === 'unverified' ? 'Current signature binding unverified · historical signer ' : f.state === 'revoked' ? 'Signature revoked · signed by ' : 'Signed by '}
       <strong>{s.signerName || 'a signer with no printed name on record'}</strong>
       {' as ' + signatureMeaningLabel(s.meaning) + ' · '}
       <GovernedTimestamp value={s.signedAt} layout="inline" />

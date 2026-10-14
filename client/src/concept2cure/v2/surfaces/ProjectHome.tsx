@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
 import { I } from '../icons';
-import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState } from '../dataConnect';
+import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
@@ -339,11 +339,20 @@ interface SourceRow {
 /** One page of the project's Data Room, as GET /:id/sources answers it. */
 interface SourcesPage {
   sources: SourceRow[];
+  /** Usage counts include only citations visible with the caller's current access. */
+  usageScope?: 'accessible-citations';
   window?: { shown: number; truncated: boolean };
   /** Every source matching the read; currentTotal counts each re-uploaded file once. */
   total?: number;
   currentTotal?: number;
 }
+
+const isSourcesPage: ShapeGuard<SourcesPage> = (value): value is SourcesPage => {
+  if (!value || typeof value !== 'object') return false;
+  const read = value as Partial<SourcesPage>;
+  return Array.isArray(read.sources) && read.sources.every(row => row && typeof row.id === 'number' && typeof row.title === 'string') &&
+    [read.total, read.currentTotal].every(count => count === undefined || (Number.isSafeInteger(count) && typeof count === 'number' && count >= 0));
+};
 
 /** How many sources one page of the Data Room shows. */
 const SOURCES_PAGE = 200;
@@ -369,6 +378,15 @@ interface ChangedUsageRow {
   citedAt: string | null;
 }
 
+interface ChangedUsageRead { changes: ChangedUsageRow[]; count: number }
+
+const isChangedUsageRead: ShapeGuard<ChangedUsageRead> = (value): value is ChangedUsageRead => {
+  if (!value || typeof value !== 'object') return false;
+  const read = value as Partial<ChangedUsageRead>;
+  return Array.isArray(read.changes) && read.count === read.changes.length &&
+    read.changes.every(row => row && typeof row.citationId === 'string' && typeof row.sectionId === 'string' && typeof row.sourceId === 'number');
+};
+
 /**
  * "Used in" — the back-reference, from recorded citations only.
  *
@@ -381,27 +399,31 @@ interface ChangedUsageRow {
  * not the same as "cited nowhere", and guessing would be the fabrication this
  * surface exists to avoid.
  */
-function usedIn(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
+function usedIn(s: SourceRow, scope: SourcesPage['usageScope']): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
   if (!s.usage) return null;
   const { sections, documents, changedSections } = s.usage;
+  if (scope !== 'accessible-citations' || ![sections, documents, changedSections].every(n => Number.isSafeInteger(n) && n >= 0)
+    || changedSections > sections || documents > sections) return {
+    label: 'Citation usage unavailable', tone: 'muted', title: 'Citation counts could not be verified for your current access.',
+  };
   if (sections === 0) {
     return {
-      label: 'Not cited yet',
+      label: 'No accessible citations',
       tone: 'muted',
-      title: 'No section records a citation of this source',
+      title: 'No citations are visible with your current access. This is not a finding about other documents.',
     };
   }
-  const where = `Used in ${sections} section${sections === 1 ? '' : 's'}`;
-  const docs = documents > 0 ? ` · ${documents} document${documents === 1 ? '' : 's'}` : '';
+  const where = `Used in ${sections} accessible section${sections === 1 ? '' : 's'}`;
+  const docs = documents > 0 ? ` · ${documents} accessible document${documents === 1 ? '' : 's'}` : '';
   if (changedSections > 0) {
     return {
       label: `${where}${docs} · ${changedSections} written against older content`,
       tone: 'warn',
       title:
-        'This source changed after those sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
+        'This source changed after those accessible sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
     };
   }
-  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections that recorded a citation of this source' };
+  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections visible with your current access that recorded a citation of this source' };
 }
 
 function prettyBytes(n: number | null): string | null {
@@ -490,21 +512,24 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const state = useLiveData<SourcesPage>(
+  const sourceRead = useLiveData<SourcesPage>(
     pid ? sourcesUrl(pid, term, offset) : null,
     [pid, reloadKey, term, offset],
-    hasKeys<SourcesPage>('sources'),
+    isSourcesPage,
   );
+  const state = !sourceRead.loading && !sourceRead.error && !sourceRead.data
+    ? { ...sourceRead, error: 'The source list could not be verified.', empty: false }
+    : sourceRead;
 
   // Sections in this project drafted from a source that has since changed. Read
   // separately because it answers a different question from the source list, and
-  // an older server that does not serve it simply yields nothing rather than a
-  // fabricated all-clear.
-  const changed = useLiveData<{ changes: ChangedUsageRow[]; count: number }>(
+  // a failed or unverified read cannot establish that no citations are affected.
+  const changed = useLiveData<ChangedUsageRead>(
     pid ? `/api/c2c/projects/${pid}/source-changes` : null,
     [pid, reloadKey],
+    isChangedUsageRead,
   );
-  const changes = changed.data?.changes ?? [];
+  const changes = !changed.loading && !changed.error ? changed.data?.changes ?? [] : [];
 
   // Same upload path as AnA's composer — one file, one identity.
   const { attachments, addFiles, uploading, statusMessage } = useChatUpload({ projectId: pid });
@@ -517,6 +542,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   }, [settled]);
 
   const sources = state.data?.sources ?? [];
+  const citationUsageScope = state.data?.usageScope;
   // A refreshed lifecycle decision must retire local and cross-surface pins.
   // A retained-data pin resolves the recorded extraction when its original
   // file is unavailable; withdrawn and replaced data cannot ground a draft.
@@ -562,7 +588,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               dropped a file in here would take an empty list as data loss. */}
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
-            : searching
+            : state.loading
+              ? searching ? 'searching this project’s sources — no matching count is confirmed yet' : 'loading this project’s sources — counts are not confirmed yet'
+              : searching
               ? `${matched} source${matched === 1 ? '' : 's'} match \u201c${term}\u201d in their title or text`
               : total > 0
                 ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable on this page${truncated || offset > 0 ? ` (showing ${offset + 1}\u2013${offset + sources.length})` : ''} — what this project's documents are written from`
@@ -609,6 +637,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           regulated text is not something this surface should do. The point is
           that the affected sections are findable at all: before this they left
           no trace anywhere. */}
+      {!changed.loading && (changed.error || !changed.data) && (
+        <p className="sec-sub" role="status">
+          Source-change citations could not be verified for your current access. No affected-citation count is confirmed.
+        </p>
+      )}
       {changes.length > 0 && (
         <div
           className="sp-tone-warn"
@@ -619,8 +652,8 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           }}
         >
           <b>
-            {changes.length} section{changes.length === 1 ? '' : 's'} in this project{' '}
-            {changes.length === 1 ? 'was' : 'were'} drafted from a source that has since changed.
+            {changes.length} accessible citation{changes.length === 1 ? '' : 's'} shown in this project{' '}
+            point{changes.length === 1 ? 's' : ''} to a source that has since changed.
           </b>
           <div style={{ marginTop: 6, display: 'grid', gap: 3 }}>
             {changes.slice(0, 6).map((c) => (
@@ -689,7 +722,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             <div className="pj-srcs">
               {rows.map((s) => {
                 const rs = readState(s);
-                const use = usedIn(s);
+                const use = usedIn(s, citationUsageScope);
                 const size = prettyBytes(s.fileSize);
                 return (
                   <div

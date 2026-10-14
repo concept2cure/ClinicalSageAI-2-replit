@@ -4,7 +4,7 @@
  * stub. This proves ordering and query isolation, not production-role RLS. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { searchVaultDocuments } from '../vault-search';
 
 let db: JourneyDb;
@@ -18,16 +18,20 @@ async function document(n: number, options: { program?: string; organization?: n
     options.code ?? `PAGE-${n}`, String(n).padStart(64, '0'), options.supersedes ?? null, options.deleted ? '2026-10-13T11:00:00Z' : null, options.supersedes ? '2.0' : '1.0']);
 }
 const search = (offset = 0, options: { programId?: string | null; organizationId?: number; includeSuperseded?: boolean } = {}) => searchVaultDocuments(db.pool, {
-  organizationId: options.organizationId ?? ORG, programId: options.programId === undefined ? PROGRAM : options.programId,
+  organizationId: options.organizationId ?? ORG, userId: Number(AUTHOR.id), programId: options.programId === undefined ? PROGRAM : options.programId,
   q: 'stability', limit: 25, offset, includeSuperseded: options.includeSuperseded ?? false,
 });
 const resultIds = (result: Awaited<ReturnType<typeof search>>) => result.results.map(row => row.id);
 
 beforeAll(async () => {
-  db = await createJourneyDb({ prereqSql: PREREQ + VAULT_DDL, migrations: [
+  db = await createJourneyDb({ prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL, migrations: [
     'migrations/20260906_vault_documents_fulltext.sql',
     'migrations/20261006_document_data_dispositions.sql',
   ] });
+  await db.pool.query(`INSERT INTO organization_users (organization_id,user_id,role) VALUES (2,${AUTHOR.id},'member')`);
+  await db.pool.query(`INSERT INTO projects (id,organization_id,name,regulatory_program_id,owner_id,created_by_id)
+      VALUES (44,2,'foreign owned anchor','${OTHER_PROGRAM}',${AUTHOR.id},${AUTHOR.id})`);
+  await db.pool.query("INSERT INTO project_visibility_settings VALUES (44,2,'private')");
   // Reverse insertion order prevents heap order from looking like the stable
   // ID contract by accident; every matching vector and timestamp is identical.
   for (let n = 31; n >= 1; n -= 1) await document(n);
@@ -67,7 +71,7 @@ describe('canonical Vault full-text paging with tied matches', () => {
     const foreign = await search(0, { programId: OTHER_PROGRAM, organizationId: 2 });
     expect(foreign.total).toBe(1);
     expect(resultIds(foreign)).toEqual([id(34)]);
-    expect(await search(0, { programId: OTHER_PROGRAM })).toMatchObject({ total: 0, results: [] });
+    await expect(search(0, { programId: OTHER_PROGRAM })).rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' });
     const historical = await search(25, { includeSuperseded: true });
     expect(historical.total).toBe(33);
     expect(resultIds(historical)).toEqual(Array.from({ length: 8 }, (_, index) => id(index + 26)));

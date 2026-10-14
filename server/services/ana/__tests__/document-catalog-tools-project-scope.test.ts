@@ -39,6 +39,21 @@ vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
   resolveOpenProgram: h.open,
   programInOrganization: h.inOrg,
 }));
+// Pure open-conversation boundary composition: current admission is supplied
+// for this member; SQL authority/RLS is covered by actual PGlite/native cases.
+vi.mock('../../c2c/current-program-access.js', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../c2c/current-program-access.js')>();
+  return { ...actual,
+    getCurrentAccessibleProgramScope: async (_q: unknown, input: { userId: number; programId?: string | null }) => {
+      if (input.programId && !await h.inOrg()) throw new actual.ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+      return { scope: 'verified-accessible-programs', actor: { userId: input.userId, role: 'member' },
+        programIds: input.programId ? [input.programId] : [A, B], reconciliationRequired: false };
+    },
+    requireCurrentProgramAccess: async (_q: unknown, input: { userId: number }) => ({ actor: { userId: input.userId, role: 'member' } }),
+    assertVerifiedProgramScope: () => undefined,
+    requireProgramScopeStillCurrent: async () => undefined,
+  };
+});
 vi.mock('../../../db.js', () => ({ pool: { query: h.ownDocs }, getPool: () => ({ query: h.ownDocs }), db: {} }));
 vi.mock('../../vault/document-catalog-search.js', () => ({
   searchCatalog: h.search,
@@ -56,6 +71,9 @@ vi.mock('../../../db/tenantStore.js', async (importOriginal) => ({
 vi.mock('../uploaded-file-access.js', () => ({
   loadUploadedFile: async () => ({ fileId: 'file_1712345678_ab12cd', fileName: 'f.pdf', mimeType: 'application/pdf', fileSize: 1, buffer: Buffer.from('x') }),
 }));
+// Source preview/callback admission is exercised by upload/native suites;
+// these isolated affordance tests supply an unchanged eligible uploaded file.
+vi.mock('../../vault/vault-upload-source-admission.js', () => ({ assertVaultUploadSource: async () => undefined }));
 vi.mock('../../vault/vault-ingest.service.js', () => ({ ingestVaultDocument: h.ingest }));
 vi.mock('../../vault/document-catalog.service.js', () => ({
   isDocumentCatalogEnabled: vi.fn(async () => true),
@@ -76,8 +94,9 @@ registerDocumentCatalogHandlers((name, fn) => handlers.set(name, fn));
 
 const A = '0a000000-0000-4000-8000-00000000000a';
 const B = '0b000000-0000-4000-8000-00000000000b';
-const V2_A: ToolContext = { organizationId: 42, userId: 7, projectId: null, projectRef: A };
-const NONE: ToolContext = { organizationId: 42, userId: 7 };
+const requestExecutor = { query: h.ownDocs };
+const V2_A: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor, projectId: null, projectRef: A };
+const NONE: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor };
 const call = async (tool: string, input: Record<string, unknown>, ctx: ToolContext) =>
   JSON.parse(await handlers.get(tool)!(input, ctx));
 const FILE = { file_id: 'file_1712345678_ab12cd', document_title: 'Tox study', document_type: 'nonclinical_study_report' };
@@ -91,8 +110,8 @@ beforeEach(() => {
 describe('list_project_documents', () => {
   it('a v2 project open: lists that project, not the whole organization', async () => {
     const r = await call('list_project_documents', {}, V2_A);
-    expect(r.scope).toEqual({ programId: A });
-    expect((h.list.mock.calls[0] as any)[1]).toMatchObject({ programId: A });
+    expect(r.scope).toMatchObject({ access: 'verified-accessible-programs', programId: A });
+    expect((h.list.mock.calls[0] as any)[2]).toMatchObject({ programId: A });
   });
 
   it("another project's documents are refused while a project is open, and nothing is listed", async () => {
@@ -103,15 +122,15 @@ describe('list_project_documents', () => {
 
   it('naming the open project itself is fine', async () => {
     const r = await call('list_project_documents', { program_id: A.toUpperCase() }, V2_A);
-    expect(r.scope).toEqual({ programId: A });
+    expect(r.scope).toMatchObject({ access: 'verified-accessible-programs', programId: A });
   });
 
-  it('no project open: the organization, as today, or a program of the organization when named', async () => {
-    expect((await call('list_project_documents', {}, NONE)).scope).toEqual({ organizationWide: true });
-    expect((await call('list_project_documents', { program_id: B }, NONE)).scope).toEqual({ programId: B });
+  it('no project open: the evaluated accessible library, or an accessible programme when named', async () => {
+    expect((await call('list_project_documents', {}, NONE)).scope).toMatchObject({ access: 'verified-accessible-programs', programId: null });
+    expect((await call('list_project_documents', { program_id: B }, NONE)).scope).toMatchObject({ access: 'verified-accessible-programs', programId: B });
     h.inOrg.mockResolvedValue(false);
     const foreign = await call('list_project_documents', { program_id: B }, NONE);
-    expect(foreign.code).toBe('PROGRAM_NOT_FOUND');
+    expect(foreign.code).toBe('PROJECT_NOT_FOUND');
   });
 });
 
@@ -175,24 +194,24 @@ describe('the by-id tools: the open project\'s documents only', () => {
 describe('search stays in the open project', () => {
   it('search_project_documents searches the open program only; with no project, the organization', async () => {
     await call('search_project_documents', { query: 'stability data' }, V2_A);
-    expect((h.search.mock.calls[0] as any)[2]).toMatchObject({ programId: A });
+    expect((h.search.mock.calls[0] as any)[3]).toMatchObject({ programId: A });
     await call('search_project_documents', { query: 'stability data' }, NONE);
-    expect((h.search.mock.calls[1] as any)[2]).toMatchObject({ programId: null });
+    expect((h.search.mock.calls[1] as any)[3]).toMatchObject({ programId: null });
   });
 
   it('search_document_passages searches the open program only; with no project, the organization', async () => {
     h.passages.mockResolvedValue({ hits: [], coverage: null });
     const UUID = '11111111-1111-4111-8111-111111111111';
     await call('search_document_passages', { query: 'stability data' }, { ...V2_A, organizationUuid: UUID });
-    expect((h.passages.mock.calls[0] as any)[1]).toMatchObject({ programId: A });
+    expect((h.passages.mock.calls[0] as any)[2]).toMatchObject({ programId: A });
     await call('search_document_passages', { query: 'stability data' }, { ...NONE, organizationUuid: UUID });
-    expect((h.passages.mock.calls[1] as any)[1]).toMatchObject({ programId: null });
+    expect((h.passages.mock.calls[1] as any)[2]).toMatchObject({ programId: null });
   });
 });
 
 describe('an open project with no program', () => {
   it('reads nothing: not the organization, and not a named program', async () => {
-    const UNANCHORED: ToolContext = { organizationId: 42, userId: 7, projectId: 99, projectRef: '99' };
+    const UNANCHORED: ToolContext = { organizationId: 42, userId: 7, sqlClient: requestExecutor, projectId: 99, projectRef: '99' };
     expect((await call('list_project_documents', {}, UNANCHORED)).code).toBe('NO_PROJECT');
     expect((await call('list_project_documents', { program_id: B }, UNANCHORED)).code).toBe('NO_PROJECT');
     expect(h.list).not.toHaveBeenCalled();

@@ -36,6 +36,18 @@ import type { ToolContext } from '../AnaToolExecutor.js';
 const loadDocumentForOrg = vi.hoisted(() => vi.fn());
 const placeVaultDocument = vi.hoisted(() => vi.fn());
 
+// This fixture supplies the current member and request executor. The cases
+// isolate tool presentation/provenance; native access suites prove sharing/RLS.
+const requestExecutor = vi.hoisted(() => ({ query: vi.fn(async () => ({ rows: [] })) }));
+vi.mock('../../c2c/current-program-access.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../c2c/current-program-access.js')>(),
+  getCurrentAccessibleProgramScope: async (_q: unknown, input: { userId: number; programId?: string | null }) => ({
+    scope: 'verified-accessible-programs', actor: { userId: input.userId, role: 'member' },
+    programIds: input.programId ? [input.programId] : [], reconciliationRequired: false,
+  }),
+  requireCurrentProgramAccess: async (_q: unknown, input: { userId: number }) => ({ actor: { userId: input.userId, role: 'member' } }),
+  requireProgramScopeStillCurrent: async () => undefined,
+}));
 vi.mock('../../vault/vault-placement.service.js', () => ({ placeVaultDocument }));
 vi.mock('../../vault/document-catalog.service.js', () => ({
   isDocumentCatalogEnabled: vi.fn(async () => true),
@@ -54,6 +66,7 @@ registerDocumentPlacementHandlers((name, fn) => handlers.set(name, fn));
 const CTX: ToolContext = {
   organizationId: 42,
   userId: 7,
+  sqlClient: requestExecutor,
   servingModel: { provider: 'anthropic', model: 'claude-test-model' },
   threadId: 'thread-placement-1',
   turnId: 'turn-placement-3',
@@ -218,7 +231,7 @@ describe('an AnA placement is a suggestion a person confirms, attributed to AnA'
     loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
     await call(
       { document_id: VAULT_ID, folder_id: 'module-4', rationale: RATIONALE },
-      { organizationId: 42, userId: 7 },
+      { organizationId: 42, userId: 7, sqlClient: requestExecutor },
     );
     const { agent } = placeVaultDocument.mock.calls[0][0];
     expect(agent.actorKind).toBe('agent:ana');

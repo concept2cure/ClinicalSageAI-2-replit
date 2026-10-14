@@ -228,3 +228,81 @@ red/green evidence under D2, and run the existing protocol signature, write-
 scope, lineage, study-design, export and SoA route suites as relevant regressions.
 Until those results exist this document is an implementation plan and static
 audit, not a concurrency qualification record.
+
+## Implemented bounded correction and native evidence (2026-10-14)
+
+The original baseline probe retained two native failures and one green control in
+`docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization/`.
+The bounded correction now reserves the original protocol parent before every
+protected writer, rechecks current editable state after the wait, advances the
+parent MVCC row with `clock_timestamp()` and exact-one-row RETURNING, and reads
+structural completeness through the finalizer's actual transaction client.
+Section and SoA writers resolve parent identity before child locks and reread
+live child/token state after reservation. Supplemental `signedContent:false`
+registers retain their existing behavior. The structural rule scope, snapshot
+and canonical signature digest recipe are unchanged.
+
+A separate read-only native call against the preserved original org18/doc9/sig12
+proved that its genuine historical signature still passed its manifest hash
+while the current content digest differed; the old export nevertheless printed
+the later prose as Finalized with Electronic signature. The existing generic
+integrity verifier explicitly did not rederive this protocol binding. The
+current facet now distinguishes `signed` (historical signature binds current
+content), `changed` (verified historical signature, changed current content) and
+`unverified` (available historical metadata, no verified current binding).
+Default reads own one tenant-scoped repeatable-read read-only snapshot; explicit
+executors must prove an actual coherent transaction. A private branded context
+carries that proof between the existing facet/export services. A signature-store
+or snapshot connection failure remains `unavailable`, preserving the rest of the
+workspace read instead of promoting missing verification into a pass.
+
+Controlled export of a finalized protocol is held with a named 409 for changed
+content or no current live signature, and named 503 when verification is
+unavailable. The existing workspace signature line and pure export renderer label
+historical/current-binding limitations. No signature is revoked, repaired or
+rewritten; the preserved original fixture retains its original source, signature
+flags, signed hash and version. The before/after read-only proof is filed under
+`docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/protocol-finalization-repair/`.
+
+The canonical native test file is
+`tests/db/protocol-finalization-concurrency.dbtest.ts`, reachable only by the
+existing real-PostgreSQL configuration. It uses new isolated active memberships,
+restricted runtime and enforced RLS, actual observed parent/child lock queues,
+real canonical mutations/governance/reauth/signatures, and real finalize/export
+HTTP routes where asserted. Independent API cases use separate genuine fixture
+signers so the platform's ten-attempt limit is preserved. A deliberately
+out-of-band source change in a newly genuinely signed fixture tests the legacy
+export guard; it is distinct from the original retained application-writer race.
+Binder-read delivery failure is a bounded injected failure on a native restricted
+snapshot, with the503 route mapping checked through the actual Express handler.
+This is regression evidence, not PQ or scientific/agency approval.
+
+## Remaining ceremony reservation proof and exact hook
+
+The current ceremony checks authorship/independence before the finalizer takes
+its parent lock. The bounded correction above does not close or claim to close
+that separate race, and does not establish review, scientific approval or
+source/model/jurisdiction prerequisites.
+
+A next native proof should hold the protocol parent, start a genuine independent
+approval signer until the existing ceremony completes its current SoD read and
+queues its finalization parent lock, then commit a genuine governed section edit
+by that pending signer ahead of it. The baseline assertion is that approval must
+not independently attest to content the signer just authored. Preserve all real
+creation/edit/signature history and check no partial release effects on refusal.
+
+If reproduced, the precise shared-ceremony API is an optional
+`prepare(client, meaning)` callback on `GovernedSignatureInput`, called after
+BEGIN/tenant context and before `checkMeaningAgainstAuthorship` and domain write.
+The protocol finalization route can obtain `lockProtocolForSignatureTx` there.
+Do not move SoD after the finalization version write, which would wrongly make
+an independent approver an author through the act's own snapshot row.
+
+For signed review disposition, resolve the tenant/live assignment's parent
+without a child lock, obtain the same lock-only parent reservation (review may
+sign an already finalized protocol), then lock/reread that exact assignment.
+Retain the existing assignment lifecycle, assigned reviewer identity, meanings
+and canonical independence check. The current `setDispositionTx` locks only the
+assignment and the later content binder reads mutable protocol children, so this
+requires its own deterministic writer-first/disposition-first native proof
+before implementation or a concurrency-closure claim.

@@ -15,7 +15,7 @@ let harness: DispositionHarness;
 beforeAll(async () => {
   harness = await createDispositionHarness();
   await harness.pg.exec(`
-    CREATE TABLE organizations (id integer PRIMARY KEY, uuid uuid NOT NULL);
+    ALTER TABLE organizations ADD COLUMN uuid uuid NOT NULL DEFAULT gen_random_uuid();
     ALTER TABLE vault.documents ADD COLUMN file_name text;
     ALTER TABLE lumen_data_atoms ADD COLUMN title text;
     ALTER TABLE rag_documents ADD COLUMN title text;
@@ -27,7 +27,7 @@ afterAll(async () => { await harness.close(); });
 
 async function sources(f: DispositionFixture) {
   const uuid = randomUUID();
-  await f.pg.query('INSERT INTO organizations VALUES ($1,$2)', [f.org, uuid]);
+  await f.pg.query('UPDATE organizations SET uuid=$2 WHERE id=$1', [f.org, uuid]);
   const chunk = (await f.pg.query<{ id: string }>('SELECT id FROM vault.document_chunks WHERE document_id=$1', [f.vault])).rows[0].id;
   const rag = (await f.pg.query<{ id: string; document_id: string }>(`SELECT c.id,d.id AS document_id FROM rag_chunks c
     JOIN rag_documents d ON d.id=c.document_id WHERE d.organization_id=$1`, [f.org])).rows[0];

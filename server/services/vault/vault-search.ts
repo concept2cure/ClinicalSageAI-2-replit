@@ -1,6 +1,6 @@
 /**
- * Search the Vault by content and metadata: one program's, or every program
- * the organisation holds (the library search of plan critique 15, row D2).
+ * Search the Vault by content and metadata: one permitted program's, or the
+ * current actor's verified accessible library (the library search of plan critique 15, row D2).
  *
  * The one search query. `GET /:id/search` asks within a program; `GET /search`
  * asks across the organisation's library, which Veeva offers and the Vault
@@ -13,18 +13,21 @@
  * Paginated with a real `total`. Current versions only unless asked (VR-09).
  * An empty query is not "match everything": it answers no results and says why.
  *
- * The tenant boundary is IN every statement (the EXISTS on regulatory_programs),
- * not only in a check before it: vault.documents has no organization_id of its
- * own to filter on, and a boundary twenty lines up is the shape that decays.
+ * Every count and page binds the verified accessible programs and checks their
+ * organization through regulatory_programs. The document's recorded parent
+ * stays authoritative; a separate earlier check cannot widen these reads.
  */
 import { supersededSql } from './vault-version-family.js';
+import { assertVerifiedProgramScope, getCurrentAccessibleProgramScope, type CurrentAccessibleProgramScope } from '../c2c/current-program-access.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
 export interface VaultSearchParams {
   organizationId: number;
-  /** One program, or null for every program the organisation holds. */
+  /** Current authenticated actor; caller-supplied roles never establish access. */
+  userId: number;
+  /** One program, or null for the actor's verified accessible library. */
   programId: string | null;
   q: string;
   limit: number;
@@ -71,12 +74,18 @@ export interface VaultSearchHit {
 const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
                @@ websearch_to_tsquery('english', $2)`;
 
-export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams): Promise<{ total: number; results: VaultSearchHit[] }> {
-  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q];
-  const inProgram = p.programId ? `AND d.program_id = $${params.push(p.programId)}::uuid` : '';
+export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams, verifiedScope?: CurrentAccessibleProgramScope): Promise<{ total: number; results: VaultSearchHit[] }> {
+  // Verify on the same executor before counting, ranking or returning prose.
+  // The helper evaluates an empty accessible set; it is never a tenant-wide fallback.
+  const identity = {organizationId:p.organizationId,userId:p.userId,programId:p.programId};
+  if (verifiedScope) assertVerifiedProgramScope(db,identity,verifiedScope);
+  const scope = verifiedScope ?? await getCurrentAccessibleProgramScope(db,identity);
+  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q, scope.programIds];
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
-  const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${inProgram}
+  const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+          AND d.organization_id = $1
+          AND d.program_id = ANY($3::uuid[])
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL

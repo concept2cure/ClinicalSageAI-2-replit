@@ -131,7 +131,7 @@ const pool = {
   query: async (sql: string, params?: unknown[]) => {
     let rows: Record<string, unknown>[] = [];
     if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) rows = [{ id: params?.[0] }];
-    else if (/WHERE regulatory_program_id = \$1/.test(sql)) rows = [{ id: 42, clientWorkspaceId: null }];
+    else if (/WHERE regulatory_program_id\s*=\s*\$1/.test(sql)) rows = [{ id: 42, clientWorkspaceId: null }];
     else if (/SELECT id, regulatory_program_id FROM projects/.test(sql)) rows = [{ id: params?.[0], regulatory_program_id: null }];
     else if (/FROM organization_users/.test(sql)) rows = [{ role: 'member', user_id: params?.[0] }];
     else if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) rows = [{ id: params?.[2], owner_id: 3,
@@ -393,6 +393,9 @@ export function streamApp(
   app.use((req, _res, next) => {
     (req as any).tenantId = 7;
     (req as any).user = { ...state.user };
+    // The actual host now passes the request executor to source tools. Keep
+    // that per-request contract in this scripted, post-admission harness too.
+    (req as any).dbClient = { query: mocks.db().pool.query };
     next();
   });
   const router = express.Router();

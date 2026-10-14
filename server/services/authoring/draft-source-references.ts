@@ -59,12 +59,13 @@ export async function verifyDraftSourceReferences(
    * catalogued facts that give the cited document its role in a comparison (`claimDocRoleOf`);
    * both may be absent, and the role is then `other`, which makes no role convention bind.
    */
-  excerpts?: Array<{ documentId: string; contentHash: string; text: string; ctdSection?: string | null; documentType?: string | null }>,
+  options: { actor: AuthoringActor | undefined; excerpts?: Array<{ documentId: string; contentHash: string; text: string; ctdSection?: string | null; documentType?: string | null }> },
 ): Promise<VerifiedDraftSourceReference[]> {
+  const { actor, excerpts } = options;
   const { loadDocumentForOrg } = await import('../vault/document-catalog.service.js');
   const verified: VerifiedDraftSourceReference[] = [];
   for (const ref of refs) {
-    const doc = await loadDocumentForOrg(ref.documentId, organizationId, { includeText: true, executor: pool, programId, currentOnly: true });
+    const doc = await loadDocumentForOrg(ref.documentId, organizationId, { includeText: true, executor: pool, userId: actor ? Number(actor.id) : undefined, programId, currentOnly: true });
     if (!verifiable(doc, ref, programId)) throw new Error('Source references could not be verified');
     excerpts?.push({
       documentId: doc.id,
@@ -74,7 +75,7 @@ export async function verifyDraftSourceReferences(
       documentType: doc.documentType ?? null,
     });
     verified.push({ documentId: doc.id, programId, contentHash: doc.contentHash,
-      title: doc.documentTitle || doc.fileName, span: ref.span,
+      title: doc.documentTitle || doc.fileName || '', span: ref.span,
       completeText: ref.span.end === doc.extractedText.length,
       extractionMethod: doc.catalog.extractionMethod, extractionConfidence: doc.catalog.extractionConfidence,
       ...sourceAvailabilityPresentation(doc) });
@@ -125,7 +126,7 @@ export async function verifySavedDraftSourceReferences(
     const selected = savedSourceSelection(doc);
     if (!selected) return;
     for (const group of selected.groups) {
-      await verifyDraftSourceReferences(savedGroupReferences(group, selected.programId), q, organizationId, selected.programId);
+      await verifyDraftSourceReferences(savedGroupReferences(group, selected.programId), q, organizationId, selected.programId, { actor });
     }
     await verifySavedImportSource(doc, q, organizationId, actor);
   } catch {

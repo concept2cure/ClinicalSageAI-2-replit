@@ -546,7 +546,7 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
     {
       docId,
       title: String(title),
-      module: String(module),
+      module: module == null ? null : String(module),
       productCode: product_code == null ? null : String(product_code),
       locale: String(locale),
       templateId: template_id ? String(template_id) : null,

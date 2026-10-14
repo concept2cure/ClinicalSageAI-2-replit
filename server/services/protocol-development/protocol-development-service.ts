@@ -25,7 +25,7 @@ import {
 } from '../clinical-regulatory-evidence/lineage-gate';
 import type { RetrievedSource } from '../clinical-regulatory-evidence/source-attribution';
 
-interface Queryable {
+export interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
@@ -37,6 +37,12 @@ export class ProtocolDevError extends Error {
 }
 
 const KINDS = ['iacuc', 'irb', 'clinical', 'ibc'];
+
+export interface ProtocolDocState {
+  kind: ProtocolKind;
+  status: string;
+  version: string;
+}
 
 // ─── Documents ───────────────────────────────────────────────────────────────
 
@@ -77,16 +83,45 @@ export async function createProtocolDocumentTx(client: Queryable, orgId: number,
   return { id, sectionsSeeded: template.length };
 }
 
-async function loadDoc(client: Queryable, orgId: number, docId: number, lock = false): Promise<{ kind: ProtocolKind; status: string; version: string }> {
+async function loadDoc(client: Queryable, orgId: number, docId: number, lock = false): Promise<ProtocolDocState> {
   // `lock` holds the row for the transaction, so two concurrent finalizations
   // cannot both read 'draft' and both commit a version and a signature.
-  const d = await client.query(`SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1${lock ? ' FOR UPDATE' : ''}`, [docId, orgId]);
+  let d: { rows: any[] };
+  try {
+    d = await client.query(`SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1${lock ? ' FOR UPDATE' : ''}`, [docId, orgId]);
+  } catch (error) {
+    if (lock && (error as { code?: string } | null)?.code === '40001') {
+      throw new ProtocolDevError('INVALID_STATE', 'Protocol changed while this action waited. Reload and retry; nothing was changed.');
+    }
+    throw error;
+  }
   if (d.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Protocol document not found for this organization.');
   return { kind: d.rows[0].protocol_kind, status: d.rows[0].status, version: d.rows[0].version };
 }
 
 function assertEditable(status: string): void {
   if (status === 'finalized' || status === 'superseded') throw new ProtocolDevError('INVALID_STATE', `Protocol is ${status}; create a new version to edit.`);
+}
+
+/** Lock-only API for a future protocol signature preparation hook. Review may
+ * sign an already-finalized record; this is deliberately distinct from the
+ * editable-content reservation below. Calling it does not establish review,
+ * independence, source qualification or any signature authority. */
+export async function lockProtocolForSignatureTx(client: Queryable, orgId: number, docId: number): Promise<ProtocolDocState> {
+  return loadDoc(client, orgId, docId, true);
+}
+
+/** Reserve the protocol before any protected child read/lock/write. The parent
+ * MVCC update makes stale repeatable-read signers refuse rather than sign an
+ * earlier child census. The caller owns BEGIN/COMMIT and the audit transaction. */
+export async function reserveProtocolForWriteTx(client: Queryable, orgId: number, docId: number): Promise<ProtocolDocState> {
+  const doc = await lockProtocolForSignatureTx(client, orgId, docId);
+  assertEditable(doc.status);
+  const touched = await client.query(`UPDATE protocol_documents SET updated_at=clock_timestamp()
+    WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL
+      AND status NOT IN ('finalized','superseded') RETURNING id`, [docId, orgId]);
+  if (touched.rows.length !== 1) throw new ProtocolDevError('INVALID_STATE', 'The current protocol could not be reserved for this write. Nothing was changed.');
+  return doc;
 }
 
 /**
@@ -100,13 +135,12 @@ function assertEditable(status: string): void {
  * SEC-C-2, SEC-C-3, SEC-C-8).
  */
 export async function requireProtocolForWriteTx(client: Queryable, orgId: number, docId: number, opts: { signedContent: boolean }): Promise<void> {
-  const doc = await loadDoc(client, orgId, docId);
-  if (opts.signedContent) assertEditable(doc.status);
+  if (opts.signedContent) await reserveProtocolForWriteTx(client, orgId, docId);
+  else await loadDoc(client, orgId, docId);
 }
 
 export async function updateSynopsisTx(client: Queryable, orgId: number, docId: number, synopsis: string, actorUserId: number): Promise<void> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   await client.query(`UPDATE protocol_documents SET synopsis = $3, status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [docId, orgId, synopsis]);
   // Prose gate: the synopsis is authored protocol text — record its author
   // lineage and assert coverage in this transaction, so content and provenance
@@ -130,8 +164,7 @@ export interface ProtocolHeaderInput {
  * Refused on a finalized/superseded document like every other edit.
  */
 export async function updateDocumentHeaderTx(client: Queryable, orgId: number, docId: number, input: ProtocolHeaderInput): Promise<void> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   const nul = (v: string | null | undefined): string | null => (v == null ? null : v.trim() === '' ? null : v.trim());
   const has = (k: keyof ProtocolHeaderInput) => Object.prototype.hasOwnProperty.call(input, k);
   if (has('title') && !nul(input.title)) throw new ProtocolDevError('BAD_INPUT', 'A protocol title cannot be blank.');
@@ -173,8 +206,7 @@ export async function bindStudyDesignTx(
   studyDesignId: string,
   actorUserId: number,
 ): Promise<{ studyDesignId: string; title: string }> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   const id = (studyDesignId ?? '').trim();
   if (!id) throw new ProtocolDevError('BAD_INPUT', 'A study design id is required.');
 
@@ -203,8 +235,7 @@ export async function bindStudyDesignTx(
  * saying the protocol passed anything.
  */
 export async function unbindStudyDesignTx(client: Queryable, orgId: number, docId: number): Promise<void> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   await client.query(
     `UPDATE protocol_documents
         SET study_design_id = NULL, study_design_linked_at = NULL, study_design_linked_by = NULL, updated_at = now()
@@ -217,13 +248,19 @@ export async function unbindStudyDesignTx(client: Queryable, orgId: number, docI
 
 export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string; sources?: RetrievedSource[]; expectedUpdatedAt?: string | null }, actorUserId: number): Promise<SourceAndAuthorLineageResult | null> {
   if (input.status && !['not_started', 'draft', 'complete'].includes(input.status)) throw new ProtocolDevError('BAD_INPUT', `Invalid status "${input.status}".`);
+  // Discover immutable ownership without a child lock, then reserve parent
+  // before reading the current section/token or changing text and lineage.
+  const parent = await client.query(`SELECT protocol_document_id FROM protocol_sections
+    WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL LIMIT 1`, [sectionId, orgId]);
+  if (parent.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Section not found for this organization.');
+  const docId = Number(parent.rows[0].protocol_document_id);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   const sec = await client.query(
-    `SELECT s.id, s.updated_at, d.status AS doc_status, d.id AS doc_id FROM protocol_sections s JOIN protocol_documents d ON d.id = s.protocol_document_id
-      WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL LIMIT 1`,
-    [sectionId, orgId],
+    `SELECT id,updated_at FROM protocol_sections
+      WHERE id=$1 AND organization_id=$2 AND protocol_document_id=$3 AND deleted_at IS NULL LIMIT 1 FOR UPDATE`,
+    [sectionId, orgId, docId],
   );
   if (sec.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Section not found for this organization.');
-  assertEditable(sec.rows[0].doc_status);
   // Concurrency token (same contract as PATCH /api/authoring/sections/:id):
   // the caller sends the updated_at it loaded; a row that has moved since is
   // refused with SECTION_CHANGED (409) instead of a blind last-write-wins that
@@ -254,15 +291,14 @@ export async function updateSectionTx(client: Queryable, orgId: number, sectionI
   } else {
     await enforceAuthorLineage(client, orgId, { documentTable: 'protocol_sections', documentId: String(sectionId) }, input.content ?? null, String(actorUserId));
   }
-  await client.query(`UPDATE protocol_documents SET status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [sec.rows[0].doc_id, orgId]);
+  await client.query(`UPDATE protocol_documents SET status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = clock_timestamp() WHERE id = $1 AND organization_id = $2`, [docId, orgId]);
   return lineage;
 }
 
 // ─── Structured components ───────────────────────────────────────────────────
 
 export async function addObjectiveTx(client: Queryable, orgId: number, userId: number, docId: number, input: { objectiveType?: string; objective: string; endpoint?: string | null; timepoint?: string | null }): Promise<{ id: number }> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   if (input.objectiveType && !['primary', 'secondary', 'exploratory'].includes(input.objectiveType)) throw new ProtocolDevError('BAD_INPUT', `Invalid objective_type "${input.objectiveType}".`);
   const { rows } = await client.query(
     `INSERT INTO protocol_objectives (organization_id, protocol_document_id, objective_type, objective, endpoint, timepoint, created_by)
@@ -273,8 +309,7 @@ export async function addObjectiveTx(client: Queryable, orgId: number, userId: n
 }
 
 export async function addEligibilityCriterionTx(client: Queryable, orgId: number, userId: number, docId: number, input: { kind: string; criterion: string }): Promise<{ id: number }> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   if (!['inclusion', 'exclusion'].includes(input.kind)) throw new ProtocolDevError('BAD_INPUT', `Invalid eligibility kind "${input.kind}".`);
   const { rows } = await client.query(
     `INSERT INTO protocol_eligibility_criteria (organization_id, protocol_document_id, kind, criterion, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
@@ -284,8 +319,7 @@ export async function addEligibilityCriterionTx(client: Queryable, orgId: number
 }
 
 export async function addVisitTx(client: Queryable, orgId: number, userId: number, docId: number, input: { visitName: string; timepoint?: string | null; procedures?: string[] | null }): Promise<{ id: number }> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   const { rows } = await client.query(
     `INSERT INTO protocol_schedule_visits (organization_id, protocol_document_id, visit_name, timepoint, procedures, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
     [orgId, docId, input.visitName, input.timepoint ?? null, input.procedures ?? null, userId],
@@ -294,8 +328,7 @@ export async function addVisitTx(client: Queryable, orgId: number, userId: numbe
 }
 
 export async function updateVisitTx(client: Queryable, orgId: number, docId: number, visitId: number, input: { visitName?: string | null; timepoint?: string | null }): Promise<void> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   const name = input.visitName == null ? null : input.visitName.trim();
   if (name !== null && name === '') throw new ProtocolDevError('BAD_INPUT', 'A visit name cannot be blank.');
   const r = await client.query(
@@ -309,8 +342,7 @@ export async function updateVisitTx(client: Queryable, orgId: number, docId: num
 /** Soft-remove a visit. Its SoA cells stay as rows (the join is not a record
  *  with its own history); the assembler and the matrix read only live visits. */
 export async function removeVisitTx(client: Queryable, orgId: number, docId: number, visitId: number): Promise<void> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   const r = await client.query(
     `UPDATE protocol_schedule_visits SET deleted_at = now(), updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND protocol_document_id = $3 AND deleted_at IS NULL RETURNING id`,
@@ -321,8 +353,7 @@ export async function removeVisitTx(client: Queryable, orgId: number, docId: num
 
 /** Soft-remove a schedule-of-assessments row (protocol_soa_assessments). */
 export async function removeSoaAssessmentTx(client: Queryable, orgId: number, docId: number, assessmentId: number): Promise<void> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   const r = await client.query(
     `UPDATE protocol_soa_assessments SET deleted_at = now(), updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND protocol_document_id = $3 AND deleted_at IS NULL RETURNING id`,
@@ -332,8 +363,7 @@ export async function removeSoaAssessmentTx(client: Queryable, orgId: number, do
 }
 
 export async function addTeamMemberTx(client: Queryable, orgId: number, userId: number, docId: number, input: { memberName: string; role?: string; personnelId?: number | null; userId?: number | null; responsibilities?: string | null }): Promise<{ id: number }> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  await reserveProtocolForWriteTx(client, orgId, docId);
   if (input.personnelId != null) {
     const p = await client.query(`SELECT id FROM research_personnel WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [input.personnelId, orgId]);
     if (p.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Research-personnel record not found for this organization.');
@@ -348,12 +378,12 @@ export async function addTeamMemberTx(client: Queryable, orgId: number, userId: 
 
 // ─── Completeness + finalize + versioning ────────────────────────────────────
 
-async function completenessInputFor(orgId: number, docId: number, kind: ProtocolKind) {
-  const sections = await pool.query(`SELECT section_key, title, required, status FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [docId, orgId]);
-  const objectives = await pool.query(`SELECT count(*)::int n FROM protocol_objectives WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [docId, orgId]);
-  const incl = await pool.query(`SELECT count(*)::int n FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND kind = 'inclusion' AND deleted_at IS NULL`, [docId, orgId]);
-  const excl = await pool.query(`SELECT count(*)::int n FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND kind = 'exclusion' AND deleted_at IS NULL`, [docId, orgId]);
-  const visits = await pool.query(`SELECT count(*)::int n FROM protocol_schedule_visits WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [docId, orgId]);
+async function completenessInputFor(client: Queryable, orgId: number, docId: number, kind: ProtocolKind) {
+  const sections = await client.query(`SELECT section_key, title, required, status FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [docId, orgId]);
+  const objectives = await client.query(`SELECT count(*)::int n FROM protocol_objectives WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [docId, orgId]);
+  const incl = await client.query(`SELECT count(*)::int n FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND kind = 'inclusion' AND deleted_at IS NULL`, [docId, orgId]);
+  const excl = await client.query(`SELECT count(*)::int n FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND kind = 'exclusion' AND deleted_at IS NULL`, [docId, orgId]);
+  const visits = await client.query(`SELECT count(*)::int n FROM protocol_schedule_visits WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [docId, orgId]);
   return {
     sections: sections.rows.map((s) => ({ sectionKey: s.section_key, title: s.title, required: s.required, status: s.status })),
     objectiveCount: objectives.rows[0].n,
@@ -367,13 +397,12 @@ async function completenessInputFor(orgId: number, docId: number, kind: Protocol
 /** Read-only completeness assessment (uses the pure evaluateCompleteness). */
 export async function getCompleteness(orgId: number, docId: number): Promise<CompletenessResult> {
   const doc = await loadDoc(pool, orgId, docId);
-  return evaluateCompleteness(await completenessInputFor(orgId, docId, doc.kind));
+  return evaluateCompleteness(await completenessInputFor(pool, orgId, docId, doc.kind));
 }
 
 /** Snapshot the current document + sections as a version row and bump the minor version. */
 export async function snapshotVersionTx(client: Queryable, orgId: number, userId: number, docId: number, changeSummary?: string | null): Promise<{ version: string }> {
-  const doc = await loadDoc(client, orgId, docId);
-  assertEditable(doc.status);
+  const doc = await reserveProtocolForWriteTx(client, orgId, docId);
   const sections = await client.query(`SELECT section_key, title, content, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, section_key, id`, [docId, orgId]);
   const version = nextVersion(doc.version, false);
   const snapshot = JSON.stringify({ version, sections: sections.rows });
@@ -387,10 +416,10 @@ export async function snapshotVersionTx(client: Queryable, orgId: number, userId
 
 /** Finalize — gated on the deterministic completeness check; bumps to the next major version. */
 export async function finalizeProtocolTx(client: Queryable, orgId: number, userId: number, docId: number): Promise<{ finalized: true; version: string; completeness: CompletenessResult }> {
-  const doc = await loadDoc(client, orgId, docId, true);
+  const doc = await lockProtocolForSignatureTx(client, orgId, docId);
   if (doc.status === 'finalized') throw new ProtocolDevError('INVALID_STATE', 'Protocol is already finalized.');
   if (doc.status === 'superseded') throw new ProtocolDevError('INVALID_STATE', 'Protocol is superseded.');
-  const completeness = evaluateCompleteness(await completenessInputFor(orgId, docId, doc.kind));
+  const completeness = evaluateCompleteness(await completenessInputFor(client, orgId, docId, doc.kind));
   if (!completeness.readyToFinalize) {
     throw new ProtocolDevError('INVALID_STATE', `Cannot finalize — ${completeness.findings.filter((f) => f.severity === 'critical').map((f) => f.message).join(' ')}`);
   }

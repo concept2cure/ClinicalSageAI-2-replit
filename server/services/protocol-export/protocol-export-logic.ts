@@ -101,11 +101,13 @@ function signatureBlockLines(status: string | null, f: PdevSignatureFacet): stri
   }
   if (f.state === 'unavailable') return [...lines, '- The signature record could not be read, so this copy does not carry the signature.'];
   if (f.state === 'none') return [...lines, '- No electronic signature is on record for this finalization.'];
+  if (f.state === 'changed') lines.push('- HISTORICAL SIGNATURE: current protocol content differs from the signed content; this copy carries no current attestation.');
+  if (f.state === 'unverified') lines.push('- HISTORICAL RECORD: the signature binding to current protocol content could not be verified; this copy carries no current attestation.');
   const s = f.signature;
   const at = new Date(s.signedAt);
   if (f.state === 'revoked') lines.push('- REVOKED: this signature has been withdrawn and no longer attests to this protocol.');
   lines.push(
-    `- Signed by: ${s.signerName}`,
+    `- ${f.state === 'changed' || f.state === 'unverified' ? 'Historically recorded signer' : 'Signed by'}: ${s.signerName}`,
     `- Meaning: ${s.meaning ? (MEANING_LABEL[s.meaning] ?? s.meaning) : 'Not recorded'}`,
     `- Executed: ${Number.isNaN(at.getTime()) ? 'Not recorded' : at.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'}`,
   );

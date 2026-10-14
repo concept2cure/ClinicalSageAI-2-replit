@@ -66,11 +66,11 @@ function coverageNote(
 ): string {
   if (!c) {
     return (
-      'How much of the vault is in the passage index could not be read, so this result does not say ' +
+      'How much of the accessible Vault scope is in the passage index could not be read, so this result does not say ' +
       'what it did not cover.'
     );
   }
-  if (c.total === 0) return `No documents are filed in this vault yet.${outsideIndexNote(c)}`;
+  if (c.total === 0) return `No documents with verified access are filed in this scope yet.${outsideIndexNote(c)}`;
   if (c.indexed === 0) {
     /* The index is EMPTY — a different statement from "nothing matched", and a
        very different one from "the embedding provider is unreachable", which is
@@ -126,7 +126,7 @@ async function handleSearchDocumentPassages(
   const limit =
     typeof input.limit === 'number' && input.limit > 0 ? Math.min(25, Math.floor(input.limit)) : 8;
 
-  // The open project's documents only (PF-10 S7); the organization's with no project open.
+  // One open project, or the actor's verified accessible library.
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
 
@@ -135,7 +135,8 @@ async function handleSearchDocumentPassages(
   );
   try {
     const result = await searchDocumentPassages(
-      { organizationId: orgId, organizationUuid: ctx?.organizationUuid, query },
+      scope.executor,
+      { organizationId: orgId, userId:scope.accessibleScope.actor.userId, organizationUuid: ctx?.organizationUuid, query },
       { limit, programId: scope.programId },
     );
     const note = coverageNote(result.coverage);
@@ -148,6 +149,7 @@ async function handleSearchDocumentPassages(
     return JSON.stringify({
       ok: true,
       query,
+      scope:{access:scope.accessibleScope.scope,programId:scope.programId,reconciliationRequired:scope.accessibleScope.reconciliationRequired},
       passages: result.hits,
       coverage: result.coverage,
       ranking: result.ranking,

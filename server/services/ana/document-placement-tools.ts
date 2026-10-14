@@ -34,7 +34,7 @@
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
-import { documentScopeRefusal } from './catalog-scope.js';
+import { catalogScope, catalogDocumentBoundary } from './catalog-scope.js';
 import {
   anaToolProvenance,
   CHAT_UPLOAD_ID,
@@ -115,7 +115,7 @@ function parsePlacementInput(input: Record<string, unknown>): PlacementPlan | { 
  * judgement. Unfiling is exempt — it retracts a claim rather than making one.
  */
 function comprehensionRefusal(
-  doc: { id: string; fileName: string; catalog: { status: string } | null },
+  doc: { id: string; fileName: string | null; catalog: { status: string } | null },
 ): string | null {
   if (doc.catalog?.status === 'cataloged') return null;
   const state =
@@ -169,11 +169,14 @@ async function handlePlaceProjectDocument(
     return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
   }
 
-  const doc = await svc.loadDocumentForOrg(parsed.documentId, orgId);
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
+  const doc = await svc.loadDocumentForOrg(parsed.documentId, orgId, {
+    executor: scope.executor, userId: scope.accessibleScope.actor.userId, programId: scope.programId ?? undefined,
+  });
   if (!doc) return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
-  // The open project's documents only (PF-10 S7), before anything is placed.
-  const outOfScope = await documentScopeRefusal(ctx, orgId, doc.programId);
-  if (outOfScope) return outOfScope;
+  const boundary = catalogDocumentBoundary(scope, doc.programId);
+  if (boundary) return boundary;
 
   if (!parsed.unfile) {
     const refusal = comprehensionRefusal(doc);
@@ -186,7 +189,7 @@ async function handlePlaceProjectDocument(
     documentId: doc.id,
     organizationId: orgId,
     // The person on whose behalf she acts; `agent` says who decided.
-    userId: ctx?.userId ?? null,
+    userId: scope.accessibleScope.actor.userId,
     folderId: parsed.folderId,
     ctdSection: parsed.ctdSection,
     evidenceKind: parsed.evidenceKind,
