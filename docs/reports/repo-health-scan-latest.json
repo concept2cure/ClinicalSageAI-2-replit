@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T20:02:56.929Z",
+  "generatedAt": "2026-10-14T20:37:46.458Z",
   "git": {
-    "sha": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+    "sha": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 230,
+    "duplicateBasenames": 231,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -1578,6 +1578,14 @@
         ]
       },
       {
+        "basename": "peer-review",
+        "count": 2,
+        "paths": [
+          "server/services/authoring/peer-review.ts",
+          "shared/authoring/peer-review.ts"
+        ]
+      },
+      {
         "basename": "permissions",
         "count": 2,
         "paths": [
@@ -2170,7 +2178,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 402665
+        "bytes": 396146
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2178,7 +2186,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 301233
+        "bytes": 301345
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2396,7 +2404,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8681
+        "lines": 8525
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2404,7 +2412,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6140
+        "lines": 6142
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2848,7 +2856,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 431,
+      "duplicateGroups": 432,
       "largeByBytes": 41,
       "largeByLines": 87
     },
@@ -2866,7 +2874,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 81,
+      "duplicateGroups": 82,
       "largeByBytes": 3,
       "largeByLines": 2
     },
