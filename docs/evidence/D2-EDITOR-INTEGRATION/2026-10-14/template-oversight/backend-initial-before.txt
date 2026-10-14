@@ -1,0 +1,36 @@
+Initial behavior run before backend implementation; test cases were subsequently split into two files.
+Source: template-oversight-pglite-before.log
+Source SHA-256: 4ce6a115b372304e07761750f307ccc56dee4fa05f13952759834b201bce7ff6
+Selected verbatim runner header, failure headings/assertions and summary. Setup logs and repeated stack traces omitted.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > reviews a renamed FDA form preparation worksheet with exact saved limits separate from scored prose
+AssertionError: expected undefined to deeply equal { …(4) }
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > retains earliest recorded guidance when current references and later CREATE rows differ
+AssertionError: expected '[{"kind":"section","sectionId":"22222…' to contain 'Verify the retained form identity, sp…'
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > isolates current guidance by exact template and tenant even when section codes are identical
+AssertionError: expected [] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > uses an exact active global fallback only when saved and tenant-specific guidance are absent
+AssertionError: expected [] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > invalidates continuation after source limitation drift without an authored-text timestamp change
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > invalidates continuation after source identity hash drift without an authored-text timestamp change
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > invalidates continuation after recorded guidance drift without an authored-text timestamp change
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > invalidates continuation after current reference drift without an authored-text timestamp change
+AssertionError: expected undefined to be type of 'string'
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > pages every long escaped Unicode reference part without omissions or broken surrogate pairs
+AssertionError: expected 1 to be greater than 1
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"33333333-2222-4333-8444-000000000002","entryId":"section:m1.1.1","version":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","kind":"preparation","aiDraftable":false,"authoringMode":"form","originalFormat":"pdf","limitations":["Keep the original sponsor-signed FDA form; this worksheet cannot replace it."]}
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"f05db0b5-caa8-5df2-8b44-33b8d905013a","entryId":"section:m1.1.1","version":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","kind":"preparation","aiDraftable":"false","authoringMode":"form","originalFormat":"pdf","limitations":["Keep the original sponsor-signed FDA form; this worksheet cannot replace it."]}
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"f05db0b5-caa8-5df2-8b44-33b8d905013a","entryId":"section:m1.1.1","version":1,"sha256":"not-a-snapshot","kind":"preparation","aiDraftable":false,"authoringMode":"form","originalFormat":"pdf","limitations":["Keep the original sponsor-signed FDA form; this worksheet cannot replace it."]}
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > refuses a malformed or conflicting recorded source instead of computing a verdict: {"id":"f05db0b5-caa8-5df2-8b44-33b8d905013a","entryId":"section:m1.1.1","version":1,"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","kind":"preparation","aiDraftable":false,"authoringMode":"form","originalFormat":"pdf","limitations":["Valid",17]}
+AssertionError: expected undefined to be type of 'string'
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > refuses a section CREATE guidance identity that conflicts with the saved document template
+AssertionError: expected undefined to be type of 'string'
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > preserves legacy review with an explicitly unrecorded template source instead of inferring builtin limits
+AssertionError: expected undefined to deeply equal { …(2) }
+ FAIL  server/services/ana/__tests__/saved-document-critique.pglite.test.ts > saved template oversight preserves recorded identity and reference limits > does not infer a template from a matching document title or module when no template ID is stored
+AssertionError: expected undefined to deeply equal { id: null, …(1) }
+ Test Files  1 failed (1)
+      Tests  16 failed | 44 passed (60)
+   Start at  19:30:46
+   Duration  7.95s (transform 1.98s, setup 91ms, import 3.05s, tests 4.45s, environment 0ms)

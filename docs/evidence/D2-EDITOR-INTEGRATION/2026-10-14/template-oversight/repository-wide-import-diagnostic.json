@@ -1,0 +1,100 @@
+{
+  "command": "npm run ci:untracked-imports -- --all",
+  "status": "failed",
+  "role": "Optional repository-wide diagnostic, distinct from the required committed push-range gate.",
+  "onDiskUntrackedImports": 1,
+  "unresolvedImports": 14,
+  "allFailingSourcesUnchangedFromIntegrationBase": true,
+  "failures": [
+    {
+      "source": "server/__tests__/security/auth-invalid-expired-jwt.test.ts",
+      "line": 22,
+      "specifier": "../../middleware/",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "db/migrations/_consolidated/0001_tenant_isolation.ts",
+      "line": 6,
+      "specifier": "../server/db/tenantRls",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "db/migrations/_consolidated/0001_tenant_isolation.ts",
+      "line": 72,
+      "specifier": "../server/db",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "db/migrations/_consolidated/0002_add_org_id_column.ts",
+      "line": 158,
+      "specifier": "../server/db",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "db/migrations/_consolidated/0002_add_organization_id.ts",
+      "line": 113,
+      "specifier": "../server/db",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "db/migrations/_consolidated/0003_setup_user_roles.ts",
+      "line": 144,
+      "specifier": "../server/db",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "db/migrations/_consolidated/0004_add_tenant_indexes.ts",
+      "line": 148,
+      "specifier": "../server/db",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "scripts/backfill-document-aliases.mjs",
+      "line": 31,
+      "specifier": "../server/db/index.ts",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "scripts/create_cer_approvals_table.js",
+      "line": 7,
+      "specifier": "../server/db/index.js",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "scripts/optimized-start.js",
+      "line": 5,
+      "specifier": "./optimize-performance.js",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "scripts/run_migrations.js",
+      "line": 6,
+      "specifier": "../server/migrations/runMigrations",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "scripts/setup-protection.js",
+      "line": 17,
+      "specifier": "./ai-agent-protection.js",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "scripts/setup-protection.js",
+      "line": 100,
+      "specifier": "./development-best-practices-audit.js",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "server/scripts/verify-api-routes.js",
+      "line": 29,
+      "specifier": "../routes/advisor.js",
+      "unchangedFromIntegrationBase": true
+    },
+    {
+      "source": "tests/unit/validate-ich-structure.js",
+      "line": 4,
+      "specifier": "../server/utils/validateZip.js",
+      "unchangedFromIntegrationBase": true
+    }
+  ]
+}

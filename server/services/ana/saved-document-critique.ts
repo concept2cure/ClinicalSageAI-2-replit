@@ -15,6 +15,7 @@ import { critiqueDocument, type PrecisionFinding } from './writing-precision-gat
 import type { ReadabilityAudience } from './medical-writing-qc';
 import type { ClaimRegister } from './promotional-screening';
 import { RESULT_BUDGET } from './agentic-loop';
+import { savedTemplateReview, type SavedTemplateReview } from './saved-template-review';
 
 type Connection = (opts: WithTenantConnectionOptions, fn: (q: RequestSqlClient) => Promise<string>) => Promise<string>;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -109,20 +110,21 @@ function reviewItems(saved: SavedSection[], result: ReturnType<typeof critiqueDo
   return items;
 }
 
-function report(documentId: string, programId: string, header: Record<string, unknown>, saved: SavedSection[], input: Record<string, unknown>): string {
+function report(documentId: string, programId: string, saved: SavedSection[], input: Record<string, unknown>, context: { header: Record<string, unknown>; template: SavedTemplateReview }): string {
+  const { header, template } = context;
   const opts = reviewOptions(input);
-  const snapshotSha256 = digest(stableStringify({ header, saved, opts }));
+  const snapshotSha256 = digest(stableStringify({ header, saved, opts, template: { source: template.source, references: template.references } }));
   if (input.expected_snapshot !== undefined && input.expected_snapshot !== snapshotSha256) return refuse('Saved document or review options changed. Restart critique_document at offset 0.');
   const result = critiqueDocument(saved.map(s => ({ title: [s.code, s.title].filter(Boolean).join(' '), text: s.text })), opts);
   const coverage = reviewCoverage(saved);
-  const items = reviewItems(saved, result);
+  const items = [...template.items, ...reviewItems(saved, result)];
   const offset = input.offset === undefined ? 0 : Number(input.offset);
   if (offset >= items.length) return refuse('Review offset is outside this snapshot. Restart at offset 0.');
   const base = { engine: 'deterministic', scope: 'saved_document', complete: true, documentId, programId,
     snapshotSha256, documentScore: result.documentScore, precisionVerdict: result.verdict,
     verdict: result.verdict === 'revise' || coverage.emptySections || coverage.citationGaps || coverage.pendingInsertions || coverage.pendingDeletions ? 'revise' : 'pass',
-    register: result.register, structure: result.structure, coverage,
-    instruction: 'Score covers writing precision of all accepted saved text. This is not approval or evidence verification. Read every nextOffset with this document_id and expected_snapshot and the same review options. Pending changes require review. Read exact sections before remedies; clipped evidence is marked truncated.' };
+    register: result.register, structure: result.structure, coverage, template: template.template,
+    instruction: 'Score covers writing precision of all accepted saved text. This is not approval or evidence verification. Read every nextOffset with this document_id and expected_snapshot and the same review options, including every template reference part. Template guidance is reference material, not authored evidence or checklist completion. Preparation worksheets do not replace original forms, datasets, certificates or signed records; respect recorded source limits. Pending changes require review. Read exact sections before remedies; clipped evidence is marked truncated.' };
   const page: Array<Record<string, unknown>> = [];
   const serialize = () => JSON.stringify({ ...base, pagination: { offset, shown: page.length, total: items.length, nextOffset: offset + page.length < items.length ? offset + page.length : null }, items: page });
   for (let i = offset; i < items.length; i++) {
@@ -175,13 +177,16 @@ export async function critiqueSavedDocument(input: Record<string, unknown>, ctx?
           [userId, 'active', tenantId]);
         if (actor.rows.length !== 1 || (actor.rows[0].email !== null && typeof actor.rows[0].email !== 'string')) throw new Error('Actor unavailable');
         const authorized = await authorizeAuthoringProgram(q, { tenantId, actor: { id: String(userId), email: actor.rows[0].email }, programId: project.programId, forWrite: false });
-        const doc = await q.query(`SELECT id::text, title, module, product_code, status, updated_at FROM authoring_documents
-          WHERE id=$1 AND tenant_id=$2 AND client_program_id=$3`, [input.document_id, tenantId, project.programId]);
+        const doc = await q.query(`SELECT d.id::text, d.title, d.module, d.product_code, d.status, d.updated_at,
+          to_jsonb(d)->>'template_id' AS template_id, to_jsonb(d)->'provenance' AS provenance FROM authoring_documents d
+          WHERE d.id=$1 AND d.tenant_id=$2 AND d.client_program_id=$3`, [input.document_id, tenantId, project.programId]);
         if (doc.rows.length !== 1) throw new Error('Document outside project');
         const scope = await resolveAuthoringDocumentScope(q, tenantId, input.document_id as string);
         if (!(await decideAuthoringPermission({ pool: q, principal: authorized.principal, scope, action: 'view' })).allowed) throw new Error('Document access denied');
         const saved = await sections(q, input.document_id as string, tenantId, userId);
-        const output = report(input.document_id as string, project.programId, documentRecord(doc.rows[0]), saved, input);
+        const header = documentRecord(doc.rows[0]);
+        const template = await savedTemplateReview(q, tenantId, input.document_id as string, header, saved);
+        const output = report(input.document_id as string, project.programId, saved, input, { header, template });
         await q.query('COMMIT');
         return output;
       } catch (error) {
@@ -190,6 +195,6 @@ export async function critiqueSavedDocument(input: Record<string, unknown>, ctx?
       }
     });
   } catch {
-    return refuse('Complete saved-document review could not be verified: check current project/document access, saved sections and the 512-section / 8 MiB limit. No document verdict was computed.');
+    return refuse('Complete saved-document review could not be verified: check current project/document access, saved sections, template identity/guidance and the 512-section / 8 MiB content / 8 MiB reference / 20,000-reference-item limits. No document verdict is returned.');
   }
 }
