@@ -1,0 +1,55 @@
+{
+  "scope": "Eight Vault fixture completion only",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "9648a675596d3b035ee9cf48dcc1478a6e28d2c66db3bcf07edfea650fae6567",
+      "bytes": 3674
+    },
+    {
+      "path": "first-native.json.gz",
+      "sha256": "b59be1bd183fbc0bcbf1fbb263ca1829f1545d247cf27ec5aecf113f3e6e1c1a",
+      "bytes": 2987
+    },
+    {
+      "path": "first-native.log.gz",
+      "sha256": "71ef723784c105d2f284a5e7d2d46b99047551d385db620336b6a1cfbbf865c3",
+      "bytes": 6566
+    },
+    {
+      "path": "lint-after.json",
+      "sha256": "4e6281b12050d760cd90584ca7266583bf12bab0f2b19062068a6c5ce79dd396",
+      "bytes": 25867
+    },
+    {
+      "path": "lint-before.json",
+      "sha256": "ceaf0f53c96262095b4c4c65d08917f96ba5660d07d00e182f9ff047b944ca97",
+      "bytes": 1925
+    },
+    {
+      "path": "lint-final.json",
+      "sha256": "ceaf0f53c96262095b4c4c65d08917f96ba5660d07d00e182f9ff047b944ca97",
+      "bytes": 1925
+    },
+    {
+      "path": "merged-baseline-projection.json",
+      "sha256": "7ef82222266b77a662e6e21840b7ffcb9b2cb4fb5c1cc31398383cd712f0321b",
+      "bytes": 2476
+    },
+    {
+      "path": "native-result.json",
+      "sha256": "53a3da77f3e285386c97d49159508b215f85489b3436677baa5126056b019d59",
+      "bytes": 4220
+    },
+    {
+      "path": "run-native.sh.gz",
+      "sha256": "49285b3eea7d7959f7cacac0b45402a629305140899329a5bdd48b1d1a711c01",
+      "bytes": 581
+    },
+    {
+      "path": "source-preservation.json",
+      "sha256": "34e5e3d0210a13704e7fca4544fa175df971a683436051b50238430d30e15e41",
+      "bytes": 4495
+    }
+  ]
+}

@@ -20,9 +20,12 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent } from './vault-current-access-fixture';
+import { nativeCatalogRunId, withNativeCatalogClient } from './catalog-native-fixture';
 
-const PROBE = 'dbtest-anavs ';
-const CODE = 'DBTEST-ANAVS';
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-anavs-${RUN} `;
+const CODE = `DBTEST-ANAVS-${RUN}`;
 const WORD = 'quokkaline';
 
 type Tenant = { orgId: number; orgUuid: string };
@@ -62,21 +65,18 @@ async function ingest(t: Tenant, programId: string, text: string, fields: Record
 
 async function tool(t: Tenant, name: string, input: Record<string, unknown>) {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`tool ${name} is not registered`);
-  const raw = await runWithTenantScope(
-    { tenantId: String(t.orgId), orgUuid: t.orgUuid, role: 'admin', source: 'request', caller: 'tests/db/ana-vault-search-no-key.dbtest.ts' },
-    () => handler(input, { organizationId: t.orgId, userId, humanConfirmed: true }),
-  );
+  const raw = await withNativeCatalogClient({ organizationId: t.orgId, organizationUuid: t.orgUuid,
+    userId, role: 'admin', caller: 'tests/db/ana-vault-search-no-key.dbtest.ts' },
+  sqlClient => handler(input, { organizationId: t.orgId, organizationUuid: t.orgUuid, userId, humanConfirmed: true, sqlClient }));
   return JSON.parse(raw);
 }
 
 async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-anavs-${slug}`],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}${slug}`, `dbtest-anavs-${RUN}-${slug}`],
   );
   return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid) };
 }
@@ -87,52 +87,45 @@ async function program(t: Tenant, name: string): Promise<string> {
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Quokkamab') RETURNING id`,
     [`${PROBE}${name}`, `${CODE}-${name.toUpperCase().replace(/\W+/g, '-')}`, t.orgId],
   );
-  return String(prog.rows[0].id);
-}
-
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(`DELETE FROM audit_logs WHERE tenant_id IN (SELECT id FROM organizations WHERE slug LIKE 'dbtest-anavs-%')`);
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
+  const programId = String(prog.rows[0].id);
+  await seedVaultFixtureParent(owner, { ...t, programId }, { userId, namespace: `${PROBE}${name}-parent` });
+  return programId;
 }
 
 beforeAll(async () => {
-  for (const k of ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'ANA_DOCUMENT_CATALOG_FORCE_ON']) {
+  for (const k of ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'ANA_DOCUMENT_CATALOG_FORCE_ON', 'ANA_VAULT_CHUNKING_FORCE_ON', 'EMBEDDING_PROVIDER', 'EMBEDDING_LOCAL_BASE_URL', 'LOCAL_AI_BASE_URL']) {
     saved[k] = process.env[k];
-    delete process.env[k];
+    process.env[k] = '';
   }
+  process.env.EMBEDDING_PROVIDER = 'local';
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-anavs@example.test', 'Ana Search', 'not-a-real-hash')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'Ana Search', 'not-a-real-hash', 'active') RETURNING id`,
+    [`dbtest-anavs-${RUN}@example.test`],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
   const prog = await program(mine, 'alpha');
   const progT = await program(theirs, 'their program');
+  await assertVaultFixtureRuntime({ ...mine, programId: prog });
   earlier = await ingest(mine, prog, `Stability report. The ${WORD} degradant stays under 0.1% at 24 months.`, { documentCode: `${CODE}-A`, documentTitle: 'Alpha stability report' });
   current = await ingest(mine, prog, `Stability report, revised. The ${WORD} degradant stays under 0.05% at 24 months.`, { supersedesDocumentId: earlier, documentTitle: 'Alpha stability report' });
   theirDoc = await ingest(theirs, progT, `Their own ${WORD} degradation study.`, { documentCode: `${CODE}-T`, documentTitle: 'Their study' });
 }, 90_000);
 
 afterAll(async () => {
-  await cleanup();
-  await owner?.end();
-  for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+  // Keep this invocation's source bytes, records and append-only history.
+  try { await closeVaultFixtureRuntime(); }
+  finally {
+    try { await owner?.end(); }
+    finally {
+      for (const [key, value] of Object.entries(saved)) {
+        if (value === undefined) delete process.env[key]; else process.env[key] = value;
+      }
+    }
+  }
 });
 
 describe('AnA reaches the Vault with no key and the catalog off (D2)', () => {

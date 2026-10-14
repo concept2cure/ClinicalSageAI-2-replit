@@ -80,3 +80,28 @@ red/green evidence note here. Preserve production admission and all original
 validation/transaction assertions; no bypass, catch-all actor response or skip.
 This closes the existing Project setup test prerequisite for this same W1/D2
 human handoff. The control tower owns final contract, compiler and publication.
+
+## Canonical creation-recovery integration
+
+Before publication, canonical commits 2df2adde8 and a45328357 added guarded
+document/section creation, scoped recovery reads and current authoring roles.
+Preserve and integrate them. Independent source review identified a shared
+navigation seam: Cancel may close the native creation form while its POST is
+pending, leaving no dialog for the task drawer to detect. A clean Workbench's
+dirty/busy guard does not own that creation ledger; unmounting could lose its
+pending or unknown outcome and permit a duplicate request on return.
+
+Root authorizes the task UI worker to connect the existing
+editor/useAuthoringCreation.ts ledger to the existing registerSurfaceLeaveGuard
+registry, and to own a new focused taskDrawerCreationGuard.test.tsx integration
+suite. No second ledger, registry, route or creation path. Consult the same live
+entries synchronously, protect unresolved creation and recovery after Cancel,
+and release on the existing definite outcome or completed scoped recovery path.
+Keep the native exact-created-record callbacks and scope/late-response checks.
+Prove the canceled-pending and unknown/recovery cases failing first with the
+actual CreateExport and TaskTray; retain existing workbench refusal and creation
+tests. Root owns merge verification, any browser replay, compiler and publication.
+The same bounded integration also treats HTTP 408 as an unknown creation
+outcome: a timeout cannot establish that nothing was created. Retain the ledger
+and recovery requirement for that response; preserve definite 403 refusal and
+all other existing response policy. Prove both cases without a baseline change.

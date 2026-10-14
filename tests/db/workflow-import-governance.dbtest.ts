@@ -10,6 +10,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 import { databaseUrl } from '../setup.db';
 import type { WorkflowImportSource } from '../../shared/authoring/source-import';
+import { captureAssignedWorkflowReview, assertBoundWorkflowReviewReceipt } from './workflow-import-review-fixture';
 
 const TAG = `workflowqa-${process.pid}-${Date.now().toString(36)}`;
 const PASSWORD = 'Workflow-Native-QA-Only-2026!';
@@ -29,9 +30,8 @@ const additionalOrganizations: number[] = [];
 
 const sha = (text: string) => createHash('sha256').update(text).digest('hex');
 const codeOf = (result: request.Response) => result.body?.error?.code ?? result.body?.code ?? result.body?.error;
-function call(actor: Actor, method: 'post' | 'patch', path: string, body: unknown) {
-  return request(app)[method](`/api/authoring${path}`).set('Authorization', `Bearer ${actor.token}`).send(body);
-}
+const call = (actor: Actor, method: 'post' | 'patch', path: string, body: unknown) =>
+  request(app)[method](`/api/authoring${path}`).set('Authorization', `Bearer ${actor.token}`).send(body);
 async function protocol(): Promise<WorkflowImportSource> {
   const row = (await owner.query(`INSERT INTO protocol_documents
     (organization_id,protocol_kind,title,version,synopsis,study_design_id,created_by)
@@ -77,8 +77,10 @@ async function approveAssignedReview(docId: string) {
     reviewers:[{id:String(actors.reviewer.id),name:'Native independent reviewer',email:actors.reviewer.email}],reason:REASON,
   });
   expect(asked.status,JSON.stringify(asked.body)).toBe(200);
-  const reviewed = await call(actors.reviewer,'post',`/documents/${docId}/review`,{review_status:'approved',review_comments:REASON});
+  const binding = await captureAssignedWorkflowReview(app, actors.reviewer, docId, orgId);
+  const reviewed = await call(actors.reviewer,'post',`/documents/${docId}/review`,{review_status:'approved',review_comments:REASON,expected:binding.expected});
   expect(reviewed.status,JSON.stringify(reviewed.body)).toBe(200);
+  assertBoundWorkflowReviewReceipt(reviewed.body, binding);
 }
 async function adopt(docId: string) {
   await approveAssignedReview(docId);

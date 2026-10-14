@@ -26,6 +26,8 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId } from './catalog-native-fixture';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, seedVaultFixtureViewer } from './vault-current-access-fixture';
 
 /* The scanner, for one marked file only: it reports an infection there and
    passes everything else to the real (dev-permissive) scanner. */
@@ -38,13 +40,15 @@ vi.mock('../../server/utils/virusScan', async (importOriginal) => {
   };
 });
 
-const PROBE = 'dbtest-vr11 ';
-const CODE = 'DBTEST-VR11';
-const TAG = `vr11-${process.pid}-${Date.now().toString(36)}`;
+const RUN = nativeCatalogRunId();
+const PROBE = `dbtest-vr11 ${RUN} `;
+const CODE = `DBTEST-VR11-${RUN}`;
+const TAG = `vr11-${RUN}`;
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 let owner: Pool;
 let userId: number;
+let viewerId: number;
 let mine: Tenant;
 let theirs: Tenant;
 const written: string[] = [];
@@ -58,13 +62,14 @@ async function appFor(t: Tenant, role = 'admin'): Promise<express.Express> {
   const createProjectVaultRoutes = (await import('../../server/routes/c2c/project-vault')).default;
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
   const a = express();
+  const actorId = role === 'viewer' ? viewerId : userId;
   a.use(express.json());
   a.use((req, _res, next) => {
     const r = req as unknown as Record<string, unknown>;
-    r.userId = userId;
+    r.userId = actorId;
     r.tenantId = t.orgId;
     r.userRole = role;
-    r.user = { id: userId, organizationId: t.orgId, organizationUuid: t.orgUuid, role };
+    r.user = { id: actorId, organizationId: t.orgId, organizationUuid: t.orgUuid, role };
     next();
   });
   a.use(establishRequestTenantScope);
@@ -87,17 +92,17 @@ async function upload(t: Tenant, name: string, bytes: Buffer, checksum: string |
   await owner.query(
     `INSERT INTO file_uploads
        (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
-     VALUES ($1, NULL, $2, $3, 'application/pdf', $4, $5, $6, 'uploaded', NOW())`,
-    [id, t.orgId, name, bytes.length, storagePath, checksum],
+     VALUES ($1, $7, $2, $3, 'application/pdf', $4, $5, $6, 'uploaded', NOW())`,
+    [id, t.orgId, name, bytes.length, storagePath, checksum, userId],
   );
   return id;
 }
 
 /** A captured data-room source, as createSource writes one. */
 async function capture(t: Tenant, title: string, checksum: string | null, fileUploadId: string | null, extra: Record<string, unknown> = {}): Promise<number> {
-  const cols = ['organization_id', 'source_type', 'title', 'checksum', 'client_program_id', 'provenance', ...Object.keys(extra)];
+  const cols = ['organization_id', 'source_type', 'title', 'checksum', 'client_program_id', 'provenance', 'created_by', ...Object.keys(extra)];
   const vals = [t.orgId, 'client_document', `${PROBE}${title}`, checksum, t.programId,
-    JSON.stringify(fileUploadId ? { origin: 'chat_upload', fileUploadId } : { origin: 'projection' }), ...Object.values(extra)];
+    JSON.stringify(fileUploadId ? { origin: 'chat_upload', fileUploadId } : { origin: 'projection' }), userId, ...Object.values(extra)];
   const { rows } = await owner.query(
     `INSERT INTO cre_evidence_sources (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING id`,
     vals,
@@ -120,58 +125,38 @@ async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vr11-${slug}`],
+    [`${PROBE}${slug}`, `dbtest-vr11-${RUN}-${slug}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Filan 5mg') RETURNING id`,
     [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, org.rows[0].id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
-}
-
-async function cleanup(): Promise<void> {
-  const programs = `SELECT id FROM regulatory_programs WHERE name LIKE '${PROBE}%'`;
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action LIKE 'vault.document.%'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE program_id IN (${programs}))`,
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query(`DELETE FROM vault.documents WHERE program_id IN (${programs}) AND supersedes_id IS NOT NULL`);
-  await owner.query(`DELETE FROM vault.documents WHERE program_id IN (${programs})`);
-  await owner.query(`DELETE FROM cre_evidence_sources WHERE title LIKE '${PROBE}%' AND previous_version_id IS NOT NULL`);
-  await owner.query(`DELETE FROM cre_evidence_sources WHERE title LIKE '${PROBE}%'`);
-  await owner.query(`DELETE FROM file_uploads WHERE id LIKE $1`, [`%${TAG}%`]);
-  await owner.query(`DELETE FROM regulatory_programs WHERE name LIKE '${PROBE}%'`);
+  const scoped = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, scoped, { userId, namespace: `${CODE}-${slug}` });
+  return scoped;
 }
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-vr11@example.test', 'Fiona Filer', 'not-a-real-hash'],
+    [`dbtest-vr11-${RUN}@example.test`, 'Fiona Filer', 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
+  viewerId = Number((await owner.query(`INSERT INTO users(email,name,password_hash)
+    VALUES($1,'Fiona Viewer','not-a-real-hash') RETURNING id`, [`dbtest-vr11-viewer-${RUN}@example.test`])).rows[0].id);
   mine = await tenant('mine');
   theirs = await tenant('theirs');
+  await seedVaultFixtureViewer(owner, mine, { userId: viewerId, invitedBy: userId });
+  await assertVaultFixtureRuntime(mine);
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
   await owner.end().catch(() => {});
-  for (const f of written) await fs.rm(f, { force: true }).catch(() => {});
+  await closeVaultFixtureRuntime();
 });
 
 describe('File into Vault from the data room (VR-11)', () => {
@@ -261,6 +246,8 @@ describe('File into Vault from the data room (VR-11)', () => {
        VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Filan 10mg') RETURNING id`,
       [`${PROBE}mine other program`, `${CODE}-OTHER`, mine.orgId],
     );
+    await seedVaultFixtureParent(owner, { ...mine, programId: String(other.rows[0].id) },
+      { userId, namespace: `${CODE}-OTHER` });
     const elsewhere = await captured({ ...mine, programId: String(other.rows[0].id) }, 'elsewhere', pdf('elsewhere'));
     const noFile = await capture(mine, 'projection', sha(pdf('projection')), null);
     const before = await vaultRows(mine);
