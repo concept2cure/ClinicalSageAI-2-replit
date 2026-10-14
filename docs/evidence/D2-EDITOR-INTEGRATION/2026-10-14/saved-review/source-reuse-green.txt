@@ -1,0 +1,180 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T02:31:38.038Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:31:38.039Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T02:31:38.039Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > creates an unbound draft with machine compositor lineage and unknown original model retained
+{
+  "timestamp": "2026-10-14T02:31:41.227Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cc87cb16-af95-4d52-8817-e28eac7b7f9c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > previews exact saved selection/model-knownness without creating authoring evidence 57ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > creates an unbound draft with machine compositor lineage and unknown original model retained 123ms
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure
+CRITICAL: Failed to create audit trail: error: Injected workflow audit failure
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 157,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function workflow_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '9394b700-6b0c-4552-9745-71e0d67e7631',
+    '35c1637c-cf9b-4a88-a55b-e76a6afa4abf',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<p>Participants received study treatment. Impurity B was &lt;LOQ in all batches.</p>\n',
+    null,
+    '48fafd896c7c85cf4f7eb5275e2e34cb4044fe0554fa3d6fb8e4b28b46d00f9b',
+    'Exercise the workflow atomic rollback',
+    {
+      provenance: [Object],
+      drafted: true,
+      workflowSourceOrigin: [Object],
+      section_code: '11.1'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '6a549d92-fcca-46be-bdc1-8f73f4365d8d',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure
+{
+  "timestamp": "2026-10-14T02:31:41.467Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected workflow audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > reopens the exact actor draft without replacing edits 99ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > refuses a source changed after preview and preserves all authoring evidence 30ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > refuses private-source previews and a different target program before prose/create 25ms
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > saved workflow structure can evolve in the existing unbound editor > reopens the exact reused working copy after a governed section addition and code rename
+{
+  "timestamp": "2026-10-14T02:31:41.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc cc87cb16-af95-4d52-8817-e28eac7b7f9c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > saved workflow structure can evolve in the existing unbound editor > reopens the exact reused working copy after a governed section addition and code rename
+{
+  "timestamp": "2026-10-14T02:31:41.554Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cc87cb16-af95-4d52-8817-e28eac7b7f9c by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:31:41.555Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "3",
+    "tenantId": 1,
+    "resourceId": "9d5dda25-72b4-4cca-b468-7075922c3d46"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > stored CSR output through canonical verified source intake > rolls back workflow copy, origin, genesis, lineage and audits together on a real audit failure 71ms
+ ✓ server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts > saved workflow structure can evolve in the existing unbound editor > reopens the exact reused working copy after a governed section addition and code rename 132ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate renamed saved sections without replacing them with the source preview 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate added saved sections without replacing them with the source preview 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate removed saved sections without replacing them with the source preview 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > admits legitimate reordered saved sections without replacing them with the source preview 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > a verified reused workflow copy keeps its actual saved structure > keeps the preview section-set check for a newly created copy 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-document section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-tenant section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses duplicate-id section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses duplicate-code section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses empty-id section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses empty-code section rows 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses missing-provenance on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-provenance on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses changed-provenance on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses missing-program on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses foreign-program on the saved document 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts > reused source receipts still require exact saved identity and valid rows > refuses changed source fingerprints and selections even when the saved rows are valid 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > previews source identity, gaps and unknown model before atomic create and exact section handoff 283ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > holds duplicate creation and refuses a changed fingerprint without navigation 66ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > invalidates an old preview when a different CSR selection is requested 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > stored workflow intake > holds opening a saved copy while the source editor has become dirty 104ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > refuses a preview for another target or source selection 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > refuses a preview for another target or source selection 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > refuses a preview for another target or source selection 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > does not accept saved sections outside the confirmed source preview 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > keeps workflow machine origin and gaps visible after reopening without claiming human authorship 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow response and provenance boundaries > publishes only the confirmed document, program and actual returned section code 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx > workflow intake keeps the canonical governed reason fields > applies the same accessible reason bounds to creation and explicit association 73ms
+
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+   Start at  02:31:32
+   Duration  10.93s (transform 4.14s, setup 166ms, import 1.01s, tests 8.84s, environment 428ms)
