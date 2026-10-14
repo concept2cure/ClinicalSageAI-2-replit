@@ -6,6 +6,8 @@ vi.mock('../../../db', () => ({pool:{query:async () => ({rows:[]})},getPool:()=>
 vi.mock('../../../lib/unified-ai-client', () => ({ai:null}));
 import { materializeWorkflowSource, WorkflowSourceImportError, type WorkflowMaterializationInput } from '../workflow-source-import';
 import { getProtocolExport } from '../../protocol-export/protocol-export-service';
+import { removeVisitTx, removeSoaAssessmentTx } from '../../protocol-development/protocol-development-service';
+import { renderProtocolSoaMarkdown } from '../../protocol-export/protocol-export-logic';
 
 const PROGRAM='11111111-1111-4111-8111-111111111111';
 const OTHER='22222222-2222-4222-8222-222222222222';
@@ -37,7 +39,9 @@ beforeAll(async()=>{
     CREATE TABLE electronic_signatures(id int,organization_id int,signed_target text,signer_name text,signed_at timestamptz,signature_meaning text,signature_purpose text,is_valid boolean,superseded_by int,verification_status text,signature_manifest jsonb,signature_type text);
     CREATE TABLE csr_build_jobs(id int PRIMARY KEY,organization_id int,project_id int,study_id text,status text,sections_to_generate text[],study_info_snapshot jsonb);
     CREATE TABLE csr_section_outputs(id int PRIMARY KEY,organization_id int,project_id int,job_id int,section_number text,content text,content_hash text,ai_generated boolean,model text,lineage jsonb,generated_at timestamptz);
-    CREATE TABLE document_span_lineage(organization_id int,document_table text,document_id text,char_start int,char_end int,span_text_sha256 text,provenance_kind text,machine_author_id text,asserted_by text,asserted_at timestamptz,signature_id text,created_by text,deleted_at timestamptz);
+    CREATE TABLE document_span_lineage(organization_id int,document_table text,document_id text,char_start int,char_end int,span_text_sha256 text,provenance_kind text,machine_author_id text,asserted_by text,asserted_at timestamptz,signature_id text,created_by text,deleted_at timestamptz,usage text NOT NULL DEFAULT 'asserted',confidence numeric);
+    ALTER TABLE protocol_schedule_visits ADD COLUMN updated_at timestamptz;
+    ALTER TABLE protocol_soa_assessments ADD COLUMN updated_at timestamptz;
   `);
 });
 afterAll(async()=>{await database?.close();});
@@ -54,14 +58,48 @@ beforeEach(async()=>{
     INSERT INTO protocol_sections VALUES(101,7,1,NULL,'background','Actual background title','Scientific source content',true,'complete',1),(102,7,1,NULL,'statistics','Actual statistics','Planned analysis',true,'draft',2),(801,8,1,NULL,'foreign','Foreign row','Foreign section content',true,'complete',0);
     INSERT INTO protocol_objectives VALUES(201,7,1,NULL,'primary','Assess response','Response endpoint','Week24',0);
     INSERT INTO protocol_eligibility_criteria VALUES(301,7,1,NULL,'inclusion','Age >= 18',0),(302,7,1,NULL,'exclusion','Prior therapy',1);
-    INSERT INTO protocol_schedule_visits VALUES(401,7,1,NULL,'Screening','Day-14',ARRAY['Consent'],0),(402,7,1,NULL,'Followup','Week24',ARRAY['Review'],1);
-    INSERT INTO protocol_soa_assessments VALUES(501,7,1,NULL,'Blood panel','lab',0),(502,7,1,NULL,'Eligibility check','eligibility',1);
+    INSERT INTO protocol_schedule_visits(id,organization_id,protocol_document_id,deleted_at,visit_name,timepoint,procedures,order_index) VALUES(401,7,1,NULL,'Screening','Day-14',ARRAY['Consent'],0),(402,7,1,NULL,'Followup','Week24',ARRAY['Review'],1);
+    INSERT INTO protocol_soa_assessments(id,organization_id,protocol_document_id,deleted_at,name,category,order_index) VALUES(501,7,1,NULL,'Blood panel','lab',0),(502,7,1,NULL,'Eligibility check','eligibility',1);
     INSERT INTO protocol_soa_cells VALUES(601,7,1,501,401,true,'Fasting'),(602,7,1,501,402,false,'If clinically indicated'),(603,7,1,502,401,true,NULL);
     INSERT INTO electronic_signatures VALUES(1,7,'protocol-document:1','Source Signer','2026-10-01T12:00:00Z','approval','Original source approval',true,NULL,'valid','{}','protocol_finalization');
     INSERT INTO csr_build_jobs VALUES(1,7,11,'study-1','complete',ARRAY['13'],'{"studyInfo":{"title":"Recorded CSR study"}}'),(2,7,NULL,'legacy-study','failed',ARRAY['13','14'],'{}'),(8,8,81,'foreign-study','complete',ARRAY['13'],'{}');
   `);
   await database.query(`INSERT INTO csr_section_outputs VALUES(701,7,11,1,'13',$1,$2,true,NULL,NULL,'2026-10-01T12:00:00Z'),(702,7,NULL,2,'13',$3,$4,false,NULL,NULL,'2026-10-01T12:00:00Z')`,['Exact saved CSR prose',hash('Exact saved CSR prose'),'Partial [DATA TO BE INSERTED]',hash('Partial [DATA TO BE INSERTED]')]);
   queries.length=0;
+});
+
+describe('retained protocol matrix cells after governed source removals', () => {
+  it.each(['visit', 'assessment'] as const)('admits an explicitly removed local %s, composes live rows, and fingerprints retained cells', async removed => {
+    await database.exec("UPDATE protocol_documents SET status='draft' WHERE id=1");
+    const before = await materializeWorkflowSource(input({ kind: 'protocol', documentId: 1 }), q);
+    if (removed === 'visit') await removeVisitTx(q, 7, 1, 402);
+    else await removeSoaAssessmentTx(q, 7, 1, 502);
+    expect((await database.query('SELECT id FROM protocol_soa_cells WHERE protocol_document_id=1 ORDER BY id')).rows)
+      .toEqual([{ id: 601 }, { id: 602 }, { id: 603 }]);
+    const result = await materializeWorkflowSource(input({ kind: 'protocol', documentId: 1 }), q);
+    const composed = await getProtocolExport(7, 1, { executor: q, contentOnly: true });
+    const matrix = result.sections.find(section => section.code === 'protocol.soa')!;
+    expect(matrix.content).toBe(renderProtocolSoaMarkdown(composed.document.soa!));
+    expect(matrix.content).not.toContain(removed === 'visit' ? 'Followup' : 'Eligibility check');
+    expect(matrix.content).toContain('Blood panel');
+    expect(result.fingerprint).not.toBe(before.fingerprint);
+    const cellId = removed === 'visit' ? 602 : 603;
+    await database.query('UPDATE protocol_soa_cells SET notes=$1 WHERE id=$2', ['Retained historical source note', cellId]);
+    const retained = await materializeWorkflowSource(input({ kind: 'protocol', documentId: 1 }), q);
+    expect(retained.fingerprint).not.toBe(result.fingerprint);
+    expect(retained.sections.find(section => section.code === 'protocol.soa')!.content).toBe(matrix.content);
+    expect(retained.origin.sectionOrigins.find(section => section.code === 'protocol.soa')!.sourceRowId).toContain(String(cellId));
+  });
+
+  it.each(['missing', 'foreign-protocol', 'foreign-organization'] as const)('refuses a %s retired endpoint rather than dropping its retained cell', async problem => {
+    await database.exec("UPDATE protocol_documents SET status='draft' WHERE id=1");
+    await removeVisitTx(q, 7, 1, 402);
+    if (problem === 'missing') await database.exec('DELETE FROM protocol_schedule_visits WHERE id=402');
+    if (problem === 'foreign-protocol') await database.exec('UPDATE protocol_schedule_visits SET protocol_document_id=2 WHERE id=402');
+    if (problem === 'foreign-organization') await database.exec('UPDATE protocol_schedule_visits SET organization_id=8 WHERE id=402');
+    await expect(materializeWorkflowSource(input({ kind: 'protocol', documentId: 1 }), q))
+      .rejects.toMatchObject({ status: 409, code: 'WORKFLOW_SOURCE_INVALID' });
+  });
 });
 
 describe('stored protocol materialization',()=>{

@@ -103,7 +103,7 @@ describe('AnA remedies reach the existing editor', () => {
     expect(document.querySelector('.tiptap ins[data-author-id="ana"]')?.textContent).toBe('24 months');
     expect(document.querySelector('.tiptap ins')?.getAttribute('data-source-record')).toBe(TURN);
     expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
-    expect(screen.getByText(/This fix has not been saved or approved/)).toBeTruthy();
+    expect(screen.getByText(/Adding the suggestion did not save or approve the document/)).toBeTruthy();
   });
 
   it('refuses a stale saved base, leaving the current section intact', async () => {

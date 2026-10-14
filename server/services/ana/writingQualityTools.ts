@@ -7,7 +7,7 @@
  * brief. It is the machine-checkable gate behind precise long-form writing: AnA
  * drafts, critiques with this tool, and revises against the brief until it
  * passes — closing the draft→critique→revise loop that the checkers alone
- * couldn't. Pure/deterministic — no DB, no org context.
+ * couldn't. Deterministic; saved-document critique reads authorized records.
  *
  * Ported from abandoned PR #1003 onto v2.
  *
@@ -74,14 +74,17 @@ export const VERIFY_REVISION: AnaTool = {
 export const CRITIQUE_DOCUMENT: AnaTool = {
   name: 'critique_document',
   description:
-    'Critique a whole multi-section document for precision AND cross-section coherence — the document-level gate for long-form writing. Runs the precision gate on each section (for located, per-section findings) and, critically, also checks CONSISTENCY across the whole document so a value stated one way in one section and differently in another — invisible to any single-section check — is caught. Returns a per-section breakdown, the cross-section findings, and a document score/verdict. Use for a full CSR / CER / Clinical Overview before finalizing. DETERMINISTIC.',
+    'Critique a whole multi-section document for precision and cross-section coherence. Prefer document_id for the complete saved authoring document in the conversation’s open project: current project and whole-document view permission are required. Read-only and deterministic; no model or write. Pending insertions are excluded and proposed deletions retained; pending suggestions and unavailable/unregistered stored citations are reported. The writing score does not verify evidence or approve a document. Findings and exact saved section identities are paged: follow every nextOffset with expected_snapshot and unchanged options; changed snapshots refuse. Alternatively provide sections for caller-supplied text, which cannot establish saved-document coverage. Provide exactly one of document_id or sections.',
   input_schema: {
     type: 'object',
     properties: {
+      document_id: { type: 'string', description: 'Exact saved authoring document UUID from screen context. Scope comes from the authorized open project, never from tool input. Use instead of sections.' },
+      offset: { type: 'number', description: 'Finding/section coverage offset; start at 0 and follow every nextOffset.' },
+      expected_snapshot: { type: 'string', description: 'snapshotSha256 returned by the first saved review. Required for continuation; changed saved content, citations or options refuse.' },
       sections: {
         type: 'array',
         minItems: 1,
-        description: 'The document sections in order.',
+        description: 'Caller-supplied sections in order; use instead of document_id. Does not establish saved-record coverage.',
         items: {
           type: 'object',
           properties: {
@@ -98,7 +101,7 @@ export const CRITIQUE_DOCUMENT: AnaTool = {
       },
       register: { type: 'string', enum: ['submission', 'promotional'], description: "Claims register (default 'submission')." },
     },
-    required: ['sections'],
+    required: [],
   },
 };
 

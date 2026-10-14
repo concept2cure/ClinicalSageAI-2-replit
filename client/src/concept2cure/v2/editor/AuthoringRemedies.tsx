@@ -5,7 +5,7 @@ import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from './anaInsertGate';
 import { parseRemedyAnswer, remedyRefusal, type AuthoringRemedy } from './authoringRemedies';
 import '../styles/redline.css';
 
-export interface RemedyTarget extends Pick<EditorBridge, 'propose' | 'editable' | 'sectionCode' | 'sectionLabels' | 'openSection'> {
+export interface RemedyTarget extends Pick<EditorBridge, 'propose' | 'editable' | 'sectionCode' | 'sectionLabels' | 'openSection' | 'viewMode'> {
   sectionId?: string;
   open?: boolean;
   reopen?: () => void;
@@ -26,7 +26,8 @@ function remedySectionLabel(remedy: AuthoringRemedy, target?: RemedyTarget): str
 
 function OpenRemedySection({ remedy, target }: { remedy: AuthoringRemedy; target?: RemedyTarget }) {
   const label = remedySectionLabel(remedy, target);
-  if (!target?.sectionId || target.sectionId === remedy.sectionId || !label || !target.openSection) return null;
+  if (!target?.sectionId || !label || !target.openSection) return null;
+  if (target.sectionId === remedy.sectionId && target.viewMode !== 'document') return null;
   return <button type="button" className="btn ghost authoring-remedy-action" onClick={() => {
     if (target.open === false) target.reopen?.();
     target.openSection?.(remedy.sectionId);
@@ -35,7 +36,7 @@ function OpenRemedySection({ remedy, target }: { remedy: AuthoringRemedy; target
 
 const remedyApplyLabel = (applied: boolean, busy: boolean) => applied ? 'Added as tracked suggestion' : busy ? 'Applying…' : 'Apply as tracked suggestion';
 function remedyStatus(applied: boolean, error: string | null, refusal: string | null): string {
-  if (applied) return 'Review the change in the editor, then save with your reason for change. This fix has not been saved or approved.';
+  if (applied) return 'Review the tracked change in the editor, then save with your reason for change. Adding the suggestion did not save or approve the document.';
   return error ?? refusal ?? 'Adds a pending change for your review; nothing is saved or approved.';
 }
 

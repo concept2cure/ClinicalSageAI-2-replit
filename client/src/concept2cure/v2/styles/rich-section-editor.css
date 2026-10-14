@@ -20,6 +20,7 @@
 .rse-rb[data-active] { background:var(--bg-100); border-color:var(--border); }
 .rse-chip { font-size:11px; height:24px; padding:0 10px; border-radius:12px; border:1px solid var(--warning); color:var(--warning); background:transparent; cursor:pointer; font-weight:600; }
 .rse-track { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-400); cursor:pointer; margin-left:6px; }
+.rse-track input[type="checkbox"] { width:24px; height:24px; margin:0; }
 .rse-review { border-bottom:1px solid var(--border); background:var(--bg-50); max-height:200px; overflow-y:auto; }
 .rse-review-h { display:flex; gap:10px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--text-300); }
 .rse-review-row { display:flex; align-items:center; gap:8px; padding:4px 12px; font-size:12px; }
@@ -98,5 +99,4 @@
 
 @media (pointer: coarse) {
   .rse-track { min-height:44px; }
-  .rse-track input[type="checkbox"] { width:24px; height:24px; margin:0; }
 }

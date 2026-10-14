@@ -965,6 +965,8 @@ export interface EditorBridge {
   openSection?: (sectionId: string) => void;
   sectionCode: string;
   sectionTitle: string;
+  /** The host's actual read/edit view, so a remedy can open the section editor. */
+  viewMode?: 'section' | 'document';
   /** False for a sealed document or assembled Document view: readable, but no insert. */
   editable: boolean;
   /** The real host's reason, including assembled Document view, when read-only. */
@@ -1523,10 +1525,11 @@ export function DocumentWorkbench({
      HELD and the author decides: save (deliberate, attributable), leave it on
      this device, or stay. */
   type LeaveTarget =
-    | { kind: 'section'; id: string; module?: string }
+    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string }
     | { kind: 'document'; id: string; sectionId?: string; module?: string }
     | { kind: 'external-document'; id: string; module?: string }
     | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
+    | { kind: 'view'; mode: 'section' | 'document'; module?: never }
     | { kind: 'conversation'; prompt: string; module?: never };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
   const pendingLeaveRef = useRef(pendingLeave);
@@ -1552,14 +1555,18 @@ export function DocumentWorkbench({
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
-    if (target.kind === 'program') target.onContinue();
+    if (target.kind === 'view') setViewMode(target.mode);
+    else if (target.kind === 'program') target.onContinue();
     else if (target.kind === 'conversation') {
       prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
     }
     else if (target.kind === 'external-document') {
       setEditorTarget({ docType: null, docId: target.id, programId });
       onNav('document-authoring');
-    } else if (target.kind === 'section') setActiveSectionId(target.id);
+    } else if (target.kind === 'section') {
+      if (target.mode) setViewMode(target.mode);
+      setActiveSectionId(target.id);
+    }
     else {
       if (target.sectionId) targetSectionRef.current = { docId: target.id, sectionId: target.sectionId };
       if (target.id === activeDocId && target.sectionId) void sectionLoaderRef.current?.(target.id);
@@ -1576,7 +1583,8 @@ export function DocumentWorkbench({
       }
       navigationSequence.current += 1;
       const alreadyThere =
-        target.kind === 'section' ? target.id === activeSectionId : target.kind === 'document'
+        target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
+          ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
           && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
       if (alreadyThere) return true;
       if (!dirty) {
@@ -1588,7 +1596,7 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode]
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
@@ -1726,10 +1734,11 @@ export function DocumentWorkbench({
       sectionId: activeSection.id,
       get sectionLabels() { return editorSectionLabelsRef.current; },
       openSection: (id) => {
-        if (Object.hasOwn(editorSectionLabelsRef.current, id)) requestLeaveRef.current({ kind: 'section', id });
+        if (Object.hasOwn(editorSectionLabelsRef.current, id)) requestLeaveRef.current({ kind: 'section', id, mode: 'section' });
       },
       sectionCode: activeSection.code,
       sectionTitle: activeSection.title,
+      viewMode,
       editable: !editorInsertRefusal(docSealed, viewMode, activeSection.code),
       insertRefusal: editorInsertRefusal(docSealed, viewMode, activeSection.code),
       get authoringContext() { return authoringContextRef.current; },
@@ -4093,7 +4102,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setViewMode('section')}
+                onClick={() => requestLeave({ kind: 'view', mode: 'section' })}
                 data-active={viewMode === 'section' || undefined}
                 aria-pressed={viewMode === 'section'}
                 title="Edit one section"
@@ -4103,7 +4112,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setViewMode('document')}
+                onClick={() => requestLeave({ kind: 'view', mode: 'document' })}
                 data-active={viewMode === 'document' || undefined}
                 aria-pressed={viewMode === 'document'}
                 title="Read the whole document"
@@ -4426,8 +4435,7 @@ export function DocumentWorkbench({
                             className="btn ghost ed-full-edit"
                             style={{ height: 26 }}
                             onClick={() => {
-                              setViewMode('section');
-                              requestLeave({ kind: 'section', id: sec.id });
+                              requestLeave({ kind: 'section', id: sec.id, mode: 'section' });
                             }}
                           >
                             {I.penLine} Edit
@@ -6003,7 +6011,8 @@ export function DocumentWorkbench({
           sectionCode={activeSection.code}
           sectionTitle={activeSection.title}
           destination={
-            pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
+            pendingLeave.kind === 'view' ? `${pendingLeave.mode === 'document' ? 'Document' : 'Section'} view`
+              : pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }

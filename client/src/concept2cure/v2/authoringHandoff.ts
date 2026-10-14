@@ -205,12 +205,38 @@ function savedSectionsMatch(data: AuthoringSourceImportData, preview: AuthoringS
   const savedCodes = new Set(data.sections.map(s => s?.code));
   return savedCodes.size === codes.size && data.sections.every(s => !!s && typeof s.id === 'string' && typeof s.code === 'string' && codes.has(s.code));
 }
+
+function validSavedSectionKeys(sections: AuthoringSourceImportData['sections']): boolean {
+  if (!sections.every(s => !!s && typeof s.id === 'string' && !!s.id.trim() && typeof s.code === 'string' && !!s.code.trim())) return false;
+  const ids = new Set(sections.map(s => String(s.id).trim()));
+  const codes = new Set(sections.map(s => String(s.code).trim().toUpperCase()));
+  return ids.size === sections.length && codes.size === sections.length;
+}
+
+function actualSavedSection(section: Record<string, unknown>, doc: AuthoringSourceImportData['doc']): boolean {
+  return section.doc_id === doc.id && section.tenant_id === doc.tenant_id && typeof section.title === 'string'
+    && (typeof section.content === 'string' || section.content === null);
+}
+
+/** Reuse is a fresh server verification of an existing edited document, not a
+ * promise that its current section structure still equals the original source.
+ * Keep the retained source/version and actual saved row ownership authoritative. */
+function reusedWorkflowCopyMatches(data: AuthoringSourceImportData, programId: string, source: WorkflowImportSource): boolean {
+  const doc = data.doc;
+  if (doc.client_program_id !== programId || !Number.isSafeInteger(doc.tenant_id) || Number(doc.tenant_id) <= 0) return false;
+  const provenance = doc.provenance as { source?: unknown; importSource?: WorkflowImportOrigin } | undefined;
+  if (provenance?.source !== 'import' || !workflowOriginMatches(provenance.importSource, programId, source)) return false;
+  if (provenance.importSource?.fingerprint !== (data.origin as WorkflowImportOrigin).fingerprint) return false;
+  return data.sections.every(section => actualSavedSection(section, doc));
+}
+
 export function readWorkflowImportResult(body: unknown, programId: string, source: WorkflowImportSource, preview: AuthoringSourceImportPreviewData): AuthoringSourceImportData | null {
   const envelope = body as { success?: boolean; data?: AuthoringSourceImportData } | null;
   const data = envelope?.data;
   if (envelope?.success !== true || !validSavedCopy(data, programId) || !isWorkflowSource(data.origin)) return null;
   if (!workflowOriginMatches(data.origin as WorkflowImportOrigin, programId, source)) return null;
-  if ((data.origin as WorkflowImportOrigin).fingerprint !== preview.fingerprint || !savedSectionsMatch(data, preview)) return null;
+  if ((data.origin as WorkflowImportOrigin).fingerprint !== preview.fingerprint || !validSavedSectionKeys(data.sections)) return null;
+  if (data.reused ? !reusedWorkflowCopyMatches(data, programId, source) : !savedSectionsMatch(data, preview)) return null;
   return data;
 }
 

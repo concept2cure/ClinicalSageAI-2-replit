@@ -1,6 +1,6 @@
 import type { CitationSource } from '@shared/authoring/citations';
 import { visibleOrgClause } from './evidence-spine.service';
-import type { Queryable } from './span-lineage.service';
+import type { RequestSqlClient } from '../../db/requestDb';
 import { capturedDataEligibleSql } from '../document-data-disposition/eligibility';
 import { CRE_SOURCE_CITATION } from './source-usage.service';
 
@@ -19,7 +19,7 @@ export async function listCitationSources(
   orgId: number,
   sourceIds: Array<number | string>,
   context: { documentId: string; sectionId: string },
-  executor: Queryable,
+  executor: RequestSqlClient,
 ): Promise<CitationSource[]> {
   const ids = numericIds(sourceIds);
   if (ids.length === 0) return [];
