@@ -95,3 +95,52 @@ regex, a suppression or a scanner configuration change. The production
 application source is unchanged by this assertion correction.
 The affected Account suite passed all 24 tests on Node 22.23.3; targeted
 ESLint reported zero errors and zero warnings.
+
+## Final main-CI guard review
+
+The main CI runs at `b50b33097` and `0259c8f55` additionally reported two
+concrete guard failures. They were replayed locally using their exact npm
+commands before correction.
+
+- Raw SQL isolation found a new actor-email lookup in the concurrently merged
+  `authoring-template-guidance.ts` without an organization constraint. The
+  repair binds the lookup to the captured tenant's canonical membership and an
+  active account before program authorization. This changes the query rather
+  than suppressing or baselining the finding.
+- The entry-point guard required re-reading the changed `mdx-admin.ts` digest.
+  Upstream `8fbe834fb` changes only its session-timeout display to use the
+  runtime's canonical clamped preference. Its one `GET /admin` remains mounted
+  at `/api/mdx` behind session authentication and the tenant lifecycle guard,
+  with its own organization/admin checks and tenant-qualified facets. The
+  existing justification still applies: the shape matcher sees the
+  `scim_tenants` facet, not alternative SCIM authentication. Only this reviewed
+  digest is refreshed. The stale API-key management entry no longer matches
+  the alternative-authentication shape and is removed; the baseline shrinks
+  from nine entries to eight. No new exception is added.
+
+These corrections retain the concurrently delivered template and session
+features. Historical workflow failures keep their original conclusions; local
+guard results and subsequent hosted runs are separate evidence.
+
+The exact entry-point command passes with thirteen discovered surfaces and
+eight baselined entries. All 29 of its positive/negative selftest controls pass;
+the selftest continues to report its three pre-existing known detection gaps.
+The dated boundary review and safe command summaries are in
+[final-entitlement-guard-review.json](final-entitlement-guard-review.json).
+
+The new real-PGlite test first failed against the original query because it
+read the foreign-only identity. With the repair, all **22 tests in three
+affected suites pass**, including the active member's retained template
+reference, the foreign-only actor and inactive-member refusals, and existing
+template HTTP/UI behavior. Selected verdicts are in
+[template-guidance-isolation-red.txt](template-guidance-isolation-red.txt) and
+[template-guidance-isolation-green.txt](template-guidance-isolation-green.txt).
+The adjacent creation and workflow-import suites also pass all 29 tests;
+their verdicts are in
+[template-guidance-authority-green.txt](template-guidance-authority-green.txt).
+Targeted ESLint passes for the changed service and new test with no warnings.
+This proves executed SQL and the saved-guidance helper; it does not qualify
+native PostgreSQL RLS or concurrent transactions. The exact raw-SQL guard now
+passes with zero current findings. The complete client/server build also
+passes; its safe verdict is in
+[build-final-guards-verdict.txt](build-final-guards-verdict.txt).

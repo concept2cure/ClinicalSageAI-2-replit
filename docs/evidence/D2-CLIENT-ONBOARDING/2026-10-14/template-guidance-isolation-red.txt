@@ -1,0 +1,5 @@
+ FAIL  server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts > saved template guidance binds actor identity to the captured tenant > does not read another organization’s actor email before refusing guidance
+AssertionError: expected [ { email: 'nobody@canvas.example' } ] to deeply equal []
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Duration  6.13s (transform 971ms, setup 96ms, import 2.08s, tests 3.68s, environment 0ms)

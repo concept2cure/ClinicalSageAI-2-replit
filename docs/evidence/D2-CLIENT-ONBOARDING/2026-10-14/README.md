@@ -64,8 +64,9 @@ Neither links nor discovery narratives are automatically published to AnA.
   components at desktop/390px widths and settled light/dark themes, with
   synthetic replies. The authoring browser evidence follows the same boundary.
 - [Hosted verification](hosted-verification.md) records the successful real
-  PostgreSQL/server/Chromium smoke and governed journey on the schema-repair
-  head, with its distinct scope and remaining CI status.
+  PostgreSQL/server/Chromium smoke and governed journey on successive published
+  heads, the hosted security and full-history scan results, and the final
+  scoped CI corrections, with their distinct verification boundaries.
 - [Report tenant index repair](report-index-repair.md) records the inherited
   fresh-install defect, narrow replayable migration, and 405 installer/schema
   checks that enabled that hosted browser proof.
