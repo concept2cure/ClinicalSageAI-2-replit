@@ -997,6 +997,69 @@
     background: var(--bg-300);
   }
 
+  /* Keep the shared signature meaning pills intact under the V2 button reset. */
+  .es-meaning-opt {
+    padding: 5px 11px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-000);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-300);
+  }
+  .es-meaning-opt:hover {
+    background: var(--bg-050);
+    color: var(--text-100);
+  }
+  .es-meaning-opt[data-active='true'] {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: var(--accent-on-strong);
+  }
+  .es-meaning-opt:focus-visible {
+    outline: 2px solid var(--accent-main-200);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  @media (max-width: 760px) {
+    .es-meaning-opt {
+      min-height: 44px;
+    }
+  }
+
+  /* Workflow review consent uses a checkbox, separate from the shared
+     signing dialog's full-width password and reason fields. */
+  .ed-workflow-adoption {
+    margin-bottom: 14px;
+  }
+  .ed-workflow-adoption-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-height: 44px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-200);
+    cursor: pointer;
+  }
+  .ed-workflow-adoption-label input[type='checkbox'] {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 0;
+    accent-color: var(--accent-strong);
+  }
+  .ed-workflow-adoption-label input[type='checkbox']:focus-visible {
+    outline: 2px solid var(--accent-main-200);
+    outline-offset: 2px;
+  }
+  .ed-workflow-adoption-hint {
+    margin: 5px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-300);
+  }
+
   /* E-signature modal (21 CFR 11.50 manifestation) */
   .esign-bd {
     position: fixed;

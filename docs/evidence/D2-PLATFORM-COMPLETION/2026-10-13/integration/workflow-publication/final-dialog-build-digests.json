@@ -1,0 +1,11 @@
+{
+  "branch": "concept2cure-v2",
+  "sourceState": "working tree after83fe48611 before consent-style commit",
+  "command": "npm run build",
+  "node": "22",
+  "exitStatus": 0,
+  "files": {
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx": "1e4c45e5d008903fe5b84f65cc7d4d94bee95a3d3de7a4761f58c25306d41e88"
+  }
+}

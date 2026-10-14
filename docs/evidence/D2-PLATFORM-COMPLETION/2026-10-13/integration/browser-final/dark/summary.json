@@ -1,0 +1,144 @@
+{
+  "variant": "dark",
+  "rowTitle": "Preview saved output for this ICH E3 section",
+  "docId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+  "sectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+  "sourceJobId": 31,
+  "reused": true,
+  "themeContrast": {
+    "heading": {
+      "color": "rgb(250, 249, 245)",
+      "background": "rgb(38, 38, 36)",
+      "ratio": 14.391087659120195
+    },
+    "tableHeader": {
+      "color": "rgb(250, 249, 245)",
+      "background": "rgb(43, 43, 41)",
+      "ratio": 13.46601760759931
+    }
+  },
+  "beforeKinds": {
+    "fromSources": 0,
+    "authorAsserted": 91,
+    "machineDrafted": 0,
+    "machineDraftedUnaccepted": 614
+  },
+  "tableCells": [
+    [
+      "Field",
+      "Stored value"
+    ],
+    [
+      "Purpose",
+      "UI verification only"
+    ],
+    [
+      "Source",
+      "Saved CSR output"
+    ]
+  ],
+  "initialBodyWidth": 1440,
+  "figureWidth": 240,
+  "afterKinds": {
+    "fromSources": 0,
+    "authorAsserted": 91,
+    "machineDrafted": 0,
+    "machineDraftedUnaccepted": 614
+  },
+  "bodyWidth": 1440,
+  "docx": {
+    "bytes": 12124,
+    "sha256": "4d988d886e6acf77879a5128a5a350151151047e1893d231a674a90b13f3c498",
+    "uncontrolledBanner": true,
+    "table": true,
+    "embeddedFigure": true
+  },
+  "conversationBodyWidth": 1440,
+  "canonicalConversation": {
+    "prefilled": true,
+    "sendOnArrival": false,
+    "savedDocId": "2b426b7b-be2d-43cb-a6a1-7086f0ad6d27",
+    "savedSectionId": "c908fec1-46b2-4e72-a6c8-74d9fa1b6104",
+    "unboundFilingContext": true
+  },
+  "passed": true,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "imageRequests": [
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    },
+    {
+      "url": "http://127.0.0.1:5000/api/authoring/images/file_1791935635675_cd6e6a",
+      "method": "GET",
+      "type": "Fetch",
+      "authenticated": true
+    }
+  ],
+  "aiTurnRequests": [],
+  "imageTransport": {
+    "requests": 11,
+    "authenticatedFetchOnly": true,
+    "nativeImageRequests": 0,
+    "liveApiImageSrcWrites": 0,
+    "inertApiReferences": 4
+  }
+}

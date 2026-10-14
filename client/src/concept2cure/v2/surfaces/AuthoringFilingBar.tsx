@@ -384,11 +384,11 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
 function WorkflowAdoption({ origin, checked, disabled, onChecked }: {
   origin: WorkflowImportOrigin; checked: boolean; disabled: boolean; onChecked: (checked: boolean) => void;
 }) {
-  return <div className="es-field">
-    <label><input type="checkbox" checked={checked} disabled={disabled} onChange={e => onChecked(e.target.checked)} />
-      I have reviewed and consciously adopt the current saved working copy for this review.</label>
-    <p className="es-field-hint">Requires your current approved review assignment. Recorded machine, template and unknown origins remain. This does not certify model qualification or PQ.</p>
-    {origin.sectionOrigins.some(s => s.originalAuthorship === 'machine') && <p className="es-field-hint">Known machine content remains held unless its qualification requirements are met or the affected passages are replaced by human writing.</p>}
+  return <div className="ed-workflow-adoption">
+    <label className="ed-workflow-adoption-label"><input type="checkbox" checked={checked} disabled={disabled} onChange={e => onChecked(e.target.checked)} />
+      <span>I have reviewed and consciously adopt the current saved working copy for this review.</span></label>
+    <p className="ed-workflow-adoption-hint">Requires your current approved review assignment. Recorded machine, template and unknown origins remain. This does not certify model qualification or PQ.</p>
+    {origin.sectionOrigins.some(s => s.originalAuthorship === 'machine') && <p className="ed-workflow-adoption-hint">Known machine content remains held unless its qualification requirements are met or the affected passages are replaced by human writing.</p>}
   </div>;
 }
 
