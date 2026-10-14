@@ -2915,6 +2915,8 @@ export function DocumentWorkbench({
            the rail re-reads on mount, so bumping while it is closed simply
            means it opens on the truth rather than on a cached verdict. */
         setExportsEpoch(e => e + 1);
+        // A saved content change invalidates earlier peer verdict bindings.
+        setTasksEpoch(e => e + 1);
       } catch (err) {
         /* THE AUTHOR IS TOLD WHY THE RECORD REFUSED THEIR WORK.
            `apiRequest` throws ApiRequestError for every non-2xx except 401, so

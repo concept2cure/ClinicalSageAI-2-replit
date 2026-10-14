@@ -16,6 +16,8 @@ import { WORKFLOW_IMPORT_AUTHOR_ID } from '../revision-ledger';
 import { hashPayload } from '../../audit/chain';
 import { workflowCopySectionContent } from '../workflow-copy-content';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
+import { AUTHORING_REVIEW_BINDING_BASIS } from '../../../../shared/authoring/peer-review';
+import { authoringSnapshotHash, fullVisibleAuthoringSnapshot } from '../authoring-content-digests';
 
 const ORG = 77;
 const PROGRAM = '10000000-0000-4000-8000-000000000077';
@@ -32,14 +34,17 @@ const migration = (file: string) => readFileSync(new URL(`../../../../${file}`, 
 
 beforeAll(async () => {
   pg = new PGlite();
-  await pg.exec(`CREATE TABLE organizations(id integer PRIMARY KEY,name text);
-    INSERT INTO organizations VALUES(77,'Test');
+  await pg.exec(`CREATE TABLE organizations(id integer PRIMARY KEY,name text,status text);
+    INSERT INTO organizations VALUES(77,'Test','active');
     CREATE TABLE users(id integer PRIMARY KEY,email text,status text);
     INSERT INTO users VALUES(8,'reviewer@example.test','active'),(9,'author@example.test','active');
-    CREATE TABLE authoring_documents(id uuid PRIMARY KEY);`);
+    CREATE TABLE organization_users(user_id integer,organization_id integer,role text);
+    INSERT INTO organization_users VALUES(8,77,'reviewer'),(9,77,'author');`);
   await pg.exec(AUDIT_LOGS_PGLITE_DDL);
   await pg.exec('ALTER TABLE audit_logs ALTER COLUMN id SET DEFAULT gen_random_uuid()::text');
-  for (const file of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
+  for (const file of ['db/migrations/20260725_authoring_document_loop_tables.sql',
+    'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+    'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
     'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql',
     'migrations/20260908_span_lineage_machine_draft.sql', 'db/migrations/20260725_authoring_audit_trail.sql',
     'db/migrations/20260725_authoring_signatures_and_workflow.sql', 'db/migrations/20260725_authoring_signature_freeze_binding.sql',
@@ -49,6 +54,8 @@ afterAll(async () => { await pg.close(); });
 
 beforeEach(async () => {
   m.verify.mockReset();
+  await q.query("UPDATE users SET status='active'");
+  await q.query('INSERT INTO organization_users(user_id,organization_id,role) SELECT 8,77,\'reviewer\' WHERE NOT EXISTS (SELECT 1 FROM organization_users WHERE user_id=8 AND organization_id=77)');
   const docId = randomUUID();
   const sectionId = randomUUID();
   const content = workflowCopySectionContent(SOURCE);
@@ -58,9 +65,13 @@ beforeEach(async () => {
     association: { mode: 'recorded', reason: null }, sectionOrigins: [{ code: '11', sourceRowId: '44:11',
       contentSha256: 'b'.repeat(64), originalAuthorship: 'unknown', model: null, modelEvidence: 'unrecorded' }] };
   input = { organizationId: ORG, doc: { id: docId, created_by: '9', client_program_id: PROGRAM,
+    title: 'Stored CSR', module: 'M5', locale: 'en', product_code: null, version: '1.0',
     provenance: { importSource: origin } }, sections: [{ id: sectionId, code: '11', content }],
     actor: { id: '8', email: 'reviewer@example.test' } };
-  await q.query('INSERT INTO authoring_documents VALUES($1)', [docId]);
+  await q.query(`INSERT INTO authoring_documents(id,title,module,locale,version,created_by,tenant_id)
+    VALUES($1,'Stored CSR','M5','en','1.0','9',$2)`, [docId,ORG]);
+  await q.query(`INSERT INTO authoring_sections(id,doc_id,code,title,content,tenant_id)
+    VALUES($1,$2,'11',NULL,$3,$4)`, [sectionId,docId,content,ORG]);
   await q.query(`INSERT INTO authoring_audit_trail(doc_id,section_id,operation_type,actor_email,actor_id,tenant_id,metadata)
     VALUES($1,$2,'CREATE','author@example.test','9',$3,$4::jsonb)`,
   [docId,sectionId,ORG,JSON.stringify({ provenance: { importSource: origin }, section_code: '11' })]);
@@ -70,11 +81,17 @@ beforeEach(async () => {
     sections: [{ code: '11', title: 'Efficacy', content: SOURCE }] }));
 });
 
-async function approvedReview(): Promise<string> {
+async function approvedReview(bound = true): Promise<string> {
   const reviewId = randomUUID();
-  await q.query(`INSERT INTO authoring_reviews(id,doc_id,reviewer_id,review_status,reviewed_at,requested_at,requested_by,tenant_id)
-    VALUES($1,$2,'8','approved',NOW(),NOW()-interval '1 minute','9',$3)
-    ON CONFLICT(doc_id,reviewer_id,tenant_id) DO UPDATE SET review_status='approved',reviewed_at=NOW(),requested_at=NOW() RETURNING id`, [reviewId,input.doc.id,ORG]);
+  const snapshot = fullVisibleAuthoringSnapshot(input);
+  await q.query(`INSERT INTO authoring_reviews(id,doc_id,reviewer_id,review_status,reviewed_at,requested_at,requested_by,tenant_id,
+      reviewed_snapshot,reviewed_snapshot_hash,review_binding_basis)
+    VALUES($1,$2,'8','approved',NOW(),NOW()-interval '1 minute','9',$3,$4::jsonb,$5,$6)
+    ON CONFLICT(doc_id,reviewer_id,tenant_id) DO UPDATE SET review_status='approved',reviewed_at=NOW(),requested_at=NOW(),
+      reviewed_snapshot=EXCLUDED.reviewed_snapshot,reviewed_snapshot_hash=EXCLUDED.reviewed_snapshot_hash,
+      review_binding_basis=EXCLUDED.review_binding_basis RETURNING id`,
+  [reviewId,input.doc.id,ORG,bound ? JSON.stringify(snapshot) : null,bound ? authoringSnapshotHash(snapshot) : null,
+    bound ? AUTHORING_REVIEW_BINDING_BASIS : null]);
   const current = await q.query('SELECT id FROM authoring_reviews WHERE doc_id=$1 AND tenant_id=$2',[input.doc.id,ORG]);
   return String(current.rows[0].id);
 }
@@ -103,6 +120,30 @@ async function rewrite(content = workflowCopySectionContent(HUMAN)) {
 }
 
 describe('workflow release needs current explicit full-document human adoption', () => {
+  it('refuses new reviewer adoption after that reviewer became a historical content contributor', async () => {
+    await approvedReview();
+    await q.query(`INSERT INTO doc_revisions(id,section_id,content,created_by,tenant_id,origin)
+      VALUES($1,$2,$3,'8',$4,'human-edit')`, [randomUUID(),input.sections[0].id,input.sections[0].content,ORG]);
+    await expect(prepareWorkflowImportAdoption(q,{...input,explicit:true}))
+      .rejects.toMatchObject({ code:'WORKFLOW_REVIEW_ASSIGNMENT_REQUIRED' });
+  });
+  it('refuses legacy unbound approval before explicit adoption', async () => {
+    await approvedReview(false);
+    await expect(prepareWorkflowImportAdoption(q, { ...input, explicit: true }))
+      .rejects.toMatchObject({ code: 'WORKFLOW_REVIEW_ASSIGNMENT_REQUIRED' });
+  });
+  it('refuses a verdict on earlier prose before explicit adoption of an edited copy', async () => {
+    await approvedReview();
+    await rewrite();
+    await expect(prepareWorkflowImportAdoption(q, { ...input, explicit: true }))
+      .rejects.toMatchObject({ code: 'WORKFLOW_REVIEW_ASSIGNMENT_REQUIRED' });
+  });
+  it('refuses a verdict on an earlier title before explicit adoption', async () => {
+    await approvedReview();
+    input.doc.title = 'Changed after the recorded human verdict';
+    await expect(prepareWorkflowImportAdoption(q, { ...input, explicit: true }))
+      .rejects.toMatchObject({ code: 'WORKFLOW_REVIEW_ASSIGNMENT_REQUIRED' });
+  });
   it('refuses a copy when a current fingerprint and unknown/template metadata are its only evidence', async () => {
     await expect(assertWorkflowImportRelease(q,input)).rejects.toMatchObject({ code: 'WORKFLOW_HUMAN_ADOPTION_REQUIRED' });
   });
@@ -171,6 +212,25 @@ describe('positive machine origin never becomes model qualification by review', 
 });
 
 describe('source identity and current content stay verified at release', () => {
+  it('retains historical signature facts but holds release after its reviewer becomes a content contributor', async () => {
+    const signatureId = await adoptedCopy();
+    await q.query(`INSERT INTO doc_revisions(id,section_id,content,created_by,tenant_id,origin)
+      VALUES($1,$2,$3,'8',$4,'human-edit')`, [randomUUID(),input.sections[0].id,input.sections[0].content,ORG]);
+    await expect(assertWorkflowImportRelease(q,input)).rejects.toMatchObject({ code:'WORKFLOW_HUMAN_ADOPTION_REQUIRED' });
+    expect((await q.query('SELECT id FROM authoring_signatures WHERE id=$1',[signatureId])).rows).toHaveLength(1);
+  });
+  it('does not infer release adoption from a verdict that loses its retained binding', async () => {
+    const signatureId = await adoptedCopy();
+    await q.query('UPDATE authoring_reviews SET reviewed_snapshot_hash=NULL WHERE doc_id=$1', [input.doc.id]);
+    await expect(assertWorkflowImportRelease(q,input)).rejects.toMatchObject({ code:'WORKFLOW_HUMAN_ADOPTION_REQUIRED' });
+    expect((await q.query('SELECT id FROM authoring_signatures WHERE id=$1', [signatureId])).rows).toHaveLength(1);
+  });
+  it('requires the adopting reviewer to retain current membership in this tenant', async () => {
+    await adoptedCopy();
+    await q.query('DELETE FROM organization_users WHERE user_id=8 AND organization_id=77');
+    await expect(assertWorkflowImportRelease(q,input)).rejects.toMatchObject({ code:'WORKFLOW_HUMAN_ADOPTION_REQUIRED' });
+    await expect(prepareWorkflowImportAdoption(q,{...input,explicit:true})).rejects.toMatchObject({ code:'WORKFLOW_REVIEW_ASSIGNMENT_REQUIRED' });
+  });
   it('fails closed when source access or fingerprint verification fails, including a previously adopted copy', async () => {
     await adoptedCopy();
     m.verify.mockRejectedValue(new Error('source changed'));

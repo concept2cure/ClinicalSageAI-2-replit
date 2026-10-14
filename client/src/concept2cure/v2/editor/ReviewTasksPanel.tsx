@@ -55,7 +55,8 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
 import { TaskSignOffDialog, type TaskSignOffRequest } from './TaskSignOffDialog';
-import { CLOSED_TASK, reviewStateNote, taskReviewState, type TaskReviewState } from './reviewTaskState';
+import { CLOSED_TASK, reviewStandingOf, reviewStateNote, taskReviewState, type TaskReviewState } from './reviewTaskState';
+import type { AuthoringReviewStanding } from '@shared/authoring/peer-review';
 
 export { reviewStatusLabel } from './reviewTaskState';
 
@@ -255,39 +256,50 @@ function useDocumentTasks(docId: string | null, refreshKey: number): DocumentTas
   const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [rows, setRows] = useState<AuthoringTaskRow[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async (id: string) => {
-    setState('loading');
-    setError(null);
-    try {
-      const res = await apiRequest('GET', `/api/tasks/tasks/by-module/${encodeURIComponent(AUTHORING_TASK_MODULE)}`);
-      const json = (await res.json().catch(() => null)) as { success?: boolean; data?: unknown } | null;
-      if (!res.ok || !json?.success) {
-        setState('error');
-        setError(serverMessage(json) ?? `The task list did not respond (HTTP ${res.status}).`);
-        setRows([]);
-        return;
-      }
-      setRows(tasksForDocument(json.data, id));
-      setState('ready');
-    } catch (e) {
-      setState('error');
-      setError(redactInternals(e instanceof Error ? e.message : '', 'The task list could not be reached.'));
-      setRows([]);
-    }
-  }, []);
+  const [epoch, setEpoch] = useState(0);
+  const [readFor, setReadFor] = useState<string | null>(null);
 
   useEffect(() => {
+    let alive = true;
+    setReadFor(docId);
+    setRows([]);
+    setError(null);
     if (!docId) {
-      setRows([]);
       setState('idle');
-      return;
+      return undefined;
     }
-    void load(docId);
-  }, [docId, refreshKey, load]);
+    const id = docId;
+    setState('loading');
+    const load = async () => {
+      try {
+        const res = await apiRequest('GET', `/api/tasks/tasks/by-module/${encodeURIComponent(AUTHORING_TASK_MODULE)}`);
+        const json = (await res.json().catch(() => null)) as { success?: boolean; data?: unknown } | null;
+        if (!alive) return;
+        if (!res.ok || !json?.success) {
+          setState('error');
+          setError(serverMessage(json) ?? `The task list did not respond (HTTP ${res.status}).`);
+          setRows([]);
+          return;
+        }
+        setRows(tasksForDocument(json.data, id));
+        setState('ready');
+      } catch (e) {
+        if (!alive) return;
+        setState('error');
+        setError(redactInternals(e instanceof Error ? e.message : '', 'The task list could not be reached.'));
+        setRows([]);
+      }
+    };
+    void load();
+    return () => { alive = false; };
+  }, [docId, refreshKey, epoch]);
 
-  const reload = useCallback((id: string) => { void load(id); }, [load]);
-  return { state, rows, error, reload };
+  const reload = useCallback((id: string) => { if (id === docId) setEpoch(e => e + 1); }, [docId]);
+  const sameDocument = readFor === docId;
+  return {
+    state: sameDocument ? state : docId ? 'loading' : 'idle',
+    rows: sameDocument ? rows : [], error: sameDocument ? error : null, reload,
+  };
 }
 
 /** One review request on the document (an authoring_reviews row), as it is shown. */
@@ -296,6 +308,8 @@ export interface StandingReview {
   reviewerId: string;
   reviewer: string;
   status: string;
+  standing: AuthoringReviewStanding;
+  comments: string | null;
   requestedAt: string | null;
   reviewedAt: string | null;
 }
@@ -324,6 +338,8 @@ export function standingReviewsOf(json: unknown, docId: string): StandingReview[
       reviewerId,
       reviewer: firstText(r.reviewer_name, r.reviewer_email) ?? reviewerId,
       status: String(r.review_status ?? ''),
+      standing: reviewStandingOf(String(r.review_status ?? ''), r.standing),
+      comments: optionalText(r.review_comments),
       requestedAt: optionalText(r.requested_at),
       reviewedAt: optionalText(r.reviewed_at),
     };
@@ -356,8 +372,10 @@ export function useDocumentReviews(docId: string | null, refreshKey = 0): Docume
   const [state, setState] = useState<DocumentReviewsRead['state']>('idle');
   const [rows, setRows] = useState<StandingReview[]>([]);
   const [epoch, setEpoch] = useState(0);
+  const [readFor, setReadFor] = useState<string | null>(null);
 
   useEffect(() => {
+    setReadFor(docId);
     setRows([]);
     if (!docId) {
       setState('idle');
@@ -376,7 +394,8 @@ export function useDocumentReviews(docId: string | null, refreshKey = 0): Docume
   }, [docId, refreshKey, epoch]);
 
   const reload = useCallback(() => setEpoch(e => e + 1), []);
-  return { state, rows, reload };
+  const sameDocument = readFor === docId;
+  return { state: sameDocument ? state : docId ? 'loading' : 'idle', rows: sameDocument ? rows : [], reload };
 }
 
 interface ReviewTaskRowProps {
@@ -424,7 +443,7 @@ function ReviewTaskRow({ task, busy, review, onTransition, onOpenBoard }: Review
       {note && (
         <div className="rt-row-d" data-testid="rt-review-state" data-review={review.kind}>
           {review.kind === 'recorded' ? I.checkCircle : I.info} {note}
-          {review.kind === 'pending' && onOpenBoard && (
+          {(review.kind === 'pending' || review.kind === 'historical') && onOpenBoard && (
             <button type="button" className="nda-open" style={{ marginLeft: 8 }} onClick={onOpenBoard}>
               Open the Review board
             </button>

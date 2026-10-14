@@ -4,7 +4,8 @@ import { isWorkflowImportOrigin, type WorkflowImportOrigin } from '../../../shar
 import { clauseSpans } from '../clinical-regulatory-evidence/lineage-gate';
 import { comparableText, MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
 import { assertLineageCoversContent, hashSpanText, listLiveMachineSpans } from '../clinical-regulatory-evidence/span-lineage.service';
-import { sectionsDigest, computeAuthoringSignatureDigest } from './authoring-content-digests';
+import { sectionsDigest, computeAuthoringSignatureDigest, fullVisibleAuthoringSnapshot, authoringSnapshotHash } from './authoring-content-digests';
+import { authoringReviewStanding } from './peer-review';
 import type { AuthoringActor } from './authoring-documents';
 import type { Queryable } from './authoring-evidence';
 import { verifySavedWorkflowImport } from './import-source-references';
@@ -13,6 +14,7 @@ import { workflowCopySectionContent } from './workflow-copy-content';
 import { hashPayload } from '../audit/chain';
 import { isDeepStrictEqual } from 'node:util';
 import type { MaterializedWorkflowSource } from './workflow-source-import';
+import { assertSignerIsNotAuthor, SeparationOfDutiesError, SeparationOfDutiesAuthorUnresolvedError } from '../governance/separation-of-duties';
 
 export interface WorkflowGovernanceDocument {
   id: string;
@@ -120,16 +122,6 @@ async function verifyCurrentLineageHashes(q: Queryable, input: { organizationId:
   }
 }
 
-/** The existing signature contentHash covers section code/prose. The chained
- * adoption receipt additionally covers the full visible document, including
- * titles and section identity/order, without transient lifecycle timestamps. */
-function adoptionSnapshotHash(input: WorkflowGovernanceInput): string {
-  const { doc, sections } = input;
-  return hashSpanText(JSON.stringify({ id:doc.id,title:doc.title ?? null,module:doc.module ?? null,
-    locale:doc.locale ?? null,productCode:doc.product_code ?? null,version:doc.version ?? null,
-    sections:sections.map(section => ({ id:section.id,code:section.code,title:section.title ?? null,content:section.content })) }));
-}
-
 /** This stricter retention check is not quote attribution or a similarity score.
  * Prose punctuation/reflow alone must not discharge known generated content.
  * Decimal/group separators immediately before digits and scientific operators
@@ -165,17 +157,37 @@ async function sectionRetainsKnownMachine(q: Queryable, input: {
   return remains;
 }
 
+/** A retained verdict stays a fact. A new adoption/release action must also
+ * satisfy current independence after any later human content contribution. */
+async function independentAdoptingReviewer(q: Queryable, input: WorkflowGovernanceInput, reviewerId: string): Promise<boolean> {
+  try {
+    await assertSignerIsNotAuthor(`authoring-document:${input.doc.id}`, input.organizationId, Number(reviewerId),
+      { client: q, meaning: 'review' });
+    return true;
+  } catch (error) {
+    if (error instanceof SeparationOfDutiesError || error instanceof SeparationOfDutiesAuthorUnresolvedError) return false;
+    throw new WorkflowImportGovernanceError(503, 'WORKFLOW_REVIEW_AUTHORITY_UNAVAILABLE',
+      'Current independent reviewer authority could not be verified. Nothing was released.');
+  }
+}
+
 async function approvedAssignment(q: Queryable, input: WorkflowGovernanceInput) {
   if (!input.actor) throw new WorkflowImportGovernanceError(403, 'WORKFLOW_ACTOR_REQUIRED', 'Current reviewer identity is required.');
-  const result = await q.query(`SELECT r.id::text, r.reviewer_id, u.email
+  const result = await q.query(`SELECT r.id::text, r.doc_id::text AS doc_id, r.reviewer_id, u.email,
+      r.review_status, r.requested_at, r.requested_by, r.reviewed_at,
+      r.reviewed_snapshot, r.reviewed_snapshot_hash, r.review_binding_basis
     FROM authoring_reviews r JOIN users u ON u.id::text=r.reviewer_id
+    JOIN organization_users ou ON ou.user_id=u.id AND ou.organization_id=r.tenant_id
+    JOIN organizations o ON o.id=ou.organization_id
     WHERE r.doc_id=$1 AND r.tenant_id=$2 AND r.reviewer_id=$3
       AND r.review_status='approved' AND r.reviewed_at IS NOT NULL
       AND r.requested_by IS NOT NULL AND r.requested_at <= r.reviewed_at
-      AND r.reviewer_id <> $4 AND u.status='active'
-    FOR SHARE OF r, u`, [input.doc.id, input.organizationId, input.actor.id, String(input.doc.created_by ?? '')]);
+      AND r.reviewer_id <> $4 AND u.status='active' AND o.status='active'
+    FOR SHARE OF r, u, ou, o`, [input.doc.id, input.organizationId, input.actor.id, String(input.doc.created_by ?? '')]);
   const row = result.rows[0];
-  if (result.rows.length !== 1 || !row.email || String(row.email).toLowerCase() !== input.actor.email?.toLowerCase()) {
+  if (result.rows.length !== 1 || !row.email || String(row.email).toLowerCase() !== input.actor.email?.toLowerCase() ||
+      authoringReviewStanding(row, authoringSnapshotHash(fullVisibleAuthoringSnapshot(input))) !== 'current' ||
+      !await independentAdoptingReviewer(q, input, String(row.reviewer_id))) {
     return refusal('WORKFLOW_REVIEW_ASSIGNMENT_REQUIRED', 'Explicit adoption needs this reviewer’s approved, assigned review of the document. The author cannot adopt their own copy as its reviewer.');
   }
   return row as { id: string; reviewer_id: string; email: string };
@@ -187,7 +199,7 @@ export async function prepareWorkflowImportAdoption(q: Queryable, input: Workflo
   const state = await inspectedWorkflow(q, input);
   if (!state || !input.explicit) return null;
   const review = await approvedAssignment(q, input);
-  return { fingerprint: state.origin.fingerprint, contentHash: state.contentHash, snapshotHash: adoptionSnapshotHash(input), reviewId: review.id,
+  return { fingerprint: state.origin.fingerprint, contentHash: state.contentHash, snapshotHash: authoringSnapshotHash(fullVisibleAuthoringSnapshot(input)), reviewId: review.id,
     reviewerId: review.reviewer_id, scope: 'full-document', originalAuthorshipDisclosed: true };
 }
 
@@ -195,32 +207,44 @@ async function hasCurrentAdoption(q: Queryable, input: WorkflowGovernanceInput, 
   const result = await q.query(`SELECT s.signer_email, s.meaning, s.content_hash, s.covered_content_hash,
       s.signature_digest, t.metadata->'workflowSourceAdoption' AS adoption,
       a.new_values->'workflowSourceAdoption' AS chained_adoption, a.new_values AS chained_values,
-      a.payload_hash AS chained_payload_hash, r.id::text AS review_id, r.reviewer_id
+      a.payload_hash AS chained_payload_hash, r.id::text AS review_id, r.doc_id::text AS doc_id, r.reviewer_id,
+      r.review_status, r.requested_at, r.requested_by, r.reviewed_at,
+      r.reviewed_snapshot, r.reviewed_snapshot_hash, r.review_binding_basis
     FROM authoring_signatures s
     JOIN authoring_audit_trail t ON t.doc_id::text=s.doc_id::text AND t.tenant_id=s.tenant_id
       AND t.operation_type IN ('E_SIGN','SIGN') AND t.metadata->>'signatureId'=s.id::text
     JOIN authoring_reviews r ON r.id::text=t.metadata->'workflowSourceAdoption'->>'reviewId'
       AND r.doc_id::text=s.doc_id::text AND r.tenant_id=s.tenant_id
     JOIN users u ON u.id::text=r.reviewer_id AND lower(u.email)=lower(s.signer_email)
+    JOIN organization_users ou ON ou.user_id=u.id AND ou.organization_id=r.tenant_id
+    JOIN organizations o ON o.id=ou.organization_id
     JOIN audit_logs a ON a.tenant_id=s.tenant_id AND a.record_id=s.doc_id::text
       AND a.action IN ('authoring.document.e-sign','authoring.document.sign') AND a.new_values->>'signatureId'=s.id::text
     WHERE s.doc_id=$1 AND s.tenant_id=$2 AND s.meaning='REVIEWER' AND s.content_hash=$3
       AND t.actor_id=r.reviewer_id AND t.actor_email=s.signer_email
       AND r.review_status='approved' AND r.reviewed_at IS NOT NULL AND r.requested_by IS NOT NULL
       AND r.reviewer_id <> $4 AND r.requested_at <= r.reviewed_at AND r.reviewed_at <= s.signed_at
-      AND r.requested_at <= s.signed_at AND u.status='active'`,
+      AND r.requested_at <= s.signed_at AND u.status='active' AND o.status='active'`,
   [input.doc.id, input.organizationId, contentHash, String(input.doc.created_by ?? '')]);
-  return result.rows.some((row: { signer_email: string; meaning: string; content_hash: string; covered_content_hash: string | null;
+  const candidates = result.rows.filter((row: { signer_email: string; meaning: string; content_hash: string; covered_content_hash: string | null;
     signature_digest: string; adoption: WorkflowSourceAdoption; chained_adoption: WorkflowSourceAdoption;
-    chained_values: unknown; chained_payload_hash: string; review_id: string; reviewer_id: string }) => {
+    chained_values: unknown; chained_payload_hash: string; review_id: string; doc_id: string; reviewer_id: string;
+    review_status: string; requested_at: unknown; requested_by: unknown; reviewed_at: unknown;
+    reviewed_snapshot: unknown; reviewed_snapshot_hash: unknown; review_binding_basis: unknown }) => {
     const adoption = row.adoption;
-    return adoption?.fingerprint === fingerprint && adoption.contentHash === contentHash && adoption.snapshotHash === adoptionSnapshotHash(input) && adoption.reviewId === row.review_id
+    const snapshotHash = authoringSnapshotHash(fullVisibleAuthoringSnapshot(input));
+    return authoringReviewStanding(row, snapshotHash) === 'current' &&
+      adoption?.fingerprint === fingerprint && adoption.contentHash === contentHash && adoption.snapshotHash === snapshotHash && adoption.reviewId === row.review_id
       && adoption.reviewerId === row.reviewer_id && adoption.scope === 'full-document' && adoption.originalAuthorshipDisclosed === true
       && isDeepStrictEqual(adoption, row.chained_adoption)
       && hashPayload(row.chained_values) === row.chained_payload_hash
       && row.signature_digest === computeAuthoringSignatureDigest({ signerEmail: row.signer_email, meaning: row.meaning,
         contentHash: row.content_hash, coveredContentHash: row.covered_content_hash });
   });
+  for (const row of candidates) {
+    if (await independentAdoptingReviewer(q, input, String(row.reviewer_id))) return true;
+  }
+  return false;
 }
 
 /** Every controlled boundary calls this on the same reserved document/source

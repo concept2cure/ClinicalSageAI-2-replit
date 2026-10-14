@@ -1,0 +1,53 @@
+{
+  "branch": "concept2cure-v2",
+  "baseCommit": "71444466ba9826575ebe127dad609c6f0a815a0b",
+  "combinedRegression": {
+    "files": 39,
+    "passed": 726,
+    "failed": 0
+  },
+  "fixtureTypeRecheck": {
+    "files": 2,
+    "passed": 21,
+    "failed": 0,
+    "includedInCombinedUniqueCount": true
+  },
+  "typecheck": {
+    "command": "npm run ci:typecheck:no-regression -- --incremental",
+    "baseline": 0,
+    "errors": 0
+  },
+  "build": {
+    "command": "npm run build",
+    "passed": true,
+    "existingChunkSizeAdvisory": true
+  },
+  "browser": {
+    "scenarios": 4,
+    "actualClient": true,
+    "syntheticApi": true,
+    "pageErrors": 0
+  },
+  "guards": {
+    "sqlInterpolation": {
+      "passed": true,
+      "nativeRouterAllowanceBefore": 4,
+      "nativeRouterAllowanceAfter": 3
+    },
+    "migrationDropSafety": true,
+    "serverErrorLeaks": true,
+    "tenantEntryPoints": true,
+    "surfaceTextRamp": true,
+    "tokenContrast": true,
+    "phantomTokensNoRegression": true,
+    "frozenThemeAliases": true,
+    "eslintWarningRatchetWorkingTrackedFiles": {
+      "net": -2,
+      "passed": true
+    }
+  },
+  "publication": {
+    "state": "pending required hooks and scans"
+  },
+  "productionQualification": "Not performed; see human and production boundary in README."
+}

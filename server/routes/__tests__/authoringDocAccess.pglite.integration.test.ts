@@ -20,7 +20,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import express from 'express';
-import { PREREQ, AUTHOR, PROGRAM, ORG, mint, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 import { runWithTenantScope } from '../../db/tenantStore';
 import { verifyJwtWithRotation } from '../../utils/jwtVerify';
 import { authoringObjectAuthorization } from '../../middleware/authoringObjectAuthorization';
@@ -48,6 +48,7 @@ function makeAccessApp(router: express.Router, role: string): express.Express {
   const a = express();
   a.use(express.json());
   a.use((req, _res, next) => {
+    Object.assign(req, { dbClient: jdb.pool });
     (req as express.Request & { userRole?: string }).userRole = role;
     runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
   });
@@ -65,6 +66,7 @@ function makeGatedApp(router: express.Router, role: string): express.Express {
   const a = express();
   a.use(express.json());
   a.use((req, _res, next) => {
+    Object.assign(req, { dbClient: jdb.pool });
     const claims = verifyJwtWithRotation(String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')) as Record<string, unknown>;
     (req as unknown as { user: unknown }).user = {
       id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId, roles: [],
@@ -92,7 +94,8 @@ let docId: string;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: `${PREREQ}\n${AUTHORING_ACCESS_DDL}
+      ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';`,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',

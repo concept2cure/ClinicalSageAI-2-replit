@@ -47,6 +47,8 @@ import { Router, Request, Response } from 'express';
 import { requestPgClient, MissingRequestDbContextError } from '../db/requestDb';
 import { buildAuthoringReviewBoard, type ReviewScope } from '../services/review/authoring-review-board';
 import { readVaultReviewQueue } from '../services/review/vault-review-queue';
+import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
+import { ProgramReadAccessError } from '../services/c2c/current-program-access';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('review-board-routes');
@@ -151,6 +153,11 @@ export default function createReviewBoardRoutes(): Router {
       });
       return res.json({ success: true, data: { ...board, vaultReviews } });
     } catch (error: any) {
+      if (error instanceof AuthoringReadScopeError || error instanceof ProgramReadAccessError) {
+        return res.status(error.status).json({ success: false, error: {
+          code: error.code, message: 'Current review access could not be verified. Reopen the review board with your current account.',
+        } });
+      }
       if (error instanceof MissingRequestDbContextError) {
         return res.status(500).json({ success: false, error: 'REQUEST_DB_CONTEXT_REQUIRED' });
       }

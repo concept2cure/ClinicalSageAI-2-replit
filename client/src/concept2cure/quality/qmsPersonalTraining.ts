@@ -6,7 +6,7 @@ import {
   type QmsTrainingContext,
 } from '@shared/qms/training';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
-import { getAuthToken } from '@/utils/authToken';
+import { capturedActorHeaders } from '@/utils/authToken';
 
 export interface PersonalTrainingScope {
   documentId: number;
@@ -52,14 +52,9 @@ export function personalTrainingScope(
  * change before React rerenders must not attest under a different actor.
  * Claim decoding is a client consistency check; the server verifies the JWT. */
 export function personalTrainingWriteHeaders(scope: PersonalTrainingScope): Record<string, string> {
-  const token = getAuthToken();
   try {
-    if (!token) throw new Error(SESSION_CHANGED);
-    const payload: unknown = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const claims = payload as { userId?: unknown; organizationId?: unknown } | null;
-    const current = personalTrainingScope({ id: claims?.userId, organizationId: claims?.organizationId }, scope.documentId);
-    if (!current || current.userId !== scope.userId || current.organizationId !== scope.organizationId) throw new Error(SESSION_CHANGED);
-    return { Authorization: `Bearer ${token}`, 'x-organization-id': String(scope.organizationId) };
+    if (!personalTrainingScope({ id: scope.userId, organizationId: scope.organizationId }, scope.documentId)) throw new Error(SESSION_CHANGED);
+    return capturedActorHeaders(scope);
   } catch {
     throw new PersonalTrainingError(SESSION_CHANGED);
   }

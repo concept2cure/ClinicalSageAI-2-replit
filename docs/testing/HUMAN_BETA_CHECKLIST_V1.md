@@ -63,6 +63,41 @@ must explain why acknowledgement is unavailable. Local automated evidence and
 its production verification boundary are recorded in
 [the QMS evidence](../evidence/D2-QMS-TRAINING/2026-10-14/README.md).
 
+## Authoring: independent review of the saved document (2026-10-14)
+
+Use a test organization with an author, a different assigned reviewer and a
+member without access to the document or its private project. Retain the review
+request, verdict, task and audit identifiers.
+
+1. Save an Authoring document with at least two sections and a table. Use
+   **Send for review** to assign the independent member through the existing
+   workflow. Open Review and verify the assignment belongs to that person.
+2. Choose **Record review decision**. Verify the revision and every saved
+   section, including the table and any governed figure. The decision starts
+   unstated. Request changes with a reason and record it; verify the receipt,
+   refreshed queue, authoring task rail and audit. A peer verdict must not
+   stand in for a required electronic signature on a gated task.
+3. Keep a decision dialog open while the author saves a change in another tab.
+   The old dialog must refuse a verdict. **Reload review record** must clear
+   the earlier decision/reason and show the complete changed content before a
+   new decision can be recorded. The earlier verdict remains an earlier fact.
+4. Re-request review while an older dialog is open. That dialog must refuse
+   the old request even if the prose is unchanged. Legacy verdicts without a
+   saved-content binding must be labeled as unverified earlier content and
+   must not count as current peer approval.
+5. Attempt to assign or record review as the original author and as someone
+   who previously saved content. Both must refuse, including an administrator.
+   The unassigned member, a removed member, and a person with only a section
+   grant must not read the complete private review or record a verdict.
+6. Switch account or organization while reading or recording. Previous content
+   and late receipts must not carry into the replacement account. Repeat the
+   complete saved read and receipt in dark mode and at phone width.
+
+This finishes peer review; final signing retains its existing authentication,
+meaning and release gates. Local database and browser evidence, including its
+production verification boundary, is recorded in
+[the review continuation evidence](../evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/README.md).
+
 ## Failure logging format
 - Timestamp (UTC)
 - Persona + seeded project id

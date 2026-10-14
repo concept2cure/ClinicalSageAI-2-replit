@@ -15,6 +15,12 @@ import { expandRoleClaims, roleClaimsSatisfy } from '../middleware/auth';
 import { getTenantScope } from '../db/tenantStore';
 import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
 import { getPool } from '../db';
+import { requestConnectable } from '../db/requestDb';
+import { authoringReviewInputSchema } from '../../shared/authoring/peer-review';
+import {
+  readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews,
+  AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed,
+} from '../services/authoring/peer-review';
 import type { PoolClient } from 'pg';
 import { SourceReadAccessError } from '../services/clinical-regulatory-evidence/source-read-access';
 import { ProgramReadAccessError } from '../services/c2c/current-program-access';
@@ -3381,12 +3387,32 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
  * retraction is ever wanted, it is a tombstone that retains and renders the
  * original content as retracted — a new capability, not these routes. */
 
-/** Review transitions serialize on their tenant's working document. */
-async function peerReviewDocument(client: Queryable, id: string | string[], tenantId: number, lock = false): Promise<boolean> {
-  const result = await client.query(
-    `SELECT id FROM authoring_documents WHERE id=$1 AND tenant_id=$2${lock ? ' FOR UPDATE' : ''}`, [id, tenantId],
-  );
-  return result.rows.length === 1;
+/** The native review service receives only the verified actor and pinned tenant client. */
+function peerReviewInput(req: Request) {
+  const actorId = getActorId(req);
+  if (!actorId) throw new AuthoringPeerReviewRefused(401, 'REVIEW_ACTOR_REQUIRED', 'Authentication required.');
+  const documentId = req.params.id;
+  if (typeof documentId !== 'string' || !isUuid(documentId)) {
+    throw new AuthoringPeerReviewRefused(400, 'REVIEW_DOCUMENT_INVALID', 'A valid document identifier is required.');
+  }
+  return { tenantId: getTenantId(req), actorId, documentId: documentId.toLowerCase() };
+}
+
+function peerReviewAudit(req: Request) {
+  return { ipAddress: req.ip || req.connection?.remoteAddress || 'unknown',
+    userAgent: req.headers['user-agent'] || 'unknown' };
+}
+
+function peerReviewFailure(res: Response, error: unknown): Response {
+  if (error instanceof AuthoringPeerReviewCommitUnconfirmed) return res.status(503).json({ success: false,
+    error: { code: 'REVIEW_COMMIT_UNCONFIRMED', message: 'The review write could not be confirmed. Reload the document and review request before trying again.' } });
+  if (!(error instanceof AuthoringPeerReviewRefused) || error.status === 503) {
+    logger.error('Authoring peer review could not be verified', { error });
+    return res.status(503).json({ success: false,
+      error: { code: 'REVIEW_UNAVAILABLE', message: 'The review could not be verified. Reload before trying again.' } });
+  }
+  if (error.status === 409 && error.code === 'REVIEWER_IS_AUTHOR') return res.status(409).json(REVIEWER_IS_AUTHOR_REFUSAL);
+  return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
 }
 
 function validPeerReviewers(reviewers: unknown): reviewers is Array<{ id: string | number; name?: string; email?: string }> {
@@ -3401,39 +3427,10 @@ function validPeerReviewers(reviewers: unknown): reviewers is Array<{ id: string
   });
 }
 
-// GET /api/authoring/documents/:id/reviews - Get review status
+// GET /api/authoring/documents/:id/reviews - Read the complete saved review context.
 router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const tenantId = getTenantId(req);
-
-    if (!(await peerReviewDocument(pool, id, tenantId))) return res.status(404).json({ success: false, error: 'Document not found' });
-
-    const result = await pool.query(
-      `SELECT id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, review_comments, reviewed_at, requested_at, requested_by, created_at, updated_at, tenant_id FROM authoring_reviews
-       WHERE doc_id = $1 AND tenant_id = $2
-       ORDER BY requested_at DESC`,
-      [id, tenantId]
-    );
-
-    const stats = {
-      total: result.rowCount,
-      pending: result.rows.filter(r => r.review_status === 'pending').length,
-      approved: result.rows.filter(r => r.review_status === 'approved').length,
-      rejected: result.rows.filter(r => r.review_status === 'rejected').length,
-      changes_requested: result.rows.filter(r => r.review_status === 'changes_requested').length,
-    };
-
-    res.json({
-      success: true,
-      reviews: result.rows,
-      stats,
-      canApprove: stats.pending === 0 && stats.rejected === 0 && stats.changes_requested === 0,
-    });
-  } catch (error) {
-    console.error('Error fetching reviews:', error);
-    return serverError(res, logger, 'loading reviews', error);
-  }
+  try { return res.json(await readAuthoringPeerReviews(requestConnectable(req), peerReviewInput(req))); }
+  catch (error) { return peerReviewFailure(res, error); }
 });
 
 type ReviewTaskLedgerRow = import('../services/tasking/task-audit').AuditTaskActionParams;
@@ -3576,113 +3573,21 @@ async function closeReviewTasksOnVerdict(
   return closure;
 }
 
-// POST /api/authoring/documents/:id/review - Submit review
+// POST /api/authoring/documents/:id/review - Record an assigned, saved-content-bound verdict.
 router.post('/documents/:id/review', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { review_status, review_comments } = req.body;
-    if (!['approved', 'rejected', 'changes_requested'].includes(review_status)) {
-      return res.status(400).json({ success: false, error: 'review_status must be approved, rejected or changes_requested' });
-    }
-    // §11.10(e): a change request or a rejection carries the reason the author
-    // acts on; an approval may carry one. Checked here, not only in Review.tsx.
-    const commentsVerdict = review_status === 'approved'
-      ? optionalGovernedReason(review_comments)
-      : requireGovernedReason(review_comments);
-    if (!commentsVerdict.ok) return res.status(400).json({ success: false, error: commentsVerdict.error, field: 'review_comments' });
-    const reviewComments = commentsVerdict.reason;
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): reviewer identity must come from the verified
-    // JWT, never from headers / req.body — a review sign-off cannot be
-    // attributed to another user.
-    const reviewerId = getActorId(req);
-    if (!reviewerId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-    const reviewerEmail = req.user?.email ?? null;
-    const reviewerName = reviewerEmail || reviewerId;
-
-    const savedReview = await inTransaction(async (client) => {
-      if (!(await peerReviewDocument(client, id, tenantId, true))) return null;
-      // Check if reviewer already has a review
-      const existingReview = await client.query(
-        `SELECT id FROM authoring_reviews
-         WHERE doc_id = $1 AND reviewer_id = $2 AND tenant_id = $3`,
-        [id, reviewerId, tenantId]
-      );
-
-      let result;
-      if (((existingReview.rowCount ?? 0) > 0)) {
-        // Update existing review
-        result = await client.query(
-          `UPDATE authoring_reviews
-           SET review_status = $1, review_comments = $2, reviewed_at = NOW(), updated_at = NOW()
-           WHERE id = $3 AND tenant_id = $4
-           RETURNING *`,
-          [review_status, reviewComments, existingReview.rows[0].id, tenantId]
-        );
-      } else {
-        // Create new review
-        const reviewId = crypto.randomUUID();
-        result = await client.query(
-          `INSERT INTO authoring_reviews
-           (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, review_comments, reviewed_at, tenant_id, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8, NOW())
-           RETURNING *`,
-          [
-            reviewId,
-            id,
-            reviewerId,
-            reviewerName,
-            reviewerEmail,
-            review_status,
-            reviewComments,
-            tenantId,
-          ]
-        );
-      }
-
-      const review = result.rows[0];
-      // The reviewer's open review tasks on this document, completed by this
-      // verdict: their row locks now, before the audit-chain lock below.
-      const tasks = await closeReviewTasksOnVerdict(client, {
-        tenantId,
-        docId: String(id),
-        reviewerId,
-        verdict: review_status,
-        reviewId: String(review.id),
-        reason: reviewComments ?? null,
-      });
-
-      // Create audit event
-      // The reviewer's comments are the stated reason the route requires for a
-      // rejection or a change request (and accepts for an approval).
-      await createAuditTrail(req, id, null, 'document_reviewed', null, null, reviewComments ?? null, {
-        review_status,
-        review_comments: reviewComments,
-      }, client);
-      // The tasks' ledger rows, after the verdict that caused them.
-      await tasks.record();
-      return { review, tasks };
-    });
-    if (!savedReview) return res.status(404).json({ success: false, error: 'Document not found' });
-
-    // Only now the verdict and the tasks it closed have committed.
-    if (savedReview.tasks.notices.length) {
+    const body = authoringReviewInputSchema.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ success: false,
+      error: { code: 'REVIEW_INPUT_INVALID', message: 'A verdict and the exact saved review context are required.' } });
+    const saved = await submitAuthoringPeerReview(requestConnectable(req), { ...peerReviewInput(req), body: body.data },
+      { audit: peerReviewAudit(req), closeTasks: closeReviewTasksOnVerdict });
+    if (saved.tasks.notices.length) {
       const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
-      for (const notice of savedReview.tasks.notices) notifyTaskEvent(notice);
+      for (const notice of saved.tasks.notices) notifyTaskEvent(notice);
     }
-
-    res.json({
-      success: true,
-      review: savedReview.review,
-      tasks: { completed: savedReview.tasks.completed, leftOpen: savedReview.tasks.leftOpen },
-      message: `Document ${review_status.replace('_', ' ')} successfully`,
-    });
-  } catch (error) {
-    console.error('Error submitting review:', error);
-    return serverError(res, logger, 'saving review', error);
-  }
+    return res.json({ success: true, review: saved.review,
+      tasks: { completed: saved.tasks.completed, leftOpen: saved.tasks.leftOpen }, auditTrail: saved.auditTrail });
+  } catch (error) { return peerReviewFailure(res, error); }
 });
 
 // POST /api/authoring/documents/:id/request-review - Request review from users
@@ -3766,82 +3671,21 @@ const REVIEWER_IS_AUTHOR_REFUSAL = {
 
 router.post('/documents/:id/request-review', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { reviewers } = req.body; // Array of { id, name, email }
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): who requested the review is attribution, and
-    // attribution comes from the verified JWT — never `x-user-name`, which the
-    // caller sets. The sibling submit-review handler was hardened this way; this
-    // one kept the header, and it only stayed harmless because the table did not
-    // exist. Making the endpoint work without fixing this would ship the defect.
-    const requestedBy = req.user?.email ?? getActorId(req);
-    if (!requestedBy) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-    if (!validPeerReviewers(reviewers)) {
-      return res.status(400).json({ success: false, error: 'reviewers must be a non-empty array of distinct reviewer identities with valid optional name and email fields' });
-    }
-    const statedReason = optionalGovernedReason(req.body?.reason);
-    if (!statedReason.ok) return res.status(400).json({ success: false, error: statedReason.error, field: 'reason' });
-    const principal = authoringPrincipalFromRequest(req);
-    const createdReviews = await inTransaction(async (client) => {
-      if (!(await peerReviewDocument(client, id, tenantId, true))) return null;
-      /* QA 2026-10-08 (j4): the author could be named as her own reviewer. The
-         Vault states the rule (a different person reviews); so does this. */
-      const scope = await resolveAuthoringDocumentScope(client, tenantId, String(id));
-      const author = String(scope?.createdBy ?? '').trim();
-      const self = reviewers.find((r) => author !== '' && String(r.id).trim() === author);
-      if (self) return { refused: 'REVIEWER_IS_AUTHOR' as const };
-      /* A request asks for a new review. Asking a reviewer who already recorded
-         a verdict (changes requested, revised, asked again) reopens their row:
-         pending, with no verdict time and no comments. Until 2026-10-08 the
-         ON CONFLICT refreshed requested_at only, so the earlier verdict stayed
-         the current one and the loop could not be closed (wave 2D, request D
-         of wave 2C). The earlier verdict is not lost: its own document_reviewed
-         audit row keeps it, untouched, and the verdicts read here are named on
-         this request's audit row. */
-      const reopened = await client.query(
-        `SELECT id, reviewer_id, review_status, reviewed_at FROM authoring_reviews
-          WHERE doc_id = $1 AND tenant_id = $2 AND reviewer_id = ANY($3::text[]) AND review_status <> 'pending'`,
-        [id, tenantId, reviewers.map(r => String(r.id).trim())],
-      );
-      const reviews = [];
-      for (const reviewer of reviewers) {
-        const result = await client.query(
-          `INSERT INTO authoring_reviews
-           (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)
-           VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, NOW())
-           ON CONFLICT (doc_id, reviewer_id, tenant_id)
-           DO UPDATE SET requested_at = NOW(), requested_by = $6, review_status = 'pending',
-                         reviewed_at = NULL, review_comments = NULL, updated_at = NOW()
-           RETURNING *`,
-          [crypto.randomUUID(), id, String(reviewer.id).trim(), reviewer.name, reviewer.email, requestedBy, tenantId],
-        );
-        reviews.push(result.rows[0]);
-      }
-      // What reviewing needs, granted by someone who may grant it (grantRequestedReviewers).
-      const grants = await grantRequestedReviewers({ client, req, docId: String(id), tenantId, scope, principal, reviews, reason: statedReason.reason });
-      await createAuditTrail(req, id, null, 'review_requested', null, null, statedReason.reason, {
-        reviewerIds: reviews.map(r => r.reviewer_id), reviewIds: reviews.map(r => r.id), grants,
-        reopenedVerdicts: reopened.rows.map((r: { id: string; reviewer_id: string; review_status: string; reviewed_at: unknown }) => ({
-          reviewId: r.id, reviewerId: r.reviewer_id, verdict: r.review_status, reviewedAt: r.reviewed_at,
-        })),
-      }, client);
-      return { reviews, grants };
+    const { reviewers } = req.body;
+    if (!validPeerReviewers(reviewers)) return res.status(400).json({ success: false,
+      error: 'reviewers must be a non-empty array of distinct reviewer identities with valid optional name and email fields' });
+    const stated = optionalGovernedReason(req.body?.reason);
+    if (!stated.ok) return res.status(400).json({ success: false, error: stated.error, field: 'reason' });
+    const input = peerReviewInput(req);
+    const saved = await requestAuthoringPeerReviews(requestConnectable(req), { ...input, reviewers, reason: stated.reason }, {
+      audit: peerReviewAudit(req),
+      grant: (client, current) => grantRequestedReviewers({ client, req, docId: input.documentId,
+        tenantId: input.tenantId, scope: current.scope, principal: current.actor.principal,
+        reviews: current.reviews.map(review => ({ id: review.id, reviewer_id: review.reviewer_id,
+          reviewer_email: typeof review.reviewer_email === 'string' ? review.reviewer_email : null })), reason: current.reason }),
     });
-    if (!createdReviews) return res.status(404).json({ success: false, error: 'Document not found' });
-    if ('refused' in createdReviews) return res.status(409).json(REVIEWER_IS_AUTHOR_REFUSAL);
-
-    res.json({
-      success: true,
-      reviews: createdReviews.reviews,
-      grants: createdReviews.grants,
-      message: `Review requested from ${reviewers.length} reviewer(s)`,
-    });
-  } catch (error) {
-    console.error('Error requesting review:', error);
-    return serverError(res, logger, 'saving request review', error);
-  }
+    return res.json({ success: true, ...saved, message: `Review requested from ${reviewers.length} reviewer(s)` });
+  } catch (error) { return peerReviewFailure(res, error); }
 });
 
 // ============= AI Integration =============
@@ -6673,7 +6517,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     }
 
     const sectionsResult = await pool.query(
-      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
       [docId, tenantId]
     );
 
@@ -6807,7 +6651,7 @@ router.post('/docs/:docId/working-copy', async (req: Request, res: Response) => 
     if ((docResult.rowCount ?? 0) === 0) return res.status(404).json({ error: 'Document not found' });
     const doc = docResult.rows[0];
     const sectionsResult = await pool.query(
-      'SELECT id, code, title, content, order_index FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      'SELECT id, code, title, content, order_index FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
       [docId, tenantId],
     );
     const at = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');

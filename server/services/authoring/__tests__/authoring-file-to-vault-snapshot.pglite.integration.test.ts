@@ -43,7 +43,7 @@ beforeAll(async () => {
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now();
     ALTER TABLE authoring_sections ADD COLUMN code text, ADD COLUMN title text,
-      ADD COLUMN content text, ADD COLUMN order_index integer;
+      ADD COLUMN content text, ADD COLUMN order_index integer, ADD COLUMN created_at timestamptz DEFAULT now();
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
@@ -148,6 +148,17 @@ async function mutate(d: WorkingDraft, mutation: Mutation) {
 }
 
 describe('file-to-Vault records the same section snapshot it rendered', () => {
+  it('uses signing order for duplicate section indices in the rendered and retained full snapshot', async () => {
+    const d = await workingDraft();
+    await d.f.pg.query(`UPDATE authoring_sections SET order_index=1,
+      created_at=CASE WHEN id=$1 THEN '2026-10-14T12:00:00Z'::timestamptz ELSE '2026-10-14T11:00:00Z'::timestamptz END
+      WHERE doc_id=$2 AND tenant_id=$3`, [d.sections[0].id,d.docId,d.f.org]);
+    admit(d);
+    expect(await file(d)).toMatchObject({ kind:'filed' });
+    const rendered = String(h.pdf.mock.calls[0][0]);
+    expect(rendered.indexOf('Original safety result.')).toBeLessThan(rendered.indexOf('Original endpoint result.'));
+    expect((await facts(d)).history[0].doc_sha256).toBe(sectionsDigest([...d.sections].reverse()));
+  });
   it('records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data', async () => {
     const d = await workingDraft();
     const origin = { kind: 'vault', id: d.f.vault, programId: d.f.program, sha256: 'a'.repeat(64),

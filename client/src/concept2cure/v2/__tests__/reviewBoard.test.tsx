@@ -29,6 +29,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // identity for in-session comment attribution, so a stub user is enough.
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { displayName: 'Test Reviewer', email: 'rev@test.co', roles: ['Reg lead'] } }),
+  useAuthUser: () => ({ displayName: 'Test Reviewer', email: 'rev@test.co', roles: ['Reg lead'] }),
 }));
 
 import { Review } from '../surfaces/Review';
@@ -171,7 +172,14 @@ describe('Review board — real data', () => {
    document stands, by the same rule as the project's Review tab
    (surfaces/reviewStanding.ts). */
 describe('Review board — the queue pill says where the document stands', () => {
-  const row = (over: Record<string, unknown>) => ({ ...BOARD.queue[0], ...over });
+  const row = (over: Record<string, unknown>) => {
+    const status = over.state === 'changes-requested' ? 'changes_requested' : over.state;
+    return {
+      ...BOARD.queue[0], ...over,
+      reviews: ['approved', 'changes_requested', 'rejected'].includes(String(status))
+        ? [{ ...BOARD.queue[0].reviews[0], status, standing: 'current' }] : BOARD.queue[0].reviews,
+    };
+  };
   it.each([
     [{ docStatus: 'IN_REVIEW', state: 'approved' }, 'Reviewers approved, sign-off pending'],
     [{ docStatus: 'APPROVED', state: 'approved' }, 'Approved'],

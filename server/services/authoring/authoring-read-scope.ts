@@ -33,21 +33,25 @@ async function permittedIdentities(q:RequestSqlClient,organizationId:number,prin
 }
 export async function getCurrentAuthoringReadScope(q: RequestSqlClient, input: {
   organizationId: number; userId: number | undefined; programId?: string | null; documentId?: string | null;
-}): Promise<{ scope: 'verified-accessible-authoring-sections'; documentIds: string[]; sectionDocumentIds:string[]; sectionIds: string[] }> {
+  /** The unfiltered Review board also retains pre-project organization records. */
+  includeOrganizationDocuments?: boolean;
+}): Promise<{ scope: 'verified-accessible-authoring-sections'; actor:{userId:number;email:string|null}; documentIds: string[]; sectionDocumentIds:string[]; sectionIds: string[] }> {
   try {
     const programs = await getCurrentAccessibleProgramScope(q,input);
     const principal=await currentPrincipal(q,input.organizationId,programs.actor);
     // Identity/status only; titles, prose and counts are read after ACL admission.
     const identities = await q.query(`SELECT d.id::text AS doc_id,d.status,d.created_by,s.id::text AS section_id
       FROM authoring_documents d LEFT JOIN authoring_sections s ON s.doc_id=d.id AND s.tenant_id=d.tenant_id
-      WHERE d.tenant_id=$1 AND d.client_program_id=ANY($2::uuid[])
+      WHERE d.tenant_id=$1 AND (d.client_program_id=ANY($2::uuid[])
+        OR ($4::boolean AND d.client_program_id IS NULL))
         AND ($3::uuid IS NULL OR d.id=$3::uuid) ORDER BY d.id,s.id`,
-    [input.organizationId,programs.programIds,input.documentId ?? null]);
+    [input.organizationId,programs.programIds,input.documentId ?? null,
+      input.includeOrganizationDocuments===true && !input.programId]);
     const access=await permittedIdentities(q,input.organizationId,principal,identities.rows);
     if (input.documentId && !access.documentIds.includes(input.documentId) && !access.sectionDocumentIds.includes(input.documentId)) {
       throw new AuthoringReadScopeError(404,'AUTHORING_DOCUMENT_NOT_FOUND','Document not found.');
     }
-    return {scope:'verified-accessible-authoring-sections',...access};
+    return {scope:'verified-accessible-authoring-sections',actor:{userId:programs.actor.userId,email:principal.email},...access};
   } catch (error) {
     if (error instanceof ProgramReadAccessError || error instanceof AuthoringReadScopeError) throw error;
     throw new AuthoringReadScopeError(503,'AUTHORING_READ_ACCESS_UNAVAILABLE','Current Authoring access could not be verified.');
@@ -64,7 +68,8 @@ export async function requireAuthoringReadScopeStillCurrent(q: RequestSqlClient,
     throw error;
   }
   const documents=new Set(current.documentIds); const parents=new Set(current.sectionDocumentIds); const sections=new Set(current.sectionIds);
-  if (prior.documentIds.some(id=>!documents.has(id)) || prior.sectionDocumentIds.some(id=>!parents.has(id)) || prior.sectionIds.some(id=>!sections.has(id))) {
+  if (prior.actor.userId!==current.actor.userId || prior.actor.email!==current.actor.email ||
+      prior.documentIds.some(id=>!documents.has(id)) || prior.sectionDocumentIds.some(id=>!parents.has(id)) || prior.sectionIds.some(id=>!sections.has(id))) {
     throw new AuthoringReadScopeError(503,'AUTHORING_READ_ACCESS_CHANGED','Current Authoring access changed during the read.');
   }
 }

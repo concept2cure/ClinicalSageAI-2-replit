@@ -9,7 +9,7 @@
   "server/routes/ana-ri/kernel.ts": 4,
   "server/routes/artifacts-center-routes.ts": 1,
   "server/routes/audit-trail-routes.ts": 4,
-  "server/routes/authoring.router.ts": 4,
+  "server/routes/authoring.router.ts": 3,
   "server/routes/biopharma/bla-workbench.ts": 1,
   "server/routes/biopharma/programs.ts": 4,
   "server/routes/c2c/ai-editing.ts": 2,

@@ -3,15 +3,13 @@ import type { QmsTrainingAcknowledgement, QmsTrainingContext } from '@shared/qms
 
 const request = vi.hoisted(() => vi.fn());
 const TOKEN = vi.hoisted(() => `fixture.${btoa(JSON.stringify({ userId: '7', organizationId: '42' }))}.fixture`);
-vi.mock('@/utils/authToken', async () => ({
-  ...await vi.importActual<typeof import('@/utils/authToken')>('@/utils/authToken'), getAuthToken: () => TOKEN,
-}));
 vi.mock('@/lib/queryClient', async () => ({
   ...await vi.importActual<typeof import('@/lib/queryClient')>('@/lib/queryClient'),
   apiRequest: request,
 }));
 
 import { ApiRequestError } from '@/lib/queryClient';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 import {
   acknowledgePersonalTraining,
   PersonalTrainingError,
@@ -62,10 +60,12 @@ const saved = (receipt: unknown = RECEIPT) => ({
 
 beforeEach(() => {
   request.mockReset();
+  clearAuthToken();
+  setAuthToken(TOKEN);
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
 });
-afterEach(() => vi.useRealTimers());
+afterEach(() => { clearAuthToken(); vi.useRealTimers(); });
 
 describe('personal training uses an explicit authenticated scope', () => {
   it('takes integer session identities without a fallback organization', () => {
