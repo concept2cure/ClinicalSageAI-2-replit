@@ -101,7 +101,7 @@ import {
 import { createDocument, createSection } from '../services/authoring/authoring-documents';
 import { importSourceDocument } from '../services/authoring/authoring-source-import';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
-import { getIndAuthoringTemplates, indTemplateReference } from '../services/authoring/ind-authoring-templates';
+import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
 import { AuthoringProgramAccessError } from '../services/authoring/authoring-program-access';
 import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
@@ -981,6 +981,17 @@ router.delete('/sections/:sectionId/tokens/:citeId', async (req: Request, res: R
   }
 })();
 
+/** Project builtin metadata into the same list shape as persisted templates. */
+function builtinTemplateListRow(template: BuiltinAuthoringTemplate) {
+  return {
+    ...builtinTemplateReference(template), name: template.name, template_name: template.name,
+    template_type: template.filingContext ? template.filingContext.registryId ?? 'document-component' : 'IND',
+    category: template.filingContext ? 'Regulatory reference' : 'IND pyramid',
+    regions: template.filingContext ? [template.filingContext.region] : ['FDA'],
+    description: template.description, section_count: template.sections.length, active: true,
+  };
+}
+
 // GET /api/authoring/templates - List all available templates
 router.get('/templates', async (req: Request, res: Response) => {
   try {
@@ -1123,12 +1134,12 @@ router.get('/templates', async (req: Request, res: Response) => {
       globalCatalog = 'unavailable';
     }
 
-    const builtinRows = getIndAuthoringTemplates().filter(template =>
-      (!category || String(category) === 'IND pyramid') && (!template_type || String(template_type) === 'IND') &&
-      (!search || `${template.name} ${template.description}`.toLowerCase().includes(String(search).toLowerCase())))
-      .map(template => ({ ...indTemplateReference(template), name: template.name, template_name: template.name,
-        template_type: 'IND', category: 'IND pyramid', regions: ['FDA'], description: template.description,
-        section_count: template.sections.length, active: true }));
+    // Builtins project the canonical IND and regional biotech outlines. A
+    // failure is a failed catalog read, never a shortened successful roster.
+    const builtinRows = (await getBuiltinAuthoringTemplates()).map(builtinTemplateListRow)
+      .filter(template => (!category || String(category) === template.category)
+      && (!template_type || String(template_type) === template.template_type)
+      && (!search || `${template.name} ${template.description} ${template.entryId ?? ''}`.toLowerCase().includes(String(search).toLowerCase())));
     const merged = [...orgRows, ...globalRows, ...builtinRows];
     res.json({
       success: true,

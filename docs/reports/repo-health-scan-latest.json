@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T20:37:46.458Z",
+  "generatedAt": "2026-10-14T21:11:12.851Z",
   "git": {
-    "sha": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
+    "sha": "34389d3af6330effb361c28ee69d9988dea10df2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -401,6 +401,16 @@
         ]
       },
       {
+        "basename": "generate",
+        "count": 4,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/generate.ts",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
+          "server/services/audit/compliance-reports/generate.ts"
+        ]
+      },
+      {
         "basename": "harness",
         "count": 4,
         "paths": [
@@ -418,6 +428,16 @@
           "server/routes/orchestration.ts",
           "shared/schema/orchestration.ts",
           "shared/types/orchestration.ts"
+        ]
+      },
+      {
+        "basename": "probe",
+        "count": 4,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx"
         ]
       },
       {
@@ -580,15 +600,6 @@
         ]
       },
       {
-        "basename": "generate",
-        "count": 3,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
-          "server/services/audit/compliance-reports/generate.ts"
-        ]
-      },
-      {
         "basename": "governance",
         "count": 3,
         "paths": [
@@ -712,15 +723,6 @@
           "client/src/concept2cure/mdx/data/postmarket.ts",
           "ui_kits/mdx/data/postmarket.js",
           "ui_kits/mdx/surfaces/Postmarket.jsx"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 3,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx"
         ]
       },
       {
@@ -2178,7 +2180,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 396146
+        "bytes": 396779
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2404,7 +2406,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8525
+        "lines": 8536
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2862,7 +2864,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 168,
+      "duplicateGroups": 170,
       "largeByBytes": 2,
       "largeByLines": 8
     },

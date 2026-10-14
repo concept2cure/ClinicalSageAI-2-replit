@@ -1,0 +1,26 @@
+Source log: global-biotech-release-build.log
+SHA-256: 96eafd46c44204dd79a353c81f61f6bb5b1e650b007aa0c6fc12a727233d53eb
+Selected verification output; request bodies and repetitive runtime logs omitted.
+
+
+> concept2cure-riai@1.0.0 build
+> vite build && node scripts/build-server.mjs
+
+vite v6.4.3 building for production...
+transforming...
+../dist/public/assets/index-f9M-FsVe.js                         161.75 kB
+../dist/public/assets/ProtocolDev-CX3w06e-.js                   164.31 kB
+../dist/public/assets/vendor-react-DB-cnGoS.js                  194.30 kB
+../dist/public/assets/DocumentWorkbench-C2ViOswP.js             231.12 kB
+../dist/public/assets/CmcModule-CCNsL9BY.js                     245.42 kB
+../dist/public/assets/MdxSurfaceHost-CD0Qyjdl.js                417.41 kB
+../dist/public/assets/V2App-OTsmmdPy.js                         423.59 kB
+../dist/public/assets/vendor-tiptap-B43J1vOg.js                 468.12 kB
+../dist/public/assets/vendor-sentry-u-u7uAma.js                 567.53 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 27.98s
+✅ Server build complete → dist/index.js

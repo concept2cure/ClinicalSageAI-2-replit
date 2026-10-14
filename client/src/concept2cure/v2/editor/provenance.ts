@@ -92,7 +92,8 @@ export function describeProvenance(
       const id = opts.templateId === undefined && raw && typeof raw === 'object' && 'id' in raw ? raw.id : opts.templateId;
       const templateSource = parseRecordedTemplateSource(raw, id);
       if (!templateSource) return null;
-      return { source: 'template', line: `Created from an IND template · ${templateSource.kind === 'preparation' ? 'preparation worksheet' : 'working scaffold'}`,
+      const origin = templateSource.filingContext ? 'a regulatory template' : 'an IND template';
+      return { source: 'template', line: `Created from ${origin} · ${templateSource.kind === 'preparation' ? 'preparation worksheet' : 'working scaffold'}`,
         model: null, conversationId: null, turnId: null, authorName, note, templateSource };
     } catch { return null; }
   }

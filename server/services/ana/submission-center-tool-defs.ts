@@ -592,7 +592,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   description:
     'Paged authoring outlines; not drafted prose, verified evidence or readiness. ' +
     'Use `template_id` or an exact active `registry_id` (never guess); `family`/`coverage` list components/biotech gaps. ' +
-    '`offset`/`limit` page results. IND catalogue template UUIDs read the same editor outline and source checks. ' +
+    '`offset`/`limit` page results. Editor UUIDs read the same outline, exact filing scope and source checks. ' +
     '`market`+`prepare` adds a regional route and at most 3 focused questions. ' +
     '`discussed_topics` only prevents re-asking. ' +
     "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text. " +
@@ -602,7 +602,7 @@ export const GET_DOCUMENT_TEMPLATE: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      template_id: { type: 'string', description: "A specific template id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'." },
+      template_id: { type: 'string', description: "An exact editor template UUID or component id, e.g. 'clinical_overview', 'k510_summary', 'smpc', 'gspr_checklist'. Follow all UUID reference pages, including preparation JSON parts when requested." },
       registry_id: { type: 'string', description: 'Exact active global registry ID, such as US_IND, EU_MAA, CA_NDS or JP_MKT_APPROVAL. With template_id: sets filing context for preparation. Alone: reads the existing filing scaffold, with explicit unavailability when it is absent or needs review. Never guess an ID.' },
       market: { type: 'string', enum: ['US', 'EU', 'CA', 'JP'], description: 'Confirmed target jurisdiction for preparation; do not infer from the conversation language.' },
       prepare: { type: 'boolean', description: 'Include a regional route and up to 3 prioritized client questions. This creates an inquiry brief, not a readiness or evidence-sufficiency verdict.' },

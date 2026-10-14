@@ -1,6 +1,6 @@
 /** Bounded reference context for the existing authorized saved-document review. */
 import { stableStringify } from '../../../shared/canonical-json';
-import { parseRecordedTemplateSource, type RecordedTemplateSource } from '../../../shared/authoring/recorded-template-source';
+import { parseRecordedTemplateFilingContext, parseRecordedTemplateSource, type RecordedTemplateSource } from '../../../shared/authoring/recorded-template-source';
 import type { RequestSqlClient } from '../../db/requestDb';
 import { templateGuidanceAfterAccess, type SavedTemplateGuidanceRead } from '../authoring/authoring-template-guidance';
 
@@ -45,6 +45,14 @@ function sourceFieldValid(key: typeof SOURCE_FIELDS[number], value: unknown): bo
   return nonempty(value);
 }
 
+function auditFilingContext(raw: Record<string, unknown>, source: RecordedTemplateSource | null): Record<string, unknown> {
+  if (source?.filingContext && !('filingContext' in raw)) throw new Error('Saved section filing context is missing.');
+  if (!('filingContext' in raw)) return {};
+  const context = parseRecordedTemplateFilingContext(raw.filingContext, raw.entryId ?? source?.entryId);
+  if (source && stableStringify(context) !== stableStringify(source.filingContext)) throw new Error('Saved section and document filing contexts conflict.');
+  return { filingContext: context };
+}
+
 /** Historical audit sources may have identity only; never fill their missing fields. */
 function auditSource(raw: unknown, templateId: string, source: RecordedTemplateSource | null) {
   if (!object(raw) || raw.id !== templateId) throw new Error('Saved section template identity is malformed or conflicting.');
@@ -55,6 +63,7 @@ function auditSource(raw: unknown, templateId: string, source: RecordedTemplateS
     if (source && stableStringify(raw[key]) !== stableStringify(source[key])) throw new Error('Saved section and document template sources conflict.');
     supplied[key] = raw[key];
   }
+  Object.assign(supplied, auditFilingContext(raw, source));
   const complete = SOURCE_FIELDS.every(key => key in raw);
   if (complete) parseRecordedTemplateSource(raw, templateId);
   return { source: supplied, sourceVerification: complete ? 'full-recorded' as const : 'identity-only' as const };

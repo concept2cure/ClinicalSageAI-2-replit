@@ -1,0 +1,113 @@
+{
+  "metrics": {
+    "visibleEditableViewport": {
+      "x": 278,
+      "y": 529.296875,
+      "width": 1104,
+      "height": 320
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "page": {
+      "clientWidth": 1440,
+      "scrollWidth": 1440
+    },
+    "canvas": {
+      "x": 12,
+      "y": 12,
+      "width": 1416,
+      "height": 976,
+      "clientWidth": 1414,
+      "scrollWidth": 1414,
+      "clientHeight": 974,
+      "scrollHeight": 974
+    },
+    "editor": {
+      "x": 278,
+      "y": 529.296875,
+      "width": 1104,
+      "height": 320,
+      "clientWidth": 1104,
+      "scrollWidth": 1104,
+      "clientHeight": 320,
+      "scrollHeight": 320
+    },
+    "documentScroll": {
+      "x": 233,
+      "y": 301.5,
+      "width": 1194,
+      "height": 685.5,
+      "clientWidth": 1194,
+      "scrollWidth": 1194,
+      "clientHeight": 686,
+      "scrollHeight": 755
+    },
+    "editorScroll": null,
+    "sectionHeading": {
+      "x": 277,
+      "y": 337.5,
+      "width": 1106,
+      "height": 135.796875,
+      "clientWidth": 1106,
+      "scrollWidth": 1106,
+      "clientHeight": 135,
+      "scrollHeight": 135
+    },
+    "editorCount": 1
+  },
+  "passage": {
+    "text": "Synthetic preparation notes await verified project evidence and source originals.",
+    "x": 298,
+    "y": 547.296875,
+    "width": 580,
+    "height": 21.125
+  },
+  "axe": {
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "impact": "serious",
+        "targets": [
+          [
+            "div[data-state=\"closed\"] > div"
+          ]
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            ".ed-tree-row:nth-child(18) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(18) > .ed-lbl"
+          ],
+          [
+            ".rse-foot-sep"
+          ]
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "targets": [
+          [
+            "button[title=\"Bold (\u2318B)\"]"
+          ],
+          [
+            "button[title=\"Italic (\u2318I)\"]"
+          ],
+          [
+            "button[title=\"Underline (\u2318U)\"]"
+          ]
+        ]
+      }
+    ],
+    "passes": 24
+  },
+  "qualification": "Pre-picker-copy diagnostic metadata on 9ba70078 plus the initial frozen feature. The tall regional picker description required a copy fix; final-path PNGs are replaced by the subsequent final replay and do not illustrate these earlier metrics."
+}
