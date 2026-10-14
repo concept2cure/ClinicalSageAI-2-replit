@@ -154,6 +154,34 @@ const finalize = (body: Record<string, unknown>) =>
 const disposition = (body: Record<string, unknown>) =>
   request(app).patch('/api/protocol-reviews/assignments/9/disposition').send(body);
 
+/** The response, action ledger and signature describe the same committed act. */
+function expectCommittedAuthorshipEvidence(body: unknown) {
+  /* Through `unknown`: the mock's inferred call-argument type is narrower
+     than the real one, so a direct assertion is a TS2352 and turned tsc red
+     on the shared branch. The sibling assertion below already takes this
+     route for persistGovernedSignSignature. */
+  const ledger = recordGovernedAction.mock.calls[0][1] as unknown as {
+    payload: Record<string, unknown>;
+    reason: string;
+  };
+  expect(ledger.payload.meaning).toBe('authorship');
+  expect(ledger.reason).toBe(REASON);
+  const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
+  expect(sig[0]).toBe(client); // the SAME transaction client
+  expect(sig[1]).toMatchObject({
+    target: 'protocol-document:5',
+    actionId: 'act_1',
+    auditId: 'aud_1',
+    sha256Chain: 'chain_1',
+    authenticationMethod: 'password',
+    secondFactorVerified: false,
+  });
+  expect((sig[1].payload as Record<string, unknown>).meaning).toBe('authorship');
+  // The signature row itself says which version was finalized.
+  expect(sig[1].extraManifest).toEqual({ act: { finalized: true, protocolVersion: '1.0' } });
+  expect(body).toMatchObject({ documentId: 5, version: '1.0', signatureId: 314, meaning: 'authorship' });
+}
+
 beforeEach(() => {
   h.log.length = 0;
   h.reauth = { ok: true };
@@ -255,30 +283,7 @@ describe('POST /documents/:id/finalize is a real electronic signature: the signi
     // signing transaction's own client.
     expect(resolveTargetAuthors).toHaveBeenCalledWith('protocol-document:5', 2, client);
     expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
-    /* Through `unknown`: the mock's inferred call-argument type is narrower
-       than the real one, so a direct assertion is a TS2352 and turned tsc red
-       on the shared branch. The sibling assertion below already takes this
-       route for persistGovernedSignSignature. */
-    const ledger = recordGovernedAction.mock.calls[0][1] as unknown as {
-      payload: Record<string, unknown>;
-      reason: string;
-    };
-    expect(ledger.payload.meaning).toBe('authorship');
-    expect(ledger.reason).toBe(REASON);
-    const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
-    expect(sig[0]).toBe(client); // the SAME transaction client
-    expect(sig[1]).toMatchObject({
-      target: 'protocol-document:5',
-      actionId: 'act_1',
-      auditId: 'aud_1',
-      sha256Chain: 'chain_1',
-      authenticationMethod: 'password',
-      secondFactorVerified: false,
-    });
-    expect((sig[1].payload as Record<string, unknown>).meaning).toBe('authorship');
-    // The signature row itself says which version was finalized.
-    expect(sig[1].extraManifest).toEqual({ act: { finalized: true, protocolVersion: '1.0' } });
-    expect(r.body).toMatchObject({ documentId: 5, version: '1.0', signatureId: 314, meaning: 'authorship' });
+    expectCommittedAuthorshipEvidence(r.body);
   });
 
   it('records the second factor only when one was verified', async () => {

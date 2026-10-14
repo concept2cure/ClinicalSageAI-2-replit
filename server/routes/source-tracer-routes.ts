@@ -45,6 +45,27 @@ const logger = createScopedLogger('source-tracer-routes');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Preserve typed access refusals and safe store failures in one response boundary. */
+function sourceTracerFailure(res: Response, error: any) {
+  if (error instanceof ProgramReadAccessError || error instanceof AuthoringReadScopeError || error instanceof SourceReadAccessError) {
+    const denied=error instanceof ProgramReadAccessError && error.code==='PROJECT_PERMISSION_DENIED';
+    return res.status(denied ? 404 : error.status).json({success:false,error:denied ? 'PROJECT_NOT_FOUND' : error.code});
+  }
+  // Fail-closed if the authoring/citation tables are not provisioned
+  // (42P01 undefined_table / 42703 undefined_column) — never fabricate.
+  if (error?.code === '42P01' || error?.code === '42703') {
+    logger.warn('citation store not available; returning 503', { code: error.code });
+    return res.status(503).json({
+      success: false,
+      error: 'CITATION_STORE_MISSING',
+    });
+  }
+  logger.error('source tracer sections error', {
+    err: error instanceof Error ? error.message : String(error),
+  });
+  return res.status(500).json({ success: false, error: 'Failed to load source tracer sections' });
+}
+
 export default function createSourceTracerRoutes(): Router {
   const router = Router();
 
@@ -124,23 +145,7 @@ export default function createSourceTracerRoutes(): Router {
 
       return res.json({ success: true, data: { sections, total: sections.length, scope:'verified-accessible-authoring-sections' } });
     } catch (error: any) {
-      if (error instanceof ProgramReadAccessError || error instanceof AuthoringReadScopeError || error instanceof SourceReadAccessError) {
-        const denied=error instanceof ProgramReadAccessError && error.code==='PROJECT_PERMISSION_DENIED';
-        return res.status(denied ? 404 : error.status).json({success:false,error:denied ? 'PROJECT_NOT_FOUND' : error.code});
-      }
-      // Fail-closed if the authoring/citation tables are not provisioned
-      // (42P01 undefined_table / 42703 undefined_column) — never fabricate.
-      if (error?.code === '42P01' || error?.code === '42703') {
-        logger.warn('citation store not available; returning 503', { code: error.code });
-        return res.status(503).json({
-          success: false,
-          error: 'CITATION_STORE_MISSING',
-        });
-      }
-      logger.error('source tracer sections error', {
-        err: error instanceof Error ? error.message : String(error),
-      });
-      return res.status(500).json({ success: false, error: 'Failed to load source tracer sections' });
+      return sourceTracerFailure(res, error);
     }
   });
 

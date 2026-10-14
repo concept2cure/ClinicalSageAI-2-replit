@@ -55,7 +55,7 @@ import {
   refusalAfterDiscard,
   type StoredUpload,
 } from './vault-ingest-discard.js';
-import { vaultWriteRefusal } from './vault-write-authority.js';
+import { ingestTargetRefusal, ingestSourceRefusal } from './vault-ingest-access.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
 import { checkInArgumentRefusal, currentVersionOfCode, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
 import {
@@ -65,8 +65,6 @@ import {
   isFolderInView,
   folderLabel,
 } from './vault-filing.service.js';
-import { ProgramReadAccessError, readCurrentProgramActor, requireCurrentProgramAccess } from '../c2c/current-program-access';
-import { AnaProjectScopeError } from '../ana/project-scope-admission';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -161,31 +159,6 @@ export type VaultIngestResult =
     }
   /** VERSION_CONTENT_CONFLICT: the current version at that code, which a check-in adds to. */
   | { ok: false; status: number; code: string; message: string; headDocumentId?: string; headVersion?: string };
-
-function accessRefusal(error: unknown): Extract<VaultIngestResult, { ok: false }> {
-  if (error instanceof ProgramReadAccessError || error instanceof AnaProjectScopeError) {
-    return { ok: false, status: error.status, code: error.code, message: error.message };
-  }
-  return { ok: false, status: 503, code: 'VAULT_SOURCE_ACCESS_UNAVAILABLE',
-    message: 'Current source access could not be verified. No document was admitted.' };
-}
-
-async function ingestTargetRefusal(q: RequestSqlClient, args: VaultIngestArgs, orgId: number,
-  forShare = false): Promise<Extract<VaultIngestResult, { ok: false }> | null> {
-  try {
-    const actor = await readCurrentProgramActor(q, { organizationId: orgId, userId: args.userId ?? undefined, forShare });
-    const roleRefusal = vaultWriteRefusal(actor.role);
-    if (roleRefusal) return roleRefusal;
-    const access = await requireCurrentProgramAccess(q, { organizationId: orgId, userId: actor.userId, programId: args.programId, forShare });
-    return vaultWriteRefusal(access.actor.role);
-  } catch (error) { return accessRefusal(error); }
-}
-
-async function ingestSourceRefusal(q: RequestSqlClient, args: VaultIngestArgs,
-  phase: 'preview' | 'commit'): Promise<Extract<VaultIngestResult, { ok: false }> | null> {
-  try { await args.assertSourceAccess?.(q, phase); return null; }
-  catch (error) { return accessRefusal(error); }
-}
 
 /**
  * Admit a document into the governed vault. Must be called inside the acting
