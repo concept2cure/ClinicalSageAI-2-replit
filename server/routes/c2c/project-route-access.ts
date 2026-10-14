@@ -38,9 +38,11 @@ export async function requireProjectRouteAccess(req: Request, res: Response, opt
     const role = access.actor.role.trim().toLowerCase();
     let permitted = options.kind === 'vault' && GOVERNED_WRITE_ROLES.has(role);
     if (options.kind === 'projects' && canCreateProgram({ orgRole: role })) {
-      const program = await q.query(`SELECT lead_user_id FROM regulatory_programs
-        WHERE id=$1 AND organization_id=$2${options.forShare ? ' FOR SHARE' : ''}`,
-      [access.programId, organizationId]);
+      const program = options.forShare
+        ? await q.query(`SELECT lead_user_id FROM regulatory_programs
+            WHERE id=$1 AND organization_id=$2 FOR SHARE`, [access.programId, organizationId])
+        : await q.query(`SELECT lead_user_id FROM regulatory_programs
+            WHERE id=$1 AND organization_id=$2`, [access.programId, organizationId]);
       const lead = program.rows[0]?.lead_user_id;
       permitted = program.rows.length === 1 && canMutateProgram({
         actor: { userId: access.actor.userId, orgRole: role },

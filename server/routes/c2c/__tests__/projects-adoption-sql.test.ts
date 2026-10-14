@@ -61,7 +61,9 @@ beforeAll(async () => {
   harness = await createDispositionHarness(); h.db = harness.db;
   await harness.pg.exec(`ALTER TABLE file_uploads ADD COLUMN original_name text,
     ADD COLUMN mime_type text, ADD COLUMN file_size bigint,
-    ADD COLUMN user_id integer, ADD COLUMN created_at timestamptz DEFAULT now();`);
+    ADD COLUMN user_id integer, ADD COLUMN created_at timestamptz DEFAULT now();
+    ALTER TABLE cre_evidence_sources ADD COLUMN client_workspace_id integer,
+      ADD COLUMN visibility_class text NOT NULL DEFAULT 'project_private';`);
 });
 afterAll(async () => { await harness.close(); });
 beforeEach(async () => {
@@ -69,8 +71,8 @@ beforeEach(async () => {
   h.files.clear();
   f = await harness.seed(); uploadId = randomUUID();
   await f.pg.query(`INSERT INTO file_uploads
-    (id,organization_id,checksum_sha256,storage_path,status,original_name,mime_type,file_size)
-    VALUES ($1,$2,$3,$4,'uploaded','clinical.csv','text/csv',$5)`,
+    (id,organization_id,user_id,checksum_sha256,storage_path,status,original_name,mime_type,file_size)
+    VALUES ($1,$2,42,$3,$4,'uploaded','clinical.csv','text/csv',$5)`,
   [uploadId, f.org, sha256Hex(original), `uploads/org-${f.org}/${uploadId}`, original.length]);
 });
 function app() {
@@ -215,11 +217,22 @@ describe('conversation adoption: actual SQL and transaction boundary', () => {
   });
 
   it('uses the real organization-wide eligibility predicate to refuse a withdrawn upload into another project', async () => {
-    await f.apply('remove_data'); uploadId = f.upload;
+    await f.apply('remove_data');
+    // The child remains genuinely unbound. Its recorded edge reaches the
+    // withdrawn original, so this tests eligibility across programmes rather
+    // than the earlier refusal to rebind an already-project-bound original.
+    await recordedConversationEdge();
     const otherProgram = randomUUID();
     await f.pg.query('INSERT INTO regulatory_programs VALUES ($1,$2,42,NULL)', [otherProgram, f.org]);
+    const destination = (await f.pg.query<{ id: number }>(`INSERT INTO projects
+      (organization_id,regulatory_program_id,owner_id,created_by_id,status)
+      VALUES ($1,$2,42,42,'active') RETURNING id`, [f.org, otherProgram])).rows[0].id;
+    await f.pg.query("INSERT INTO project_visibility_settings VALUES ($1,$2,'private')", [f.org, destination]);
+    const sourceBefore = (await f.pg.query('SELECT * FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2', [f.capture, f.org])).rows[0];
+    const auditBefore = await audits();
     expect((await adopt(otherProgram)).status).toBe(404);
-    expect(await audits()).toEqual([]);
-    const rows = await captures(); expect(rows).toHaveLength(1); expect(rows[0].id).toBe(f.capture);
+    expect(await audits()).toEqual(auditBefore);
+    expect(await captures()).toEqual([]);
+    expect((await f.pg.query('SELECT * FROM cre_evidence_sources WHERE id=$1 AND organization_id=$2', [f.capture, f.org])).rows[0]).toEqual(sourceBefore);
   });
 });

@@ -92,7 +92,8 @@ export async function getCurrentReadableSourceScope(q: RequestSqlClient, input: 
       jsonb_build_object('origin',s.provenance->>'origin','fileUploadId',s.provenance->>'fileUploadId',
         'authoringDocumentId',s.provenance->>'authoringDocumentId') AS provenance,
       jsonb_build_object('artifactId',s.metadata->>'artifactId') AS metadata
-      FROM cre_evidence_sources s WHERE ${visibleSourceOrgSql('s',1)} AND s.deleted_at IS NULL
+      FROM cre_evidence_sources s WHERE (s.organization_id=$1 OR (s.organization_id IS NULL AND s.visibility_class='global_public'))
+      AND s.deleted_at IS NULL
       AND ($2::int[] IS NULL OR s.id=ANY($2::int[])) ORDER BY s.id`,[input.organizationId,selected ?? null]);
     if (selected && rows.rows.length!==new Set(selected).size) throw new SourceReadAccessError(404,'SOURCE_NOT_FOUND','Source not found.');
     const readable: number[] = [];

@@ -782,14 +782,14 @@ export class AdvancedRAGPipeline {
       let rows: Array<{ id: string; document_id?: string; original_file_available: boolean; title: string }>;
       if (type === 'vault_chunk') {
         if (!isTenantUuid(uuid)) continue;
-        const params: unknown[] = [ids, uuid];
-        const programFilter = buildDocFilterClause(undefined, params, VAULT_FILTER_COLUMNS, vaultRead?.verifiedScope.programIds);
+        const params: unknown[] = [ids, uuid, vaultRead?.verifiedScope.programIds ?? null];
         rows = await this.withVaultReadExecutor(uuid, vaultRead, async client => (await client.query(
           `SELECT c.id::text AS id, d.id::text AS document_id,
                   COALESCE(d.document_title, d.file_name, '') AS title,
                   ${vaultBinaryAvailableSql('d')} AS original_file_available
              FROM vault.document_chunks c JOIN vault.documents d ON d.id = c.document_id
-            WHERE c.id::text = ANY($1::text[]) AND d.deleted_at IS NULL${programFilter}
+            WHERE c.id::text = ANY($1::text[]) AND d.deleted_at IS NULL
+              AND ($3::uuid[] IS NULL OR d.program_id = ANY($3::uuid[]))
               AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$2::uuid)
               AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id=d.program_id
                 AND p.organization_id=d.organization_id AND p.deleted_at IS NULL)
@@ -1102,13 +1102,13 @@ export class AdvancedRAGPipeline {
           if (doc.atomType === 'vault_chunk') {
             texts = await this.withVaultReadExecutor(organizationUuid, vaultRead, async client => {
               // tenant-isolation-safe: explicit tenant and live-parent predicates; scoped reads bind admitted program IDs on the caller executor.
-              const params: unknown[] = [doc.documentId, lo, hi, organizationUuid];
-              const programFilter = buildDocFilterClause(undefined, params, VAULT_FILTER_COLUMNS, vaultRead?.verifiedScope.programIds);
+              const params: unknown[] = [doc.documentId, lo, hi, organizationUuid, vaultRead?.verifiedScope.programIds ?? null];
               const { rows } = await client.query(
                 `SELECT c.chunk_text FROM vault.document_chunks c
                    JOIN vault.documents d ON d.id = c.document_id
                  WHERE c.document_id = $1 AND c.chunk_index BETWEEN $2 AND $3
-                   AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programFilter}
+                   AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+                   AND ($5::uuid[] IS NULL OR d.program_id = ANY($5::uuid[]))
                    AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$4::uuid)
                    AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id=d.program_id
                      AND p.organization_id=d.organization_id AND p.deleted_at IS NULL)
