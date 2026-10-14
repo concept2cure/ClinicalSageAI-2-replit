@@ -87,7 +87,7 @@ function app() {
   instance.use('/api/c2c/projects', projectsRouter);
   return instance;
 }
-function adopt(program = f.program) {
+function adopt(program: string = f.program) {
   return request(app()).post(`/api/c2c/projects/${program}/adopt`).send({ fileUploadId: uploadId });
 }
 async function captures() {
