@@ -43,6 +43,7 @@ beforeAll(async () => {
   await pg.exec(AUDIT_LOGS_PGLITE_DDL);
   await pg.exec('ALTER TABLE audit_logs ALTER COLUMN id SET DEFAULT gen_random_uuid()::text');
   for (const file of ['db/migrations/20260725_authoring_document_loop_tables.sql',
+    'db/migrations/20260730_authoring_comments_router_columns.sql',
     'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
     'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
     'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql',

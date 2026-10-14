@@ -14,7 +14,11 @@ const BINDING_COLUMNS = ['reviewed_snapshot', 'reviewed_snapshot_hash', 'review_
 
 async function verifyCreator(file: string, upgrade: boolean) {
   const database = await createJourneyDb({ prereqSql: PREREQ,
-    migrations: ['db/migrations/20260725_authoring_document_loop_tables.sql'] });
+    migrations: [
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+    ] });
   try {
     const sql = fs.readFileSync(path.resolve(file), 'utf8');
     const id = randomUUID();

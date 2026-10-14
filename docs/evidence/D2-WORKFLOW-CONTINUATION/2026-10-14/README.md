@@ -63,6 +63,35 @@ remain unchanged.
 - Official zero-baseline compiler and production build results are recorded in
   [release-verification.json](release-verification.json). Publication hooks and
   hosted outcomes are added when observed; no baseline increase or bypass.
+- Published source: [`5a7c0ae09`](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/5a7c0ae09f047a1c12a1ceb70d64c90c816178ab).
+  Every normal [pre-push gate](pre-push.txt) passed, including zero compiler and
+  lint errors and a net decrease of two lint warnings. Hosted full-history
+  scanning passed for all 10,240 commits with no findings; exact observed
+  security, browser and validation job outcomes are recorded in release metadata.
+  [Hosted secret-scan proof](security/hosted-scan-result.json).
+- Final official proof tier: **1,433/1,433 in 127 suites**, no skips or guard
+  changes: [final-proof-tier.txt](final-proof-tier.txt). The initial hosted run
+  exposed four failures in two older proof fixtures: seven missing canonical
+  migration applications and review calls using the old wire and actor setup.
+  Those fixtures now apply the actual required migrations and capture the
+  strict current review binding. The audit/foreign-assignment checks are
+  stronger. The final 14-case HTTP fixture replay additionally covers its last
+  explicit audit-denial status assertion. Two older UI mocks now provide the
+  existing stable user through both auth hooks. Affected database replays
+  (210), closure checks (4), root UI replays (34) and other UI/auth consumers
+  (262) passed; these runs overlap and are not added to the unique feature count.
+  Final source compiler and build are retained in
+  [final-qualified-typecheck.txt](final-qualified-typecheck.txt) and
+  [final-publication-build.txt](final-publication-build.txt).
+
+The four separate hosted workflows for source `5a7c0ae09` completed
+successfully: Semgrep, CodeQL, Tier 5 Browser Smoke and C2C Validate/Audit.
+Main CI security contracts and security scans also passed. Main CI's initial
+proof-fixture failure remains recorded alongside the final local repair proof;
+it is not described as an overall CI pass. The fixture, queue-copy and evidence
+follow-up has separate hosted status. Exact final files are pinned in the source
+manifest. Current content binding is distinct from final sign-off; the queue
+action's wording now makes that explicit.
 - Real Chromium, actual AuthProvider/Review/components and canonical transport,
   with explicitly synthetic API responses: two-section complete saved read,
   native table, unstated decision, exact request/binding headers, confirmed

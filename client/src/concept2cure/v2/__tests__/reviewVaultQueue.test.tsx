@@ -12,12 +12,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const signedIn = vi.hoisted(() => ({ id: 7, organizationId: 7, displayName: 'Raj Patel', email: 'raj@test.co', roles: ['approver'] }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { displayName: 'Raj Patel', email: 'raj@test.co', roles: ['approver'] } }),
+  useAuth: () => ({ user: signedIn }),
+  useAuthUser: () => signedIn,
 }));
 
 import { Review } from '../surfaces/Review';

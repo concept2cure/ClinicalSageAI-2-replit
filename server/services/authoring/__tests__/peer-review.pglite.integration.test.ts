@@ -37,6 +37,7 @@ beforeAll(async () => {
       ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';`,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
       'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260727_authoring_object_permissions.sql',

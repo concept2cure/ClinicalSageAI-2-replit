@@ -81,7 +81,7 @@
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/Review.tsx",
-      "sha256": "89750055621d6a0ae6843d760774ad9fc055be1826a5dec5db784580ee4a5638"
+      "sha256": "29a5945aa68107bb98e8cff5eee9a8c8d1be22ebfe5827079a032b37d24dd18f"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx",
@@ -161,15 +161,15 @@
     },
     {
       "path": "server/services/authoring/__tests__/peer-review-migrations.pglite.test.ts",
-      "sha256": "a6b3cfe33a0efe178b783de35ea96aff4f3bf52e5a38fbc6099964834da54f0b"
+      "sha256": "bcbe65301d10ea2afa708f16d3de971ce104f0d09352ef0ad65624b2a2e91069"
     },
     {
       "path": "server/services/authoring/__tests__/peer-review.pglite.integration.test.ts",
-      "sha256": "8010a630179748189e18a663577399aa5893fb25b63e60486ee588b2c34fe7ef"
+      "sha256": "9f2d7f4eb4a892d780d68343eeb0edf1d7044f836811c7fc7dd4ccf18238b05f"
     },
     {
       "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
-      "sha256": "d570c0059fa5916e648f9981220db22ae82a577c790609f848ab1470d7085ccb"
+      "sha256": "b019d433a1ce4acde78119aebad44d82e702dd437c6e67105b0e1804a35cf50b"
     },
     {
       "path": "server/services/authoring/authoring-content-digests.ts",
@@ -193,7 +193,7 @@
     },
     {
       "path": "server/services/governance/__tests__/separation-of-duties.authoring.pglite.test.ts",
-      "sha256": "f5929b3f1c30517f4c4530043d7a9491a69cf241ac47113e7bf66ce23d950f75"
+      "sha256": "1ebdcee92f974db7c2029d8e2a73e59fb6d2d9d6f1ba27a93ceb6afc7caa46e1"
     },
     {
       "path": "server/services/governance/separation-of-duties.ts",
@@ -201,7 +201,7 @@
     },
     {
       "path": "server/services/review/__tests__/authoring-review-board-access.pglite.test.ts",
-      "sha256": "35ef075a8d83174a476dc828c735dfd07ee05eee875ca0678d6f675cf87e706e"
+      "sha256": "d9126f6b38f6d426fd6e969194c839352afcb51b7dc460b1ceedb01d8b066f65"
     },
     {
       "path": "server/services/review/authoring-review-board-formatting.ts",
@@ -222,10 +222,24 @@
     {
       "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
       "sha256": "fd3d631674f7c6cfef88848277f781d75c0ef8985c148afd3005321703c9ea87"
+    },
+    {
+      "path": "tests/schema-contract/authoring-review-audit-comment.contract.test.ts",
+      "sha256": "df18445b5b8e15c9ac0c6f26fd2f480d6a86ef8bec8b3556721253b6b4e4464c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx",
+      "sha256": "546c9cbdc2f0540e43fcf7525ecf6a87f9c9713b59e9ffba336f18440e305b98"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx",
+      "sha256": "ac29f3492ee9cca366edab43e5a99ccfd0be89df373ff3569f47e32d1e52fa78"
     }
   ],
   "featureCommit": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
   "integratedEditorCommit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
   "verifiedMergedSourceCommit": "7c33c547dbbfcef0b61ea8072c06dd287b055f07",
-  "publicationRepairs": "Removed unused dialog CSS class; existing canonical plainTextToHtml replaces raw fixture interpolation, with byte-identical generated contract."
+  "publicationRepairs": "Removed unused dialog CSS class; existing canonical plainTextToHtml replaces raw fixture interpolation, with byte-identical generated contract.",
+  "initialPublishedFeatureCommit": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
+  "finalFileScope": "These final source pins include the follow-up migration/wire/auth fixture repairs and queue copy. Hosted successes are pinned to the initial published feature commit; follow-up hosted outcomes are separate."
 }

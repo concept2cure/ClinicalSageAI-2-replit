@@ -22,12 +22,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const signedIn = vi.hoisted(() => ({ id: 7, organizationId: 7, firstName: 'Ada' }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
+  useAuth: () => ({ user: signedIn }),
+  useAuthUser: () => signedIn,
 }));
 const catalogState = vi.hoisted(() => ({
   current: { data: undefined as unknown, isLoading: true, isError: false },
