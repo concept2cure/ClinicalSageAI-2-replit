@@ -416,7 +416,7 @@ export function ChangeControl({
         <section className="qms-sec">
           <div className="qms-sec-head">
             <h2>How to raise a change</h2>
-            <span className="meta">AnA trains your team</span>
+            <span className="meta">Procedure guidance</span>
           </div>
           <div className="qcc-train">
             <ol className="qcc-steps">
@@ -431,24 +431,23 @@ export function ChangeControl({
                 className="qms-btn primary"
                 onClick={() =>
                   onAsk(
-                    'Train me on how to raise a change request in this quality system. Explain each step of the ' +
+                    'Explain how to raise a change request in this quality system. Explain each step of the ' +
                       'change-control procedure, what makes a change minor, major or critical, and what a good impact ' +
-                      'assessment looks like. Then quiz me and record read-and-understood training for the change-control SOP.',
+                      'assessment looks like. Personal read-and-understood acknowledgements are recorded by the signed-in reader in the SOP register.',
                   )
                 }
               >
-                {I.users} Train me
+                {I.users} Explain the procedure
               </button>
               <button
                 className="qms-btn ghost"
                 onClick={() =>
                   onAsk(
-                    'Record read-and-understood training on the change-control procedure for my team. Ask me which ' +
-                      'team members, capture the acknowledgment method, and set the next refresh date.',
+                    'Help me find the change-control procedure in the SOP register. I will open its controlled revision and record my own read-and-understood acknowledgement there.',
                   )
                 }
               >
-                {I.bookOpen} Record team training
+                {I.bookOpen} Find the controlled procedure
               </button>
             </div>
           </div>

@@ -14229,14 +14229,28 @@ registerToolHandler('verify_memory_atom', async (input, ctx) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
+function qmsDocumentCreateHeader(input: Record<string, unknown>) {
+  return {
+    docNumber: typeof input.doc_number === 'string' ? input.doc_number.trim() : '',
+    title: typeof input.title === 'string' ? input.title.trim() : '',
+    docType: typeof input.doc_type === 'string' ? input.doc_type : '',
+  };
+}
+
+function hasControlledTextAuthorship(input: Record<string, unknown>): boolean {
+  return Boolean(input.metadata && typeof input.metadata === 'object' &&
+    Object.prototype.hasOwnProperty.call(input.metadata, 'controlledTextAuthorship'));
+}
+
 registerToolHandler('create_qms_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
   if (!ctx.userId) return JSON.stringify({ error: 'create_qms_document requires user context — a controlled document cannot be created without an identified actor (21 CFR Part 11).' });
-  const docNumber = typeof input.doc_number === 'string' ? input.doc_number.trim() : '';
-  const title     = typeof input.title === 'string' ? input.title.trim() : '';
-  const docType   = typeof input.doc_type === 'string' ? input.doc_type : '';
+  if (hasControlledTextAuthorship(input)) {
+    return JSON.stringify({ error: 'Controlled-text authorship is recorded by the server when the identified editor saves text; it cannot be supplied on creation.' });
+  }
+  const { docNumber, title, docType } = qmsDocumentCreateHeader(input);
   if (!docNumber || !title) return JSON.stringify({ error: 'doc_number and title are required.' });
-  if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'].includes(docType)) {
+  if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'].includes(docType)) {
     return JSON.stringify({ error: 'doc_type invalid.' });
   }
   const { getPool } = await import('../../db.js');
@@ -14380,42 +14394,14 @@ registerToolHandler('retire_qms_document', async () =>
   ),
 );
 
-registerToolHandler('ack_training', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'ack_training requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'ack_training requires user context.' });
-  const docId = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(docId)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  try {
-    const { getPool } = await import('../../db.js');
-    const doc = await getPool().query<{ version: string }>(
-      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [docId, ctx.organizationId],
-    );
-    if (doc.rows.length === 0) {
-      return JSON.stringify({ error: `Document ${docId} not found in this organization.` });
-    }
-    const { rows } = await getPool().query(
-      `INSERT INTO qms_training_records (
-         organization_id, user_id, document_id, document_version,
-         acknowledgment_method, quiz_score, expires_at
-       ) VALUES ($1, $2, $3, $4, COALESCE($5,'attestation'), $6, NOW() + INTERVAL '365 days')
-       RETURNING id, document_version, expires_at`,
-      [
-        ctx.organizationId, ctx.userId, docId, doc.rows[0].version,
-        typeof input.method === 'string' ? input.method : null,
-        typeof input.quiz_score === 'number' ? Math.round(input.quiz_score) : null,
-      ],
-    );
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Recorded training acknowledgment for document ${docId} version ${doc.rows[0].version}.`,
-    });
-  } catch (err) {
-    return JSON.stringify({
-      error: `ack_training failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  }
-});
+// The authorization registry already refuses this tool. Keep the handler
+// non-writing too: the reachable replacement is Quality's personal reader and
+// POST /api/mdx/qms/documents/:id/training-ack, never an attestation by AnA.
+registerToolHandler('ack_training', async () => JSON.stringify({
+  error: 'NOT_AN_ANA_ACTION',
+  tool: 'ack_training',
+  message: 'Open the controlled document in Quality, read its released revision and choose Acknowledge this revision. Only you can make your personal read-and-understood attestation.',
+}));
 
 // ── Change control (ICH Q10 / Annex 15) — call the shared service so the tool
 //    inherits the controlled lifecycle, segregation-of-duties and validation the

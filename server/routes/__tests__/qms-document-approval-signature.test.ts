@@ -257,7 +257,35 @@ describe('POST /api/mdx/qms/documents/:id/approve — electronic signature', () 
 
 });
 
+describe('POST /api/mdx/qms/documents/:id/approve — controlled-text authorship', () => {
+  it.each([AUTHOR, null])('refuses a protected controlled-text contributor regardless of original author %s', async authorId => {
+    scriptTransaction({ ...IN_REVIEW, author_id: authorId,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [SIGNER] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(403); expect(res.body.details.code).toBe('QMS_SELF_APPROVAL');
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on malformed protected authorship without signing or mutation', async () => {
+    scriptTransaction({ ...IN_REVIEW,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [String(SIGNER)] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(409); expect(res.body.details.code).toBe('QMS_INVALID_AUTHORSHIP');
+    expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+    expect(H.recordGoverned).not.toHaveBeenCalled(); expect(H.persistSignature).not.toHaveBeenCalled();
+  });
+});
+
 describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', () => {
+  it('permits an uninvolved signer and records enforced two-person attribution when contributors exist without an original author', async () => {
+    scriptTransaction({ ...IN_REVIEW, author_id: null,
+      metadata: { ...IN_REVIEW.metadata, controlledTextAuthorship: { authorUserIds: [8] } } });
+    const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
+    expect(res.status).toBe(200);
+    expect(H.persistSignature).toHaveBeenCalledTimes(1);
+    expect(H.persistSignature.mock.calls[0][1].extraManifest).toMatchObject({ twoPersonRule: 'enforced' });
+  });
   it('signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT', async () => {
     const res = await request(app()).post('/api/mdx/qms/documents/11/approve').send(VALID_BODY);
     expect(res.status).toBe(200);

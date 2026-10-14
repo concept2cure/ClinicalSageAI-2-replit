@@ -33,6 +33,36 @@ Generated: 2026-04-01
 - Project context remains stable across editor/review/workspace transitions.
 - Governed artifact can be opened and reviewed with provenance/audit visibility.
 
+## Quality: controlled text and personal acknowledgement (2026-10-14)
+
+Use a test organization with an editor, an independent approver and a reader.
+Retain the resulting document, signature, audit and acknowledgement identifiers.
+
+1. In Quality, open a draft SOP and choose **Edit controlled text**. Enter actual
+   procedure text and a reason, then **Save controlled text**. Reopen it and
+   verify the text persisted; the document must still require review/approval.
+2. Change text without saving and close the editor. **Keep editing** retains
+   the draft; **Discard changes** must leave the stored document unchanged.
+3. Have a text contributor attempt approval through the existing signing
+   dialog. It must refuse. Have the independent approver review the text and
+   complete the existing reauthentication and approval ceremony.
+4. As the reader, choose **Read and acknowledge** for the effective SOP. Verify
+   the released revision and full text. The declaration starts unchecked;
+   checking it enables **Acknowledge this revision**. Submit and reopen: the
+   reader's receipt and current-release roster coverage must persist.
+5. Revise the SOP through the existing workflow. An earlier receipt must not
+   count for the new release, and the retained receipt must preserve the old
+   text/version. A reader with stale displayed text must reload before writing.
+6. Switch user or organization while a record is open; no previous account's
+   document, receipt or draft may remain available for a write. Repeat the
+   reader/editor check at a narrow viewport and in dark mode.
+
+This tests personal reading and understanding, not assessed competency or a
+role-specific training matrix. Skeleton-only and unverified legacy releases
+must explain why acknowledgement is unavailable. Local automated evidence and
+its production verification boundary are recorded in
+[the QMS evidence](../evidence/D2-QMS-TRAINING/2026-10-14/README.md).
+
 ## Failure logging format
 - Timestamp (UTC)
 - Persona + seeded project id

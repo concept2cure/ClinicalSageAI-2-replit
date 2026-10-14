@@ -1,0 +1,135 @@
+# Backend verification — personal QMS acknowledgement
+
+2026-10-14 UTC. Contract: [QMS_PERSONAL_TRAINING.md](../../../architecture/QMS_PERSONAL_TRAINING.md).
+These results cover the local working snapshot based on
+`bd8738868e1ebd0519ac39608f142dfacdd0a6fe`, including the new backend changes.
+They are focused backend results, not a hosted deployment or whole-repository verdict.
+
+## Final results
+
+**147/147 tests passed across seven suites.** The exact suite paths and counts are:
+
+| Suite | Passed |
+| --- | ---: |
+| `server/services/qms/__tests__/training.pglite.integration.test.ts` | 35 |
+| `server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts` | 34 |
+| `server/routes/__tests__/qms-personal-training.test.ts` | 19 |
+| `server/routes/__tests__/qms-legacy-api-retired.test.ts` | 18 |
+| `server/routes/__tests__/qms-document-approval-signature.test.ts` | 18 |
+| `server/services/qms/__tests__/document-approval-signature.test.ts` | 8 |
+| `server/routes/__tests__/mdx-qms-retire.test.ts` | 15 |
+
+Selected raw verdicts, with exact local scratch log filenames:
+
+```text
+/workspace/scratch/qms-training-validation/final-sixtynine-suites-private.log
+Test Files  2 passed (2)
+Tests  69 passed (69)
+Duration  10.53s
+
+/workspace/scratch/qms-authorship-existing-final.log
+Test Files  4 passed (4)
+Tests  63 passed (63)
+Duration  25.05s
+
+/workspace/scratch/qms-authorship-retire-final.log
+Test Files  1 passed (1)
+Tests  15 passed (15)
+Duration  2.36s
+```
+
+Strict ESLint passed with zero warnings for the five new services, canonical
+document-approval service, three affected native/legacy route tests, and both
+PGlite test files. The existing `mdx-qms.ts` has zero errors and its same two
+inherited warnings (`max-lines` and unrelated handler `complexity`).
+`git diff --check` passed. Full typecheck/build and hosted evidence belong to
+the integration report; a prior default-heap typecheck exhausted memory and
+provides no type verdict.
+
+## Failures demonstrated before repair
+
+The logs below are private local run artifacts. Only selected test verdicts
+are reproduced here; database configuration, credentials and full logs are omitted.
+
+| Proof | Before-repair verdict and exact log | After repair |
+| --- | --- | --- |
+| Native personal acknowledgement contract | `Tests  11 failed (11)` — `/workspace/scratch/qms-personal-training-route-red.log` | Strict own-person input, verified reader context, duplicate receipt, audit failure and uncertain COMMIT cases pass. |
+| Existing PATCH had no controlled-text persistence | `Tests  1 failed \| 11 passed (12)` — `/workspace/scratch/qms-controlled-text-route-red.log`; save returned 422 instead of 200 | Exact text save, stale digest, actual viewer standing, mixed fields, missing request client and rollback/readback cases pass. |
+| Read-only posture hid an existing own receipt | `Tests  1 failed \| 33 skipped (34)` — `/workspace/scratch/qms-training-validation/read-only-receipt-before-private.log` | Existing receipt/text remain readable; new acknowledgement stays 403 with no additional record or audit. |
+| Actual text writer could approve their own revision | `Tests  7 failed \| 1 passed \| 25 skipped (33)` — `/workspace/scratch/qms-training-validation/contributor-sod-before-private.log`; canonical approval resolved instead of refusing | Actual writer is refused before approval mutation; uninvolved signer remains permitted. |
+| Canonical native approval ignored contributor attribution | `Tests  4 failed \| 14 skipped (18)` — `/workspace/scratch/qms-authorship-native-before.log` | Contributor refusals, malformed attribution and truthful null-original-author two-person manifest pass. |
+| Native creation accepted fictional contributor metadata | `Tests  1 failed \| 18 skipped (19)` — `/workspace/scratch/qms-authorship-create-before.log`; it reached the poisoned database collaborator | Reserved metadata now returns 422 before database/audit calls. |
+
+## Executed SQL and security boundary
+
+Both PGlite suites extract the actual `qms_documents` and
+`qms_training_records` CREATE blocks, including constraints, from
+`migrations/20260511_qms_and_labeling.sql`. They execute the production
+training/save SQL against those tables. Account, organization and membership
+support tables are minimal test fixtures with the real status/role semantics;
+they are not a production database deployment.
+
+The audit collaborator writes an actual proof row using the supplied transaction
+client, then deliberately issues invalid SQL after insertion. Assertions verify
+that both the training record or controlled-text change and the audit proof roll
+back. Production uses canonical `writeChainedAuditRow` on that same request-pinned
+client. Native route tests poison pooled access and verify the request client is
+used; failures cannot fall back to the shared pool. COMMIT-response loss is
+simulated after persistence: the response is unconfirmed, and rereading proves
+the saved receipt/text rather than claiming rollback.
+
+These tests prove SQL transaction coupling and native request-client use. They
+mock audit-chain cryptography and electronic-signature persistence; they do not
+independently certify cryptographic chain validity, production RLS or a live
+credential ceremony. The approval route suite exercises the canonical signer
+ceremony with controlled account/credential collaborators.
+
+## Canonical contributor approval proof
+
+The SQL regression has creator 10, actual text writer 11 and uninvolved signer
+12. Writer 11 saves through `saveQmsControlledText`, the document is sent for
+review, and the real `approveQmsDocumentSigned` refuses writer 11 with
+`SELF_APPROVAL`. The document remains unchanged and no approval UPDATE,
+governed-action proof, approval audit proof or signature proof is written.
+Signer 12 then succeeds through the same canonical gate with the real canonical
+content digest covering the protected contributor history.
+
+Additional cases retain multiple actual writers and original `author_id`, bind
+contributors into audit details and the approval manifest, reject five malformed
+authorial blocks including an empty list, and reject identities supplied through
+the strict controlled-text body. Native approval also proves enforcement when
+the original author is null. The existing revision SQL preserves this metadata
+through its outer merge; it does not erase contributor history.
+
+The acknowledgement suites additionally cover actual active membership/account
+standing, foreign documents/actors, readable released bodies versus outlines,
+approval stamp/digest parity, version/digest staleness, expiry, duplicate retries,
+retained snapshots/history, and distinct current-member coverage. Historical
+unbound or unreadable records remain unavailable rather than becoming verified
+acknowledgements.
+
+## Reproduce
+
+From the repository root with Node 22.23.3:
+
+```sh
+npx vitest run \
+  server/services/qms/__tests__/training.pglite.integration.test.ts \
+  server/services/qms/__tests__/training-controlled-text.pglite.integration.test.ts \
+  server/routes/__tests__/qms-personal-training.test.ts \
+  server/routes/__tests__/qms-legacy-api-retired.test.ts \
+  server/routes/__tests__/qms-document-approval-signature.test.ts \
+  server/services/qms/__tests__/document-approval-signature.test.ts \
+  server/routes/__tests__/mdx-qms-retire.test.ts --reporter=dot
+```
+
+## Publication SQL gate follow-up
+
+The repository SQL interpolation gate refused the optional lock suffix in the
+new membership query. It was replaced with two complete fixed SQL literals,
+with no baseline or suppression change. The read query remains unlocked; the
+mutation query retains `FOR SHARE OF ou, u, o`; both bind organization/user as
+`$1`/`$2`. The gate changes from exit 1 to exit 0, and 88 affected canonical SQL
+and native training tests pass across three files. A separate scratch-only
+PGlite trace passes 2/2 and confirms these exact lock/parameter semantics and
+foreign-member refusal. See the final selected integration verdicts.

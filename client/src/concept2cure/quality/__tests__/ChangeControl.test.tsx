@@ -112,12 +112,13 @@ describe('ChangeControl — the change-control log', () => {
     expect(onAsk.mock.calls[0][0]).toMatch(/raise a change request/i);
   });
 
-  it('trains the user on raising changes via AnA', () => {
+  it('explains raising changes without asking AnA to attest for a person', () => {
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} />);
-    fireEvent.click(screen.getByRole('button', { name: /Train me/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Explain the procedure/ }));
     expect(onAsk).toHaveBeenCalledTimes(1);
     expect(onAsk.mock.calls[0][0]).toMatch(/how to raise a change request/i);
+    expect(onAsk.mock.calls[0][0]).not.toMatch(/quiz me|record read-and-understood training/i);
   });
 
   it('opens a change-control form in the editor via AnA', () => {
