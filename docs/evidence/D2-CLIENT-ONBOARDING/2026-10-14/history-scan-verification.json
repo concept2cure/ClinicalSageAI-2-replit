@@ -1,0 +1,47 @@
+{
+  "recorded_on": "2026-10-14",
+  "scanner_module": "github.com/zricethezav/gitleaks/v8@v8.28.0",
+  "scanner_version": "8.28.0",
+  "captured_head": "342ffc8d0d6465a85942518da59a1d01e45c6aa4",
+  "reachable_commits": 13940,
+  "command": [
+    "/workspace/scratch/gitleaks-audit/bin/gitleaks",
+    "git",
+    "--no-banner",
+    "--redact=100",
+    "--config",
+    ".gitleaks.toml",
+    "--log-opts=--full-history --diff-filter=tuxdb 342ffc8d",
+    "--report-format=json",
+    "--report-path=/workspace/scratch/gitleaks-audit/post-dispositions-findings.json",
+    "."
+  ],
+  "working_directory": "/workspace/concept2cure",
+  "before_dispositions": {
+    "started_at": "2026-10-14T04:32:53.515437+00:00",
+    "exit_code": 1,
+    "elapsed_seconds": 164.68,
+    "finding_count": 7,
+    "commits_scanned": 10204
+  },
+  "after_dispositions": {
+    "started_at": "2026-10-14T04:45:14.326053+00:00",
+    "exit_code": 0,
+    "elapsed_seconds": 217.08,
+    "finding_count": 0,
+    "commits_scanned": 10204
+  },
+  "exact_fingerprint_dispositions": 7,
+  "existing_ignore_content_preserved_byte_for_byte": true,
+  "scanner_configuration_unchanged": true,
+  "source_checksum_comparisons": {
+    "first_review": 7,
+    "independent_second_review": 7,
+    "independent_control_tower_review": 7,
+    "all_matched": true
+  },
+  "scope_note": "Same captured full history with working-tree exact-fingerprint dispositions; final committed evidence and dispositions require control-tower commit-range or hosted verification.",
+  "credential_values_in_artifact": false,
+  "credential_tests_performed": false,
+  "history_rewritten": false
+}

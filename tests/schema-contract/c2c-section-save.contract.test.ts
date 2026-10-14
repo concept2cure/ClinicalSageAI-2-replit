@@ -51,6 +51,8 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
 const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql');
 const AUTHORING = path.join(REPO_ROOT, 'db/migrations/20260725_authoring_document_loop_tables.sql');
+const COMMENTS = path.join(REPO_ROOT, 'db/migrations/20260730_authoring_comments_router_columns.sql');
+const REVISION_LEDGER = path.join(REPO_ROOT, 'db/migrations/20260817_doc_revisions_immutable_ledger.sql');
 const BINDING = path.join(REPO_ROOT, 'migrations/20260728_authoring_document_governed_binding.sql');
 
 const ORG = 7;
@@ -116,6 +118,8 @@ beforeEach(async () => {
   // the actual deployed prerequisites; catching a missing table leaves that
   // transaction aborted and cannot prove the filing write contract.
   await pg.exec(fs.readFileSync(AUTHORING, 'utf8'));
+  await pg.exec(fs.readFileSync(COMMENTS, 'utf8'));
+  await pg.exec(fs.readFileSync(REVISION_LEDGER, 'utf8'));
   await pg.exec(fs.readFileSync(BINDING, 'utf8'));
 
   // A document bound to a real seeded rule pack, so the composite FK resolves,

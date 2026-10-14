@@ -168,7 +168,11 @@ export async function critiqueSavedDocument(input: Record<string, unknown>, ctx?
       try {
         const project = await admitAnaProjectScope(q, { organizationId: tenantId, userId, projectRef: ctx.projectRef, projectId: ctx.projectId });
         if (!project.programId) throw new Error('No authoring program');
-        const actor = await q.query('SELECT email FROM users WHERE id=$1 AND status=$2', [userId, 'active']);
+        // Email-only document grants use the active caller's recorded identity,
+        // bound to canonical membership in this snapshot's organization.
+        const actor = await q.query(`SELECT u.email FROM users u
+          JOIN organization_users ou ON ou.user_id=u.id
+          WHERE u.id=$1 AND u.status=$2 AND ou.organization_id=$3`, [userId, 'active', tenantId]);
         if (actor.rows.length !== 1 || (actor.rows[0].email !== null && typeof actor.rows[0].email !== 'string')) throw new Error('Actor unavailable');
         const authorized = await authorizeAuthoringProgram(q, { tenantId, actor: { id: String(userId), email: actor.rows[0].email }, programId: project.programId, forWrite: false });
         const doc = await q.query(`SELECT id::text, title, module, product_code, status, updated_at FROM authoring_documents

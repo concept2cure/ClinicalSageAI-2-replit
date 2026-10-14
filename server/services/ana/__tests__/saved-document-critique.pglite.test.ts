@@ -4,6 +4,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { RequestSqlClient } from '../../../db/requestDb';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import type { WithTenantConnectionOptions } from '../../../db/withTenantConnection';
 import type { ToolContext } from '../AnaToolExecutor';
 import { critiqueSavedDocument } from '../saved-document-critique';
@@ -144,8 +145,10 @@ beforeAll(async () => {
     CREATE TABLE document_data_dispositions(organization_id int,program_id uuid,captured_source_id int,
       source_sha256 text,linked_ids jsonb,choice text);
     CREATE TABLE file_uploads(id text PRIMARY KEY,organization_id int,checksum_sha256 text,storage_path text);
-    CREATE TABLE audit_logs(tenant_id int,action text,record_id text,table_name text,target text,new_values json);
   `);
+  // Keep the audit fixture writable by the canonical chained-audit writer,
+  // even though saved-document review itself is a read-only operation.
+  await pg.exec(AUDIT_LOGS_PGLITE_DDL);
 }, 90_000);
 
 beforeEach(async () => {
@@ -214,6 +217,22 @@ describe('the exact authorized saved document is the complete deterministic inpu
 });
 
 describe('saved-review authorization is read again on every actual connection', () => {
+  it('the executed actor-email query reads only membership in the current organization', async () => {
+    expect((await review()).complete).toBe(true);
+    const actorQuery = statements.find(sql => /SELECT\s+u\.email\s+FROM\s+users\s+u/i.test(sql));
+    expect(actorQuery).toBeDefined();
+    expect((await pg.query(actorQuery!, [7, 'active', 7])).rows).toEqual([{ email: 'reviewer@example.test' }]);
+    await pg.query("INSERT INTO users VALUES(9,'active','foreign-only@example.test')");
+    await pg.query("INSERT INTO organization_users VALUES(8,9,'member')");
+    expect((await pg.query(actorQuery!, [9, 'active', 7])).rows).toEqual([]);
+    // The user exists and can be resolved in their own organization, so the
+    // empty current-organization result proves isolation rather than absence.
+    expect((await pg.query(actorQuery!, [9, 'active', 8])).rows).toEqual([{ email: 'foreign-only@example.test' }]);
+    statements.length = 0;
+    await denied({}, { ...context, userId: 9 });
+    expect(statements.some(sql => /FROM authoring_sections\b/.test(sql))).toBe(false);
+  });
+
   it('refuses current project revocation after a successful review', async () => {
     expect((await review()).complete).toBe(true);
     await pg.query("UPDATE project_members SET status='revoked' WHERE project_id=11 AND user_id=7");

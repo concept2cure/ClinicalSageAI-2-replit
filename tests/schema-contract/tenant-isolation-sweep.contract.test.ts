@@ -34,7 +34,9 @@ import { citext } from '@electric-sql/pglite/contrib/citext';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
+import { immutableReportRecords, reportDomainEnum, sealStatusEnum, regulatoryBodyEnum } from '../../shared/schema';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 // Imported, not re-typed: the same string used to be hardcoded in four places,
@@ -45,6 +47,19 @@ const BATCH_START = 'db/migrations/022_stability_v2.sql';
 const T = 180_000;
 
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
+
+/** This table is newer than the baseline journal. Generate its actual model
+ * DDL (including enums, constraints and indexes), as fresh drizzle push does;
+ * a miniature substitute would fail to represent the deployed base schema. */
+async function provisionReportLedgerFixture(pg: PGlite): Promise<void> {
+  // drizzle-kit's ESM entry contains an unsupported bundled require; its
+  // package exposes this supported CJS entry through Node's ESM loader bridge.
+  const loadKit = createRequire(import.meta.url);
+  const { generateDrizzleJson, generateMigration } = loadKit('drizzle-kit/api') as typeof import('drizzle-kit/api');
+  const empty = generateDrizzleJson({});
+  const declared = generateDrizzleJson({ immutableReportRecords, reportDomainEnum, sealStatusEnum, regulatoryBodyEnum });
+  for (const statement of await generateMigration(empty, declared)) await pg.exec(statement);
+}
 
 /**
  * A BASE-SCHEMA fixture: the state a deploy actually presents to the migration
@@ -138,6 +153,10 @@ async function baseSchemaFixture(): Promise<PGlite> {
   const registryDdl = reportOs.match(/CREATE TABLE IF NOT EXISTS report_type_registry \([\s\S]*?\n\);/);
   if (!registryDdl) throw new Error('0014_report_os_foundation.sql no longer creates report_type_registry');
   await safe(registryDdl[0]);
+  // The report-index repair assumes the same canonical base table that the
+  // installer pushes. This fixture's old journal never declared it; provision
+  // the model rather than weakening the repair's missing-table refusal.
+  await provisionReportLedgerFixture(pg);
   return pg;
 }
 
@@ -286,7 +305,7 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
           await pg.exec(readMig(rel));
         } catch (err) {
           await pg.exec('ROLLBACK').catch(() => {});
-          throw new Error(`pass ${pass}: ${rel} failed — ${(err as Error).message}`);
+          throw new Error(`pass ${pass}: ${rel} failed — ${(err as Error).message}`, { cause: err });
         }
       }
     }
