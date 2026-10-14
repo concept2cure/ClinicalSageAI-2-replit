@@ -1,0 +1,85 @@
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+▶ 1/8 Prerequisites — schemas + extensions
+  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+  ✓ pgvector (extension "vector") present
+
+▶ 2/8 Tables — drizzle-kit push
+  • schema source: drizzle-kit push from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (drizzle.config.ts)
+  • 6 declared table(s) live in a named schema, which push does not create; the overlay does. Asserted in 8/8, not here: vault.document_archives, vault.document_chunks, vault.documents, vault.evidence_citations, vault.legal_holds, vault.retention_policies
+  ✓ schema pushed from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (482 of 488 declared tables verified present here: 482 in public, 6 in vault)
+
+▶ 3/8 Complete schema — raw migration overlay
+  ✓ pre-overlay creator: db/migrations/20260401_cmc_convergence_os.sql
+  ✓ pre-overlay creator: db/migrations/20260224_ai_trace_chain.sql
+  ✓ pre-overlay creator: db/migrations/20260730_cmc_projects_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_manufacturing_processes_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_fk_delete_policies_port.sql
+  ✓ pre-overlay creator: db/migrations/20260917_ana_runs.sql
+  pass 1: applied=307 already-present=2 deferred=12 hard=0
+  pass 2: applied=11 already-present=0 deferred=1 hard=0
+  pass 3: applied=0 already-present=0 deferred=1 hard=0
+  ◦ 1 file(s) skipped-classified (expected on a fresh install; each names its tracked resolution — NOT counted as incomplete):
+      0008_critical_fk_delete_policies.sql — superseded by db/migrations/20260730_fk_delete_policies_port.sql (guarded port applied pre-overlay); the original aborts on retired user_sessions
+        last error: relation "user_sessions" does not exist
+  ✓ overlay: 318 applied, 2 already-present from push
+
+▶ 4/8 Authoring subsystem (Part-11 unit)
+  ✓ authoring subsystem provisioned as a unit (9 files, 23 tables, tenant-isolated)
+
+▶ 5/8 Row-Level Security policies (raw migrations)
+  ✓ coerced residual text tenant columns to integer (fresh-DB safe)
+  ✓ applied 0005_csr_knowledge_database.sql
+  ✓ applied 0019_tenant_column_audit.sql
+  ✓ applied 0020_coerce_text_tenant_columns.sql
+  ✓ applied 0021_enable_rls_everywhere.sql
+  ✓ applied 20260608_ai_placement_policies.sql
+  ✓ applied 20260612_rls_research_admin.sql
+
+▶ 6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)
+  ✓ governed content: 42/42 applied
+  ✓ re-applied 22/22 root file(s) guarded on a named schema (their dependency exists only after this tree)
+  ✓ tenant-isolation sweep re-run over the tables this tree created
+  ✓ non-public uuid-tenant tables policied
+  ✓ child tables scoped to their tenant-keyed parents
+
+▶ 7/8 Runtime role — non-superuser grants
+  ✓ role app_service aligned (LOGIN · NOSUPERUSER · NOBYPASSRLS · password set)
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 23/32 append-only store(s) present: public.audit_logs, public.audit_events, public.electronic_signatures, public.ana_turn_records, public.ana_record_blobs, public.authoring_audit_trail, public.doc_revisions, public.concept2cure_signatures, public.concept2cure_submission_snapshots, public.proof_audit_logs, public.coauthor_validation_history, public.credit_ledger, public.document_audit_trail, public.ivdr_validation_parameter_history, public.ivdr_evidence_result_history, public.ivdr_cdx_status_history, public.workflow_history, public.document_audit_logs, public.regulatory_audit_logs, public.c2c_ana_actions, public.authoring_signatures, public.cmc_module3_section_versions, public.cmc_provenance_events; INSERT too where a store's ceiling is SELECT
+  ✓ EXECUTE revoked on 48 unreviewed SECURITY DEFINER function(s)
+  ✓ grants applied on: adversarial(SELECT, INSERT, UPDATE, DELETE); agent_runtime(SELECT, INSERT, UPDATE, DELETE); ai(SELECT, INSERT, UPDATE, DELETE); audit(SELECT, INSERT); cognitive_audit(SELECT, INSERT, UPDATE, DELETE); common_standards(SELECT, INSERT, UPDATE, DELETE); compliance(SELECT, INSERT, UPDATE, DELETE); core(SELECT, INSERT, UPDATE, DELETE); cortex(SELECT, INSERT, UPDATE, DELETE); discovery(SELECT, INSERT, UPDATE, DELETE); ectd(SELECT, INSERT, UPDATE, DELETE); ectd_v4(SELECT, INSERT, UPDATE, DELETE); extensions(SELECT); federated_ml(SELECT, INSERT, UPDATE, DELETE); fhir(SELECT, INSERT, UPDATE, DELETE); global_dossier(SELECT, INSERT, UPDATE, DELETE); identity(SELECT, INSERT, UPDATE, DELETE); innovation(SELECT, INSERT, UPDATE, DELETE); labeling(SELECT, INSERT, UPDATE, DELETE); lumen(SELECT, INSERT, UPDATE, DELETE); manufacturing(SELECT, INSERT, UPDATE, DELETE); precedent(SELECT, INSERT, UPDATE, DELETE); product_master(SELECT, INSERT, UPDATE, DELETE); prose(SELECT, INSERT, UPDATE, DELETE); public(SELECT, INSERT, UPDATE, DELETE); registry(SELECT, INSERT, UPDATE, DELETE); regulatory(SELECT, INSERT, UPDATE, DELETE); signing(SELECT, INSERT, UPDATE, DELETE); site_intel(SELECT, INSERT, UPDATE, DELETE); truth(SELECT, INSERT, UPDATE, DELETE); vault(SELECT, INSERT, UPDATE, DELETE)
+  ✓ default privileges set — future owner-created tables auto-grant to app_service
+
+▶ 8/8 Verify
+  tables (public): 808
+  RLS policies:    1011
+  named-schema tables: 6/6 present
+  core route tables: 5/5 present
+  authoring subsystem: 19/19 tables present
+  required objects: 8/8 capabilities complete
+    ✓ stability_studies — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ project_intelligence_profiles — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ immutable_report_records — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ evidence_claims — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ conversation_working_memory — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ ana_capability_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ report_type_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ doc_permissions — from authoring subsystem (db/migrations/20260725_authoring_*) · RLS on tenant_id
+  tenant isolation: every integer tenant-keyed table is policied ✓
+  runtime role app_service: LOGIN · non-superuser · NOBYPASSRLS · USAGE on all application schemas · can read tenant tables ✓
+
+✅ Application schema install complete.
+   Next:
+   • run `node scripts/db/deploy-migrate.mjs` to apply the out-of-band
+     C2C migration set (the db/migrations/ files NO other path applies —
+     e.g. the clinical-regulatory evidence spine, section tracking, and
+     the governance/resolution tables). This installer does NOT apply
+     that set; without it the routes reading those tables fall back to
+     sample data. (In the AWS pipeline deploy-migrate runs as its own
+     step after this one; a local install must run it by hand.)
+   • set RLS_ENFORCE=on and restart to enforce tenant isolation;
+   • point the runtime at the non-superuser role: set APP_DATABASE_URL to the
+     app_service connection string (set APP_SERVICE_DB_PASSWORD here first so
+     the role is provisioned). Migrations keep using DATABASE_URL (the owner).
+     Production boot fails closed under RLS_ENFORCE=on if it connects as a superuser.
+   • leave SEED_DEMO_USER unset in production (no known-password admin).

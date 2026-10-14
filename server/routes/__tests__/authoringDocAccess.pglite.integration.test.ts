@@ -44,37 +44,23 @@ const T = 180_000;
  * the same role (2026-09-28, GE-P-3). The router's own jose middleware still
  * verifies the token.
  */
-function makeAccessApp(router: express.Router, role: string): express.Express {
+function makeAccessApp(router: express.Router, gateObjects = false): express.Express {
   const a = express();
   a.use(express.json());
-  a.use((req, _res, next) => {
-    Object.assign(req, { dbClient: jdb.pool });
-    (req as express.Request & { userRole?: string }).userRole = role;
-    runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
-  });
-  a.use('/api/authoring', router);
-  return a;
-}
-/**
- * The same app with the object gate in front of the router, as production
- * mounts it (register-inline-routes.ts: app.use('/api',
- * authoringObjectAuthorization) ahead of /api/authoring). The global /api gate
- * attaches the verified principal before the object gate runs; this models it
- * with the same verification the router uses.
- */
-function makeGatedApp(router: express.Router, role: string): express.Express {
-  const a = express();
-  a.use(express.json());
-  a.use((req, _res, next) => {
-    Object.assign(req, { dbClient: jdb.pool });
+  a.use((req, res, next) => {
     const claims = verifyJwtWithRotation(String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')) as Record<string, unknown>;
-    (req as unknown as { user: unknown }).user = {
-      id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId, roles: [],
-    };
-    (req as express.Request & { userRole?: string }).userRole = role;
-    runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
+    // The deployed /api auth gate reads this role uncached on every request.
+    // A direct SQL role change must therefore update the fixture's identity too.
+    void jdb.pool.query('SELECT role FROM organization_users WHERE user_id=$1 AND organization_id=$2', [claims.userId, claims.organizationId]).then(result => {
+      if (result.rows.length !== 1) { res.status(403).json({ error: 'CURRENT_MEMBERSHIP_REQUIRED' }); return; }
+      const role = String((result.rows[0] as { role: string }).role);
+      Object.assign(req, { dbClient: jdb.pool, userRole: role,
+        identity: { legacyUserId: Number(claims.userId), organizationId: Number(claims.organizationId), role },
+        user: { id: claims.userId, userId: claims.userId, email: claims.email, organizationId: claims.organizationId, role, roles: [role] } });
+      runWithTenantScope({ tenantId: String(ORG), role, source: 'request', caller: 'authoring-doc-access-test' }, next);
+    }).catch(next);
   });
-  a.use('/api', authoringObjectAuthorization);
+  if (gateObjects) a.use('/api', authoringObjectAuthorization);
   a.use('/api/authoring', router);
   return a;
 }
@@ -85,7 +71,6 @@ const COLLEAGUE = { id: '7', organizationId: ORG, email: 'colleague@canvas.examp
 
 let jdb: JourneyDb;
 let app: express.Express;
-let viewerScopedApp: express.Express;
 let gatedApp: express.Express;
 let author: (r: request.Test) => request.Test;
 let reviewer: (r: request.Test) => request.Test;
@@ -129,9 +114,8 @@ beforeAll(async () => {
   reviewer = asToken(await mint(REVIEWER));
   colleague = asToken(await mint(COLLEAGUE));
   const { default: router } = await import('../authoring.router');
-  app = makeAccessApp(router, 'member');
-  viewerScopedApp = makeAccessApp(router, 'viewer');
-  gatedApp = makeGatedApp(router, 'member');
+  app = makeAccessApp(router);
+  gatedApp = makeAccessApp(router, true);
 
   const created = await author(request(app).post('/api/authoring/docs/from-draft')).send({
     programId: PROGRAM,
@@ -179,16 +163,15 @@ describe('GET /docs/:docId — the caller’s access', () => {
   });
 
   it('a member with only a Reviewer grant and a viewer org role is told, per act, why not', async () => {
-    const res = await reviewer(request(viewerScopedApp).get(`/api/authoring/docs/${docId}`));
+    const res = await reviewer(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const { access } = res.body;
     expect(access.freeze.allowed).toBe(false);
-    expect(access.freeze.reason).toMatch(/Owner or Approver grant/);
-    expect(access.freeze.reason).toMatch(/Your grants on it: Reviewer/);
+    expect(access.freeze.reason).toMatch(/current organization access is read-only/);
     expect(access.esign.allowed).toBe(false);
-    expect(access.esign.reason).toMatch(/Owner or Approver grant/);
+    expect(access.esign.reason).toMatch(/current organization access is read-only/);
     expect(access.fileToVault.allowed).toBe(false);
-    expect(access.fileToVault.reason).toMatch(/Owner, Author or Approver grant/);
+    expect(access.fileToVault.reason).toMatch(/current organization access is read-only/);
     expect(access.assignReview.allowed).toBe(false);
     expect(access.assignReview.reason).toMatch(/Your role: viewer/);
     // The control it describes is "Send for review" (wave 2C): the sentence
@@ -217,9 +200,9 @@ describe('GET /docs/:docId — the caller’s access', () => {
       await jdb.pool.query(`UPDATE organization_users SET role = 'viewer' WHERE organization_id = $1 AND user_id = $2`, [ORG, REVIEWER.id]);
     }
     // Without a signing role the review signature is refused, and says why.
-    const res = await reviewer(request(viewerScopedApp).get(`/api/authoring/docs/${docId}`));
+    const res = await reviewer(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.body.access.esignReview.allowed).toBe(false);
-    expect(res.body.access.esignReview.reason).toMatch(/signing role/i);
+    expect(res.body.access.esignReview.reason).toMatch(/current organization access is read-only/);
   });
 
   it('a FROZEN document can still be filed to the vault — the sealed record is what filing is for', async () => {

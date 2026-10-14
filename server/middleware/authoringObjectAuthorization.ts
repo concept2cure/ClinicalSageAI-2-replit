@@ -4,12 +4,14 @@ import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 import {
   authoringPrincipalFromRequest,
+  isReadOnlyAuthoringPrincipal,
   decideAuthoringPermission,
   resolveAuthoringDocumentScope,
   resolveAuthoringSectionScope,
   type AuthoringObjectScope,
   type AuthoringPermissionAction,
   type AuthoringPermissionDecision,
+  type AuthoringPrincipal,
 } from '../services/authoring/authoring-permissions';
 
 const logger = createScopedLogger('authoring-object-authorization');
@@ -305,6 +307,15 @@ function skipsObjectAuthorization(req: Request, path: string | null): boolean {
   return SAFE_METHODS.has(req.method);
 }
 
+function forbiddenAuthoringAction(res: Response): Response {
+  return res.status(403).json({ error: { code: 'AUTHORING_OBJECT_FORBIDDEN',
+    message: 'You do not have permission to perform this action on the authoring object.' } });
+}
+
+function readOnlyCreation(req: Request, path: string, principal: AuthoringPrincipal): boolean {
+  return req.method === 'POST' && /^\/docs(?:\/from-draft)?$/i.test(path) && isReadOnlyAuthoringPrincipal(principal);
+}
+
 export async function authoringObjectAuthorization(
   req: Request,
   res: Response,
@@ -329,6 +340,10 @@ export async function authoringObjectAuthorization(
 
   const target = targetForRequest(req, tenantId, authoringPath!);
   if (!target) {
+    // Creation has no object ACL yet; it still changes a governed record.
+    if (readOnlyCreation(req, authoringPath!, principal)) {
+      return forbiddenAuthoringAction(res);
+    }
     next();
     return;
   }
@@ -355,12 +370,7 @@ export async function authoringObjectAuthorization(
         sectionId: decision.scope?.sectionId,
         reason: decision.reason,
       });
-      return res.status(403).json({
-        error: {
-          code: 'AUTHORING_OBJECT_FORBIDDEN',
-          message: 'You do not have permission to perform this action on the authoring object.',
-        },
-      });
+      return forbiddenAuthoringAction(res);
     }
 
     res.locals.authoringAuthorization = {

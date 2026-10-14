@@ -1,0 +1,36 @@
+{
+  "automated": true,
+  "format": "docx",
+  "fileStatus": 201,
+  "response": {
+    "success": true,
+    "data": {
+      "vaultDocumentId": "40c01d11-6d84-4e2c-8495-0c765947ee3c",
+      "folder": {
+        "folderId": "module-2",
+        "folderLabel": "Module 2 · Summaries",
+        "evidenceKind": "report",
+        "ctdSection": null,
+        "placementStatus": "confirmed",
+        "confidence": null,
+        "rationale": "Filed from the authoring editor by its CTD module (M2 → Module 2 · Summaries).",
+        "needsReview": false
+      },
+      "sha256": "e356f48d8b8c7c0d3c5cd1738f868a95972ecbd8baeacca41e04e5ea74b4d509",
+      "format": "docx",
+      "fileName": "LOCAL_TEST_ONLY___component_quality_overall_summary.docx",
+      "programId": "9dec16b7-b2c1-4dd5-bd75-0bf096ffd320",
+      "sealed": false,
+      "approval": {
+        "carried": false,
+        "reason": "It is not approved in Authoring (status: draft)."
+      }
+    }
+  },
+  "scope": "in-process platform-generated working draft; does not qualify untrusted upload AV or human approval",
+  "downloadStatus": 200,
+  "downloadBytes": 9147,
+  "downloadSha256": "e356f48d8b8c7c0d3c5cd1738f868a95972ecbd8baeacca41e04e5ea74b4d509",
+  "draftMarkingPresent": true,
+  "testParagraphPresent": true
+}
