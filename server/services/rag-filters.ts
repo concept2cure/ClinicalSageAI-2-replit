@@ -27,6 +27,8 @@ export interface QueryFilters {
    * wider. Never extracted from the query; only a caller sets it.
    */
   programId?: string;
+  /** Server-admitted actor scope. Empty means no allowed programme. */
+  allowedProgramIds?: readonly string[];
 }
 
 /** The columns a corpus exposes for filtering (null when the corpus lacks one). */
@@ -67,6 +69,13 @@ export function buildDocFilterClause(
     params.push(filters.programId);
     clause += `\n          AND ${cols.program} = $${params.length}::uuid`;
   }
+  if (filters.allowedProgramIds !== undefined) {
+    if (!cols.program) {
+      throw new Error('This corpus has no program column, so an actor programme scope cannot be honoured. Nothing was searched.');
+    }
+    params.push([...filters.allowedProgramIds]);
+    clause += `\n          AND ${cols.program} = ANY($${params.length}::uuid[])`;
+  }
   if (filters.dateRange && cols.date) {
     params.push(filters.dateRange.start);
     clause += `\n          AND ${cols.date} >= $${params.length}`;
@@ -103,6 +112,6 @@ export function mergeFilters(
   const merged: QueryFilters = { ...extracted, ...explicit };
   const hasAny =
     merged.atomType != null || merged.source != null || merged.dateRange != null || merged.domain != null ||
-    merged.programId != null;
+    merged.programId != null || merged.allowedProgramIds !== undefined;
   return hasAny ? merged : undefined;
 }

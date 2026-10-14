@@ -37,7 +37,7 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_review_assignments(artifact_id int,organization_id int,reviewer_id int,status text);
     ALTER TABLE projects ADD COLUMN client_workspace_id int, ADD COLUMN owner_id int,
       ADD COLUMN created_by_id int, ADD COLUMN settings jsonb DEFAULT '{}';
-    ALTER TABLE cre_evidence_sources ADD COLUMN client_workspace_id int,
+    ALTER TABLE cre_evidence_sources ADD COLUMN created_by int, ADD COLUMN client_workspace_id int,
       ADD COLUMN visibility_class text DEFAULT 'project_private';
     ALTER TABLE cre_evidence_sources ALTER COLUMN organization_id DROP NOT NULL;
     ALTER TABLE file_uploads ADD COLUMN user_id int, ADD COLUMN original_name text,

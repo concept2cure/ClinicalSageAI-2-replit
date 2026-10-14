@@ -8,8 +8,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const batchDraftMock = vi.fn();
 const sourceMocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn() }));
-vi.mock('../catalog-scope', () => ({ catalogScope: sourceMocks.scope }));
-vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForOrg: sourceMocks.load }));
+vi.mock('../catalog-scope', async () => ({ catalogScope: sourceMocks.scope, sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
+vi.mock('../../vault/document-catalog.service', () => ({ revalidateActorSourceScope: async () => {}, loadDocumentForActor: sourceMocks.load }));
 vi.mock('../AnaDocumentDraftingService', () => ({
   getAnaDraftingService: () => ({ batchDraft: batchDraftMock }),
 }));

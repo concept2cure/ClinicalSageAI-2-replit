@@ -1,0 +1,24 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 7ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 9ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > with no project open it guesses none: the file is not filed, and the audited adopt is named 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > current body delivery survives its metadata-only final guard, whose receipt projection is false 18ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > historical text remains readable without current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > stored legacy text is readable without a backfill write 1ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > same-length extraction mutation during coverage withdraws content even outside settling host 0ms
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts > actual metadata/body facade composition > access revocation during coverage withdraws content even outside settling host 0ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  19:41:46
+   Duration  2.65s (transform 1.06s, setup 80ms, import 2.18s, tests 49ms, environment 0ms)
+

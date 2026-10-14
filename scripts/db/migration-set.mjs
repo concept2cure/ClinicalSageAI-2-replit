@@ -3189,6 +3189,12 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/ANA-QUESTIONS/2026-10-12-eu-classes/.
   'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
 
+  // Exact source text admitted by the AnA host budget: tenant-owned immutable
+  // metadata, not provider-delivery or scientific-review evidence. Replay-safe
+  // ledger and controlled legal-hold-aware purge door; no legacy backfill.
+  // Public integer tenant key, created before the final isolation sweeps.
+  'migrations/20261014_ana_source_read_receipts.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -1,0 +1,5 @@
+Scope: two owned pure roots and their imported/ambient dependencies using repository tsconfig compiler options. Not a whole-repository typecheck.
+shared/ana/source-admission-receipts.ts: 0 target diagnostics
+shared/ana/__tests__/source-admission-receipts.test.ts: 0 target diagnostics
+Loaded sources: 447
+Total scoped diagnostics: 0

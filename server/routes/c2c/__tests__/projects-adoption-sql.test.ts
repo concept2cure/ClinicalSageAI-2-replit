@@ -1,5 +1,5 @@
 /** Real adoption eligibility SQL/rollback via PGlite. Filesystem bytes,
- * source persistence and audit sealing are explicit seams, not live RLS,
+ * source persistence, processing and audit sealing are explicit seams, not live RLS,
  * immutable storage, independent-connection concurrency or audit-HMAC PQ. */
 import { randomUUID, createHash } from 'node:crypto';
 import path from 'node:path';
@@ -11,7 +11,7 @@ import { createDispositionHarness, insertCapturedSuccessor, type DispositionHarn
 const h = vi.hoisted(() => ({ db: null as any, bytes: Buffer.from('original scientific source'),
   files: new Map<string, Buffer>(),
   captureFails: false, auditFails: false, missing: false,
-  beforeRead: null as (() => Promise<void>) | null }));
+  beforeRead: null as (() => Promise<void>) | null, processCapturedSource: vi.fn() }));
 vi.mock('node:fs', async importOriginal => {
   const original = await importOriginal<typeof import('node:fs')>();
   return { ...original, promises: { ...original.promises, readFile: vi.fn(async (filePath: string) => {
@@ -24,6 +24,11 @@ vi.mock('node:fs', async importOriginal => {
 });
 vi.mock('../../../db.js', () => ({ getPool: () => h.db,
   pool: { query: (...args: any[]) => h.db.query(...args), connect: () => h.db.connect() } }));
+// This disposition/lineage harness lacks the unrelated AnA organization and
+// user membership schema needed by the conversation edit fixture. Keep that
+// admission boundary explicit; real admission has its own PGlite suite.
+vi.mock('../../../services/ana/source-context-admission', () => ({ assertAnaUploadAccess: async () => undefined }));
+vi.mock('../../../services/clinical-regulatory-evidence/data-room-processing.js', () => ({ processCapturedSource: h.processCapturedSource }));
 vi.mock('../../../services/audit/chain.js', () => ({
   hashPayload: (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex'),
   computeAuditChainSealed: async () => {
@@ -67,6 +72,8 @@ afterAll(async () => { await harness.close(); });
 beforeEach(async () => {
   vi.clearAllMocks(); h.bytes = original; h.captureFails = false; h.auditFails = false; h.missing = false; h.beforeRead = null;
   h.files.clear();
+  h.processCapturedSource.mockReset();
+  h.processCapturedSource.mockResolvedValue({ ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_WRITE_FAILED' });
   f = await harness.seed(); uploadId = randomUUID();
   await f.pg.query(`INSERT INTO file_uploads
     (id,organization_id,checksum_sha256,storage_path,status,original_name,mime_type,file_size)
@@ -154,10 +161,26 @@ describe('conversation adoption: actual SQL and transaction boundary', () => {
     expect(rows[0].checksum).toBe(sha256Hex(original));
     expect(rows[0].extraction_status).toBe('pending');
     expect(rows[0].provenance.fileUploadId).toBe(uploadId);
+    expect(response.body).toMatchObject({ adopted: true, processed: false,
+      processing: { status: 'retryable_failure', reasonCode: 'PROCESSING_WRITE_FAILED' } });
     const trail = await audits(); expect(trail).toHaveLength(1);
     expect(trail[0].action).toBe('c2c.project.adopt');
     expect(trail[0].new_values.source_id).toBe(rows[0].id);
     expect((await f.pg.query<any>('SELECT status FROM file_uploads WHERE id=$1 AND organization_id=$2', [uploadId, f.org])).rows[0].status).toBe('uploaded');
+  });
+
+  it('retains the committed capture and audit when the processing seam rejects', async () => {
+    h.processCapturedSource.mockImplementation(async () => {
+      expect(await captures()).toHaveLength(1);
+      expect(await audits()).toHaveLength(1);
+      throw new Error('private extractor path /private/source');
+    });
+    const response = await adopt();
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ adopted: true, processed: false,
+      processing: { status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' } });
+    expect((await captures())[0].extraction_status).toBe('pending');
+    expect(await audits()).toHaveLength(1);
   });
 
   it('repeated adoption returns the same source without another capture or audit', async () => {

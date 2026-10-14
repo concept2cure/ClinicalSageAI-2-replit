@@ -54,8 +54,13 @@ vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
 }));
 vi.mock('../../../db.js', () => ({ pool: {}, getPool: () => ({}), db: {} }));
 
-vi.mock('../../vault/document-catalog.service.js', () => ({
+vi.mock('../../vault/document-catalog.service.js', async () => {
+  const { syntheticReadWrapper, syntheticActorDocument } = await import('./support/source-read-tool-fixture.js');
+  return ({
+  withAnaSourceReadScope: syntheticReadWrapper,
+  revalidateActorSourceScope: async () => {},
   isDocumentCatalogEnabled: vi.fn(async () => true),
+  loadDocumentForActor: (input: any, opts: any) => syntheticActorDocument(input, opts, loadDocumentForOrg),
   loadDocumentForOrg,
   completeCatalog,
   listProjectDocuments: vi.fn(async () => ({
@@ -73,7 +78,7 @@ vi.mock('../../vault/document-catalog.service.js', () => ({
     status: 'extraction_failed', method: 'none', confidence: null,
     error: 'none', charCount: 0, wordCount: null,
   })),
-}));
+}); });
 
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 
@@ -113,14 +118,15 @@ describe('read_project_document — a chat upload id', () => {
     expect(r.error).toMatch(/read_uploaded_document/);
     // The one thing it must never say.
     expect(r.error).not.toMatch(/not found/i);
-    expect(r.error).toMatch(/The file exists/);
+    expect(r.error).toMatch(/has not verified.*availability/);
+    expect(r.error).not.toMatch(/The file exists/);
   });
 
   it('a genuinely unknown vault id still says plainly that the vault does not hold it', async () => {
     const r = await call('read_project_document', { document_id: VAULT_ID });
     expect(r.ok).toBe(false);
     expect(r.idSpace).toBe('unknown');
-    expect(r.error).toMatch(/No vault document with id/);
+    expect(r.error).toMatch(/No accessible vault document with id/);
     expect(r.error).toMatch(/list_project_documents/);
   });
 });

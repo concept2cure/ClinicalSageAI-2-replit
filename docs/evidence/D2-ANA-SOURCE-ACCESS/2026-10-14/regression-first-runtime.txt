@@ -1,0 +1,1 @@
+{"exitCode":1,"sourcesUnchangedDuringRun":false,"resultSummary":[" Test Files  2 failed | 100 passed (102)","      Tests  2 failed | 1966 passed (1968)","   Duration  214.71s (transform 20.99s, setup 2.24s, import 98.70s, tests 92.29s, environment 6.38s)"]}

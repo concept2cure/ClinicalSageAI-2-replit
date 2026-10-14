@@ -38,6 +38,9 @@
 
 import { pool } from '../../db.js';
 import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { supersededSql } from './vault-version-family.js';
+import type { AdmittedAnaSourceReadScope } from '../ana/source-read-scope.js';
+import { assertRetrievalScope, pinRetrievalReadScope, verifyRetrievalSources, withRetrievalReadScope, type RetrievalQueryable } from './retrieval-source-access.js';
 
 export class PassageSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -125,12 +128,47 @@ export interface PassageSearchResult {
 /** How many unfiled uploads the coverage line probes for before saying "more". */
 const UNFILED_UPLOAD_PROBE = 20;
 
+async function readUnfiledUploadCoverage(db: RetrievalQueryable, organizationId: number, scope?: AdmittedAnaSourceReadScope): Promise<Pick<PassageCoverage, 'unfiledUploads' | 'unfiledUploadsMore'>> {
+  try {
+    const { listChatUploads, listChatUploadsInReadScope } = await import('./document-catalog.service.js');
+    const page = scope ? await listChatUploadsInReadScope(db, scope, { limit: UNFILED_UPLOAD_PROBE })
+      : await listChatUploads(organizationId, null, UNFILED_UPLOAD_PROBE);
+    return { unfiledUploads: page.uploads.length, unfiledUploadsMore: page.hasMore };
+  } catch {
+    return { unfiledUploads: null, unfiledUploadsMore: false };
+  }
+}
+
+function ledgerCount(value: unknown): number {
+  if (typeof value !== 'number' && (typeof value !== 'string' || !/^\d+$/.test(value))) {
+    throw new Error('The passage index ledger could not be verified.');
+  }
+  const count = Number(value);
+  if (!Number.isSafeInteger(count) || count < 0) throw new Error('The passage index ledger could not be verified.');
+  return count;
+}
+
+function recordedCoverage(r: Record<string, any>, uploads: Pick<PassageCoverage, 'unfiledUploads' | 'unfiledUploadsMore'>): PassageCoverage {
+  const counts = ['total', 'indexed', 'pending', 'failed'].map(key => ledgerCount(r[key]));
+  if (counts[1] + counts[2] + counts[3] > counts[0]) throw new Error('The passage index ledger could not be verified.');
+  return { ...uploads, total: counts[0], indexed: counts[1], pending: counts[2], failed: counts[3],
+    failureReasons: Array.isArray(r.failure_reasons) ? r.failure_reasons.filter(Boolean) : [] };
+}
+
 export async function getPassageCoverage(
   organizationId: number,
   /** One program's documents (the open project, PF-10 S7); null = the organization's. */
   programId: string | null = null,
+  opts: { allowedProgramIds?: readonly string[]; db?: RetrievalQueryable; sourceReadScope?: AdmittedAnaSourceReadScope } = {},
 ): Promise<PassageCoverage> {
-  const { rows } = await pool.query(
+  if (opts.sourceReadScope && !opts.db) {
+    return withRetrievalReadScope(opts.sourceReadScope, db => getPassageCoverage(organizationId, programId, { ...opts, db }));
+  }
+  const db = opts.db ?? pool;
+  const allowedProgramIds = opts.sourceReadScope?.accessibleProgramIds ?? opts.allowedProgramIds;
+  const params: unknown[] = [organizationId, programId];
+  const allowed = allowedProgramIds === undefined ? '' : `AND d.program_id = ANY($${params.push([...allowedProgramIds])}::uuid[])`;
+  const { rows } = await db.query(
     `SELECT COUNT(*)::int AS total,
             COUNT(*) FILTER (WHERE c.chunk_status = 'chunked' AND COALESCE(c.chunk_count, 0) > 0)::int AS indexed,
             COUNT(*) FILTER (WHERE c.chunk_status IS NULL OR c.chunk_status = 'pending')::int AS pending,
@@ -142,47 +180,31 @@ export async function getPassageCoverage(
                WHERE c.chunk_status = 'chunk_failed' AND c.chunk_error IS NOT NULL
              ))[1:3] AS failure_reasons
        FROM vault.documents d
-       JOIN regulatory_programs p ON p.id = d.program_id
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE p.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
-        AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
-    [organizationId, programId],
+       JOIN regulatory_programs p ON p.id = d.program_id AND p.deleted_at IS NULL
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+      WHERE p.organization_id = $1 AND d.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+        AND NOT ${supersededSql('d')}
+        AND ($2::uuid IS NULL OR d.program_id = $2::uuid) ${allowed}`,
+    params,
   );
-  const r = rows[0] ?? {};
+  if (rows.length !== 1) throw new Error('The passage index ledger could not be verified.');
   /* The uploads outside the corpus, through the one definition of "the chat
      uploads this organization currently has". Bounded — the coverage line needs
      to say THAT files sit outside the index and roughly how many, not to
      enumerate them — and independently fault-tolerant, because a coverage
      figure that fails the whole search would be a worse answer than a partial
      one. */
-  let unfiledUploads: number | null;
-  let unfiledUploadsMore = false;
-  try {
-    const { listChatUploads } = await import('./document-catalog.service.js');
-    const page = await listChatUploads(organizationId, null, UNFILED_UPLOAD_PROBE);
-    unfiledUploads = page.uploads.length;
-    unfiledUploadsMore = page.hasMore;
-  } catch {
-    // Unknown, which the coverage note reports as unchecked — never as zero.
-    unfiledUploads = null;
-  }
-  return {
-    unfiledUploads,
-    unfiledUploadsMore,
-    total: Number(r.total ?? 0),
-    indexed: Number(r.indexed ?? 0),
-    pending: Number(r.pending ?? 0),
-    failed: Number(r.failed ?? 0),
-    failureReasons: Array.isArray(r.failure_reasons) ? r.failure_reasons.filter(Boolean) : [],
-  };
+  return recordedCoverage(rows[0] ?? {}, await readUnfiledUploadCoverage(db, organizationId, opts.sourceReadScope));
 }
 
 /* Coverage is context for the answer, not the answer. A ledger read that
    fails must not take the search down with it — but it must not quietly
    become "all indexed" either, so it becomes null and the caller says so. */
-async function coverageOrUnknown(organizationId: number, programId: string | null): Promise<PassageCoverage | null> {
+async function coverageOrUnknown(organizationId: number, programId: string | null, opts: PassageSearchOptions): Promise<PassageCoverage | null> {
   try {
-    return await getPassageCoverage(organizationId, programId);
+    return opts.sourceReadScope
+      ? await withRetrievalReadScope(opts.sourceReadScope, db => getPassageCoverage(organizationId, programId, { ...opts, db }))
+      : await getPassageCoverage(organizationId, programId, opts);
   } catch {
     return null;
   }
@@ -202,6 +224,35 @@ export interface PassageSearchOptions {
    * project's is still found; null = the organization's.
    */
   programId?: string | null;
+  allowedProgramIds?: readonly string[];
+  sourceReadScope?: AdmittedAnaSourceReadScope;
+  db?: RetrievalQueryable;
+}
+
+type PassageSearchArgs = { organizationId: number; organizationUuid: string | null | undefined; query: string };
+
+async function preparePassageSearch(args: PassageSearchArgs, opts: PassageSearchOptions) {
+  const query = args.query.trim();
+  if (query.length < 3) throw new PassageSearchUnavailableError('the query must be at least 3 characters.');
+  if (!args.organizationUuid || !UUID_RE.test(args.organizationUuid)) {
+    throw new PassageSearchUnavailableError('no organization identity is on this request, so the vault cannot be searched for one tenant. Nothing was searched — this is not an empty result.');
+  }
+  const programId = opts.programId ?? null;
+  const scope = opts.sourceReadScope ? pinRetrievalReadScope(opts.sourceReadScope) : undefined;
+  if (scope) {
+    assertRetrievalScope(scope, args.organizationId, programId);
+    await withRetrievalReadScope(scope, async q => {
+      const { rows } = await q.query('SELECT id FROM organizations WHERE id=$1 AND uuid=$2::uuid', [args.organizationId, args.organizationUuid]);
+      if (rows.length !== 1 || Number(rows[0].id) !== args.organizationId) throw new PassageSearchUnavailableError('the organization identity could not be verified. Nothing was searched.');
+    });
+  }
+  return { query, organizationUuid: args.organizationUuid, programId, scope,
+    admittedOpts: { ...opts, sourceReadScope: scope, allowedProgramIds: scope?.accessibleProgramIds ?? opts.allowedProgramIds } };
+}
+
+function passageFilters(programId: string | null, allowedProgramIds?: readonly string[]) {
+  if (!programId && allowedProgramIds === undefined) return undefined;
+  return { ...(programId ? { programId } : {}), ...(allowedProgramIds !== undefined ? { allowedProgramIds } : {}) };
 }
 
 /**
@@ -215,29 +266,12 @@ export interface PassageSearchOptions {
  * catalog exists to stop.
  */
 export async function searchDocumentPassages(
-  args: {
-    organizationId: number;
-    organizationUuid: string | null | undefined;
-    query: string;
-  },
+  args: PassageSearchArgs,
   opts: PassageSearchOptions = {},
 ): Promise<PassageSearchResult> {
-  const query = args.query.trim();
-  if (query.length < 3) {
-    throw new PassageSearchUnavailableError('the query must be at least 3 characters.');
-  }
-  if (!args.organizationUuid || !UUID_RE.test(args.organizationUuid)) {
-    // The pipeline would refuse this by returning [], which reads as "nothing
-    // matched". Say what actually happened instead.
-    throw new PassageSearchUnavailableError(
-      'no organization identity is on this request, so the vault cannot be searched for one tenant. ' +
-        'Nothing was searched — this is not an empty result.',
-    );
-  }
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
-
-  const programId = opts.programId ?? null;
-  const coverage = await coverageOrUnknown(args.organizationId, programId);
+  const { query, organizationUuid, programId, scope, admittedOpts } = await preparePassageSearch(args, opts);
+  let coverage = await coverageOrUnknown(args.organizationId, programId, admittedOpts);
 
   /* NOTHING IS INDEXED — answer without embedding anything.
      The two feature flags are independent, and catalog-on/chunking-off is the
@@ -252,6 +286,7 @@ export async function searchDocumentPassages(
      at all is a different (also honest) message the caller composes from the
      same coverage. */
   if (coverage && coverage.total > 0 && coverage.indexed === 0) {
+    if (scope) await withRetrievalReadScope(scope, async () => undefined);
     return { hits: [], coverage, ranking: null };
   }
 
@@ -262,9 +297,10 @@ export async function searchDocumentPassages(
       query,
       intent: 'regulatory_qa',
       corpus: 'vault',
-      organizationUuid: args.organizationUuid,
+      organizationUuid,
       limit,
-      filters: programId ? { programId } : undefined,
+      filters: passageFilters(programId, admittedOpts.allowedProgramIds),
+      sourceReadScope: scope,
       /* Two deliberate departures from the regulatory_qa defaults, both because
          this runs INSIDE an agent turn rather than behind a request a person is
          waiting on once.
@@ -289,6 +325,16 @@ export async function searchDocumentPassages(
     throw new PassageSearchUnavailableError(
       err instanceof Error ? err.message : String(err),
     );
+  }
+
+  if (scope) await withRetrievalReadScope(scope, q => verifyRetrievalSources(q, scope, documents.map(d => ({
+    documentId: d.documentId ?? '', programId: d.programId ?? '', contentHash: d.contentHash ?? '',
+  }))));
+  if (scope) {
+    // Ledger/counts were read before asynchronous retrieval. Refresh within
+    // the current actor scope; failed ledger reads remain explicitly unknown.
+    coverage = await coverageOrUnknown(args.organizationId, programId, admittedOpts);
+    await withRetrievalReadScope(scope, async () => undefined);
   }
 
   const hits: PassageHit[] = documents.slice(0, limit).map(d => ({

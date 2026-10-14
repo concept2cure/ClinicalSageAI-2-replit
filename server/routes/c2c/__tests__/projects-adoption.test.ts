@@ -10,7 +10,7 @@ import path from 'node:path';
 const mocks = vi.hoisted(() => ({
   poolQuery: vi.fn().mockResolvedValue({ rows: [] }),
   txQuery: vi.fn().mockResolvedValue({ rows: [] }),
-  release: vi.fn(), readFile: vi.fn(), loader: vi.fn(), createSource: vi.fn(),
+  release: vi.fn(), readFile: vi.fn(), loader: vi.fn(), createSource: vi.fn(), processCapturedSource: vi.fn(),
 }));
 const client = { query: mocks.txQuery, release: mocks.release };
 vi.mock('../../../db.js', () => ({
@@ -34,6 +34,11 @@ vi.mock('../../../services/clinical-regulatory-evidence/evidence-spine.service.j
 vi.mock('../../../services/audit/chain.js', () => ({
   hashPayload: () => 'payload-hash-test',
   computeAuditChainSealed: async () => ({ sha256Chain: 'chain-test', hmacSeal: 'seal-test' }),
+}));
+// This route suite verifies capture/audit durability and processing outcomes.
+// Processor identity/lease/commit SQL is covered by its own service suites.
+vi.mock('../../../services/clinical-regulatory-evidence/data-room-processing.js', () => ({
+  processCapturedSource: mocks.processCapturedSource,
 }));
 
 import router from '../projects';
@@ -133,6 +138,8 @@ beforeEach(() => {
   });
   mocks.readFile.mockReset(); mocks.readFile.mockResolvedValue(BYTES);
   mocks.release.mockClear(); mocks.loader.mockClear(); mocks.createSource.mockClear();
+  mocks.processCapturedSource.mockReset();
+  mocks.processCapturedSource.mockResolvedValue({ ok: true, processed: true, status: 'completed' });
   delete process.env.PROGRAM_AUTHZ_MODE;
 });
 
@@ -142,10 +149,11 @@ describe('adoption verifies current owned bytes before capture', () => {
     finalPatch = { original_name: 'current-study.txt', mime_type: 'text/markdown' };
     const res = await adopt();
     expect(res.status).toBe(201);
-    // Captured pending in the transaction, then read after it commits (Data
-    // Room catalog S2): the processing step's UPDATE is the one write after.
-    expect(res.body).toEqual({ adopted: true, sourceId: 41, processed: expect.any(Boolean) });
-    expect(mocks.poolQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE cre_evidence_sources SET'), expect.anything());
+    expect(res.body).toEqual({ adopted: true, sourceId: 41, processed: true,
+      processing: { ok: true, processed: true, status: 'completed' } });
+    expect(mocks.processCapturedSource).toHaveBeenCalledWith(ORG, 41, expect.objectContaining({
+      bytes: BYTES, fileName: 'current-study.txt', mimeType: 'text/markdown', programId: PROGRAM, expectedWorkspaceId: null,
+    }));
     expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG);
     expect(mocks.readFile).toHaveBeenCalledWith(path.resolve(process.cwd(), upload.storage_path));
     expect(mocks.createSource.mock.calls[0][2]).toBe(client);
@@ -234,9 +242,11 @@ describe('adoption protects the database handoff', () => {
 describe('adoption preserves authorization and historical idempotency', () => {
   it('duplicate adoption still verifies bytes and writes no source or audit, including a historical source', async () => {
     duplicate = { id: 16, checksum: HASH, source_type: 'client_document', client_program_id: PROGRAM, is_current: false };
+    mocks.processCapturedSource.mockResolvedValue({ ok: false, processed: false, status: 'stale_source', reasonCode: 'SOURCE_NOT_CURRENT' });
     const res = await adopt();
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ adopted: false, sourceId: 16 });
+    expect(res.body).toMatchObject({ processed: false, processing: { status: 'stale_source', reasonCode: 'SOURCE_NOT_CURRENT' } });
     expect(mocks.loader).toHaveBeenCalledWith(FILE, ORG);
     noCapture();
   });
@@ -275,5 +285,74 @@ describe('adoption preserves authorization and historical idempotency', () => {
     expect((await adopt(appAs(), 'not-a-program')).status).toBe(404);
     expect((await adopt(appAs(), PROGRAM, {})).status).toBe(400);
     expect(mocks.txQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe('adoption reports processing separately from committed capture', () => {
+  it.each([false, true])('releases the capture connection before processing (duplicate=%s)', async isDuplicate => {
+    if (isDuplicate) duplicate = { id: 16, checksum: HASH, is_current: true };
+    const res = await adopt();
+    expect(res.body.processed).toBe(true);
+    const boundary = isDuplicate ? 'ROLLBACK' : 'COMMIT';
+    const boundaryIndex = mocks.txQuery.mock.calls.findIndex(([sql]) => sql === boundary);
+    const boundaryOrder = mocks.txQuery.mock.invocationCallOrder[boundaryIndex];
+    expect(mocks.release).toHaveBeenCalledOnce();
+    expect(mocks.release.mock.invocationCallOrder[0]).toBeGreaterThan(boundaryOrder);
+    expect(mocks.release.mock.invocationCallOrder[0]).toBeLessThan(mocks.processCapturedSource.mock.invocationCallOrder[0]);
+  });
+
+  it('does not process when COMMIT acknowledgement is lost and releases exactly once', async () => {
+    mocks.txQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (sql === 'COMMIT') throw new Error('connection lost while acknowledging COMMIT');
+      return transactionQuery(sql, params);
+    });
+    const res = await adopt();
+    expect(res.status).toBe(500);
+    expect(mocks.processCapturedSource).not.toHaveBeenCalled();
+    expect(sqlCalls().at(-1)).toBe('ROLLBACK');
+    expect(mocks.release).toHaveBeenCalledOnce();
+  });
+
+  it.each(['extraction_failed', 'retryable_failure', 'blocked', 'stale_source', 'busy', 'retry_not_due', 'retry_exhausted'] as const)(
+    'preserves capture and paired audits when processing returns %s', async status => {
+      const processing = { ok: false, processed: false, status, reasonCode: 'SAFE_PROCESSING_REASON' };
+      mocks.processCapturedSource.mockImplementation(async () => {
+        expect(sqlCalls()).toContain('COMMIT');
+        expect(committed.filter(write => write.kind === 'source')).toHaveLength(1);
+        return { ...processing, extracted: { text: null, error: '/private/extractor/failure' } };
+      });
+      const res = await adopt();
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ adopted: true, sourceId: 41, processed: false, processing });
+      expect(committed.filter(write => write.kind === 'audit')).toHaveLength(2);
+      expect(sqlCalls().at(-1)).toBe('COMMIT');
+      expect(mocks.release).toHaveBeenCalledOnce();
+      expect(JSON.stringify(res.body)).not.toMatch(/private|extracted/);
+    });
+
+  it('preserves committed adoption when processing unexpectedly rejects', async () => {
+    mocks.processCapturedSource.mockRejectedValue(new Error('private provider path /private/file'));
+    const res = await adopt();
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ adopted: true, sourceId: 41, processed: false,
+      processing: { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' } });
+    expect(committed.filter(write => write.kind === 'source')).toHaveLength(1);
+    expect(sqlCalls().at(-1)).toBe('COMMIT');
+    expect(mocks.release).toHaveBeenCalledOnce();
+  });
+
+  it.each(['completed', 'already_complete'] as const)('repairs or reads a duplicate through %s without another capture or audit', async status => {
+    duplicate = { id: 16, checksum: HASH, is_current: true };
+    mocks.processCapturedSource.mockImplementation(async () => {
+      expect(sqlCalls().at(-1)).toBe('ROLLBACK');
+      return { ok: true, processed: true, status, extracted: { text: 'private document body' } };
+    });
+    const res = await adopt();
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ adopted: false, sourceId: 16, processed: true,
+      processing: { ok: true, processed: true, status } });
+    expect(mocks.processCapturedSource).toHaveBeenCalledWith(ORG, 16, expect.objectContaining({ bytes: BYTES, programId: PROGRAM, expectedWorkspaceId: null }));
+    noCapture();
+    expect(JSON.stringify(res.body)).not.toContain('private document body');
   });
 });

@@ -91,7 +91,9 @@ export async function loadRecentOutcomeLessons(
 export async function sessionBootstrapBlockFor(opts: {
   priorMessageCount: number;
   organizationId?: number | null;
+  userId?: number | null;
   projectId?: number;
+  projectRef?: string | null;
   threadId?: string;
   atomLimit?: number;
 }): Promise<string> {
@@ -107,7 +109,9 @@ export async function sessionBootstrapBlockFor(opts: {
   try {
     return await buildSessionBootstrapContext({
       organizationId: opts.organizationId as number,
+      userId: opts.userId,
       projectId: opts.projectId,
+      projectRef: opts.projectRef,
       threadId: opts.threadId,
       atomLimit: opts.atomLimit ?? 6,
     });
@@ -118,13 +122,42 @@ export async function sessionBootstrapBlockFor(opts: {
 
 export interface SessionBootstrapInput {
   organizationId: number;
+  userId?: number | null;
   projectId?: number;
+  projectRef?: string | null;
   threadId?: string;
   atomLimit?: number;
 }
 
 /** Optional recall must not hold the first reply behind a stalled source. */
 export const SESSION_RECALL_TIMEOUT_MS = 1500;
+
+async function recallWithinBudget<T>(
+  source: string,
+  load: (signal: AbortSignal) => Promise<T>,
+  fallback: T,
+  unavailable: Set<string>,
+): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(() => load(controller.signal)),
+      new Promise<T>(resolve => {
+        timer = setTimeout(() => {
+          unavailable.add(source);
+          controller.abort();
+          resolve(fallback);
+        }, SESSION_RECALL_TIMEOUT_MS);
+      }),
+    ]);
+  } catch {
+    unavailable.add(source);
+    return fallback;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * Load independent sources concurrently, retaining every source that answers
@@ -134,35 +167,18 @@ export const SESSION_RECALL_TIMEOUT_MS = 1500;
  * prevents a late profile/feature lookup from starting a follow-up query.
  */
 export async function buildSessionBootstrapContext(input: SessionBootstrapInput): Promise<string> {
-  const { organizationId, projectId, threadId } = input;
+  const { organizationId, userId, projectId, projectRef, threadId } = input;
   const atomLimit = input.atomLimit ?? 6;
   const unavailable = new Set<string>();
-
-  const safe = async <T>(
-    source: string,
-    load: (signal: AbortSignal) => Promise<T>,
-    fallback: T,
-  ): Promise<T> => {
-    const controller = new AbortController();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      return await Promise.race([
-        Promise.resolve().then(() => load(controller.signal)),
-        new Promise<T>(resolve => {
-          timer = setTimeout(() => {
-            unavailable.add(source);
-            controller.abort();
-            resolve(fallback);
-          }, SESSION_RECALL_TIMEOUT_MS);
-        }),
-      ]);
-    } catch {
-      unavailable.add(source);
-      return fallback;
-    } finally {
-      clearTimeout(timer);
+  const sourceScope = Object.freeze({ organizationId, userId: userId as number, projectId, projectRef });
+  const requireSourceActor = () => {
+    if (!Number.isSafeInteger(userId) || (userId ?? 0) <= 0 || (userId ?? 0) > 2_147_483_647) {
+      throw new Error('Current source actor is required.');
     }
   };
+
+  const safe = <T>(source: string, load: (signal: AbortSignal) => Promise<T>, fallback: T) =>
+    recallWithinBudget(source, load, fallback, unavailable);
 
   // Shared imports/feature lookup, with each consumer bounded below. No org-
   // spanning cache: the feature decision and all reads belong to this turn.
@@ -200,13 +216,16 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
       safe('vault file recall', async signal => {
         const svc = await catalog;
         signal.throwIfAborted();
-        return svc ? svc.getCatalogBootstrapDigest(organizationId, 12) : undefined;
+        if (!svc) return undefined;
+        requireSourceActor();
+        return svc.getCatalogBootstrapDigestForActor(sourceScope, 12);
       }, undefined),
       safe('chat upload recall', async signal => {
         const svc = await catalog;
         signal.throwIfAborted();
         if (!svc) return undefined;
-        const page = await svc.listChatUploads(organizationId, null, 8);
+        requireSourceActor();
+        const page = await svc.listChatUploadsForActor(sourceScope, { limit: 8 });
         return {
           uploads: page.uploads.map(u => ({
             fileName: u.fileName,
@@ -214,6 +233,10 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
             uploadedAt: u.uploadedAt,
           })),
           hasMore: page.hasMore,
+          actorFiltered: page.actorFiltered,
+          total: page.total,
+          withheld: page.withheld,
+          sourceAccessNotice: page.sourceAccessNotice,
         };
       }, undefined),
     ]);

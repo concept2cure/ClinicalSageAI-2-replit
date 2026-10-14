@@ -26,13 +26,14 @@ vi.mock('../client-intelligence-memory.js', () => ({
 vi.mock('../working-memory.js', () => ({ getLatestWorkingMemoryByThread: sources.working }));
 vi.mock('../vault/document-catalog.service.js', () => ({
   isDocumentCatalogEnabled: sources.catalogEnabled,
-  getCatalogBootstrapDigest: sources.vault,
-  listChatUploads: sources.uploads,
+  getCatalogBootstrapDigestForActor: sources.vault,
+  listChatUploadsForActor: sources.uploads,
 }));
 
 import { buildSessionBootstrapContext, sessionBootstrapBlockFor } from '../ana-session-bootstrap';
 
-const input = { organizationId: 7, projectId: 11, threadId: 'thread-7' };
+const input = { organizationId: 7, userId: 3, projectId: 11, projectRef: '11111111-2222-4333-8444-555555555555', threadId: 'thread-7' };
+const sourceScope = { organizationId: 7, userId: 3, projectId: 11, projectRef: input.projectRef };
 const delay = <T>(value: T, ms = 200) => new Promise<T>(resolve => setTimeout(() => resolve(value), ms));
 
 beforeEach(() => {
@@ -47,9 +48,9 @@ beforeEach(() => {
   sources.catalogEnabled.mockResolvedValue(true);
   sources.vault.mockImplementation(() => delay({
     files: [{ fileName: 'study.pdf', documentTitle: 'Study report', placementStatus: 'confirmed', catalogStatus: 'cataloged' }],
-    total: 1, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0,
+    total: 1, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0, actorFiltered: true,
   }));
-  sources.uploads.mockImplementation(() => delay({ uploads: [{ fileName: 'prior-upload.pdf', fileId: 'file-7' }], hasMore: false }));
+  sources.uploads.mockImplementation(() => delay({ uploads: [{ fileName: 'prior-upload.pdf', fileId: 'file-7' }], hasMore: false, actorFiltered: true, total: 1, withheld: 0 }));
 });
 
 afterEach(() => {
@@ -72,8 +73,8 @@ describe('session recall latency', () => {
     expect(sources.working).toHaveBeenCalledWith('thread-7', 7);
     expect(sources.projectProfile).toHaveBeenCalledWith(11, 7);
     expect(sources.clientAtoms).toHaveBeenCalledWith(102, 7, { limit: 40 });
-    expect(sources.vault).toHaveBeenCalledWith(7, 12);
-    expect(sources.uploads).toHaveBeenCalledWith(7, null, 8);
+    expect(sources.vault).toHaveBeenCalledWith(sourceScope, 12);
+    expect(sources.uploads).toHaveBeenCalledWith(sourceScope, { limit: 8 });
     expect(text).not.toContain('Session recall incomplete');
   });
 
@@ -131,5 +132,42 @@ describe('session recall latency', () => {
     expect(await result).not.toContain('Session recall incomplete');
     expect(sources.vault).not.toHaveBeenCalled();
     expect(sources.uploads).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('source-file recall uses current actor admission', () => {
+  it('does not read files with a missing actor, while preserving other recall and naming the gap', async () => {
+    const result = buildSessionBootstrapContext({ ...input, userId: undefined });
+    await vi.runAllTimersAsync();
+    const text = await result;
+    expect(sources.vault).not.toHaveBeenCalled();
+    expect(sources.uploads).not.toHaveBeenCalled();
+    expect(text).toContain('Project fact');
+    expect(text).toContain('Session recall incomplete');
+    expect(text).toContain('vault file recall');
+    expect(text).toContain('chat upload recall');
+    expect(text).not.toContain('Study report');
+  });
+  it('keeps an explicit refused scope unavailable and consumes safe failure without disclosing details', async () => {
+    sources.vault.mockRejectedValue(new Error('private sentinel detail'));
+    sources.uploads.mockRejectedValue(new Error('private upload sentinel'));
+    const result = sessionBootstrapBlockFor({ ...input, priorMessageCount: 0 });
+    await vi.runAllTimersAsync();
+    const text = await result;
+    expect(sources.vault).toHaveBeenCalledWith(sourceScope, 12);
+    expect(text).toContain('Session recall incomplete');
+    expect(text).not.toContain('private sentinel');
+    expect(text).not.toContain('private upload');
+    expect(text).not.toContain('no files');
+  });
+  it('org-level source recall carries the actor and no fabricated project', async () => {
+    const result = buildSessionBootstrapContext({ organizationId: 7, userId: 3 });
+    await vi.runAllTimersAsync();
+    const text = await result;
+    expect(sources.vault).toHaveBeenCalledWith({ organizationId: 7, userId: 3, projectId: undefined, projectRef: undefined }, 12);
+    expect(sources.uploads).toHaveBeenCalledWith({ organizationId: 7, userId: 3, projectId: undefined, projectRef: undefined }, { limit: 8 });
+    expect(text).toContain('accessible source scope');
+    expect(text).not.toContain('this is all of them');
   });
 });

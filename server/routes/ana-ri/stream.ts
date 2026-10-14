@@ -102,7 +102,7 @@ import {
   type ModelTurn,
   type FailedToolCall,
 } from '../../services/ana/agentic-loop.js';
-import { readReceiptContext, settleReadReceipts, type DeferredReadReceipts } from '../../services/ana/read-receipts.js';
+import { guardReadResultsForHandoff, readReceiptContext, settleReadReceipts, withdrawSourceReadResult, type DeferredReadReceipts } from '../../services/ana/read-receipts.js';
 import { buildSteerMessage } from '../../services/ana/operator-channel.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
@@ -1498,6 +1498,8 @@ export function mountStreamRoute(router: Router): void {
         priorMessageCount: streamPriorTurns,
         organizationId: orgId ? Number(orgId) : null,
         projectId: streamProjectIdNumber ?? undefined,
+        userId: guardUserId,
+        projectRef: admittedProject.projectRef,
         threadId: threadId ?? undefined,
         atomLimit: 6,
       });
@@ -2494,6 +2496,7 @@ export function mountStreamRoute(router: Router): void {
           const roundTitles = await resolveStepDocumentTitles(calls, {
             organizationId: orgId,
             ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
+          userId: guardUserId,
           });
           res.write(
             `data: ${JSON.stringify({
@@ -3037,8 +3040,12 @@ export function mountStreamRoute(router: Router): void {
           // carry all prior results forward). Small rounds pass through under the
           // classic per-result caps, byte-identical to before. A read goes whole
           // or not at all, and its receipt is written only if it went whole.
-          const budgeted = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
-          await settleReadReceipts(entries, budgeted, readReceipts);
+          const staged = budgetToolResultsForModel(entries, { wholeOrNothing: readReceipts });
+          const budgeted = await guardReadResultsForHandoff(entries, staged, readReceipts, { signal: runSignal });
+          const sourceReadIds = [...new Set([...readReceipts.keys(), ...entries.filter(e => e.name === 'read_project_document').map(e => e.tool_use_id)])];
+          await settleReadReceipts(entries, budgeted, readReceipts, undefined, {
+            signal: runSignal, onSourceRefused: () => sourceReadIds.forEach(id => withdrawSourceReadResult(budgeted, id, { signal: runSignal })),
+          });
           // What the model will read of each result, where the budget or the
           // drive-budget amendment changed it from what the tool returned.
           turnRecorder?.setSentToModel(budgeted);
@@ -3162,7 +3169,9 @@ export function mountStreamRoute(router: Router): void {
           round: number,
           includeTools: boolean
         ): Promise<ModelTurn> => {
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           await settleMoves(round);
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           stageRound(results, priorText, round);
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
@@ -3182,6 +3191,7 @@ export function mountStreamRoute(router: Router): void {
           let roundText = '';
           // What this round sends, kept for its record (MC-RL-8).
           const roundThinking = followUpThinking();
+          if (runSignal?.aborted) return { text: '', toolCalls: [] };
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
             // Every agentic round is bound to the same tenant as the first.

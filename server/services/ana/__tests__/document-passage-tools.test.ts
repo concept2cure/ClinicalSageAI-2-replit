@@ -36,7 +36,8 @@ vi.mock('../../vault/document-passage-search.js', () => ({
   searchDocumentPassages,
   PassageSearchUnavailableError: FakeUnavailable,
 }));
-vi.mock('../../vault/document-catalog.service.js', () => ({
+vi.mock('../../vault/document-catalog.service.js', async () => ({
+  withAnaSourceReadScope: (await import('./support/source-read-tool-fixture.js')).syntheticReadWrapper,
   isDocumentCatalogEnabled: vi.fn(async () => true),
 }));
 
@@ -93,7 +94,7 @@ describe('what it returns on a hit', () => {
     expect(searchDocumentPassages).toHaveBeenCalledWith(
       { organizationId: 42, organizationUuid: CTX.organizationUuid, query: 'mortality at the high dose' },
       // No project open: the organization's passages (PF-10 S7).
-      { limit: 8, programId: null },
+      expect.objectContaining({ limit: 8, programId: null, sourceReadScope: expect.objectContaining({ userId: 7, actorFiltered: true }) }),
     );
   });
 
@@ -103,7 +104,7 @@ describe('what it returns on a hit', () => {
       coverage: { total: 1, indexed: 1, pending: 0, failed: 0 },
     });
     await call({ query: 'anything', limit: 500 });
-    expect(searchDocumentPassages.mock.calls[0][1]).toEqual({ limit: 25, programId: null });
+    expect(searchDocumentPassages.mock.calls[0][1]).toMatchObject({ limit: 25, programId: null, sourceReadScope: { userId: 7, actorFiltered: true } });
   });
 });
 
@@ -295,7 +296,8 @@ describe('what it says when it could not look', () => {
       throw new Error('connection reset');
     });
     const out = await call({ query: 'stability at 6 months' });
-    expect(out.error).toContain('connection reset');
+    expect(out).toMatchObject({ ok: false, code: 'DOCUMENT_REQUEST_FAILED' });
+    expect(out.error).not.toContain('connection reset');
     expect(out.passages).toBeUndefined();
   });
 

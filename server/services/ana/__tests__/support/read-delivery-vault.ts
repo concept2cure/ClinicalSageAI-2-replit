@@ -21,6 +21,7 @@
  * production one namespace). A round of parallel reads is the case under test,
  * so the gates hand this service over directly instead.
  */
+import { createHash } from 'node:crypto';
 import { assertCatalogWriteAllowed, computeCoverage, type Span } from '../../../vault/document-catalog-core.js';
 import { unframeToolOutput } from '../../tool-output-frame.js';
 
@@ -60,7 +61,7 @@ export function plant(text: string, sentence: string, at: number): string {
 }
 
 export function addDocument(id: string, text: string, catalog?: Record<string, unknown>): void {
-  store.documents.set(id, { id, text, contentHash: `hash-${id}`, catalog });
+  store.documents.set(id, { id, text, contentHash: createHash('sha256').update(text).digest('hex'), catalog });
 }
 
 /** Every receipt written for a document, in order. */
@@ -76,7 +77,7 @@ function coverageOf(documentId: string, contentHash: string, charCount: number) 
 function rowOf(doc: StoredDocument) {
   return {
     id: doc.id,
-    programId: null,
+    programId: '90000000-0000-4000-8000-000000000001',
     fileName: `${doc.id}.txt`,
     documentTitle: `Report ${doc.id}`,
     extractedText: doc.text,
@@ -103,8 +104,22 @@ function rowOf(doc: StoredDocument) {
 }
 
 /** The module the catalog tools load as `svc`. */
+const fixtureProgram = '90000000-0000-4000-8000-000000000001';
+const fixtureScope = (input: { organizationId: number; userId: number }) => ({ organizationId: input.organizationId, userId: input.userId,
+  role: 'member', projectId: null, programId: null, accessibleProgramIds: [fixtureProgram], actorFiltered: true as const });
+
 export function serviceMock() {
   return {
+    withAnaSourceReadScope: async (input: any, run: any) => run({}, fixtureScope(input)),
+    revalidateActorSourceScope: async () => {},
+    loadDocumentForActor: async (input: any) => {
+      const doc = store.documents.get(input.documentId);
+      if (!doc) return null;
+      return { ...rowOf(doc), admittedScope: fixtureScope(input), isCurrent: true,
+        extractedTextSha256: createHash('sha256').update(doc.text).digest('hex'),
+        sourceAccess: { actorFiltered: true, currentVersion: true, retainedTextOnly: false, currentUseEligible: true,
+          receiptEligible: true, scope: 'accessible_projects', notice: 'Synthetic actor-accessible current source.' } };
+    },
     isDocumentCatalogEnabled: async () => true,
     loadDocumentForOrg: async (id: string) => {
       const doc = store.documents.get(id);
@@ -123,6 +138,30 @@ export function serviceMock() {
       if (!verdict.allowed) return { ok: false, refusal: verdict.reason, coverage };
       return { ok: true, embeddingStatus: 'failed' as const };
     },
+  };
+}
+
+function validSyntheticSpan(snapshot: any, length: number): boolean {
+  return snapshot.totalChars === length && Number.isSafeInteger(snapshot.span?.start) && Number.isSafeInteger(snapshot.span?.end) &&
+    snapshot.span.start >= 0 && snapshot.span.end > snapshot.span.start && snapshot.span.end <= length;
+}
+
+/** Source snapshot proof in this synthetic Vault only; real guards have separate DB tests. */
+export function receiptHelperMock(actor = { organizationId: 42, userId: 7 }) {
+  const verify = async (receipt: any) => {
+    const snapshot = receipt.sourceSnapshot;
+    const doc = store.documents.get(snapshot?.documentId);
+    if (!doc || snapshot.organizationId !== actor.organizationId || snapshot.userId !== actor.userId || snapshot.programId !== fixtureProgram ||
+        snapshot.contentHash !== doc.contentHash || snapshot.extractedTextSha256 !== createHash('sha256').update(doc.text).digest('hex') ||
+        !validSyntheticSpan(snapshot, doc.text.length)) {
+      throw new Error('SYNTHETIC_SOURCE_SNAPSHOT_CHANGED');
+    }
+  };
+  return {
+    verifyDeferredReadReceipt: verify,
+    writeGuardedLegacyReadReceipt: async (receipt: any) => { await verify(receipt); await serviceMock().recordReadReceipt(receipt); },
+    // Host-budget fixture remains a legacy-only writer; durable storage has its own controls.
+    writeGuardedReadReceipt: async (receipt: any) => { await verify(receipt); await serviceMock().recordReadReceipt(receipt); },
   };
 }
 

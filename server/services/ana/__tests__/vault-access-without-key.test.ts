@@ -44,7 +44,21 @@ vi.mock('../../../db/tenantStore.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../db/tenantStore.js')>()),
   getTenantScope: () => ({ tenantId: '42', role: 'member', source: 'request' }),
 }));
-vi.mock('../../vault/document-catalog.service.js', () => ({
+// This suite qualifies keyless ranking and merging, using an explicitly admitted synthetic actor.
+vi.mock('../../vault/document-catalog-actor-access.js', () => ({ withAnaSourceReadScope: syntheticActorWrapper }));
+vi.mock('../source-read-scope.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../source-read-scope.js')>(),
+  revalidateAnaSourceReadScope: async (_q: unknown, scope: unknown) => scope,
+}));
+async function syntheticActorWrapper(input: any, run: any) {
+  const scope = { organizationId: input.organizationId, userId: input.userId, role: 'viewer', projectId: null, programId: null,
+    accessibleProgramIds: ['a0000000-0000-4000-8000-00000000000a'], actorFiltered: true };
+  return run({ query: async () => ({ rows: [{ document_id: STABILITY.id, program_id: STABILITY.program.id, content_hash: STABILITY.contentHash }] }) }, scope);
+}
+vi.mock('../../vault/document-catalog.service.js', async () => ({
+  withAnaSourceReadScope: syntheticActorWrapper, revalidateActorSourceScope: async () => {},
+  listProjectDocumentsForActor: h.list, listChatUploadsForActor: h.uploads,
+  loadDocumentForActor: async (input: any, opts: any) => (await import('./support/source-read-tool-fixture.js')).syntheticActorDocument(input, opts, h.docOf),
   isDocumentCatalogEnabled: h.catalogOn,
   listProjectDocuments: h.list,
   listChatUploads: h.uploads,
@@ -73,6 +87,7 @@ const STABILITY = {
   placementStatus: 'confirmed',
   version: '1',
   current: true,
+  contentHash: 'a'.repeat(64),
   snippet: 'assay remained within <b>specification</b> at 24 months',
   program: { id: 'a0000000-0000-4000-8000-00000000000a', name: 'Program A' },
 };
@@ -116,7 +131,7 @@ describe('AnA reaches the Vault with no key and the catalog off', () => {
   it('a document found both ways is one hit that says so', async () => {
     h.catalogOn.mockResolvedValue(true);
     h.semantic.mockResolvedValue({
-      hits: [{ documentId: STABILITY.id, programId: STABILITY.program.id, title: STABILITY.title, similarity: 0.82 }],
+      hits: [{ documentId: STABILITY.id, programId: STABILITY.program.id, contentHash: STABILITY.contentHash, title: STABILITY.title, similarity: 0.82 }],
       searchedCount: 3,
       unsearchableCount: 0,
     });

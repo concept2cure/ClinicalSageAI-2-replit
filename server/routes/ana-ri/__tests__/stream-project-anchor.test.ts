@@ -110,7 +110,7 @@ beforeEach(() => {
 describe('a program UUID reaches the project readers as its linked project id', () => {
   it('memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped', async () => {
     h.state.script = [[{ id: 'tu_1', name: 'search_literature', input: { query: 'endpoint' } }], 'Done.'];
-    await streamTurn(app, { message: 'Review the project', project_id: PROGRAM });
+    await streamTurn(app, { message: 'Review the project', project_id: PROGRAM, userId: 999, user_id: 999 });
 
     expect(io.resolve).toHaveBeenCalledTimes(1);
     expect(io.resolve.mock.calls[0][1]).toMatchObject({ ref: PROGRAM, orgId: 7 });
@@ -118,7 +118,7 @@ describe('a program UUID reaches the project readers as its linked project id', 
     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({ projectId: PROGRAM, projectIdNumber: 42 }));
     // Enrichment keeps the UUID for the reads keyed on the program (CMC build state).
     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ projectId: PROGRAM, project: { status: 'linked', id: 42 } }));
-    expect(io.bootstrap).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
+    expect(io.bootstrap).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42, projectRef: PROGRAM, userId: 3 }));
     expect(io.logToolRun).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
     expect(io.reflect).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
   });

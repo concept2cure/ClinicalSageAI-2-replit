@@ -1,0 +1,217 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T20:56:35.286Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:56:35.287Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+{
+  "timestamp": "2026-10-14T20:56:35.287Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal)
+{
+  "timestamp": "2026-10-14T20:56:38.946Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission)
+{
+  "timestamp": "2026-10-14T20:56:38.951Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "11111111-1111-4111-8111-000000000011",
+    "error": "Synthetic receipt INSERT permission denied"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 211ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 2. six reads over the round budget: none is cut, and each past the budget is "read again from" with no receipt 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 3. catalog_project_document refuses after a read whose text never reached the model whole 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > read_project_document through the stream route > 4. a sentence planted at 6,000–7,000 of 40,000 characters is in what the model received whenever a receipt covers it 19ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > withdraws changed exact source text before the follow-up gateway and writes no span 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream source reads at the actual host handoff > does not send a new follow-up request or write a span when cancellation occurs at handoff 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (source_refusal) 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts > stream observes source refusal during guarded receipt insertion > keeps source authority distinct from persistence (receipt_permission) 5ms
+stderr | server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > source admission metadata customer-data lifecycle > preserves an existing narrowed tenant purge and its retained audit
+{
+  "timestamp": "2026-10-14T20:56:39.781Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 4,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:synthetic-final-export",
+    "deletedRows": {
+      "documents": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > reports only the actual door count in the returned result and retained audit row
+{
+  "timestamp": "2026-10-14T20:56:39.792Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 4,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:synthetic-final-export",
+    "deletedRows": {
+      "ana_source_read_receipts": 3,
+      "organization_users": 1,
+      "documents": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 3
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > records an absent optional store as absent, without claiming zero rows were erased
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > records an absent optional store as absent, without claiming zero rows were erased
+{
+  "timestamp": "2026-10-14T20:56:39.793Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 4,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:synthetic-final-export",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > reserves sources before status/hold state and before deleting actor rows
+{
+  "timestamp": "2026-10-14T20:56:39.797Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 4,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:synthetic-final-export",
+    "deletedRows": {
+      "ana_source_read_receipts": 3,
+      "organization_users": 1,
+      "documents": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "sourceReadReceiptErasure": {
+      "receipts": 3
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > source admission metadata customer-data lifecycle > preserves an existing narrowed tenant purge and its retained audit 5ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > source admission metadata customer-data lifecycle > withholds runtime mutation grants after the broad schema grants 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > source admission metadata customer-data lifecycle > detects mutation privileges on the source receipt store rather than treating it as mutable working data 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > source admission metadata customer-data lifecycle > registers append-only runtime grants and the controlled erasure door before actor/source parents 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > source admission metadata customer-data lifecycle > does not let runtime grant refresh revoke the reviewed exact purge door 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rolls back new metadata erasure when final status UPDATE is unconfirmed {"statusRows":[],"statusRowCount":0} 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rolls back new metadata erasure when final status UPDATE is unconfirmed {"statusRows":[{"purged_at":null}],"statusRowCount":1} 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rolls back new metadata erasure when final status UPDATE is unconfirmed {"statusRows":[{"purged_at":"2026-10-14T00:00:00.000Z"}],"statusRowCount":0} 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rolls back new metadata erasure when final status UPDATE is unconfirmed {"statusRows":[{"purged_at":"2026-10-14T00:00:00.000Z"}],"statusRowCount":null} 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rolls back new metadata erasure when final status UPDATE is unconfirmed {"statusRows":[{"purged_at":"unverified-time"}],"statusRowCount":1} 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses an installed append-only store without its governed erasure door 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > reports only the actual door count in the returned result and retained audit row 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > records an absent optional store as absent, without claiming zero rows were erased 2ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses unconfirmed erasure counts [] 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses unconfirmed erasure counts [ { receipts: null } ] 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses unconfirmed erasure counts [ { receipts: '' } ] 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses unconfirmed erasure counts [ { receipts: false } ] 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses unconfirmed erasure counts [ { receipts: -1 } ] 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses unconfirmed erasure counts [ { receipts: 1.5 } ] 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses unconfirmed erasure counts [ { receipts: 1 }, { receipts: 1 } ] 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > reserves sources before status/hold state and before deleting actor rows 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rechecks status and retention after the source reservation wait 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > refuses a final export that disappeared after preflight 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > keeps a legal-hold barrier before the fresh hold check and all erasure 0ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rolls back receipt erasure when a later required control fails {"auditFailure":true} 1ms
+ ✓ server/services/tenant/__tests__/tenant-source-read-receipts.test.ts > controlled source admission metadata erasure > rolls back receipt erasure when a later required control fails {"laterRetentionFailure":true} 0ms
+
+ Test Files  2 passed (2)
+      Tests  34 passed (34)
+   Start at  20:56:30
+   Duration  8.91s (transform 4.96s, setup 81ms, import 8.09s, tests 306ms, environment 0ms)
+

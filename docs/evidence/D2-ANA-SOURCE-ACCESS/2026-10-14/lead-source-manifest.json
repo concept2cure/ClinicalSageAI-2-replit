@@ -1,0 +1,20 @@
+{
+  "files": {
+    "server/services/ana-session-bootstrap.ts": "cae3882ebbe207454276aa9fb90cc51f4b05addf68f26ba54a427e1f06023844",
+    "server/services/ana-session-bootstrap-format.ts": "7abd75b6ab686d8edde04ce479fc6933f1d99260b3974d73ce602e85741aa29b",
+    "server/services/ana/source-context-admission.ts": "87bf8b3e748da51b2c9be7d0da76750aa4b32e8c4cece98c82ab4f145498eb12",
+    "server/routes/chat/send-message.ts": "829b4c02051961225391a7303b3ce7ca7819b2afb37bb26f34bb89b44c2b37d3",
+    "server/routes/ana-ri/stream.ts": "ed0cd05a4d965de54f2ae754b845633acb4b51b656a06aab8d48cc596355db27",
+    "server/services/ana/AnaToolExecutor.ts": "ae780b532e756cb63e2a4da49e37c3e817c70d472869145a2db18b4261f33697",
+    "server/services/__tests__/ana-session-bootstrap-latency.test.ts": "3905c52f67b61d610e56ca87c53b41f926663ca8bd982db71a754987b89cf291",
+    "server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts": "55912de4cdc17dc3af883c4d610c73b0f3c55849c69f16075a00ade8751263f8",
+    "server/routes/ana-ri/__tests__/stream-read-delivery.test.ts": "5c3057a7465376ce8ea7f66508cb778071ae62a64f319c68a4708186682d44f3",
+    "server/routes/ana-ri/__tests__/stream-project-anchor.test.ts": "1501857b8d4b46138514aa4164bb43ce32428cf3c0dbbda4f46a25e61941c21e",
+    "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts": "0f6a2f21c9531721bb36fc62c8de0b07043ca2c30890aa9a567b21431ceea81d",
+    "server/routes/chat/__tests__/send-message-private-project.test.ts": "c7cb2c102672e00731e54623f1006a1b8a013884209dfd3b0d146ea67217e6b0",
+    "server/services/ana/__tests__/source-context-admission.pglite.test.ts": "a6eabc694891ed7b6e51a816b754afa4ddc31ee8de3a48599935f2c62d0c0bee",
+    "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts": "7efc598806f966e1c60cb9443702a00fbc0a4cf8f1e6af142f7d53a1256406af"
+  },
+  "scope": "Root-owned production, integration controls and exact canonical-fixture DDL updates; final nine-root plus three-host-root target diagnostics in separate logs. Not all listed legacy fixture roots have been separately typechecked.",
+  "lastCallerFix": "Authenticated actor forwarded to mounted title enrichment; lead-stream-typecheck-final.txt qualifies final stream target, previous host/nine-root logs qualify other owned roots."
+}

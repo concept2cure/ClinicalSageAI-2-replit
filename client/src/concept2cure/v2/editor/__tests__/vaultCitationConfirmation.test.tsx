@@ -9,7 +9,7 @@ import { ProjectFilesPanel } from '../ProjectFilesPanel';
 import type { FireToast } from '../../toast';
 
 const programId = '11111111-1111-4111-8111-111111111111';
-const source = { id: 5, title: 'Protocol', checksum: 'sha-protocol', extractionStatus: 'extracted',
+const source = { id: 5, title: 'Protocol', checksum: 'sha-protocol', extractionStatus: 'extracted', textAvailable: true,
   isCurrent: true, dataEligible: true, originalFileAvailable: true };
 const upload = { id: 'upload-5', num: '', title: 'Protocol', type: 'Protocol', status: 'unfiled', pct: null,
   owner: '', ver: '', updated: '', preview: '', src: 'upload', docId: 'upload-5', hash: 'sha-protocol' };

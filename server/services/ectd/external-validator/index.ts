@@ -1,8 +1,8 @@
 /**
  * External eCTD validator seam — barrel + resolver.
  *
- * Resolves the active validator: the licensed LORENZ adapter when configured,
- * else the fail-closed no-op. The dispatch-readiness wrapper calls
+ * Resolves an external LORENZ adapter, opted-in internal subset or unavailable
+ * no-op, retaining the selected kind. The dispatch-readiness wrapper calls
  * `resolveExternalValidator()`, runs `validate()` on the unzipped package, and
  * feeds the result through `evaluateExternalValidationGate` (see gate.ts).
  *
@@ -23,9 +23,10 @@ import { FdaCriteriaValidatorAdapter } from './fda-criteria-adapter';
 
 /**
  * The active external validator, in preference order:
- *   1. licensed LORENZ engine when configured (the real agency-grade validator);
+ *   1. LORENZ external adapter when its path/endpoint is configured (configuration
+ *      is not proof of licence, actual provider identity or qualified coverage);
  *   2. the opt-in, license-free FDA-criteria subset (EVALIDATOR_USE_FDA_CRITERIA_FALLBACK)
- *      — raises the floor but is explicitly NOT a substitute for the agency validator;
+ *      — raises the floor but never satisfies the external-engine requirement;
  *   3. the fail-closed no-op (honest about not having run; keeps the dispatch gate
  *      fail-closed under ECTD_REQUIRE_EVALIDATOR).
  */

@@ -46,6 +46,7 @@ import { findExportReceipt, type ExportReceipt } from '../tenant-export/tenant-f
 import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
 import { getStorageProviderFor } from '../storage';
 import { recordPurge, type PurgeAuditContext } from './tenant-purge-audit';
+import { reserveSourceReadReceiptPurge } from './tenant-source-read-receipt-purge';
 
 const logger = createScopedLogger('tenant-offboarding');
 
@@ -446,8 +447,9 @@ async function purgeChildTable(
  * checks is still seen. A deployment without the vault schema has no hold
  * table, and so no holds; any other failure to read aborts the purge.
  */
-async function assertNoActiveLegalHold(client: PoolClient, organizationId: number): Promise<void> {
+async function assertNoActiveLegalHold(client: PoolClient, organizationId: number, strict = false): Promise<void> {
   const present = await client.query(`SELECT to_regclass('vault.legal_holds') IS NOT NULL AS present`);
+  if (strict) requireKnownHoldPresence(present.rows);
   if (!present.rows[0]?.present) return;
   const { rows } = await client.query(
     `SELECT count(*)::int AS active
@@ -455,7 +457,7 @@ async function assertNoActiveLegalHold(client: PoolClient, organizationId: numbe
       WHERE organization_id = $1 AND lifted_at IS NULL`,
     [organizationId]
   );
-  const active = rows[0]?.active ?? 0;
+  const active = strict ? confirmedActiveHoldCount(rows) : rows[0]?.active ?? 0;
   if (active > 0) {
     throw new OffboardingStateError(
       'LEGAL_HOLD_ACTIVE',
@@ -463,6 +465,19 @@ async function assertNoActiveLegalHold(client: PoolClient, organizationId: numbe
         'destroyed; lift each hold, with a reason, before purging.'
     );
   }
+}
+
+function requireKnownHoldPresence(rows: any[]): void {
+  if (rows.length !== 1 || rows[0]?.present !== true) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_UNAVAILABLE', 'The legal-hold state could not be verified. Nothing was purged.');
+  }
+}
+
+function confirmedActiveHoldCount(rows: any[]): number {
+  if (rows.length !== 1 || typeof rows[0]?.active !== 'number' || !Number.isSafeInteger(rows[0].active) || rows[0].active < 0) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_UNAVAILABLE', 'The active legal-hold count could not be verified. Nothing was purged.');
+  }
+  return rows[0].active;
 }
 
 /** What the purge did to the vault's stored bytes, which live outside the database. */
@@ -539,6 +554,9 @@ export interface RunEventErasure {
   events: number;
 }
 
+/** Tenant-owned exact-source host-admission metadata erased through its door. */
+export interface SourceReadReceiptErasure { receipts: number; }
+
 /** What the purge erased of the tenant's artifact signatures and lock snapshots. */
 export interface ArtifactRecordErasure {
   signatures: number;
@@ -572,6 +590,13 @@ export interface ArtifactRecordErasure {
  */
 export const PURGE_DOORS = Object.freeze([
   {
+    tables: ['ana_source_read_receipts'],
+    fn: 'purge_tenant_source_read_receipts',
+    columns: ['receipts'],
+    erasure: 'sourceReadReceiptErasure',
+    unavailable: 'SOURCE_READ_RECEIPT_PURGE_UNAVAILABLE',
+  },
+  {
     tables: ['ana_turn_records', 'ana_record_blobs'],
     fn: 'purge_tenant_turn_records',
     columns: ['records', 'blobs'],
@@ -596,13 +621,16 @@ export const PURGE_DOORS = Object.freeze([
 type PurgeDoor = (typeof PURGE_DOORS)[number];
 
 /** Erase a door's tables for the tenant; the counts it returns, by column. */
-async function eraseThroughDoor(client: PoolClient, door: PurgeDoor, organizationId: number): Promise<Record<string, number>> {
-  const zero = Object.fromEntries(door.columns.map((c) => [c, 0]));
+async function eraseThroughDoor(client: PoolClient, door: PurgeDoor, organizationId: number): Promise<Record<string, number> | null> {
   const present = await client.query(
     'SELECT to_regclass($1) IS NOT NULL AS present, to_regprocedure($2) IS NOT NULL AS door',
     [`public.${door.tables[0]}`, `public.${door.fn}(integer)`]
   );
-  if (!present.rows[0]?.present) return zero;
+  const strict = door.fn === 'purge_tenant_source_read_receipts';
+  if (strict && (present.rows.length !== 1 || typeof present.rows[0].present !== 'boolean' || typeof present.rows[0].door !== 'boolean')) {
+    throw new OffboardingStateError(door.unavailable, 'The source receipt purge schema could not be verified. Nothing was purged.');
+  }
+  if (!present.rows[0]?.present) return strict ? null : Object.fromEntries(door.columns.map((c) => [c, 0]));
   if (!present.rows[0]?.door) {
     throw new OffboardingStateError(
       door.unavailable,
@@ -611,7 +639,15 @@ async function eraseThroughDoor(client: PoolClient, door: PurgeDoor, organizatio
   }
   // Identifiers from the frozen list above, never from input.
   const { rows } = await client.query(`SELECT ${door.columns.join(', ')} FROM public.${door.fn}($1)`, [organizationId]);
+  if (strict && (rows.length !== 1 || !confirmedDoorCount(rows[0]?.receipts))) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_UNCONFIRMED', 'Source receipt erasure could not be confirmed. Nothing was purged.');
+  }
   return Object.fromEntries(door.columns.map((c) => [c, Number(rows[0]?.[c] ?? 0)]));
+}
+
+function confirmedDoorCount(value: unknown): boolean {
+  return (typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value)))
+    && Number.isSafeInteger(Number(value)) && Number(value) >= 0;
 }
 
 /**
@@ -644,6 +680,7 @@ interface PurgeTally {
   /** What each door erased (PURGE_DOORS): AnA turn records; the run-event mirror; artifact signatures and lock snapshots. */
   turnRecordErasure: TurnRecordErasure;
   runEventErasure: RunEventErasure;
+  sourceReadReceiptErasure: SourceReadReceiptErasure;
   artifactRecordErasure: ArtifactRecordErasure;
 }
 
@@ -659,6 +696,7 @@ async function deleteTenantRows(
     storedObjects: [],
     turnRecordErasure: { records: 0, blobs: 0 },
     runEventErasure: { events: 0 },
+    sourceReadReceiptErasure: { receipts: 0 },
     artifactRecordErasure: { signatures: 0, snapshots: 0 },
   };
   const opened = new Set<string>();
@@ -670,6 +708,10 @@ async function deleteTenantRows(
       if (!opened.has(door.fn)) {
         opened.add(door.fn);
         const counts = await eraseThroughDoor(client, door, organizationId);
+        if (counts === null) {
+          tally.tablesAbsent.push(...door.tables);
+          continue;
+        }
         Object.assign(tally, { [door.erasure]: counts });
         door.tables.forEach((t, k) => {
           tally.deletedRows[t] = counts[door.columns[k]] ?? 0;
@@ -702,9 +744,10 @@ async function markPurged(
   client: PoolClient,
   organizationId: number,
   purgedByUserId: number,
-  digest: string
+  digest: string,
+  confirmStatus = false
 ): Promise<Date | null> {
-  const { rows } = await client.query(
+  const { rows, rowCount } = await client.query(
     `UPDATE organizations
         SET status                 = 'purged',
             purged_at              = NOW(),
@@ -720,7 +763,18 @@ async function markPurged(
       RETURNING purged_at`,
     [organizationId, purgedByUserId, digest]
   );
+  if (confirmStatus) return confirmedPurgedStatus(rows, rowCount);
   return rows[0]?.purged_at ?? null;
+}
+
+function confirmedPurgedStatus(rows: any[], rowCount: number | null): Date {
+  const value = rows[0]?.purged_at;
+  const isTimestamp = value instanceof Date || typeof value === 'string';
+  const instant = isTimestamp ? new Date(value).getTime() : Number.NaN;
+  if (rowCount !== 1 || rows.length !== 1 || !Number.isFinite(instant)) {
+    throw new OffboardingStateError('SOURCE_READ_RECEIPT_PURGE_STATUS_UNCONFIRMED', 'Tenant purge status persistence could not be confirmed. Nothing was purged.');
+  }
+  return new Date(instant);
 }
 
 function isDocumentDispositionRetentionConflict(error: unknown): boolean {
@@ -755,9 +809,12 @@ async function purgeInOneTransaction(
   try {
     await client.query('BEGIN');
     try {
-      await assertNoActiveLegalHold(client, organizationId);
+      const receiptPurgeReserved = await reserveSourceReadReceiptPurge(client, {
+        organizationId, childTables: input.childTables, receipt: input.receipt, preconditions: input.preconditions,
+      });
+      await assertNoActiveLegalHold(client, organizationId, receiptPurgeReserved);
       const tally = await deleteTenantRows(client, organizationId, input.childTables);
-      const purgedAt = await markPurged(client, organizationId, input.purgedByUserId, input.receipt.digest);
+      const purgedAt = await markPurged(client, organizationId, input.purgedByUserId, input.receipt.digest, receiptPurgeReserved);
       await recordPurge(client, {
         existing: input.existing,
         receipt: input.receipt,
@@ -821,6 +878,7 @@ export async function purgeTenant(
     deletedRows: Record<string, number>;
     turnRecordErasure: TurnRecordErasure;
     runEventErasure: RunEventErasure;
+    sourceReadReceiptErasure: SourceReadReceiptErasure;
     artifactRecordErasure: ArtifactRecordErasure;
   }
 > {
@@ -858,6 +916,7 @@ export async function purgeTenant(
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
     runEventErasure: tally.runEventErasure,
+    sourceReadReceiptErasure: tally.sourceReadReceiptErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
   });
 
@@ -870,6 +929,7 @@ export async function purgeTenant(
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
     runEventErasure: tally.runEventErasure,
+    sourceReadReceiptErasure: tally.sourceReadReceiptErasure,
     artifactRecordErasure: tally.artifactRecordErasure,
   };
 }
@@ -905,6 +965,9 @@ function assertNoRetainedRecords(tables: readonly string[]): void {
  * billing records are needed for revenue recognition after the account closes.
  */
 export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
+  // Immutable customer admission metadata, erased through its narrow door
+  // before the actor/programme/source parents. Its audit/export history stays.
+  'ana_source_read_receipts',
   // Access requests contain the member's free-text business justification and
   // the administrator's decision reason. The canonical audit event survives;
   // this tenant-owned working record does not.

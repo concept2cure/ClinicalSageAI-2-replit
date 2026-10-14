@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+xxx·x·
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: true)
+ FAIL  server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a move between preflight and service load refuses even when both programmes are writable (project open: false)
+AssertionError: expected { ok: true, …(5) } to match object { ok: false, refused: true, …(1) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SOURCE_PROGRAM_CHANGED",
+-   "ok": false,
+-   "refused": true,
++   "ok": true,
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-program-binding.test.ts:52:20
+     50|     h.moveOnSecondLoad = true;
+     51|     const result = await call(input, open ? context : { organizationId…
+     52|     expect(result).toMatchObject({ ok: false, refused: true, code: 'SO…
+       |                    ^
+     53|     expect(h.loads).toBe(2); expect(h.embed).not.toHaveBeenCalled(); e…
+     54|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > a missing preflight cannot become an unadmitted document on a later load
+AssertionError: expected { ok: true, …(5) } to match object { ok: false, idSpace: 'unknown' }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "idSpace": "unknown",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-program-binding.test.ts:57:26
+     55|   it('a missing preflight cannot become an unadmitted document on a la…
+     56|     h.missingPreflight = true; h.moveOnSecondLoad = true;
+     57|     expect(await call()).toMatchObject({ ok: false, idSpace: 'unknown'…
+       |                          ^
+     58|     expect(h.loads).toBe(1); expect(h.embed).not.toHaveBeenCalled(); e…
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/document-catalog-program-binding.test.ts > serving programme binding across catalog source loads > the completion service independently refuses a different expected programme
+AssertionError: expected { ok: true, coverage: { …(4) }, …(2) } to match object { ok: false, …(1) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SOURCE_PROGRAM_CHANGED",
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/ana/__tests__/document-catalog-program-binding.test.ts:65:211
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  06:44:43
+   Duration  2.23s (transform 1.24s, setup 81ms, import 1.89s, tests 23ms, environment 0ms)
+

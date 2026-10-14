@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn() }));
-vi.mock('../catalog-scope', () => ({ catalogScope: mocks.scope }));
-vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForOrg: mocks.load }));
+vi.mock('../catalog-scope', async () => ({ catalogScope: mocks.scope, sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
+vi.mock('../../vault/document-catalog.service', () => ({ revalidateActorSourceScope: async () => {}, loadDocumentForActor: mocks.load }));
 import { loadDraftProjectSources, draftSourcePrompt } from '../draft-project-sources';
 const id = '10000000-0000-4000-8000-000000000001';
 const program = '20000000-0000-4000-8000-000000000001';
@@ -14,8 +14,8 @@ describe('processed project sources for regulatory drafting', () => {
   it('loads saved text, binds source identity/version/span, and deduplicates IDs', async () => {
     const result = await loadDraftProjectSources([id, id], ctx);
     expect(mocks.load).toHaveBeenCalledTimes(2);
-    expect(mocks.load).toHaveBeenNthCalledWith(1, id, 7, { currentOnly: true });
-    expect(mocks.load).toHaveBeenNthCalledWith(2, id, 7, { includeText: true, currentOnly: true });
+    expect(mocks.load).toHaveBeenNthCalledWith(1, expect.objectContaining({ documentId: id, organizationId: 7, userId: 3 }), { currentOnly: true });
+    expect(mocks.load).toHaveBeenNthCalledWith(2, expect.objectContaining({ documentId: id, organizationId: 7, userId: 3 }), { includeText: true, currentOnly: true });
     expect(result).toMatchObject({ status: 'loaded', sources: [{ documentId: id, contentHash: 'a'.repeat(64), completeText: true }] });
     expect(result.sources[0].text).toContain('12 of 30');
   });

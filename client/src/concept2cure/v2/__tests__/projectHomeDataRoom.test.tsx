@@ -41,6 +41,9 @@ function source(over: Record<string, unknown> = {}) {
     checksum: 'sha-1',
     ingestionStatus: 'ingested',
     extractionStatus: 'extracted',
+    textAvailable: (over.extractionStatus ?? 'extracted') === 'extracted',
+    isCurrent: true,
+    dataEligible: true,
     createdAt: '2026-07-20T10:00:00Z',
     mimeType: 'application/pdf',
     fileSize: 2_400_000,
@@ -84,6 +87,49 @@ afterEach(() => {
 });
 beforeEach(() => {
   (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' };
+});
+
+describe('ProjectHome — recorded processing recovery', () => {
+  it('rereads recovered persisted text for the same source without sending a processing mutation', async () => {
+    let recovered = false;
+    mockApi(() => ok({ projectId: PID, sources: [source({ id: 12, title: 'Recovered assay.txt', textAvailable: recovered,
+      processing: { state: recovered ? 'completed' : 'failed', retryable: !recovered, reasonCode: recovered ? null : 'PERSISTENCE_FAILED',
+        leaseExpiresAt: null, nextRetryAt: recovered ? null : '2026-10-14T04:10:00.000Z' } })], unscoped: [] }));
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText('Processing needs retry');
+    recovered = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh sources' }));
+    await screen.findByText('Read');
+    expect((screen.getByLabelText('Use Recovered assay.txt as context') as HTMLInputElement).disabled).toBe(false);
+    expect(screen.queryByText('Processing needs retry')).toBeNull();
+    expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+  it('shows persisted retry-needed processing instead of a premature extracted label', async () => {
+    mockApi(() => ok({ projectId: PID, sources: [source({ title: 'needs-retry.pdf', isCurrent: true, dataEligible: true,
+      extractionStatus: 'extracted', textAvailable: false, processing: { state: 'failed', retryable: true,
+        reasonCode: 'PERSISTENCE_FAILED', leaseExpiresAt: null, nextRetryAt: '2026-10-14T04:10:00.000Z' } })], unscoped: [] }));
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText('needs-retry.pdf');
+    expect(document.body.textContent).toContain('Processing needs retry');
+    expect((screen.getByLabelText('Use needs-retry.pdf as context') as HTMLInputElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: /Write from these sources/ })).toBeNull();
+  });
+
+  it('keeps legacy unknown availability ineligible instead of inventing readable text', async () => {
+    mockApi(() => ok({ projectId: PID, sources: [source({ title: 'unverified.pdf', isCurrent: true, dataEligible: true, textAvailable: undefined })], unscoped: [] }));
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText('unverified.pdf');
+    expect((screen.getByLabelText('Use unverified.pdf as context') as HTMLInputElement).disabled).toBe(true);
+    expect(document.body.textContent).toContain('Text availability unconfirmed');
+  });
+
+  it('shows a superseded source as historical even when its persisted text exists', async () => {
+    mockApi(() => ok({ projectId: PID, sources: [source({ title: 'previous.pdf', isCurrent: false, dataEligible: true, textAvailable: true })], unscoped: [] }));
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText('previous.pdf');
+    expect(document.body.textContent).toContain('Superseded source');
+    expect((screen.getByLabelText('Use previous.pdf as context') as HTMLInputElement).disabled).toBe(true);
+  });
 });
 
 describe('ProjectHome — data room', () => {

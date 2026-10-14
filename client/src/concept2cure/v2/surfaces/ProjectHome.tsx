@@ -27,6 +27,7 @@ import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import { useProgramMarkets } from './programSequence';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
+import { sourceHasGroundingText, sourceReadView } from '@shared/data-room-processing-status';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -312,6 +313,8 @@ function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: st
 const HANDOFF_LIMIT = 10;
 
 interface SourceRow {
+  textAvailable?: boolean | null;
+  processing?: import('@shared/data-room-processing-status').DataRoomProcessingSummary | null;
   id: number;
   title: string | null;
   checksum: string | null;
@@ -427,31 +430,29 @@ function kindLabel(mime: string | null): string {
 /**
  * Whether this source's text is actually available to draft from.
  *
- * Reported from the source's own `extraction_status`, never inferred. A
+ * Reported from persisted text availability and recorded processing state. A
  * document whose text could not be read is shown as such: it is still stored
  * and still has an identity, but a section drafted "from" it would not be
  * grounded in anything, and hiding that would be the worst kind of quiet
  * failure on a regulatory surface.
  */
 function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted' } {
-  if (s.disposition === 'remove_data') return { label: 'Data withdrawn', tone: 'warn' };
-  if (s.disposition === 'supersede') return { label: 'Replaced by newer data', tone: 'muted' };
-  if (s.disposition === 'keep_data') return { label: 'Data retained · original unavailable', tone: 'muted' };
-  if (s.extractionStatus === 'extracted') {
-    return { label: s.extractionMethod?.includes('ocr') ? 'Read via OCR' : 'Read', tone: 'ok' };
-  }
-  if (s.extractionStatus === 'failed') return { label: 'Text not readable', tone: 'warn' };
-  return { label: 'Not processed yet', tone: 'muted' };
+  return sourceReadView(s);
 }
 
 function sourceCanGround(s: SourceRow): boolean {
-  return s.extractionStatus === 'extracted' && s.isCurrent !== false && s.dataEligible !== false;
+  return sourceHasGroundingText(s);
+}
+
+function sourceReadTitle(source: SourceRow): string {
+  return sourceReadView(source).detail ?? 'Reported from persisted source text and processing state';
 }
 
 function sourcePinTitle(s: SourceRow): string {
   if (s.dataEligible === false || s.isCurrent === false) return 'This source is excluded from active data use';
+  if (!sourceCanGround(s)) return 'This source has no confirmed readable text, so it cannot ground a draft';
   if (s.originalFileAvailable === false) return 'Use the retained extracted text as context for AnA; the original file is unavailable';
-  return s.extractionStatus === 'extracted'
+  return sourceCanGround(s)
     ? 'Use this source as context for AnA'
     : 'This source has no readable text, so it cannot ground a draft';
 }
@@ -532,7 +533,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
      counted. The server counts the whole room (currentTotal), not this page. */
   const current = sources.filter(s => s.isCurrent !== false && s.dataEligible !== false);
   const total = state.data?.currentTotal ?? current.length;
-  const readable = current.filter(s => s.extractionStatus === 'extracted').length;
+  const readable = current.filter(sourceCanGround).length;
   const truncated = state.data?.window?.truncated === true;
   const searching = term.length > 0;
   const matched = state.data?.total ?? sources.length;
@@ -557,6 +558,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     <section className="pj-sec">
       <div className="pj-sec-h">
         <h2>Data room</h2>
+        {pid && <button type="button" className="btn ghost" disabled={state.loading} title="Refresh only reads status; it does not retry processing" onClick={() => setReloadKey(k => k + 1)}>Refresh sources</button>}
         <span className="sec-sub">
           {/* A failed read must not read as "no sources". Someone who just
               dropped a file in here would take an empty list as data loss. */}
@@ -741,7 +743,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     <span
                       className={rs.tone === 'ok' ? 'sp-tone-ok' : rs.tone === 'warn' ? 'sp-tone-warn' : undefined}
                       style={{ fontSize: 11.5, whiteSpace: 'nowrap' }}
-                      title="Reported by the source's own extraction status"
+                      title={sourceReadTitle(s)}
                     >
                       {rs.label}
                     </span>

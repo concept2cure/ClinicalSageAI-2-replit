@@ -209,6 +209,7 @@ export const APPEND_ONLY_TABLES = Object.freeze(
     },
     { schema: 'public', name: 'ana_turn_records' },
     { schema: 'public', name: 'ana_record_blobs' },
+    { schema: 'public', name: 'ana_source_read_receipts' },
     { schema: 'public', name: 'authoring_audit_trail' },
     { schema: 'public', name: 'doc_revisions' },
     { schema: 'public', name: 'concept2cure_signatures' },

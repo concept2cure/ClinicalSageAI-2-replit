@@ -1,0 +1,85 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:22:20.687Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:22:21.855Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:22:21.855Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:22:21.855Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible
+{
+  "timestamp": "2026-10-14T06:22:21.947Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault catalog record read failed",
+  "context": {
+    "err": "read unavailable"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries the session actor into canonical reads 24ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into confirm 12ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into correct 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (42) without downgrading to legacy review 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (null) without downgrading to legacy review 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding ({}) without downgrading to legacy review 3ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (false) without downgrading to legacy review 3ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > preserves a canonical source-change refusal 3ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible 4ms
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  06:22:19
+   Duration  2.89s (transform 1.11s, setup 78ms, import 2.46s, tests 74ms, environment 0ms)
+

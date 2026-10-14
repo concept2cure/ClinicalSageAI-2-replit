@@ -1,0 +1,7 @@
+{
+  "fixture": "missing configured database; empty temporary cwd; all five runtime database URL variables removed; inherited LOG_LEVEL deliberately debug",
+  "core_wrapper_export": "pending",
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "{\"code\":\"RECOVERY_UNAVAILABLE\"}\n"
+}

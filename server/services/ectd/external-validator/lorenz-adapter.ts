@@ -1,8 +1,9 @@
 /**
- * LORENZ eValidator adapter — the licensed, agency-grade engine target.
+ * LORENZ eValidator adapter — the external-engine integration target.
  *
  * `isConfigured()` is true only when `EVALIDATOR_BINARY`/`EVALIDATOR_ENDPOINT`
- * points at an existing engine. When configured, `validate()`:
+ * names an accessible path or an HTTP(S) URL. That is configuration discovery,
+ * not evidence of a licence, provider identity or qualified profile. `validate()`:
  *   - CLI mode  (a filesystem path): spawns the engine with a configurable arg
  *     template (`EVALIDATOR_ARGS`, placeholders {packageDir} {profile} {report}),
  *     then reads + parses the report it writes;
@@ -15,7 +16,8 @@
  * no-op is used instead). A configured engine that fails to run or whose report
  * cannot be parsed THROWS — never a fabricated pass. The dispatch gate treats a
  * throw / un-run validation as "not passed", so this can never silently clear a
- * package the agency validator hasn't actually approved.
+ * required gate with an unrun report. A parsed engine pass is not agency
+ * acceptance or proof that the engine/profile was independently qualified.
  *
  * @module server/services/ectd/external-validator/lorenz-adapter
  */
@@ -164,6 +166,7 @@ function runCli(bin: string, args: string[], timeoutMs = 120000): Promise<void> 
 
 export class LorenzEValidatorAdapter implements ExternalValidator {
   readonly name = 'lorenz-evalidator';
+  readonly kind = 'external_engine' as const;
 
   async isConfigured(): Promise<boolean> {
     const bin = evalidatorBinary();

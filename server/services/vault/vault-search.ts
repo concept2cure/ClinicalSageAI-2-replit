@@ -13,9 +13,9 @@
  * Paginated with a real `total`. Current versions only unless asked (VR-09).
  * An empty query is not "match everything": it answers no results and says why.
  *
- * The tenant boundary is IN every statement (the EXISTS on regulatory_programs),
- * not only in a check before it: vault.documents has no organization_id of its
- * own to filter on, and a boundary twenty lines up is the shape that decays.
+ * Every statement checks the recorded source organization and its live owned
+ * parent. Actor programme constraints, when supplied by the server, precede
+ * count, rank and page limit.
  */
 import { supersededSql } from './vault-version-family.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
@@ -38,6 +38,8 @@ export interface VaultSearchParams {
    * answers nothing (D2, docs/evidence/D2/2026-10-01-vault-search-no-key/).
    */
   match?: 'all' | 'any';
+  /** Server-admitted actor scope, applied before count/rank/LIMIT. */
+  allowedProgramIds?: readonly string[];
 }
 
 /**
@@ -54,6 +56,8 @@ export interface VaultSearchHit {
   originalFileAvailable?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   id: string;
+  /** Internal retrieval identity; actor adapters recheck this before returning. */
+  contentHash?: string;
   title: string;
   fileName: string | null;
   documentType: string | null;
@@ -74,9 +78,10 @@ const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(
 export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams): Promise<{ total: number; results: VaultSearchHit[] }> {
   const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q];
   const inProgram = p.programId ? `AND d.program_id = $${params.push(p.programId)}::uuid` : '';
+  const allowed = p.allowedProgramIds === undefined ? '' : `AND d.program_id = ANY($${params.push([...p.allowedProgramIds])}::uuid[])`;
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
-  const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${inProgram}
+  const where = `d.deleted_at IS NULL AND d.organization_id = $1 AND ${vaultDataEligibleSql('d')} ${inProgram} ${allowed}
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
@@ -90,7 +95,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams):
       WHERE ${where}`, params);
   const page = [...params, p.limit, p.offset];
   const rows = await db.query(
-    `SELECT d.id, d.document_title, d.file_name, d.document_type, d.file_size,
+    `SELECT d.id, d.content_hash, d.document_title, d.file_name, d.document_type, d.file_size,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             ${vaultDispositionChoiceSql('d')} AS disposition,
             d.folder_id, d.ctd_section, d.placement_status, d.created_at, d.version,
@@ -118,6 +123,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams):
       originalFileAvailable: r.original_file_available ?? true,
       disposition: r.disposition ?? null,
       id: String(r.id),
+      contentHash: r.content_hash,
       title: r.document_title || r.file_name || 'Untitled',
       fileName: r.file_name ?? null,
       documentType: r.document_type ?? null,

@@ -45,6 +45,7 @@ vi.mock('../../vault/document-catalog.service.js', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ...(await vaultModule()).serviceMock(),
 }));
+vi.mock('../source-read-receipt.js', async importOriginal => ({ ...(await importOriginal<Record<string, unknown>>()), ...(await vaultModule()).receiptHelperMock() }));
 vi.mock('../document-tools-shared.js', async importOriginal => (await vaultModule()).gatesMock(await importOriginal<Record<string, unknown>>()));
 vi.mock('../../../db/tenantStore.js', async importOriginal => ({
   ...(await importOriginal<typeof import('../../../db/tenantStore.js')>()),
@@ -121,7 +122,7 @@ beforeEach(() => {
 
 describe('read_project_document through executeAgenticLoop', () => {
   it('1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received', async () => {
-    const DOC = 'doc-60k';
+    const DOC = '10000000-0000-4000-8000-000000000001';
     addDocument(DOC, prose(60_000));
     let handlerResult = '';
     gateway.script = (_m, call) => (call === 1 ? tools([read('rd1', { document_id: DOC })]) : answer());
@@ -141,7 +142,7 @@ describe('read_project_document through executeAgenticLoop', () => {
   });
 
   it('2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt', async () => {
-    const docs = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'];
+    const docs = Array.from({ length: 6 }, (_, i) => `20000000-0000-4000-8000-00000000000${i + 1}`);
     docs.forEach(id => addDocument(id, prose(20_000, id)));
     const offsets = [0, 0, 0, 0, 2000, 3000];
     gateway.script = (_m, call) =>
@@ -167,7 +168,7 @@ describe('read_project_document through executeAgenticLoop', () => {
   });
 
   it('3. catalog_project_document refuses after a read whose text never reached the model whole', async () => {
-    const DOC = 'doc-30k';
+    const DOC = '10000000-0000-4000-8000-000000000002';
     addDocument(DOC, prose(30_000));
     gateway.script = (_m, call) => (call === 1 ? tools([read('rd1', { document_id: DOC })]) : answer());
 
@@ -182,7 +183,7 @@ describe('read_project_document through executeAgenticLoop', () => {
   });
 
   it('3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through', async () => {
-    const DOC = 'doc-12k';
+    const DOC = '10000000-0000-4000-8000-000000000003';
     addDocument(DOC, prose(12_000));
     gateway.script = follower(DOC, 12);
 
@@ -199,7 +200,7 @@ describe('read_project_document through executeAgenticLoop', () => {
   });
 
   it('4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it', async () => {
-    const DOC = 'doc-40k';
+    const DOC = '10000000-0000-4000-8000-000000000004';
     const SENTENCE = '4.7 PHOTOSTABILITY OF BATCH ZX-9917: no degradant above 0.05% after 1.2 million lux hours. '.repeat(11).slice(0, 1000);
     addDocument(DOC, plant(prose(40_000), SENTENCE, 6000));
     gateway.script = follower(DOC, 6);

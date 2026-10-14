@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
 import {
   bootstrapAtomScore,
   rankBootstrapAtoms,
+  formatVaultFileLine,
   formatSessionBootstrap,
   shouldAutoBootstrap,
   type BootstrapAtom,
@@ -17,6 +18,19 @@ const atom = (over: Partial<BootstrapAtom>): BootstrapAtom => ({
   isVerified: false,
   confidence: 0.5,
   ...over,
+});
+
+describe('catalog recall verification scope', () => {
+  it.each(['suggested', 'confirmed', 'corrected'])('preserves %s provenance and discloses unrecorded scientific context', state => {
+    const text = formatVaultFileLine({ fileName: 'assay.pdf', documentTitle: 'Assay report',
+      placementStatus: 'confirmed', catalogStatus: 'cataloged', catalogState: state });
+    expect(text).toContain('legacy value-presence check');
+    expect(text).toContain('label/context verification is not recorded');
+    expect(text).toContain('scientific qualification is unassessed');
+    if (state === 'confirmed') expect(text).toContain('confirmed by a person');
+    if (state === 'corrected') expect(text).toContain('corrected by a person');
+    if (state === 'suggested') expect(text).toContain('your suggestion, not yet confirmed');
+  });
 });
 
 /**

@@ -19,13 +19,13 @@ import type { ToolContext } from '../AnaToolExecutor.js';
 const h = vi.hoisted(() => ({
   open: vi.fn(async (_db: unknown, _ctx: any): Promise<string | null> => null),
   inOrg: vi.fn(async () => true),
-  list: vi.fn(async () => ({ documents: [], total: 0, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0 })),
-  uploads: vi.fn(async () => ({ uploads: [], hasMore: false })),
+  list: vi.fn(async (_input?: unknown, _opts?: unknown) => ({ documents: [], total: 0, withheld: 0, notYetStudied: 0, extractionFailed: 0, unfiled: 0 })),
+  uploads: vi.fn(async (_input?: unknown, _opts?: unknown) => ({ uploads: [], hasMore: false })),
   docOf: vi.fn(async (): Promise<any> => null),
   receipt: vi.fn(async () => {}),
   complete: vi.fn(async () => ({ ok: true })),
   place: vi.fn(async () => ({ ok: true })),
-  search: vi.fn(async () => ({ hits: [], searchedCount: 0, unsearchableCount: 0 })),
+  search: vi.fn(async (_db?: unknown, _query?: unknown, _opts?: unknown) => ({ hits: [], searchedCount: 0, unsearchableCount: 0 })),
   passages: vi.fn(async () => ({ hits: [] as any[], coverage: null })),
   ownDocs: vi.fn(async (): Promise<{ rows: any[] }> => ({ rows: [] })),
   ingest: vi.fn(async () => ({
@@ -40,6 +40,7 @@ vi.mock('../../c2c/program-access.js', async (importOriginal) => ({
   programInOrganization: h.inOrg,
 }));
 vi.mock('../../../db.js', () => ({ pool: { query: h.ownDocs }, getPool: () => ({ query: h.ownDocs }), db: {} }));
+vi.mock('../../vault/vault-assistant-search.js', () => ({ searchVaultForAssistant: (_db: any, p: any) => h.search(_db, p.query, p) }));
 vi.mock('../../vault/document-catalog-search.js', () => ({
   searchCatalog: h.search,
   CatalogSearchUnavailableError: class extends Error {},
@@ -57,15 +58,22 @@ vi.mock('../uploaded-file-access.js', () => ({
   loadUploadedFile: async () => ({ fileId: 'file_1712345678_ab12cd', fileName: 'f.pdf', mimeType: 'application/pdf', fileSize: 1, buffer: Buffer.from('x') }),
 }));
 vi.mock('../../vault/vault-ingest.service.js', () => ({ ingestVaultDocument: h.ingest }));
-vi.mock('../../vault/document-catalog.service.js', () => ({
+vi.mock('../../vault/document-catalog.service.js', async () => {
+  const { syntheticReadWrapper, syntheticActorDocument } = await import('./support/source-read-tool-fixture.js');
+  return ({
+  withAnaSourceReadScope: syntheticReadWrapper,
+  revalidateActorSourceScope: async () => {},
   isDocumentCatalogEnabled: vi.fn(async () => true),
   listProjectDocuments: h.list,
+  listProjectDocumentsForActor: (input: any, opts: any) => h.list(input, opts),
   listChatUploads: h.uploads,
+  listChatUploadsForActor: (input: any, opts: any) => h.uploads(input, opts),
+  loadDocumentForActor: (input: any, opts: any) => syntheticActorDocument(input, opts, h.docOf),
   loadDocumentForOrg: h.docOf,
   recordReadReceipt: h.receipt,
   completeCatalog: h.complete,
   getReadCoverage: vi.fn(async () => ({ charCount: 10, coveredChars: 10, uncovered: [], complete: true })),
-}));
+}); });
 
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
 import { readReceiptContext, type DeferredReadReceipts } from '../read-receipts.js';
@@ -91,8 +99,8 @@ beforeEach(() => {
 describe('list_project_documents', () => {
   it('a v2 project open: lists that project, not the whole organization', async () => {
     const r = await call('list_project_documents', {}, V2_A);
-    expect(r.scope).toEqual({ programId: A });
-    expect((h.list.mock.calls[0] as any)[1]).toMatchObject({ programId: A });
+    expect(r.scope).toEqual({ programId: A, actorFiltered: true });
+    expect((h.list.mock.calls[0] as any)[0]).toMatchObject({ requestedProgramId: A });
   });
 
   it("another project's documents are refused while a project is open, and nothing is listed", async () => {
@@ -103,12 +111,12 @@ describe('list_project_documents', () => {
 
   it('naming the open project itself is fine', async () => {
     const r = await call('list_project_documents', { program_id: A.toUpperCase() }, V2_A);
-    expect(r.scope).toEqual({ programId: A });
+    expect(r.scope).toEqual({ programId: A, actorFiltered: true });
   });
 
   it('no project open: the organization, as today, or a program of the organization when named', async () => {
-    expect((await call('list_project_documents', {}, NONE)).scope).toEqual({ organizationWide: true });
-    expect((await call('list_project_documents', { program_id: B }, NONE)).scope).toEqual({ programId: B });
+    expect((await call('list_project_documents', {}, NONE)).scope).toEqual({ accessibleProjects: true, actorFiltered: true });
+    expect((await call('list_project_documents', { program_id: B }, NONE)).scope).toEqual({ programId: B, actorFiltered: true });
     h.inOrg.mockResolvedValue(false);
     const foreign = await call('list_project_documents', { program_id: B }, NONE);
     expect(foreign.code).toBe('PROGRAM_NOT_FOUND');
@@ -142,7 +150,7 @@ describe('file_chat_upload_to_vault', () => {
 describe('the by-id tools: the open project\'s documents only', () => {
   const docOf = (programId: string) => ({
     id: 'dddddddd-0000-4000-8000-000000000001', programId, fileName: 'f.pdf', documentTitle: 'Tox',
-    extractedText: 'text body!', contentHash: 'h',
+    extractedText: 'text body!', contentHash: 'a'.repeat(64),
     catalog: { status: 'cataloged', charCount: 10, extractionStatus: 'extracted' },
   });
 
@@ -153,7 +161,7 @@ describe('the by-id tools: the open project\'s documents only', () => {
   ])("%s on another project's document is refused, and nothing is read or written", async (tool, input) => {
     h.docOf.mockResolvedValue(docOf(B));
     const r = await call(tool, input, V2_A);
-    expect(r.code).toBe('CROSS_PROJECT');
+    expect(r.code).toBe(tool === 'place_project_document' ? 'ANA_SOURCE_ACCESS_DENIED' : 'CROSS_PROJECT');
     expect(h.receipt).not.toHaveBeenCalled();
     expect(h.complete).not.toHaveBeenCalled();
     expect(h.place).not.toHaveBeenCalled();

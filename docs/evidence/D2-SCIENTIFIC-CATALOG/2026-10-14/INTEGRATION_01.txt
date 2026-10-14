@@ -1,0 +1,1002 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > annotates every expected row of every case, and nothing else 3ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-01 198ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-02 35ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-03 34ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-04 31ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-05 21ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-06 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-07 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-08 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-09 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-10 23ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-11 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-12 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-13 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-14 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-15 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-16 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-17 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-18 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-19 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-20 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-21 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-22 25ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-23 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-24 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-25 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-26 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-27 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-28 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-29 65ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-30 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-31 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-32 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-33 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-34 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-35 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-36 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-37 26ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-38 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-39 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-40 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-001-randomized-total-transposition 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-002-randomized-active-vs-passive-voice 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-003-disposition-table-vs-synopsis-trailing-zero 33ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-004-treatment-vs-study-discontinuation 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-005-rescue-medication-treated 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-006-primary-and-key-secondary-consistent-comma-p 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-007-two-decimal-ci-conflict 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-008-ci-bound-zero-vs-negative 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-009-hr-consistent-coarser-precision 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-010-hr-true-conflict 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-011-hr-vs-risk-difference 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-012-stratified-vs-unstratified-hr 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-013-bicr-vs-investigator 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-014-fas-vs-pp-and-sensitivity 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-015-timepoint-week26-vs-week52 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-017-response-difference-scale 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-019-teae-with-most-common-and-severity 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-020-sae-single-arm-most-commonly 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-021-sae-transposed-digits 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-023-sae-and-death-rates-same-clause 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-024-per-arm-deaths-vs-total 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-025-single-arm-deaths 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-026-deaths-treatment-emergent-vs-all 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-027-deaths-true-conflict 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-029-open-label-extension-period 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-030-exposure-adjusted-vs-incidence 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-031-pooled-vs-single-study 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-032-different-studies-randomized 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-033-n-percent-layout 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-034-ambiguous-overall-rate 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-035-enrolled-vs-randomized-screened 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-036-completed-true-conflict 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-038-p-values-bound-and-exact 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-039-ci-level-90-vs-95 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-040-coarser-precision-agreement 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-041-per-arm-ls-means-vs-difference 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-042-randomized-vs-treated-n 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-01 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-02 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-04 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-05 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-06 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-07 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-08 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-09 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-10 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-11 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-12 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-13 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-14 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-15 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-16 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-17 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-18 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-19 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-20 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-21 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-22 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-23 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-24 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-25 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-26 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-27 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-28 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-29 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-30 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-31 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-32 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-33 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-34 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-35 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-36 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-37 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-38 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-39 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-01-table1-placebo-first-columns-consistent 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-02-table1-nausea-and-header-n-conflict 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-03-gi-narrative-subrates-and-event-shares 26ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-04-exposure-sentence-pooled-vs-single-study-csr 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-06-approximate-and-bound-exposure-statements 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-07-pooled-label-table-vs-single-study-csr-table 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-08-threshold-omission-is-not-a-value 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-09-threshold-boundary-rounded-row 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-10-grouped-term-vs-preferred-term 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-11-oncology-narrative-sae-fatal-grade-discontinuation 35ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-12-adverse-reaction-causality-basis-ambiguous 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-13-orr-bicr-vs-investigator 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-14-os-hazard-ratio-conflict 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-15-stratified-vs-unstratified-hr 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-16-ci-level-differs-alpha-split 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-17-trial-designation-not-bound-to-study 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-18-section14-hba1c-table-rounding-consistent 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-19-estimand-differs 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-20-percent-change-vs-absolute-change-weight 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-21-geriatric-subgroup-vs-overall 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-22-hypoglycemia-levels-and-explicit-zero 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-23-lab-threshold-and-trailing-zero-conflict 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-24-oncology-lab-table-vs-shift-table-and-ae-term 21ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-25-per-arm-deaths-vs-total 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-26-highlights-threshold-list-has-no-figures 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-27-upper-bound-is-not-a-value 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-28-adjudicated-vs-investigator-reported 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-29-per-dose-columns-vs-all-doses-column 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-30-section14-randomized-transposition-conflict 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-31-randomized-vs-treated-and-rescue-medication 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-32-section14-demographics-duration-conflict 23ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-33-two-trials-in-label-one-csr 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-34-discontinuation-and-sub-rate-consistent 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-35-precision-as-written-trailing-zero-conflict 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-36-pediatric-label-section-vs-adult-csr 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-37-sae-overall-vs-regional-subgroup 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-38-period-week52-vs-week26 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-01 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-02 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-04 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-05 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-06 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-07 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-11 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-12 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-15 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-16 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-17 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-18 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-20 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-22 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-23 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-24 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-25 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-26 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-27 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-30 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-31 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-32 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-33 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-34 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-35 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-36 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-37 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-38 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-39 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-40 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-01 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-02 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-03 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-04 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-05 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-06 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-07 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-08 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-09 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-10 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-11 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-12 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-13 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-14 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-15 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-16 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-17 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-18 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-19 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-20 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-21 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-22 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-23 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-24 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-25 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-26 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-27 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-28 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-29 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-31 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-32 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-33 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-34 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-35 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-36 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-37 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-38 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-ci-stated-before-estimate 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-paired-list-without-respectively 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-control-named-first-comparative 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-n-of-N-inline 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-causality-trailing-clause 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-causality-parenthetical 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-excluding-leading-clause 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-other-than-restriction 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sae-requiring-hospitalisation 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-post-treatment-sae 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sae-onset-after-week 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sae-within-30-days-of-last-dose 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-more-than-one-sae 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-teae-trailing-led-to 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-non-fatal-read-as-fatal 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-serious-cardiac-read-as-any-ae 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-subgroup-trailing-among 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-period-trailing-second-year 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-hr-trailing-region 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-effect-trailing-sensitivity-method 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-effect-trailing-dose 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomized-trailing-region 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomized-in-country 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomized-after-amendment 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-table-pct-n-column-order 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomly-assigned 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomly-allocated 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-enrolled-and-randomized 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-randomization-noun 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-sentence-split-by-line-break 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-of-the-patients-receiving 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-colon-semicolon-list 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-percentage-of-patients-with 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-reported-by-passive 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-similar-between-groups-paren 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-parenthetical-comparator 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-bulleted-list 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-counts-in-words 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-tab-separated-table 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-markdown-pipe-table 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-table-flattened-to-one-line 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-per-arm-shorthand 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-discontinued-study-per-arm 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-treated-passive-administered 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-respectively-across-measures 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-pv-respectively-measures-and-arms 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-01 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-02 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-03 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-04 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-05 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-06 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-07 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-08 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-09 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-10 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-11 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-12 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-13 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-14 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-15 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-16 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-17 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-18 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-19 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-20 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-21 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-22 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-23 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-24 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-25 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-26 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-27 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-28 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-29 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-30 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-31 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-32 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-33 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-34 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-35 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-36 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-37 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-38 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-39 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-40 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-41 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-42 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-43 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-44 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-45 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-46 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-47 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-48 22ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-49 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-50 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-51 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-52 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-56 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-57 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-58 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-sp-59 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-01 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-02 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-03 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-04 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-05 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-06 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-07 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-08 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-09 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-10 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-11 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-12 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-13 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-14 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-15 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-16 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-17 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-18 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-19 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-20 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-21 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-22 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-23 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r1-nsf-24 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-withdrawal-read-as-any-ae 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-death-read-as-any-ae 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-dose-reduction-read-as-any-ae 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-withdrew-owing-to-read-as-any-ae 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ae-leading-to-withdrawal-vs-discontinued 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-resulted-verb-read-as-arm 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-lower-in-placebo-than-in-drug-x 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-fewer-patients-in-placebo-than-in-drug-x 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-of-N-patients-trailing-percent 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-slash-N-patients-trailing-percent 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-comma-nejm-style-hr 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-comma-nejm-style-ls-mean-difference 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-confidence-limits 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-ci-interval-of-x-to-y-prose 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-population-comprised 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-total-number-randomised-was 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-ratio-then-n-equals 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-n-in-total-were-randomised 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-paren-screened-aside 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-randomised-paren-sites-aside 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-disposition-table-row-n-column 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-table-row-label-n-pct-unaligned 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-table-row-label-colon 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-percent-then-count-prose 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-all-cause-mortality 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-active-treatment-group 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-those-assigned-to 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-corresponding-figure-for 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-respectively-arms-named-first 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-former-and-latter 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-hyphenation-across-line-break-safety 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-hyphenation-across-line-break-hazard-ratio 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-footnote-markers-on-values 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-list-one-per-line-en-dash 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-arm-list-numbered-ordinals-as-figures 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-nonnative-has-been-randomized 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-pv-nonnative-inverted-subject 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-01-pool-scope-name-all-exposure 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-02-pool-scope-name-long-term 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-03-pool-control-type 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-04-period-duration-prose 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-05-period-sub-window 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-06-db-period-duration 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-07-parenthetical-region-leak 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-08-parenthetical-region-leak-false-consistent 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-09-parenthetical-age-leak 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-10-parenthetical-regional-n-leak 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-11-primary-vs-final-analysis 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-12-interim-occasion 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-13-table-footnote-subgroup 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-14-as-treated-stated-as-prose 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-15-mitt-not-read 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-16-population-definition-appositive 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-17-arm-letter-labels 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-18-same-stratum-both-sides 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-scope-19-combined-dose-arm-both-sides 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-01 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-02 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-03 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-04 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-05 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-06 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-07 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-08 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-09 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-10 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-11 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-12 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-13 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-14 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-15 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-16 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-num-17 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-01-table-unit-in-title-false-consistent 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-02-table-unit-in-title-false-conflicts 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-03-whitespace-label-table-units-row 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-04-smpc-4-8-never-compared-with-csr 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-05-smpc-4-8-adr-table-misleading-verdict 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-06-uspi-6-1-most-common-ar-list 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-07-smpc-4-8-most-commonly-reported-list 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-08-exposure-sentence-exposed-to-dose 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-09-exposure-sentence-per-arm-read-as-total 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-10-exposure-duration-subset-sentence 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-11-all-grades-vs-any-grade 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > r2-lbl-12-section14-responder-row-unit-in-stub 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 4.0 vs 4.4: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 2.0 vs 2.4: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8 vs 8.2: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8 vs 8.6: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 7.5 vs 8: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8.5 vs 8: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.72 vs 0.723: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.10 vs 0.14: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.00 vs -0.40: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.00 vs -0.01: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > -0.8 vs -0.80: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > -1.0 vs -0.98: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 612 vs 621: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0 vs 0.0: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs <0.001: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs 0.0004 is not compared (bound_not_value) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs <0.0001 is not compared (bounds_differ) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > approximately 600 vs 612 is not compared (approximate_value) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0% vs 0.3% is not compared (zero_precision_ambiguous) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 4.0 1ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 0.00 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > −0.62 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 1 227 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 1,227 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > Six hundred and twelve 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > <0.001 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 4.6 per cent 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > reads a decimal comma in a comma-convention source and a period thousands separator in a count slot 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reads the verb-first and the passive randomized total as the same measure (F5, F19) 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > never reads rescue-medication "treated" as the treated population (F2) 1ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > keeps a subgroup qualifier in the frame, never the overall figure (F15, F18) 1ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reads per-arm deaths as per-arm, never as the total (F14) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > keeps sub-rates as preferred-term claims, never as more arm rates (F6) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > frames an effect by type, endpoint, population, timepoint and CI, and cuts a p-value from the interval (F12, F13) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reports a figure it cannot frame as not compared, with the missing slot, never drops it (F13) 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF01: Explicit randomized total 132ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF02: Randomized count cannot use treated count 34ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF03: Drug arm cannot use placebo count 10ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF04: Incomplete clinical frame 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF05: CMC batch/method result 2ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF06: CMC batch substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF07: CMC method substitution 5ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF08: CMC scalar cannot strip criterion bound 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF09: CMC specification bound preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF10: Source precision retained 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF11: Device configuration/software result 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF12: Device configuration substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF13: Device software substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF14: Device criterion cannot become measured scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF15: Device criterion bound preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF16: Complete diagnostic sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF17: Diagnostic assay substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF18: Diagnostic specimen substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF19: Diagnostic cutoff substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF20: Diagnostic denominator substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF21: Diagnostic reference substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF22: Diagnostic population substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF23: Comparator agreement remains agreement 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF24: Agreement cannot establish sensitivity 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF25: Missing diagnostic context 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF26: Analytical LoD design/matrix/lot 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF27: Analytical lot/matrix substitution 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF28: Analytical CV property substitution 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF29: Scientific notation cannot be rewritten 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF30: Range preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF31: Range endpoint cannot establish scalar 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF32: Approximation cannot establish exact scalar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF33: Approximation preserved 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF34: Remote heading is not a local relation 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF35: Large multi-subject anchor 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF36: Unsupported Japanese interpretation 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF37: OCR remains unqualified context 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF41: Ordinary narrative is outside admitted row grammar 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-document: Wrong source document 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-bytes: Wrong original-byte hash 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-text: Wrong extraction hash 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-range: Shifted exact quote range 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF38-quote: Fabricated exact quote 1ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF39: Unsupported computed result 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-status: Candidate cannot claim acceptance 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-actor: Candidate cannot supply authority 0ms
+ ✓ server/services/vault/__tests__/scientific-source-facts.test.ts > independent scientific source-statement corpus > SF40-locator: Unsupported fabricated original locator 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > shows AnA's suggestion with its model, and every key data value 36ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > confirms the revision it was shown, and claims it only once the server says so 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > will not save a correction without a reason of the required length 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > a reader is told their role cannot decide, and gets no button 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > a failed read is said, not shown as no description 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog record > a version with no description says so 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > keeps legacy human attribution while disclosing the limits of key data checks 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > does not invent a past context check when an older record has no scope fields 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > binds confirmation to the exact extraction shown when its digest is available 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > shows a changed-extraction refusal without claiming that confirmation was recorded 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > treats a failure envelope as a refusal even if its HTTP status is successful 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog check coverage and review receipts > does not claim a decision when the server gives no matching recorded-state receipt 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog current use and retained history > keeps a corrected historical record visible while explaining withdrawal and withholding actions 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog current use and retained history > does not invite cataloging an unavailable source with no historical description 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx > Catalog current use and retained history > binds corrections to the extraction shown and preserves the whole-record reason 16ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: the organization, as today, or a program of the organization when named 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project 11ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > read_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > catalog_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > place_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > the open project's own document is read 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_project_documents searches the open program only; with no project, the organization 43ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_document_passages searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > an open project with no program > reads nothing: not the organization, and not a named program 0ms
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:28:27.310Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:28:28.439Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:28:28.440Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts
+{
+  "timestamp": "2026-10-14T06:28:28.440Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible
+{
+  "timestamp": "2026-10-14T06:28:28.575Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault catalog record read failed",
+  "context": {
+    "err": "read unavailable"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries the session actor into canonical reads 34ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into confirm 16ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > carries shown-text digest and session actor into correct 5ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (42) without downgrading to legacy review 3ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (null) without downgrading to legacy review 19ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding ({}) without downgrading to legacy review 4ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > refuses malformed shown-text binding (false) without downgrading to legacy review 3ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > preserves a canonical source-change refusal 5ms
+ ✓ server/routes/c2c/__tests__/vault-catalog-source-review.test.ts > catalog HTTP source review binding > keeps a read failure visible 7ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a stale session editor after the persisted membership becomes viewer 8ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses missing actor before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses wrong tenant before catalog DML 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses inactive membership before catalog DML 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed text at the locked source boundary 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed withdrawal at the locked source boundary 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed superseded at the locked source boundary 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed scope at the locked source boundary 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses changed hash at the locked source boundary 5ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > refuses a key-data value not stated in the freshly locked text 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > does not replace a human-confirmed record 8ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog suggestion final-write admission > reserves catalog then documents before source admission and audits exact hashes 4ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row vector writes without successful audit 2ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > refuses zero-row plain writes without successful audit 4ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 42501 into plain success 3ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > does not turn vector SQL 22P02 into plain success 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > permits only the missing vector type fallback and still obtains a row receipt 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > catalog persistence receipts and vector fallback > rolls back and reports no completion if chained audit fails 7ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > returns no catalog data for a document with conflicting recorded tenant ownership 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses changed extraction even when header revision and original bytes match 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after viewer and audits no decision 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after withdrawn and audits no decision 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > refuses review after zero rows and audits no decision 1ms
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts > whole-record review and honest historical catalog view > preserves a historical human decision while disclosing withdrawn current use 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > default-off gate refuses before opening a connection 4ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > invalid candidates refuse before a document or authority read 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > uses current write authority and exact project on a read-only executor 11ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses revoked/private-project access and never loads the source 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses a mismatched or absent recorded document organization: 7 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses a mismatched or absent recorded document organization: null 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses a mismatched or absent recorded document organization: undefined 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: absent 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: wrong_hash 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: missing_hash 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: failed_extraction 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: empty 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > refuses unavailable or unsupported current source: unsupported 0ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > retained data previews preserve the original availability caveat 2ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > requires complete byte-bound coverage against actual text 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: quote 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: text_hash 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: byte_hash 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > rejects the whole batch when one candidate binding fails: value 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > OCR output never acquires established context approval 1ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > read failure is visible and releases the connection 2ms
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts > canonical read-only scientific catalog preview service > a caller cannot change candidates while authority admission waits 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses facts without explicit preview mode before catalog persistence 4ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field document_kind instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field purpose instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field summary instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field key_data instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field user_id instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field actor instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field reviewState instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field organization_id instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field program_id instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > is off by default and makes no document or preview call 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > keeps the catalog gate and write-role gate on preview 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > requires an identified actor and open project 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > uses serving actor/project context and reports diagnostic checks without scientific approval 3ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > a failed verification is a refusal, never an empty successful result 3ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > does not describe a preview service exception as successful verification 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > rejects an unknown operation 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > legacy descriptions retain suggestion attribution and disclose value-only checks 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > tool schema advertises the same explicit mutually exclusive branches 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered read exact extraction envelope > identifies stored text and bytes without minting a read receipt 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 4ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > with no project open it guesses none: the file is not filed, and the audited adopt is named 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+stdout | server/services/ana/__tests__/project-scope-admission.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:28:32.383Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:28:32.384Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/project-scope-admission.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:28:32.384Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/project-scope-admission.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > keeps an omitted project database-free, including ordinary null context fields 31ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11111111-2222-4333-8444-000000000011"} 28ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11"} 20ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"proj_11"} 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectId":11} 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11111111-2222-4333-8444-000000000011","projectId":11} 22ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > preserves a real unanchored numeric project without inventing a program 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"21"} 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"11111111-2222-4333-8444-000000000021"} 12ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"999"} 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses conflicting numeric and program references rather than choosing one 16ms
+stderr | server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses a program with no anchor and an ambiguous anchor before private content can be selected
+{
+  "timestamp": "2026-10-14T06:28:38.080Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "11111111-2222-4333-8444-000000000011",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"unknown-project"} into an organization-wide turn 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":0} into an organization-wide turn 28ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"11111111-2222-4333-8444-000000000011","projectId":"not-a-number"} into an organization-wide turn 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses a program with no anchor and an ambiguous anchor before private content can be selected 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > validates the stored program tenant even when the numeric project exists in this organization 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"11111111-2222-4333-8444-000000000011"} 15ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"11"} 35ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > admits the private project creator and owner without an explicit member entry 21ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > uses normalized current membership after revocation instead of stale JSON sharing or a cached admission 24ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > rechecks the live role after an administrator is downgraded 19ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > allows a shared member with a tenant-specific role rather than introducing a new role allow-list 33ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a creator whose organization membership has been removed 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses ambiguous membership rows instead of selecting the most privileged role 18ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a suspended administrator and an inactive organization 21ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an explicit project without a valid pinned actor 8ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when organization_users cannot be read 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when project_members cannot be read 31ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > returns only preview scope for an exact explicit source row 8ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > keeps legacy wrong-assay value-presence meaning explicit 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong batchAsWritten even if stated remotely 3ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong methodAsWritten even if stated remotely 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong productRef even if stated remotely 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses a value stated only elsewhere 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > missing mandatory context is not established 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > missing witnesses are not established 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses a remote repeated witness 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > independently recomputes supplied text identity 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > same bytes with changed extraction do not inherit source binding 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong quote 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong offset 4ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > refuses wrong end 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > keeps canonical digest independent of key order 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > does not establish ocr context 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > does not establish unsupported_language_or_layout context 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > takes a private candidate snapshot 2ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects forged field accepted 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects forged field actorId 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects forged field scientificQualification 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects computation and unsupported source locator 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset NaN 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset Infinity 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset 1.5 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset -1 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects unsafe offset 9007199254740992 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > source binding preview, separate from unchanged legacy labels > rejects all input limits, unknown paths and duplicate witnesses 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 99.2 against 99.20 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 99.20 against 99.20 as scalar binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 0.5 against < 0.5 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > < 0.5 against < 0.5 as bound binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 0.5 against approximately 0.5 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > approximately 0.5 against approximately 0.5 as approximate binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 1-2 against 1-2 as range binding=true 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 1-2 against 1-2 as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 10 against 10³ as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 103 against 10³ as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > stable against stable as scalar binding=false 0ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > 1.20e-3 against 1.20e-3 as scalar binding=true 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > preserves bound direction 1ms
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts > exact numeric form, no weakening or conversion > cannot ignore source negation or compound subjects 1ms
+stderr | server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written
+{
+  "timestamp": "2026-10-14T06:28:39.497Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "doc-a",
+    "error": "database unavailable"
+  }
+}
+
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > writes a receipt only for a result sent to the model byte for byte as the read returned it 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written 3ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > with nothing deferred, writes nothing and touches no database 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > without any, a squeezed round is exactly what it was 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > reads are placed first and whole; the cuttable results share what is left, never below the floor 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > a read larger than the per-result cap is replaced, never cut 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > the replacement says where to read again from, in the shape the design names 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > is the recorded spans plus this window 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > with nothing recorded, is this window alone 7ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > fitReadWindow > keeps a window that fits, and shrinks one that does not to the largest that does 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > outside a settling host it records nothing, counts nothing, and says so 3ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > inside one it defers the receipt for exactly the window it serves, with the result it serves 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > a comprehension record too large to leave room for text gives way, and says so 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the faithful values, written the way the document writes them 3ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the same values typed in plain ASCII, any case, either mu 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > REFUSES every invented value and NAMES each leaf with the value it carried 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > names only the failing leaves when faithful and invented values are mixed 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a boolean leaf even though "released" is a word in the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a null leaf and an empty string — neither transcribes anything 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a figure the document does not state, even a derived one 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > checks a leaf inside an array inside an object, and names its full path 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > quotes a key that is not a plain identifier, so the path is unambiguous 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > does not verify keys — labels are the model’s naming, not a claim about the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > has nothing to verify when there is no key_data 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a number’s decimal form must match exactly: no prefix, suffix or neighbour 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > thousands grouping may be added or removed for a number — but a group is not the number 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > an identifier fragment is not the identifier 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a hyphen separates tokens: 24 is stated by "24-month" 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a sign is part of the figure: −5 °C states -5, not 5 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a superscript exponent is not folded into the digits (NFKC alone makes 10³ read "103") 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a unit glued to a figure makes one token: 10 is not "10mg", "10mg" is 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a value the extraction wrapped across a line, or padded with spaces, still occurs 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > fails closed against a document with no text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > REFUSES invented key_data even after a complete read, carrying the named leaves 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > judges coverage first: a partial read is refused on coverage, not on values 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > allows a complete read whose key_data the text states 0ms
+stderr | server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > excludes a correctly hashed cataloged predecessor from hits AND counts, retaining its stored history
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > excludes a correctly hashed cataloged predecessor from hits AND counts, retaining its stored history
+{
+  "timestamp": "2026-10-14T06:28:43.207Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > excludes a correctly hashed cataloged predecessor from hits AND counts, retaining its stored history 404ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports no catalog current successor as unsearchable without returning the old summary 15ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports extracted current successor as unsearchable without returning the old summary 11ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports cataloged without embedding current successor as unsearchable without returning the old summary 10ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > reports stale catalog current successor as unsearchable without returning the old summary 10ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current version, not a better indexed predecessor > ignores a deleted successor, making the surviving predecessor current under the canonical family rule 10ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-program successor link 15ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-organization successor link 10ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid cross-code successor link 10ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an original under an invalid unknown organization successor link 9ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — canonical legacy-family boundaries > does not hide an unrelated same-code document without a successor pointer 10ms
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts > semantic catalog — current evidence remains organization/project scoped > isolates the open program, organization-wide search and a foreign program 23ms
+stdout | server/startup/__tests__/document-catalog-bootstrap.test.ts
+[database] Database connection successful
+
+stderr | server/startup/__tests__/document-catalog-bootstrap.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > names both feature keys, so the line is searchable against the toggle table 1ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > when off, says what is inactive AND both ways to turn it on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > does not claim every tenant is off — a per-org enablement is invisible here 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > distinguishes an env override from a toggle so the source of ON is not guessed at 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > says passages are searched by text, and nothing embedded, when the catalog is on but chunking is not 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > describeCatalogToggles > confirms the whole surface when both are on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > says UNKNOWN, and says the flag was not turned off 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > an ordinary off still reads as off, with the two ways to turn it on 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > a store it could not read is not a feature somebody turned off > one unreadable flag is enough to stop claiming the other is simply off 0ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > bootstrapDocumentCatalogToggles — a row it could not create is said, not swallowed > warns with the key and the reason when a toggle row cannot be created 1ms
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts > bootstrapDocumentCatalogToggles — the catalog row is created on (S4, 2026-10-08) > creates ana.document_catalog ON and ana.vault_chunking OFF 0ms
+ ✓ tests/schema-contract/document-catalog-migration.contract.test.ts > document-catalog migrations are on the durable apply path > both are in C2C_MIGRATION_FILES 2ms
+ ✓ tests/schema-contract/document-catalog-migration.contract.test.ts > document-catalog migrations are on the durable apply path > runs after the canonical-shape and placement entries for the same table 0ms
+ ✓ tests/schema-contract/document-catalog-migration.contract.test.ts > document-catalog migration applies against PGlite > is a silent no-op on a database with no vault schema 1743ms
+ ✓ tests/schema-contract/document-catalog-migration.contract.test.ts > document-catalog migration applies against PGlite > provisions both tables once vault.documents exists, and re-applies cleanly 27ms
+ ✓ tests/schema-contract/document-catalog-migration.contract.test.ts > document-catalog migration applies against PGlite > the chunks migration provisions the store, its indexes, and the catalog ledger — twice 15ms
+ ✓ tests/schema-contract/document-catalog-migration.contract.test.ts > document-catalog migration applies against PGlite > receipt spans are constrained to sane character ranges 5ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 8ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 2ms
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-10-14T06:28:47.912Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:28:47.913Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-10-14T06:28:47.913Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/document-catalog.service.test.ts
+[database] Database connection successful
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/document-catalog.service.test.ts
+{
+  "timestamp": "2026-10-14T06:28:47.992Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > unions touching and overlapping spans into one 2ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > clamps to [0, charCount] and drops spans that vanish 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > mergeSpans > keeps genuinely disjoint spans apart 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > reports exact gaps between reads, in order 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > is complete only at exact full coverage — 99.9% is not "reviewed" 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > double-reading does not inflate coverage 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > computeCoverage > a document with no text can never be "completely read" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a first-page-only read and names the exact unread ranges 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a middle gap even when both ends were read 1ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > REFUSES a document whose extraction produced nothing 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > assertCatalogWriteAllowed — the sampling gate > allows the write only once every character has been served 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > an empty result is a FAILURE with a reason, never "extracted, 0 chars" 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a file type nothing could extract says exactly that 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > a thrown extraction error is carried, not swallowed 0ms
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts > buildExtractionOutcome — honesty about extraction > real text is recorded with its method, confidence and counts 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > pins exact extraction digest in the final writer handoff 6ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > mutation during embedding cannot change checked fields or proposer 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > mutation while source load waits cannot redefine the submitted candidate 1ms
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts > catalog exact private suggestion snapshot > a locked-source refusal is returned without a successful catalog claim 0ms
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path
+{
+  "timestamp": "2026-10-14T06:28:49.602Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+stderr | server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion
+{
+  "timestamp": "2026-10-14T06:28:49.606Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Embedding unavailable"
+  }
+}
+
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the vector path 8ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > refuses zero updated rows on the fallback path 3ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row vector completion 2ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > catalog completion persistence receipts > preserves a successful one-row fallback completion 1ms
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts > the kind is the Vault vocabulary (S4) > refuses a kind outside it before reading anything 1ms
+ ✓ server/services/vault/__tests__/catalog-search-version.test.ts > semantic catalog source-version query contract > binds both counts and hits to the current version and project tenant 3ms
+ ✓ server/services/vault/__tests__/catalog-search-version.test.ts > semantic catalog source-version query contract > keeps provider failure unavailable rather than an empty current corpus 1ms
+ ✓ server/services/vault/__tests__/catalog-search-version.test.ts > semantic catalog source-version query contract > does not turn a database failure into no current matches 1ms
+ ✓ server/services/ana/__tests__/catalog-gated-tools.test.ts > CATALOG_GATED_TOOLS > names exactly the tools whose handlers call requireCatalog 18ms
+
+ Test Files  23 passed (23)
+      Tests  818 passed (818)
+   Start at  06:28:19
+   Duration  30.90s (transform 2.57s, setup 499ms, import 11.10s, tests 15.41s, environment 382ms)
+

@@ -607,7 +607,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         const block = await sessionBootstrapBlockFor({
           priorMessageCount: previousMessages.length,
           organizationId: numericOrgId ?? null,
+          userId: numericUserId,
           projectId: turnProjectId ?? undefined,
+          projectRef: admittedProject.projectRef,
           threadId,
           atomLimit: 6,
         });

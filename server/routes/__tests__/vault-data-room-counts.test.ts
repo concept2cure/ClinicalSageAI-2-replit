@@ -71,6 +71,16 @@ beforeEach(() => {
 const dataRoom = async () => (await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`)).body.data.dataRoom;
 
 describe('data room — the window', () => {
+  it.each([
+    [false, { state: 'failed', retryable: true, reasonCode: 'PERSISTENCE_FAILED', leaseExpiresAt: null, nextRetryAt: '2026-10-14T04:10:00.000Z' }, 'Processing needs retry'],
+    [null, null, 'Text availability unconfirmed'],
+    [true, null, 'Read'],
+  ])('projects recorded readability independently of captured/classified/filed (%j)', async (textAvailable, processing, label) => {
+    listClientDocuments.mockResolvedValue([{ ...source(1), isCurrent: true, dataEligible: true, textAvailable, processing }]);
+    const room = await dataRoom();
+    expect(room.sources[0].readState).toBe(label);
+    expect(room.sources[0].stage).toBe('captured');
+  });
   it('asks for current sources only, one past the window', async () => {
     listClientDocuments.mockResolvedValue([]);
     await dataRoom();

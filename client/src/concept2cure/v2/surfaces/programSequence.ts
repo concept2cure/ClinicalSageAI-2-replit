@@ -86,9 +86,11 @@ export interface GateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
-  /** The server's sentence when the gate cleared only because its check did
-   *  not run and is not required here. Not blocking, and not passed. */
+  /** The server's sentence when an external assessment did not qualify and
+   *  is not required here. Not blocking, and not passed. */
   notAssessed?: string;
+  assessmentStatus?: 'passed' | 'failed' | 'not_assessed' | 'invalid';
+  assessmentNote?: string;
 }
 
 export interface ReadinessSummary {
@@ -102,8 +104,16 @@ export interface ExternalValidation {
   configured: boolean;
   ran: boolean;
   errorCount: number;
+  errorCountKnown?: boolean;
   cleared: boolean;
   blockers: string[];
+  validatorKind?: 'external_engine' | 'internal_subset' | 'unavailable' | 'unknown';
+  selectedValidatorName?: string | null;
+  reportedValidatorName?: string | null;
+  qualifyingRun?: boolean;
+  assessmentStatus?: GateView['assessmentStatus'];
+  assessmentNote?: string;
+  enforced?: boolean;
 }
 
 /** The server's composed dispatch verdict. Authoritative — see `gate` below. */

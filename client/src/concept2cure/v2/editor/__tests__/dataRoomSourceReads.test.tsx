@@ -9,7 +9,7 @@ import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 
 const programId = '11111111-1111-4111-8111-111111111111';
 const otherProgram = '22222222-2222-4222-8222-222222222222';
-const source = { id: 9, title: 'Protocol source', checksum: null, extractionStatus: 'extracted', extractionMethod: 'text',
+const source = { id: 9, title: 'Protocol source', checksum: null, extractionStatus: 'extracted', textAvailable: true, extractionMethod: 'text',
   isCurrent: true, dataEligible: true, originalFileAvailable: true };
 const page = (projectId = programId, title = source.title) => ({ projectId, sources: [{ ...source, title }], total: 1,
   currentTotal: 1, page: { limit: 50, offset: 0 }, window: { shown: 1, truncated: false } });

@@ -17,9 +17,10 @@ async function document(n: number, options: { program?: string; organization?: n
       '2026-10-13T10:00:00Z',$6,$7,$8)`, [id(n), options.program ?? PROGRAM, options.organization ?? ORG,
     options.code ?? `PAGE-${n}`, String(n).padStart(64, '0'), options.supersedes ?? null, options.deleted ? '2026-10-13T11:00:00Z' : null, options.supersedes ? '2.0' : '1.0']);
 }
-const search = (offset = 0, options: { programId?: string | null; organizationId?: number; includeSuperseded?: boolean } = {}) => searchVaultDocuments(db.pool, {
+const search = (offset = 0, options: { programId?: string | null; organizationId?: number; includeSuperseded?: boolean; allowedProgramIds?: readonly string[]; limit?: number } = {}) => searchVaultDocuments(db.pool, {
   organizationId: options.organizationId ?? ORG, programId: options.programId === undefined ? PROGRAM : options.programId,
-  q: 'stability', limit: 25, offset, includeSuperseded: options.includeSuperseded ?? false,
+  q: 'stability', limit: options.limit ?? 25, offset, includeSuperseded: options.includeSuperseded ?? false,
+  allowedProgramIds: options.allowedProgramIds,
 });
 const resultIds = (result: Awaited<ReturnType<typeof search>>) => result.results.map(row => row.id);
 
@@ -36,10 +37,23 @@ beforeAll(async () => {
   await document(34, { program: OTHER_PROGRAM, organization: 2 });
   await document(35, { program: PROGRAM_B });
   await document(36, { deleted: true });
+  // Own parent but a foreign recorded source organization: not a tenant source.
+  await document(37, { organization: 2 });
 }, 60_000);
 afterAll(async () => { try { assertNoSchemaGaps(db); } finally { await db?.close(); } });
 
 describe('canonical Vault full-text paging with tied matches', () => {
+  it('applies actor programmes before tied private matches displace the limited page', async () => {
+    const allowed = await search(0, { programId: null, allowedProgramIds: [PROGRAM_B], limit: 1 });
+    expect(allowed.total).toBe(1);
+    expect(resultIds(allowed)).toEqual([id(35)]);
+    expect(await search(0, { programId: null, allowedProgramIds: [], limit: 1 })).toMatchObject({ total: 0, results: [] });
+  });
+
+  it('cannot launder a foreign recorded organization through an owned programme', async () => {
+    expect(resultIds(await search(25))).not.toContain(id(37));
+    expect((await search()).total).toBe(32);
+  });
   it('returns every current match exactly once across a heap reorder between pages', async () => {
     const first = await search();
     expect(first.total).toBe(currentIds.length);

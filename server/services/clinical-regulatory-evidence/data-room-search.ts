@@ -20,6 +20,7 @@ import { pool } from '../../db';
 import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 import { adaptSource, visibleOrgClause } from './evidence-spine.service.js';
 import { EXTRACTION_STATUSES, type EvidenceSource, type ExtractionStatus } from './types.js';
+import { persistedTextAvailableSql } from './data-room-processing-state.js';
 
 export interface DataRoomQuery {
   programId: string;
@@ -61,6 +62,9 @@ const LIST_COLUMNS = [
 
 /** The searchable text of a source: the index's own expression, so the index serves the query. */
 const SEARCH_VECTOR = `vault.document_search_vector(s.title, NULL::text, left(s.extracted_text, 900000))`;
+
+/** ECMAScript trim whitespace, so the lean SQL flag agrees with the core's nonblank rule. */
+export const SOURCE_TEXT_AVAILABLE_SQL = persistedTextAvailableSql('s');
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -142,6 +146,8 @@ export async function searchDataRoom(orgId: number, p: DataRoomQuery): Promise<D
   const page = [...args, p.limit ?? 200, p.offset ?? 0];
   const { rows } = await pool.query(
     `SELECT ${LIST_COLUMNS},
+            ${SOURCE_TEXT_AVAILABLE_SQL} AS text_available,
+            clock_timestamp() AS processing_observed_at,
             ${capturedDataEligibleSql('s')} AS data_eligible,
             ${capturedBinaryAvailableSql('s')} AS original_file_available,
             ${capturedDispositionChoiceSql('s')} AS disposition,

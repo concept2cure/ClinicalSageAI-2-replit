@@ -38,6 +38,8 @@ const placeVaultDocument = vi.hoisted(() => vi.fn());
 
 vi.mock('../../vault/vault-placement.service.js', () => ({ placeVaultDocument }));
 vi.mock('../../vault/document-catalog.service.js', () => ({
+  // Placement attribution/comprehension fixture assumes this active actor’s source access.
+  withAnaSourceReadScope: async (input: any, run: any) => run({}, { organizationId: input.organizationId, userId: input.userId, role: 'member', projectId: null, programId: null, accessibleProgramIds: ['11111111-1111-4111-8111-111111111111'], actorFiltered: true }),
   isDocumentCatalogEnabled: vi.fn(async () => true),
   loadDocumentForOrg,
 }));

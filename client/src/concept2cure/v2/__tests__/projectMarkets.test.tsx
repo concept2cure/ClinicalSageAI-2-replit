@@ -78,7 +78,7 @@ const ALL_APPROVED = {
   queue: Array.from({ length: 10 }, (_, i) => ({ id: `a${i}`, doc: `Approved ${i}`, state: 'approved', docStatus: 'APPROVED', comments: 0 })),
 };
 
-type Opts = { subs?: unknown[]; verdictFailures?: number; failList?: boolean | number; sequencesNoBody?: boolean; board?: unknown };
+type Opts = { subs?: unknown[]; verdictFailures?: number; failList?: boolean | number; sequencesNoBody?: boolean; board?: unknown; assessment?: unknown };
 /** The server, as a table of paths; each answer is a function so it can fail. */
 function routes(opts: Opts, nextVerdict: () => Response): Record<string, () => Response> {
   const indSequences = [{ id: 905, sequenceNumber: '0000', status: 'assembling', type: 'original', region: 'fda' }];
@@ -101,7 +101,7 @@ function serve(opts: Opts = {}) {
   let verdictFailures = opts.verdictFailures ?? 0;
   const table = routes(opts, () => {
     if (verdictFailures > 0) { verdictFailures -= 1; throw fail(); }
-    return ok(BLOCKED);
+    return ok(opts.assessment ?? BLOCKED);
   });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
@@ -142,6 +142,21 @@ afterEach(() => {
 });
 
 describe('Submit — one row per market, each with its own server verdict', () => {
+  it.each([['failed', true], ['invalid', true], ['failed', false], ['invalid', false]] as const)('retains advisory clearance while displaying the external %s outcome (gate breakdown=%s)', async (assessmentStatus, breakdown) => {
+    const assessmentNote = assessmentStatus === 'failed' ? 'External validator found 1 error; dispatch policy is advisory.' : 'Report names another engine; dispatch policy is advisory.';
+    serve({ assessment: {
+      ...BLOCKED, gate: { cleared: true, blockers: [] },
+      externalValidation: { ...BLOCKED.externalValidation, ran: assessmentStatus === 'failed', assessmentStatus, assessmentNote },
+      ...(breakdown ? { gates: [{ key: 'external', rule: { id: 'EXTERNAL_VALIDATION_CLEAN', title: 'External validation result and dispatch policy are assessed' }, cleared: true, blockers: [], assessmentStatus, assessmentNote }] } : {}),
+    } });
+    await openSubmit();
+    const row = await marketRow('IND · FDA');
+    await waitFor(() => expect(row.textContent).toContain('Cleared to dispatch'));
+    expect(row.textContent).toContain(assessmentStatus === 'failed' ? 'External validation failed' : 'External validation report invalid');
+    expect(row.textContent).toContain(assessmentNote);
+    expect(row.textContent).not.toMatch(/not assessed|validator not run|Satisfied/);
+    expect(within(row).getByTestId('pj-market-validation-status')).toBeTruthy();
+  });
   it('an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row', async () => {
     serve();
     await openSubmit();

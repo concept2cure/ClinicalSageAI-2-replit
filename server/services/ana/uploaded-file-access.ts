@@ -360,7 +360,25 @@ export interface DerivedUploadResult {
   storagePath: string;
   sourceId?: number | null;
   captureStatus?: 'captured' | 'conversation_only';
+  /** Committed Data Room readability, separate from capture and edit receipt. */
+  processing?: Omit<import('../clinical-regulatory-evidence/data-room-processing.js').SourceProcessingResult, 'extracted'>;
   derivationAudit?: { resourceType: 'file_upload'; resourceId: string };
+}
+
+/** A processing failure after capture COMMIT cannot deny the saved edit. */
+async function processSpreadsheetCapture(orgId: number, sourceId: number, programId: string | null, params: DerivedUploadParams): Promise<NonNullable<DerivedUploadResult['processing']>> {
+  try {
+    const { processCapturedSource } = await import('../clinical-regulatory-evidence/data-room-processing.js');
+    const done = await processCapturedSource(orgId, sourceId, {
+      bytes: params.buffer, fileName: params.fileName, mimeType: params.mimeType,
+      programId, expectedWorkspaceId: null, processedBy: 'spreadsheet_edit',
+    });
+    return { ok: done.ok, processed: done.processed, status: done.status,
+      ...(done.reasonCode ? { reasonCode: done.reasonCode } : {}) };
+  } catch (err) {
+    logger.warn('Captured spreadsheet processing unavailable', { sourceId, err: err instanceof Error ? err.message : String(err) });
+    return { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' };
+  }
 }
 
 export async function saveDerivedUpload(params: DerivedUploadParams): Promise<DerivedUploadResult> {
@@ -500,6 +518,13 @@ async function saveSpreadsheetDerivation(
   const client = await getPool().connect();
   let bytesWritten = false;
   let commitAttempted = false;
+  let clientOwned = true;
+  const releaseCaptureClient = () => {
+    if (clientOwned) { clientOwned = false; client.release(); }
+  };
+  const rollbackCaptureClient = async () => {
+    if (clientOwned) await client.query('ROLLBACK').catch(() => undefined);
+  };
   try {
     await client.query('BEGIN');
     await assertAnaUploadAccess(client, { organizationId: orgId, userId, fileIds: [source.fileId] });
@@ -561,12 +586,16 @@ async function saveSpreadsheetDerivation(
     });
     commitAttempted = true;
     await client.query('COMMIT');
-    if (captured) await (await import('../clinical-regulatory-evidence/data-room-processing.js')).processCapturedSource(orgId, captured.id, { bytes: params.buffer, fileName: params.fileName, mimeType: params.mimeType, programId, processedBy: 'spreadsheet_edit' });
+    // The processor claims through its own connection; do not retain a capture
+    // connection while waiting for that claim at the pool's concurrency limit.
+    releaseCaptureClient();
+    const processing = captured ? await processSpreadsheetCapture(orgId, captured.id, programId, params) : undefined;
     return { fileId, storagePath, sourceId,
       captureStatus: captured ? 'captured' : 'conversation_only',
+      processing,
       derivationAudit: { resourceType: 'file_upload', resourceId: fileId } };
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    await rollbackCaptureClient();
     // Only this invocation's new file is eligible for cleanup. An ambiguous
     // COMMIT must retain bytes, since a committed capture may already name them.
     if (bytesWritten && !commitAttempted) {
@@ -574,6 +603,6 @@ async function saveSpreadsheetDerivation(
     }
     throw err;
   } finally {
-    client.release();
+    releaseCaptureClient();
   }
 }

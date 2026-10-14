@@ -12,6 +12,9 @@
  * absence narrows the search and is reported; it never empties it.
  */
 import { searchVaultDocuments } from './vault-search.js';
+import type { AdmittedAnaSourceReadScope } from '../ana/source-read-scope.js';
+import { assertRetrievalScope, pinRetrievalReadScope, verifyRetrievalSources, withRetrievalReadScope, type RetrievalSourceIdentity } from './retrieval-source-access.js';
+import { AnaProjectScopeError } from '../ana/project-scope-admission.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -45,9 +48,11 @@ export interface AssistantSearchResult {
 
 export async function searchVaultForAssistant(
   db: Queryable,
-  p: { organizationId: number; programId: string | null; query: string; limit: number; catalogEnabled: boolean },
+  p: { organizationId: number; programId: string | null; query: string; limit: number; catalogEnabled: boolean; allowedProgramIds?: readonly string[]; sourceReadScope?: AdmittedAnaSourceReadScope },
 ): Promise<AssistantSearchResult> {
-  const text = await searchVaultDocuments(db, {
+  const scope = p.sourceReadScope ? pinRetrievalReadScope(p.sourceReadScope) : undefined;
+  if (scope) assertRetrievalScope(scope, p.organizationId, p.programId);
+  const textSearch = (executor: Queryable) => searchVaultDocuments(executor, {
     organizationId: p.organizationId,
     programId: p.programId,
     q: p.query,
@@ -55,7 +60,20 @@ export async function searchVaultForAssistant(
     offset: 0,
     includeSuperseded: false,
     match: 'any',
+    allowedProgramIds: scope?.accessibleProgramIds ?? p.allowedProgramIds,
   });
+  const text = scope ? await withRetrievalReadScope(scope, textSearch) : await textSearch(db);
+  const identities: RetrievalSourceIdentity[] = scope ? text.results.map(r => ({ documentId: r.id, programId: r.program.id, contentHash: r.contentHash ?? '' })) : [];
+  const finish = async (result: AssistantSearchResult): Promise<AssistantSearchResult> => {
+    if (scope) await withRetrievalReadScope(scope, async q => {
+      await verifyRetrievalSources(q, scope, identities);
+      const current = await textSearch(q);
+      if (current.total !== text.total || JSON.stringify(current.results) !== JSON.stringify(text.results)) {
+        throw new AnaProjectScopeError(409, 'ANA_SOURCE_CHANGED', 'Source access or identity changed during retrieval. Search again before using these sources.');
+      }
+    });
+    return result;
+  };
   const hits = new Map<string, AssistantSearchHit>();
   for (const r of text.results) {
     hits.set(r.id, {
@@ -72,12 +90,14 @@ export async function searchVaultForAssistant(
   }
 
   if (!p.catalogEnabled) {
-    return { hits: [...hits.values()], textMatches: text.total, semantic: { available: false, reason: 'catalog_off' } };
+    return finish({ hits: [...hits.values()], textMatches: text.total, semantic: { available: false, reason: 'catalog_off' } });
   }
   const { searchCatalog, CatalogSearchUnavailableError } = await import('./document-catalog-search.js');
   try {
-    const result = await searchCatalog(p.organizationId, p.query, { limit: p.limit, programId: p.programId });
+    const result = await searchCatalog(p.organizationId, p.query, { limit: p.limit, programId: p.programId, db,
+      allowedProgramIds: scope?.accessibleProgramIds ?? p.allowedProgramIds, sourceReadScope: scope });
     for (const c of result.hits) {
+      if (scope) identities.push({ documentId: c.documentId, programId: c.programId, contentHash: c.contentHash ?? '' });
       const recorded = {
         documentKind: c.documentKind,
         purpose: c.purpose,
@@ -104,17 +124,17 @@ export async function searchVaultForAssistant(
             },
       );
     }
-    return {
+    return finish({
       hits: [...hits.values()].slice(0, p.limit),
       textMatches: text.total,
       semantic: { available: true, searchedCount: result.searchedCount, unsearchableCount: result.unsearchableCount },
-    };
+    });
   } catch (err) {
     if (!(err instanceof CatalogSearchUnavailableError)) throw err;
-    return {
+    return finish({
       hits: [...hits.values()],
       textMatches: text.total,
       semantic: { available: false, reason: 'no_embedding_provider' },
-    };
+    });
   }
 }

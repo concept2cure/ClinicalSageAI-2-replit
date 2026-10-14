@@ -17,7 +17,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 
 const harnessModule = vi.hoisted(() => () => import('./support/stream-route-harness.js'));
-const scope = vi.hoisted(() => ({ value: { programId: 'aaaaaaaa-0000-4000-8000-00000000000a' } as { programId: string | null } | { error: string } }));
+const scope = vi.hoisted(() => ({ value: { programId: 'aaaaaaaa-0000-4000-8000-00000000000a', admittedScope: { organizationId: 7, userId: 3, role: 'member', projectId: 42, programId: 'aaaaaaaa-0000-4000-8000-00000000000a', accessibleProgramIds: ['aaaaaaaa-0000-4000-8000-00000000000a'], actorFiltered: true } } as import('../../../services/ana/catalog-scope.js').CatalogScope }));
 vi.mock('../../../db.js', async () => (await harnessModule()).mocks.db());
 vi.mock('../shared.js', async importOriginal =>
   (await harnessModule()).mocks.shared(await importOriginal<Record<string, unknown>>()),
@@ -46,9 +46,30 @@ vi.mock('../../../services/ana/tool-telemetry.js', async () => (await harnessMod
 vi.mock('../../../services/ana-ri-metrics.js', async () => (await harnessModule()).mocks.metrics());
 vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule()).mocks.anthropicFiles());
 // The open project's scope, as catalogScope decides it for the read handler.
-vi.mock('../../../services/ana/catalog-scope.js', () => ({
+vi.mock('../../../services/ana/catalog-scope.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../../services/ana/catalog-scope.js')>(),
   catalogScope: async () => scope.value,
   documentScopeRefusal: async () => null,
+}));
+
+// The mounted UI suite supplies an explicitly admitted public-project actor.
+// Canonical authority and transaction behavior are qualified separately.
+vi.mock('../../../services/ana/source-read-scope.js', async importOriginal => ({
+  ...await importOriginal<typeof import('../../../services/ana/source-read-scope.js')>(),
+  revalidateAnaSourceReadScope: async (_q: unknown, pinned: unknown) => {
+    if ('error' in scope.value || JSON.stringify(pinned) !== JSON.stringify(scope.value.admittedScope)) throw new Error('Synthetic source access changed');
+    return scope.value.admittedScope;
+  },
+}));
+vi.mock('../../../services/vault/document-catalog.service.js', () => ({
+  withAnaSourceReadScope: async (input: any, run: any) => {
+    if ('error' in scope.value || input.organizationId !== scope.value.admittedScope.organizationId || input.userId !== scope.value.admittedScope.userId) throw new Error('Synthetic source actor mismatch');
+    const { pool } = await import('../../../db.js');
+    const result = await run(pool, scope.value.admittedScope);
+    const { revalidateAnaSourceReadScope } = await import('../../../services/ana/source-read-scope.js');
+    await revalidateAnaSourceReadScope(pool, scope.value.admittedScope);
+    return result;
+  },
 }));
 
 import { mountStreamRoute } from '../stream.js';
@@ -57,7 +78,7 @@ import { noteGeneration } from '../../../services/ai-gateway/generation-capture.
 import { harness as h, resetHarness, streamApp, turn as streamTurn, type SseEvent } from './support/stream-route-harness.js';
 
 const app = streamApp(mountStreamRoute);
-const turn = (): Promise<SseEvent[]> => streamTurn(app, { message: 'find the stability reports' });
+const turn = (): Promise<SseEvent[]> => streamTurn(app, { message: 'find the stability reports', project_id: PROGRAM });
 const PROGRAM = 'aaaaaaaa-0000-4000-8000-00000000000a';
 const IN_PROJECT = '3f2b8c1e-9d4a-4e6b-8c2f-1a5d7e9b0c3d';
 const OTHER_PROJECT = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
@@ -86,22 +107,23 @@ afterAll(() => {
 
 beforeEach(() => {
   resetHarness();
-  scope.value = { programId: PROGRAM };
+  scope.value = { programId: PROGRAM, admittedScope: { organizationId: 7, userId: 3, role: 'member', projectId: 42, programId: PROGRAM, accessibleProgramIds: [PROGRAM], actorFiltered: true } };
   titleQueries.length = 0;
   // Stands in for Postgres on the one title query: rows of the organisation, in
-  // the program the SQL binds ($3) when it binds one. The SQL's own scoping is
+  // the admitted program array ($3) and open program ($4) when it binds one. The SQL's own scoping is
   // proven against a real schema in step-document-titles.pglite.test.ts.
+  const baselineQuery = pool.query.bind(pool);
   vi.spyOn(pool as { query: (...a: unknown[]) => unknown }, 'query').mockImplementation(async (...args: unknown[]) => {
     const [sql, params = []] = args as [string, unknown[]];
     if (typeof sql === 'string' && sql.includes('FROM vault.documents d')) {
       titleQueries.push({ sql, params });
-      const [ids, org, program] = params as [string[], number, string | undefined];
+      const [ids, org, allowedPrograms, program] = params as [string[], number, string[], string | undefined];
       const rows = ids
-        .filter(id => VAULT_TITLES[id] && org === 7 && (!program || VAULT_TITLES[id].program === program))
-        .map(id => ({ id, document_title: VAULT_TITLES[id].title }));
+        .filter(id => VAULT_TITLES[id] && org === 7 && allowedPrograms.includes(VAULT_TITLES[id].program) && (!program || VAULT_TITLES[id].program === program))
+        .map(id => ({ id, document_title: VAULT_TITLES[id].title, organization_id: 7, program_id: VAULT_TITLES[id].program }));
       return { rows, rowCount: rows.length };
     }
-    return { rows: [], rowCount: 0 };
+    return baselineQuery(sql, params);
   });
   h.handlers.search_project_documents = async () => JSON.stringify({ ok: true, totalMatches: 3, results: [{}, {}, {}] });
   h.handlers.read_project_document = async () =>
@@ -139,7 +161,7 @@ describe('S3 through the stream route', () => {
     expect(plan).toEqual([{ tool: 'read_project_document', label: 'Reading "Stability report 2025"' }]);
     // One query, for the organisation and the open project's program.
     expect(titleQueries).toHaveLength(1);
-    expect(titleQueries[0].params).toEqual([[IN_PROJECT], 7, PROGRAM]);
+    expect(titleQueries[0].params).toEqual([[IN_PROJECT], 7, [PROGRAM], PROGRAM]);
   });
 
   it('5. a document id outside the open project yields no title', async () => {
@@ -150,7 +172,7 @@ describe('S3 through the stream route', () => {
   });
 
   it('5. a project with no program (the read would be refused) yields no title at all', async () => {
-    scope.value = { error: 'The open project has no program.' };
+    scope.value = { error: 'The open project has no program.', code: 'NO_PROJECT' };
     h.state.script = [[{ id: 'tu_n', name: 'read_project_document', input: { document_id: IN_PROJECT } }], 'Done.'];
     const events = await turn();
     expect(useOf(events, 'tu_n')?.label).toBe('Reading a Vault document');

@@ -153,6 +153,35 @@ describe('runDispatchQc — deterministic verdict, model narrates', () => {
 });
 
 describe('computeDispatchQcVerdict', () => {
+  it.each([
+    ['not_assessed', 'Internal subset checks ran; no qualifying external validation is established.'],
+    ['failed', 'External validation reported errors; advisory policy does not block dispatch.'],
+    ['invalid', 'The supplied external report cannot be assessed; advisory policy does not block dispatch.'],
+  ])('retains the external %s evidence caveat even when the policy gate clears', (status, note) => {
+    const assessment = {
+      validationErrors: 0, unacknowledgedShadowCriticals: 0, shadowReviewRunCount: 1,
+      externalValidation: { cleared: true }, releaseSignature: { cleared: true },
+      gate: { cleared: true, blockers: [] },
+      gates: [{ key: 'external', cleared: true, blockers: [], assessmentStatus: status, assessmentNote: note }],
+      readiness: { findings: [{ severity: 'warning', message: 'Existing scoped warning.' }] },
+    } as unknown as DispatchReadinessAssessment;
+    const result = computeDispatchQcVerdict(CLEAR_INPUT, assessment);
+    expect(result.clearedToDispatch).toBe(true);
+    expect(result.blockers).toEqual([]);
+    expect(result.warnings).toEqual(['Existing scoped warning.', note]);
+  });
+
+  it('does not turn a matching passed external report into an advisory warning', () => {
+    const assessment = {
+      validationErrors: 0, unacknowledgedShadowCriticals: 0, shadowReviewRunCount: 1,
+      externalValidation: { cleared: true }, releaseSignature: { cleared: true },
+      gate: { cleared: true, blockers: [] },
+      gates: [{ key: 'external', cleared: true, blockers: [], assessmentStatus: 'passed', assessmentNote: 'External report passed.' }],
+      readiness: { findings: [] },
+    } as unknown as DispatchReadinessAssessment;
+    expect(computeDispatchQcVerdict(CLEAR_INPUT, assessment).warnings).toEqual([]);
+  });
+
   it('without an assessment: the hard gate over the counts, and a warning naming what was not checked', () => {
     const v = computeDispatchQcVerdict(CLEAR_INPUT);
     expect(v.clearedToDispatch).toBe(true);

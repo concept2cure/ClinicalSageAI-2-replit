@@ -73,6 +73,7 @@ beforeAll(async () => {
     CREATE TABLE cre_evidence_sources (id integer PRIMARY KEY, organization_id integer, visibility_class text,
       client_program_id uuid, client_workspace_id integer, deleted_at timestamp, provenance jsonb);
     CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer, user_id integer);
+    ALTER TABLE cre_evidence_sources ADD COLUMN source_type text, ADD COLUMN created_by int;
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}',7,NULL);
     INSERT INTO projects VALUES (42,7,'${PROGRAM}',NULL,5,5,'{}');
     INSERT INTO users VALUES (3,'active'),(5,'active');
@@ -83,7 +84,7 @@ beforeAll(async () => {
     INSERT INTO projects VALUES (84,7,'${PUBLIC_PROGRAM}',NULL,5,5,'{}');
     INSERT INTO project_visibility_settings VALUES (84,7,'org_public');
     INSERT INTO file_uploads VALUES ('private-source-upload',7,3);
-    INSERT INTO cre_evidence_sources VALUES (321,7,'project_private','${PROGRAM}',42,NULL,
+    INSERT INTO cre_evidence_sources (id,organization_id,visibility_class,client_program_id,client_workspace_id,deleted_at,provenance) VALUES (321,7,'project_private','${PROGRAM}',42,NULL,
       '{"fileUploadId":"private-source-upload"}');
   `);
   uploadReaders = await import('../../../services/ana/uploaded-file-access');

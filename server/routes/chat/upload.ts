@@ -28,6 +28,7 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { sha256Hex } from '../../services/ana/uploaded-file-access';
 import { programInOrganization } from '../../services/c2c/program-access.js';
 import { projectBelongsToTenant } from '../../services/cmc/project-membership.js';
+import type { SourceProcessingResult } from '../../services/clinical-regulatory-evidence/data-room-processing.js';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -55,6 +56,21 @@ function resolveProjectScope(
   return Number.isFinite(numeric)
     ? { programId: null, workspaceId: numeric }
     : { programId: null, workspaceId: null };
+}
+
+/** The capture stands when its later derived processing is unavailable. */
+async function processUploadCapture(orgId: number, sourceId: number,
+  input: Parameters<typeof import('../../services/clinical-regulatory-evidence/data-room-processing.js').processCapturedSource>[2],
+): Promise<Omit<SourceProcessingResult, 'extracted'>> {
+  try {
+    const { processCapturedSource } = await import('../../services/clinical-regulatory-evidence/data-room-processing.js');
+    const done = await processCapturedSource(orgId, sourceId, input);
+    return { ok: done.ok, processed: done.processed, status: done.status,
+      ...(done.reasonCode ? { reasonCode: done.reasonCode } : {}) };
+  } catch (err) {
+    logger.warn('Captured upload processing unavailable', { sourceId, err: err instanceof Error ? err.message : String(err) });
+    return { ok: false, processed: false, status: 'retryable_failure', reasonCode: 'PROCESSING_UNAVAILABLE' };
+  }
 }
 
 export const uploadHandler = async (req: Request, res: Response) => {
@@ -201,7 +217,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
     // The one Data Room processing step reads the bytes for every capture path
     // (data-room-processing.ts); the upload reads them here, once.
-    const { extractCapture, describeCapture, recordSourceProcessing, buildCatalogFacts } = await import(
+    const { extractCapture, describeCapture } = await import(
       '../../services/clinical-regulatory-evidence/data-room-processing.js'
     );
     const extracted = fileBuffer && fileBuffer.length > 0 ? await extractCapture(fileBuffer, mimeType, fileName) : null;
@@ -390,6 +406,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // (below): the bytes are stored, and the answer says the Data Room does not
     // hold them. It used to answer 200 "ready" with sourceId null.
     let sourceId: number | null = null;
+    let processing: Omit<SourceProcessingResult, 'extracted'> | null = null;
     let sourceWriteFailed = false;
     const scopedToProject = projectScope.programId != null || projectScope.workspaceId != null;
     // The org must resolve to a real numeric id. `tenantContext.organizationId`
@@ -499,10 +516,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
             // Null unless the document actually declares one; the determination
             // travels in provenance either way.
             version: versionDetermination.version,
-            // The bytes are stored and were read at ingest, so neither status
-            // is 'pending' — reporting otherwise would misstate the corpus.
+            // Capture is durable; derived text/facts are still pending until
+            // the bound processor commits them on this source.
             ingestionStatus: 'ingested',
-            extractionStatus: extractionMethod ? 'extracted' : 'failed',
+            extractionStatus: 'pending',
             provenance: {
               origin: 'chat_upload',
               fileUploadId: fileId,
@@ -548,15 +565,6 @@ export const uploadHandler = async (req: Request, res: Response) => {
               )).source
             : await createSource(numericOrgId, sourceParams);
           sourceId = created.id;
-          // The text it read, stored on the source so the Data Room can be
-          // searched by it (20261008c). Derived data: a failure here leaves the
-          // capture standing and the sweep re-reads it.
-          if (extracted) {
-            await buildCatalogFacts(pool, numericOrgId, scope.programId ?? null, { text: extracted.text, bytes: fileBuffer, fileName, mimeType })
-              .then(facts => recordSourceProcessing(pool, numericOrgId, created.id, { extracted, facts, processedBy: 'chat_upload ingest' }))
-              .catch((textErr: unknown) => logger.warn('Data Room text not stored for upload', {
-                fileId, sourceId, err: textErr instanceof Error ? textErr.message : String(textErr) }));
-          }
           logger.info(
             supersedes
               ? 'Upload superseded an existing source identity'
@@ -578,6 +586,16 @@ export const uploadHandler = async (req: Request, res: Response) => {
         error: 'The file was stored, but it could not be recorded in the project’s Data Room. Try again.',
         code: 'SOURCE_NOT_RECORDED',
         fileId,
+      });
+    }
+    // Both a new capture and a same-byte duplicate use the bound orchestration.
+    // The processor verifies the recorded original upload; this new upload ID
+    // never replaces an existing source's original provenance.
+    if (scopedToProject && sourceId != null) {
+      processing = await processUploadCapture(numericOrgId, sourceId, {
+        bytes: fileBuffer, fileName, mimeType, programId: projectScope.programId,
+        expectedWorkspaceId: projectScope.workspaceId, processedBy: 'chat_upload ingest',
+        ...(extracted ? { preExtracted: extracted } : {}),
       });
     }
 
@@ -638,7 +656,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
       // Whether the Data Room holds this file (PF-07). With no project open it
       // stays in the conversation until it is adopted into a project.
       dataRoom: scopedToProject && sourceId != null
-        ? { recorded: true }
+        ? { recorded: true, readable: processing?.processed === true, processing }
         : {
             recorded: false,
             reason: scopedToProject
@@ -646,7 +664,8 @@ export const uploadHandler = async (req: Request, res: Response) => {
               : 'No project was open, so this file stays in the conversation. Adopt it into a project to add it to that project’s Data Room.',
           },
       // Extraction summary for the chat UI: which method read the file and how
-      // many words landed in memory (null/0 when unscoped or extraction failed).
+      // many words this extraction attempt read. Committed Data Room
+      // readability is reported separately above.
       extractionMethod,
       extractionWords,
       /* What the retrieval corpus actually holds. An upload's atom is ONE

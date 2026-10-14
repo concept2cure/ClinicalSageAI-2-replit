@@ -82,15 +82,35 @@ async function resolveProjectIdentity(q: RequestSqlClient, organizationId: numbe
   return { projectId, programId };
 }
 
-async function assertActiveProjectAccess(q: RequestSqlClient, organizationId: number, userId: number, projectId: number): Promise<void> {
+/** Current persisted read membership shared by explicit project and source
+ * admission. Read authority is the project policy, never a write-role list. */
+export async function readActiveAnaActorRole(
+  q: RequestSqlClient,
+  input: Pick<AnaProjectScopeInput, 'organizationId' | 'userId'>,
+): Promise<string> {
+  const { organizationId, userId } = input;
+  if (!positiveId(organizationId) || !positiveId(userId) || organizationId > 2_147_483_647 || userId > 2_147_483_647) {
+    throw new AnaProjectScopeError(403, 'ANA_PROJECT_ACCESS_DENIED', 'An identified organization member is required to read this project.');
+  }
   // Same persisted membership source as resolveSignerOrgRole, on the
   // connection used for the project policy and the protected source read.
-  const membership = await q.query(`SELECT ou.role FROM organization_users ou
-    JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
-    WHERE ou.user_id = $1 AND ou.organization_id = $2 AND u.status = 'active' AND o.status = 'active'`, [userId, organizationId]);
-  const role = membership.rows.length === 1 && typeof membership.rows[0].role === 'string'
-    ? membership.rows[0].role.trim().toLowerCase() : null;
-  if (!role || !await canAccessReportProject(organizationId, { userId, role }, projectId, q)) {
+  try {
+    const membership = await q.query(`SELECT ou.role FROM organization_users ou
+      JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
+      WHERE ou.user_id = $1 AND ou.organization_id = $2 AND u.status = 'active' AND o.status = 'active'`, [userId, organizationId]);
+    const role = membership.rows.length === 1 && typeof membership.rows[0].role === 'string'
+      ? membership.rows[0].role.trim().toLowerCase() : null;
+    if (!role) throw new AnaProjectScopeError(403, 'ANA_PROJECT_ACCESS_DENIED', 'You do not have current access to this project.');
+    return role;
+  } catch (error) {
+    if (error instanceof AnaProjectScopeError) throw error;
+    throw new AnaProjectScopeError(503, 'ANA_PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. AnA has not read its sources.');
+  }
+}
+
+async function assertActiveProjectAccess(q: RequestSqlClient, organizationId: number, userId: number, projectId: number): Promise<void> {
+  const role = await readActiveAnaActorRole(q, { organizationId, userId });
+  if (!await canAccessReportProject(organizationId, { userId, role }, projectId, q)) {
     throw new AnaProjectScopeError(403, 'ANA_PROJECT_ACCESS_DENIED', 'You do not have current access to this project.');
   }
 }

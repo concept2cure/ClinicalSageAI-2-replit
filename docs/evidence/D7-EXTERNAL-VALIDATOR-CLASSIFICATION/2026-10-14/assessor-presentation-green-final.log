@@ -1,0 +1,107 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied" 59ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran 23ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean 14ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass 13ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass 11ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > publishes an invalid zero placeholder with its status and engine provenance to AnA 13ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows a raw executed subset as not externally assessed 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call a legacy advisory report clean when its observed error count is positive 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=true) 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=true) 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=false) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=false) 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row 39ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row 223ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet" 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > "Add a market" opens the Submission Center on New submission; "Open Submission Center" on the list 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and offers Add a market 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market" 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read) 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review" 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared" 14ms
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-14T03:36:39.505Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:36:39.506Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-14T03:36:39.506Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict) 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > clears once at least one completed run exists 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a structural error blocks all three — signing never clears a content defect 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a missing Shadow Review blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an external-validator failure blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an invalid signature blocks all three, including freeze — tamper evidence is never signed over 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an undetermined lookup blocks dispatch-now and dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a signature already on record: all three clear, and nothing is "resolved by signing" 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a type that requires no signature: all three clear on an otherwise-clear sequence 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > says why the external gate cleared without a report 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > carries the sentence on the external gate view only when it cleared 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > a gate that blocks keeps its blockers and no not-assessed note 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's Module 1 list (no "1.20 missing" on an amendment) 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing NDA, BLA or ANDA sequence is held to its 1.1 form (Form FDA 356h), as an error, and to nothing else 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing sequence outside the US marketing and IND kinds is still not held to a Module 1 list 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a region or kind the record does not model keeps the profile list as warnings, never errors 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > reads the headings from the IND profile, with their ICH M4 titles — not a second list 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > asks a US IND only: not an NDA, not an IND outside FDA, not an unknown type 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > sequence 0000 is the original; another number only when typed original and first 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > Module 1 alone: both headings are blocking errors 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a leaf at or under the heading clears it, in any spelling; a numerically adjacent code does not 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a delete leaf places nothing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a cross-reference clears only with its LOA on file and the heading named (or a heading that contains it) 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a register that could not be read is not an empty register: still blocking, with the reason 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > asks nothing when no requirement is given (an amendment, another application) 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains a clean subset execution without treating it as configured external validation 5ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > clears the composed verdict for a configured matching clean external report 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > uses configuration discovery, rather than an adapter name, to enforce readiness 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory failed report as its actual outcome, preserving policy clearance 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory invalid report as its actual outcome, preserving policy clearance 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > serializes an invalid numeric tally as an unknown count with factual status and identities 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > explains an advisory subset execution as not externally assessed even when raw ran is true 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > does not attribute another engine report to the selected internal subset 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains unrun operational diagnostics and tolerates a malformed diagnostic row 1ms
+
+ Test Files  4 passed (4)
+      Tests  71 passed (71)
+   Start at  03:36:34
+   Duration  7.81s (transform 2.78s, setup 242ms, import 5.19s, tests 1.10s, environment 803ms)
+

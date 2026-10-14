@@ -36,6 +36,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 export * from './schema/vault';
+export * from './schema/ana-source-read-receipts';
 export * from './schema/csr-knowledge-db';
 export * from './schema/submissions';
 export * from './schema/evidence';

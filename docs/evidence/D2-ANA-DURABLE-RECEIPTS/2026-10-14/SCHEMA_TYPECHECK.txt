@@ -1,0 +1,5 @@
+Scope: 2 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+shared/schema/ana-source-read-receipts.ts: 0 target diagnostics
+tests/schema-contract/ana-source-read-receipts.contract.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 825
+Total selected-scope diagnostics: 0

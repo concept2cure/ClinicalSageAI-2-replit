@@ -9,6 +9,11 @@
  * service re-exports everything below, so callers keep one import path.
  */
 
+// The opt-in preview uses the same transcription rules while retaining a
+// separate context verdict; legacy key_data labels keep their old meaning.
+export { validateSourceFactBatch, verifySourceFactCandidate, CATALOG_FACT_CHECKER_REVISION } from './catalog-fact-verification.js';
+export type { CatalogFactSource, CatalogFactVerification, CatalogFactCandidate, CatalogFactBatchValidation } from '../../../shared/ana/catalog-facts.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Spans + coverage
 // ─────────────────────────────────────────────────────────────────────────────

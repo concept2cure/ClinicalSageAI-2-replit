@@ -1,0 +1,57 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the faithful values, written the way the document writes them 3ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > ACCEPTS the same values typed in plain ASCII, any case, either mu 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > REFUSES every invented value and NAMES each leaf with the value it carried 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — the reproduced CoA > names only the failing leaves when faithful and invented values are mixed 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a boolean leaf even though "released" is a word in the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a null leaf and an empty string — neither transcribes anything 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — verdicts are not transcriptions > REFUSES a figure the document does not state, even a derived one 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > checks a leaf inside an array inside an object, and names its full path 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > quotes a key that is not a plain identifier, so the path is unambiguous 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > does not verify keys — labels are the model’s naming, not a claim about the text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — nesting > has nothing to verify when there is no key_data 1ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a number’s decimal form must match exactly: no prefix, suffix or neighbour 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > thousands grouping may be added or removed for a number — but a group is not the number 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > an identifier fragment is not the identifier 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a hyphen separates tokens: 24 is stated by "24-month" 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a sign is part of the figure: −5 °C states -5, not 5 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a superscript exponent is not folded into the digits (NFKC alone makes 10³ read "103") 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a unit glued to a figure makes one token: 10 is not "10mg", "10mg" is 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > a value the extraction wrapped across a line, or padded with spaces, still occurs 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > verifyKeyDataAgainstText — a value must be a whole token, not a fragment > fails closed against a document with no text 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > REFUSES invented key_data even after a complete read, carrying the named leaves 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > judges coverage first: a partial read is refused on coverage, not on values 0ms
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts > assertCatalogWriteAllowed — the gate composes both checks > allows a complete read whose key_data the text states 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/catalog-fact-verification.test.ts [ server/services/vault/__tests__/catalog-fact-verification.test.ts ]
+Error: Transform failed with 1 error:
+/workspace/Concept2Cure/server/services/vault/__tests__/catalog-fact-verification.test.ts:33:177: ERROR: Expected ";" but found ")"
+  Plugin: vite:esbuild
+  File: /workspace/Concept2Cure/server/services/vault/__tests__/catalog-fact-verification.test.ts:33:177
+  
+  Expected ";" but found ")"
+  31 |    it.each(['ocr', 'unsupported_language_or_layout'] as const)('does not establish %s context', extractionCaveat => expect(verifySourceFactCandidate(fact(), { ...source(), extractionCaveat }).context.state).toBe('not_established'));
+  32 |    it('takes a private candidate snapshot', () => { const c = fact(), r = validateSourceFactBatch([c]); c.value.asWritten = 'mutated'; expect(r.ok && r.candidates[0].value.asWritten).toBe('99.20'); });
+  33 |    it.each(['accepted', 'actorId', 'scientificQualification'])('rejects forged field %s', field => expect(validateSourceFactBatch([{ ...fact(), [field]: true }]).ok).toBe(false)));
+     |                                                                                                                                                                                   ^
+  34 |    it('rejects computation and unsupported source locator', () => { expect(validateSourceFactBatch([{ ...fact(), origin: { kind: 'deterministic_computation' } }])).toMatchObject({ ok: false, code: 'COMPUTATION_METHOD_UNAVAILABLE' }); const c = fact(); expect(validateSourceFactBatch([{ ...c, origin: { ...c.origin, valueAnchor: { ...c.origin.valueAnchor, locator: { page: 1 } } } }]).ok).toBe(false); });
+  35 |    it.each([NaN, Infinity, 1.5, -1, Number.MAX_SAFE_INTEGER + 1])('rejects unsafe offset %s', start => { const c = fact(); c.origin.valueAnchor.range.start = start; expect(validateSourceFactBatch([c]).ok).toBe(false); });
+  
+ ❯ failureErrorWithLog node_modules/vite/node_modules/esbuild/lib/main.js:1467:15
+ ❯ node_modules/vite/node_modules/esbuild/lib/main.js:736:50
+ ❯ responseCallbacks.<computed> node_modules/vite/node_modules/esbuild/lib/main.js:603:9
+ ❯ handleIncomingPacket node_modules/vite/node_modules/esbuild/lib/main.js:658:12
+ ❯ Socket.readFromStdout node_modules/vite/node_modules/esbuild/lib/main.js:581:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  23 passed (23)
+   Start at  06:23:29
+   Duration  766ms (transform 349ms, setup 77ms, import 355ms, tests 13ms, environment 0ms)
+

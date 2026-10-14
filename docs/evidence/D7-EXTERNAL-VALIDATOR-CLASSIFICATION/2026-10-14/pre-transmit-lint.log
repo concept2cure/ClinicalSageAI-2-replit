@@ -1,0 +1,10 @@
+
+/workspace/Concept2Cure/server/services/submission-gateways/__tests__/pre-transmit-check.test.ts
+  76:36  warning  Arrow function has too many lines (146). Maximum allowed is 100  max-lines-per-function
+
+/workspace/Concept2Cure/server/services/submission-gateways/pre-transmit-check.ts
+  224:8  warning  Function 'evaluatePreTransmit' has too many lines (145). Maximum allowed is 100  max-lines-per-function
+  224:8  warning  Function 'evaluatePreTransmit' has a complexity of 29. Maximum allowed is 15     complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+

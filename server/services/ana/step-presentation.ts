@@ -408,14 +408,29 @@ export function stepUsedModel(
 }
 
 interface TitleScopeContext {
+  userId?: number | null;
   organizationId?: number | null;
   projectId?: number | null;
   projectRef?: string | null;
 }
 
+interface TitleRow { id: string; document_title: string | null; organization_id: number; program_id: string; }
 interface TitleDeps {
-  query?: (sql: string, params: unknown[]) => Promise<{ rows: Array<{ id: string; document_title: string | null }> }>;
-  scope?: (ctx: TitleScopeContext, orgId: number) => Promise<{ programId: string | null } | { error: string }>;
+  query?: (sql: string, params: unknown[]) => Promise<{ rows: TitleRow[] }>;
+  scope?: (ctx: TitleScopeContext, orgId: number) => Promise<import('./catalog-scope.js').CatalogScope>;
+  /** Explicit test seam for authority revalidation; never supplied by a model. */
+  revalidate?: (scope: import('./source-read-scope.js').AdmittedAnaSourceReadScope) => Promise<void>;
+}
+
+function titleActorReady(ctx: TitleScopeContext): ctx is TitleScopeContext & { organizationId: number; userId: number } {
+  return Number.isSafeInteger(ctx.organizationId) && Number(ctx.organizationId) > 0 &&
+    Number.isSafeInteger(ctx.userId) && Number(ctx.userId) > 0;
+}
+function titleScopeMatches(scope: import('./source-read-scope.js').AdmittedAnaSourceReadScope, ctx: TitleScopeContext): boolean {
+  return Boolean(scope && scope.organizationId === ctx.organizationId && scope.userId === ctx.userId);
+}
+function titleRowAllowed(row: TitleRow, orgId: number, programs: readonly string[], ids: readonly string[]): boolean {
+  return row.organization_id === orgId && programs.includes(row.program_id) && ids.includes(row.id);
 }
 
 /**
@@ -441,21 +456,39 @@ export async function resolveStepDocumentTitles(
         .filter((id): id is string => id !== null),
     ),
   ];
+  if (ids.length === 0 || !titleActorReady(ctx)) return new Map();
   const orgId = ctx.organizationId;
-  if (ids.length === 0 || !orgId) return new Map();
   try {
     const scope = await (deps.scope ?? defaultScope)(ctx, orgId);
     if ('error' in scope) return new Map();
+    if (!titleScopeMatches(scope.admittedScope, ctx)) return new Map();
     const { vaultDataEligibleSql } = await import('../document-data-disposition/eligibility.js');
-    const programClause = scope.programId ? ' AND d.program_id = $3::uuid' : '';
+    const programClause = scope.programId ? ' AND d.program_id = $4::uuid' : '';
     const sql =
-      `SELECT d.id::text AS id, d.document_title FROM vault.documents d
-        WHERE d.id = ANY($1::uuid[]) AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
-          AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2)`;
-    const params = scope.programId ? [ids, orgId, scope.programId] : [ids, orgId];
-    const { rows } = await (deps.query ?? defaultQuery)(sql, params);
+      `SELECT d.id::text AS id, d.document_title, d.organization_id, d.program_id::text AS program_id FROM vault.documents d
+        WHERE d.id = ANY($1::uuid[]) AND d.organization_id=$2 AND d.program_id=ANY($3::uuid[])
+          AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}
+          AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)`;
+    const params = [ids, orgId, [...scope.admittedScope.accessibleProgramIds], ...(scope.programId ? [scope.programId] : [])];
+    let rows: TitleRow[];
+    if (deps.query) {
+      // Injected SQL fixtures declare their own final authority seam; absence
+      // is unknown access and cannot yield a title.
+      if (!deps.revalidate) return new Map();
+      ({ rows } = await deps.query(sql, params));
+      await deps.revalidate(scope.admittedScope);
+    } else {
+      const { withAnaSourceReadScope } = await import('../vault/document-catalog.service.js');
+      const { sourceReadInput } = await import('./catalog-scope.js');
+      const { revalidateAnaSourceReadScope } = await import('./source-read-scope.js');
+      rows = await withAnaSourceReadScope(sourceReadInput(ctx as never, orgId), async q => {
+        await revalidateAnaSourceReadScope(q, scope.admittedScope);
+        return (await q.query(sql, params)).rows as TitleRow[];
+      });
+    }
     const titles = new Map<string, string>();
     for (const row of rows) {
+      if (!titleRowAllowed(row, orgId, scope.admittedScope.accessibleProgramIds, ids)) return new Map();
       const title = cleanStepText(row.document_title);
       if (title) titles.set(row.id, title);
     }
@@ -469,9 +502,4 @@ export async function resolveStepDocumentTitles(
 async function defaultScope(ctx: TitleScopeContext, orgId: number) {
   const { catalogScope } = await import('./catalog-scope.js');
   return catalogScope(ctx as never, orgId, null, 'read');
-}
-
-async function defaultQuery(sql: string, params: unknown[]) {
-  const { pool } = await import('../../db.js');
-  return pool.query(sql, params) as unknown as Promise<{ rows: Array<{ id: string; document_title: string | null }> }>;
 }

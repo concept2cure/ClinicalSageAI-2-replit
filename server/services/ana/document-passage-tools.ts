@@ -114,7 +114,7 @@ async function handleSearchDocumentPassages(
   // Keyless and flag-free (D2, 2026-10-08): the passage index is written at
   // every ingest and searched by text when nothing can embed the query.
   const gate = await requireDocumentAccess(ctx, 'search_document_passages');
-  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, code: gate.code });
   const { orgId } = gate;
 
   const query = typeof input.query === 'string' ? input.query.trim() : '';
@@ -136,9 +136,9 @@ async function handleSearchDocumentPassages(
   try {
     const result = await searchDocumentPassages(
       { organizationId: orgId, organizationUuid: ctx?.organizationUuid, query },
-      { limit, programId: scope.programId },
+      { limit, programId: scope.programId, sourceReadScope: scope.admittedScope },
     );
-    const note = coverageNote(result.coverage);
+    const note = 'Within the current actor’s accessible source scope: ' + coverageNote(result.coverage);
     // Ranked by text alone: no embedding provider answered. The model says so
     // rather than implying a meaning-based search ran.
     const ranked = result.ranking === 'text'
@@ -148,6 +148,7 @@ async function handleSearchDocumentPassages(
     return JSON.stringify({
       ok: true,
       query,
+      scope: { actorFiltered: true, ...(scope.programId ? { programId: scope.programId } : scope.admittedScope.projectId !== null ? { openProject: true, programId: null } : { accessibleProjects: true }) },
       passages: result.hits,
       coverage: result.coverage,
       ranking: result.ranking,
@@ -176,6 +177,6 @@ async function handleSearchDocumentPassages(
 export function registerDocumentPassageHandlers(register: RegisterFn): void {
   register(
     'search_document_passages',
-    withCaughtErrors('search_document_passages', handleSearchDocumentPassages),
+    withCaughtErrors('search_document_passages', handleSearchDocumentPassages, { safeOutcome: true }),
   );
 }

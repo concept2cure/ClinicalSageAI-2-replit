@@ -1,0 +1,57 @@
+{
+  "verification": {
+    "passed": 11,
+    "tests": 11,
+    "fullMountedRoutes": false,
+    "realProvider": false,
+    "sequentialPGliteControl": true,
+    "actualRegisteredHandlerAndExecutor": true
+  },
+  "files": [
+    {
+      "path": "server/services/ana-session-bootstrap.ts",
+      "sha256": "cae3882ebbe207454276aa9fb90cc51f4b05addf68f26ba54a427e1f06023844",
+      "bytes": 9788
+    },
+    {
+      "path": "server/services/ana-session-bootstrap-format.ts",
+      "sha256": "7abd75b6ab686d8edde04ce479fc6933f1d99260b3974d73ce602e85741aa29b",
+      "bytes": 12588
+    },
+    {
+      "path": "server/routes/chat/send-message.ts",
+      "sha256": "829b4c02051961225391a7303b3ce7ca7819b2afb37bb26f34bb89b44c2b37d3",
+      "bytes": 61169
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "sha256": "273e0e1812fea084aabb1ac89eda1e862606ca7966a41be160c6b8d565f8c568",
+      "bytes": 195564
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "sha256": "ae780b532e756cb63e2a4da49e37c3e817c70d472869145a2db18b4261f33697",
+      "bytes": 1136266
+    },
+    {
+      "path": "server/services/ana/source-context-admission.ts",
+      "sha256": "87bf8b3e748da51b2c9be7d0da76750aa4b32e8c4cece98c82ab4f145498eb12",
+      "bytes": 13980
+    },
+    {
+      "path": "server/services/ana/read-receipts.ts",
+      "sha256": "785124d4f12f69f9c3d558820c2cd4a505404c3b690ee223e7c3c80474ced3af",
+      "bytes": 12503
+    },
+    {
+      "path": "server/services/ana/source-read-receipt.ts",
+      "sha256": "5d7e6ce80b72120b4d7a24b866b2a1dc4fa0269f39b6bb5d42e09e0c0ac1968f",
+      "bytes": 11303
+    },
+    {
+      "path": "docs/evidence/D2-ANA-SOURCE-ACCESS/2026-10-14/independent-root-wiring.test.mts",
+      "sha256": "820e1fde07d3b40e12a7b5f24de69d51b6bfc836f5555abdd17be3de2806badb",
+      "bytes": 19940
+    }
+  ]
+}

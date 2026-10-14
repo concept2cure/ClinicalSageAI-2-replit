@@ -2,9 +2,9 @@
  * Semantic search over the document catalog — "which of the client's files
  * speaks to X?", answered from the comprehension records AnA has written.
  *
- * Searches ONLY current cataloged versions: the embedding indexes the comprehension
- * tier (kind + purpose + summary + key data written after a full read), so a
- * hit is a claim AnA has actually earned. Uncataloged documents are absent by
+ * Searches ONLY current cataloged versions: the embedding indexes the recorded
+ * description (kind + purpose + summary + legacy key data). A matching record
+ * is not a context-verified scientific fact. Uncataloged documents are absent by
  * construction — discovery of those is list_project_documents' job, and the
  * caller is told how many exist so absence is never mistaken for "no such
  * file".
@@ -17,8 +17,22 @@
  */
 
 import { pool } from '../../db.js';
-import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
-import { supersededSql } from './vault-version-family.js';
+import { queryCatalogMeaningIndex } from './document-catalog-search-query.js';
+import { missingVectorIndex } from './vector-index-availability.js';
+import type { AdmittedAnaSourceReadScope } from '../ana/source-read-scope.js';
+import { assertRetrievalScope, pinRetrievalReadScope, withRetrievalReadScope } from './retrieval-source-access.js';
+
+export type CatalogSearchQueryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+export interface CatalogSearchOptions {
+  limit?: number;
+  minSimilarity?: number;
+  programId?: string | null;
+  /** Server-admitted scope. Empty means search no programmes. */
+  allowedProgramIds?: readonly string[];
+  /** Existing trusted executor; callers stamp tenant context when necessary. */
+  db?: CatalogSearchQueryable;
+  sourceReadScope?: AdmittedAnaSourceReadScope;
+}
 
 export class CatalogSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -30,6 +44,7 @@ export class CatalogSearchUnavailableError extends Error {
 export interface CatalogSearchHit {
   originalFileAvailable: boolean;
   documentId: string;
+  contentHash?: string;
   programId: string;
   programName: string | null;
   fileName: string;
@@ -80,70 +95,41 @@ export async function searchCatalog(
   organizationId: number,
   query: string,
   /** programId: one program's documents only (the open project, PF-10 S7); absent or null = the organization's. */
-  opts: { limit?: number; minSimilarity?: number; programId?: string | null } = {},
+  opts: CatalogSearchOptions = {},
 ): Promise<CatalogSearchResult> {
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
   const minSimilarity = opts.minSimilarity ?? 0.15;
   const programId = opts.programId ?? null;
+  const scope = opts.sourceReadScope ? pinRetrievalReadScope(opts.sourceReadScope) : undefined;
+  if (scope) {
+    assertRetrievalScope(scope, organizationId, programId);
+    await withRetrievalReadScope(scope, async () => undefined);
+  }
   const vectorLiteral = await embedQuery(query);
-
+  const db = opts.db ?? pool;
+  const run = (executor: CatalogSearchQueryable) => queryCatalogMeaningIndex(executor, { organizationId, programId, vectorLiteral, limit, minSimilarity, allowedProgramIds: scope?.accessibleProgramIds ?? opts.allowedProgramIds });
   try {
-    const counts = await pool.query(
-      `SELECT
-         COUNT(*) FILTER (WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged') AS searchable,
-         COUNT(*) FILTER (WHERE c.embedding IS NULL OR c.catalog_status IS DISTINCT FROM 'cataloged') AS unsearchable
-       FROM vault.documents d
-       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
-      WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
-        AND NOT ${supersededSql('d')}
-        AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
-      [organizationId, programId],
-    );
-    const res = await pool.query(
-      `SELECT d.id, d.program_id, rp.name AS program_name, d.file_name, d.document_title,
-              d.folder_id, d.ctd_section, d.placement_status,
-              c.document_kind, c.purpose, c.summary, c.key_data,
-              ${vaultBinaryAvailableSql('d')} AS original_file_available,
-              1 - (c.embedding <=> $2::vector) AS similarity
-         FROM vault.document_catalog c
-         JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL AND c.content_hash = d.content_hash
-         JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
-        WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged'
-          AND ${vaultDataEligibleSql('d')}
-          AND NOT ${supersededSql('d')}
-          AND 1 - (c.embedding <=> $2::vector) >= $3
-          AND ($5::uuid IS NULL OR d.program_id = $5::uuid)
-        ORDER BY c.embedding <=> $2::vector
-        LIMIT $4`,
-      [organizationId, vectorLiteral, minSimilarity, limit, programId],
-    );
-    return {
-      hits: res.rows.map((r: any) => ({
-        originalFileAvailable: r.original_file_available ?? true,
-        documentId: r.id,
-        programId: r.program_id,
-        programName: r.program_name,
-        fileName: r.file_name,
-        documentTitle: r.document_title,
-        documentKind: r.document_kind,
-        purpose: r.purpose,
-        summary: r.summary,
-        keyData: r.key_data ?? null,
-        folderId: r.folder_id,
-        ctdSection: r.ctd_section,
-        placementStatus: r.placement_status,
-        similarity: Number(r.similarity),
-      })),
-      searchedCount: Number(counts.rows[0]?.searchable ?? 0),
-      unsearchableCount: Number(counts.rows[0]?.unsearchable ?? 0),
-    };
+    if (!scope) return await run(db);
+    const result = await withRetrievalReadScope(scope, async executor => {
+      await executor.query('SAVEPOINT catalog_meaning_search');
+      try {
+        const found = await run(executor);
+        await executor.query('RELEASE SAVEPOINT catalog_meaning_search');
+        return { found };
+      } catch (error) {
+        await executor.query('ROLLBACK TO SAVEPOINT catalog_meaning_search');
+        await executor.query('RELEASE SAVEPOINT catalog_meaning_search');
+        if (!missingVectorIndex(error)) throw error;
+        return { unavailable: true as const };
+      }
+    });
+    if (result.found) return result.found;
+    throw new CatalogSearchUnavailableError('this database has no pgvector embedding column for the catalog');
   } catch (err) {
     // 42703 = the embedding column does not exist (no pgvector on this
     // database); 42883 = the <=> operator is missing. Both mean the index,
     // not the corpus, is absent — say that.
-    const code = (err as { code?: string })?.code;
-    if (code === '42703' || code === '42883') {
+    if (missingVectorIndex(err)) {
       throw new CatalogSearchUnavailableError(
         'this database has no pgvector embedding column for the catalog',
       );

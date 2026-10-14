@@ -14,19 +14,24 @@
  *
  * The rules themselves (spans, coverage, the gate, extraction outcomes) are
  * pure functions in document-catalog-core.ts, re-exported below; this file is
- * the thin DB layer. Tenancy on vault.documents follows the established
- * idiom: an EXISTS join to regulatory_programs.organization_id, because the
- * table itself carries no org column (see vault-ingest.ts).
+ * the thin DB layer. Source reads require the document's recorded organization
+ * and its live regulatory program to agree with the requested organization.
  */
 
+import { createHash } from 'node:crypto';
 import { pool } from '../../db.js';
+import { LEGACY_CATALOG_VERIFICATION_SCOPE, type LegacyCatalogVerificationScope } from '../../../shared/ana/catalog-facts.js';
+import { runSourceFactPreview, type SourceFactPreviewArgs, type SourceFactPreviewResult } from './document-catalog-preview.js';
+import type { CompleteCatalogArgs, CompleteCatalogResult, VaultDocDigest } from './document-catalog-operation-types.js';
 import { vaultDataEligibleSql, vaultDispositionChoiceSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
-import { catalogableDocument } from './document-catalog-eligibility.js';
+import { catalogableExpectedProgram, assertCatalogListingScope } from './document-catalog-source-scope.js';
 import { supersededSql } from './vault-version-family.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
-import { catalogStateOf, writeCatalogSuggestion, type CatalogProposer } from './document-catalog-governance.service.js';
+import { catalogStateOf, writeCatalogSuggestion } from './document-catalog-governance.service.js';
 import { filingVocabularyRefusal } from './vault-filing.service.js';
+import { runLoadDocumentForActor, runListProjectDocumentsForActor, type ActorCatalogDocumentRow, type ActorProjectDocumentPage } from './document-catalog-actor-reads.js';
+import type { AnaSourceReadScopeInput } from '../ana/source-read-scope.js';
 import {
   computeCoverage,
   assertCatalogWriteAllowed,
@@ -55,6 +60,11 @@ export async function isDocumentCatalogEnabled(organizationId?: number | null): 
 
 // One import path for callers: the pure core rides along with the DB layer.
 export * from './document-catalog-core.js';
+export { withAnaSourceReadScope, revalidateActorSourceScope } from './document-catalog-actor-access.js';
+export type { AnaSourceReadScopeInput, AdmittedAnaSourceReadScope } from './document-catalog-actor-access.js';
+export type { AnaCatalogSourceAccess, ActorCatalogDocumentRow, ActorProjectDocumentPage } from './document-catalog-actor-reads.js';
+export { listChatUploadsForActor, listChatUploadsInReadScope } from './document-catalog-actor-captures.js';
+export type { ActorChatUploadPage } from './document-catalog-actor-captures.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB wrappers
@@ -149,6 +159,9 @@ export async function recordExtractionOutcome(
 
 /** The org-checked document row every tool call resolves through (see module header on tenancy). */
 export interface CatalogDocumentRow {
+  organizationId?: number;
+  /** Authoritative family projection; raw callers may omit this in old fixtures. */
+  isCurrent?: boolean;
   disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   originalFileAvailable?: boolean;
   id: string;
@@ -187,35 +200,41 @@ export interface CatalogDocumentRow {
 export async function loadDocumentForOrg(
   documentId: string,
   organizationId: number,
-  opts: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean } = {},
+  opts: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] } = {},
 ): Promise<CatalogDocumentRow | null> {
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
-  const programClause = opts.programId ? ' AND d.program_id = $3::uuid' : '';
+  const params: unknown[] = [documentId, organizationId];
+  let programClause = '';
+  if (opts.programId) { params.push(opts.programId); programClause += ` AND d.program_id = $${params.length}::uuid`; }
+  if (opts.allowedProgramIds !== undefined) { params.push([...opts.allowedProgramIds]); programClause += ` AND d.program_id = ANY($${params.length}::uuid[])`; }
   // Newly admitted sources require both recorded tenant consistency and a
   // current version. Programme ownership alone cannot repair legacy conflicts.
-  const currentClause = opts.currentOnly ? ` AND d.organization_id = $2 AND NOT ${supersededSql('d')}` : '';
+  const currentClause = opts.currentOnly ? ` AND NOT ${supersededSql('d')}` : '';
   const res = await (opts.executor ?? pool).query(
-    `SELECT d.id, d.program_id, d.document_code, d.document_title, d.document_type,
+    `SELECT d.id, d.organization_id, d.program_id, d.document_code, d.document_title, d.document_type,
             d.file_name, d.mime_type, d.content_hash, ${textCol},
             ${vaultDispositionChoiceSql('d')} AS disposition,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
+            NOT ${supersededSql('d')} AS is_current,
             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
             c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
             c.extraction_error, c.char_count, c.word_count, c.page_count,
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
             c.catalog_state, c.proposed_model
        FROM vault.documents d
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}${currentClause}
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+      WHERE d.id = $1 AND d.organization_id = $2 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}${currentClause}
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
-                     WHERE rp.id = d.program_id AND rp.organization_id = $2)
+                     WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
       LIMIT 1`,
-    opts.programId ? [documentId, organizationId, opts.programId] : [documentId, organizationId],
+    params,
   );
   const r = res.rows[0];
-  if (!r) return null;
+  if (!r || r.organization_id !== organizationId) return null;
   return {
     id: r.id,
+    organizationId: r.organization_id,
+    isCurrent: r.is_current,
     programId: r.program_id,
     documentCode: r.document_code,
     documentTitle: r.document_title,
@@ -252,7 +271,18 @@ export async function loadDocumentForOrg(
   };
 }
 
-/** Record the exact span of extracted text served by a read. */
+/** Interactive AnA reads must use current actor/project admission. The raw
+ * loader above remains for callers that already perform their own admission. */
+export function loadDocumentForActor(
+  input: AnaSourceReadScopeInput & { documentId: string },
+  opts: { includeText?: boolean; currentOnly?: boolean } = {},
+): Promise<ActorCatalogDocumentRow | null> {
+  return runLoadDocumentForActor(input, opts, { load: loadDocumentForOrg });
+}
+
+/** Trusted internal legacy span insert. Interactive AnA reads use the guarded
+ * host-budget admission writer; these rows contain no extraction digest or
+ * provider delivery acknowledgement. */
 export async function recordReadReceipt(args: {
   documentId: string;
   contentHash: string;
@@ -275,13 +305,15 @@ export async function recordReadReceipt(args: {
   );
 }
 
-/** Coverage of the CURRENT bytes (receipts against other hashes prove nothing). */
+/** Aggregate legacy host-span history bound to the selected original byte
+ * hash. It is not current-actor, extraction-specific or provider-served proof. */
 export async function getReadCoverage(
   documentId: string,
   contentHash: string,
   charCount: number,
+  executor: Queryable = pool,
 ): Promise<SpanCoverageReport> {
-  const res = await pool.query(
+  const res = await executor.query(
     `SELECT char_start, char_end FROM vault.document_read_receipts
       WHERE document_id = $1 AND content_hash = $2`,
     [documentId, contentHash],
@@ -290,13 +322,14 @@ export async function getReadCoverage(
   return computeCoverage(spans, charCount);
 }
 
-export interface CompleteCatalogResult {
-  ok: boolean;
-  refusal?: string;
-  coverage?: SpanCoverageReport;
-  /** Present only on a key_data refusal: every value the text does not state, by path. */
-  unverifiedKeyData?: import('./document-catalog-core.js').UnverifiedKeyDataLeaf[];
-  embeddingStatus?: 'embedded' | 'failed';
+export type { CompleteCatalogArgs, CompleteCatalogResult, VaultDocDigest } from './document-catalog-operation-types.js';
+
+export type { SourceFactPreviewArgs, SourceFactPreviewResult } from './document-catalog-preview.js';
+export { isSourceFactPreviewEnabled } from './document-catalog-preview.js';
+
+/** One canonical facade; the read-only helper uses these same query primitives. */
+export function previewSourceFacts(args: SourceFactPreviewArgs): Promise<SourceFactPreviewResult> {
+  return runSourceFactPreview(args, { connect: () => pool.connect(), isCatalogEnabled: isDocumentCatalogEnabled, loadDocument: loadDocumentForOrg, getCoverage: getReadCoverage });
 }
 
 /**
@@ -306,34 +339,31 @@ export interface CompleteCatalogResult {
  * never assumed: a catalog entry whose embedding failed is still a valid
  * record that says its semantic index is missing.
  */
-export async function completeCatalog(args: {
-  documentId: string;
-  organizationId: number;
-  documentKind: string;
-  purpose: string;
-  summary: string;
-  keyData?: Record<string, unknown> | null;
-  userId?: number | null;
-  /** Who wrote the description: the agent, its model and turn (S4). */
-  proposer?: CatalogProposer | null;
-}): Promise<CompleteCatalogResult> {
+export async function completeCatalog(args: CompleteCatalogArgs): Promise<CompleteCatalogResult> {
+  // Clone synchronously, before source load or embedding awaits. The checked
+  // proposal and server-derived attribution must be the proposal handed off.
+  try { args = globalThis.structuredClone(args); }
+  catch { return { ok: false, refusal: 'The catalog proposal could not be copied as a private data snapshot. Nothing was saved.' }; }
   // The kind is the Vault's evidence-kind vocabulary, as placement's is (S4).
   const vocabulary = filingVocabularyRefusal({ evidenceKind: args.documentKind });
   if (vocabulary) return { ok: false, refusal: vocabulary.message };
   // The text that was served is the text key_data is verified against.
-  const availability = catalogableDocument(await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true }));
+  const availability = catalogableExpectedProgram(await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true }), args.expectedProgramId);
   if (!availability.ok) return availability;
   const doc = availability.document;
+  const currentText = doc.extractedText ?? '';
+  const expectedExtractedTextSha256 = createHash('sha256').update(currentText).digest('hex');
 
-  /* Coverage proves the model was served every character; it proved nothing
-     about what the model then wrote. key_data was stored as the model typed
+  /* The legacy aggregate coverage gate requires stored spans for every
+     character under this byte hash; it does not prove current extraction,
+     current actor or provider delivery. key_data was stored as the model typed
      it, so a CoA reading batch 23-104 and assay 99.2 % was recorded as batch
      23-105 and assay 98.4 and served back as fact by every reader of the
      catalog. The gate now also checks each value against the same stored text
      read_project_document served, before the embedding and the write, so a
      refusal stores nothing (CLAUDE.md Rule 2). */
-  const coverage = await getReadCoverage(doc.id, doc.contentHash, doc.catalog.charCount);
-  const verdict = assertCatalogWriteAllowed(coverage, args.keyData, doc.extractedText);
+  const coverage = await getReadCoverage(doc.id, doc.contentHash, currentText.length);
+  const verdict = assertCatalogWriteAllowed(coverage, args.keyData, currentText);
   if (!verdict.allowed) {
     const { reason, unverifiedKeyData } = verdict;
     return { ok: false, refusal: reason ?? 'Catalog write refused.', coverage, unverifiedKeyData };
@@ -372,6 +402,7 @@ export async function completeCatalog(args: {
   const written = await writeCatalogSuggestion({
     documentId: doc.id,
     contentHash: doc.contentHash,
+    expectedExtractedTextSha256,
     organizationId: args.organizationId,
     programId: doc.programId,
     documentTitle: doc.documentTitle,
@@ -384,8 +415,8 @@ export async function completeCatalog(args: {
     userId: args.userId ?? null,
     proposer: args.proposer ?? null,
   });
-  if (!written.ok) return { ok: false, refusal: written.refusal, coverage };
-  return { ok: true, coverage, embeddingStatus: written.embeddingStatus };
+  if (!written.ok) return { ok: false, refusal: written.refusal, coverage, ...(written.unverifiedKeyData ? { unverifiedKeyData: written.unverifiedKeyData } : {}) };
+  return { ok: true, coverage, embeddingStatus: written.embeddingStatus, checkScope: { ...LEGACY_CATALOG_VERIFICATION_SCOPE } };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -413,6 +444,8 @@ export interface ProjectDocumentListing {
   purpose: string | null;
   /** suggested (AnA's, not yet confirmed) | confirmed | corrected; null before a description. */
   catalogState: string | null;
+  /** Describes the legacy check's scope; it is not a new historical pass. */
+  checkScope?: LegacyCatalogVerificationScope;
   extractionError: string | null;
   charCount: number | null;
   createdAt: string;
@@ -465,7 +498,7 @@ export interface ProjectDocumentPage {
  */
 export async function listProjectDocuments(
   organizationId: number,
-  opts: { programId?: string | null; limit?: number } = {},
+  opts: { programId?: string | null; limit?: number; executor?: Queryable; allowedProgramIds?: readonly string[]; currentOnly?: boolean } = {},
 ): Promise<ProjectDocumentPage> {
   const limit = Math.min(200, Math.max(1, opts.limit ?? 100));
   const params: unknown[] = [organizationId, limit];
@@ -474,8 +507,14 @@ export async function listProjectDocuments(
     params.push(opts.programId);
     programFilter = `AND d.program_id = $${params.length}`;
   }
-  const res = await pool.query(
-    `SELECT d.id, d.program_id, rp.name AS program_name, d.document_code, d.document_title,
+  if (opts.allowedProgramIds !== undefined) {
+    params.push([...opts.allowedProgramIds]);
+    programFilter += ` AND d.program_id = ANY($${params.length}::uuid[])`;
+  }
+  if (opts.currentOnly) programFilter += ` AND NOT ${supersededSql('d')}`;
+  const res = await (opts.executor ?? pool).query(
+    `SELECT d.id, d.organization_id, d.program_id, rp.organization_id AS program_organization_id,
+            rp.deleted_at AS program_deleted_at, rp.name AS program_name, d.document_code, d.document_title,
             d.document_type, d.file_name, d.folder_id, d.ctd_section, d.evidence_kind,
             d.placement_status, d.created_at,
             ${vaultDispositionChoiceSql('d')} AS disposition,
@@ -491,13 +530,17 @@ export async function listProjectDocuments(
             COUNT(*) FILTER (WHERE d.placement_status = 'unfiled')
               OVER () AS scope_unfiled
        FROM vault.documents d
-       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
+       JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
-      WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${programFilter}
+      WHERE d.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${programFilter}
       ORDER BY d.created_at DESC
       LIMIT $2`,
     params,
   );
+  assertCatalogListingScope(res.rows, organizationId);
+  if (opts.allowedProgramIds !== undefined && res.rows.some(row => !opts.allowedProgramIds!.includes(row.program_id))) {
+    throw new Error('The catalog query returned a source outside its admitted program scope.');
+  }
   const documents = res.rows.map((r: any) => ({
     id: r.id,
     programId: r.program_id,
@@ -518,6 +561,7 @@ export async function listProjectDocuments(
     documentKind: r.document_kind,
     purpose: r.purpose,
     catalogState: catalogStateOf(r),
+    ...(r.catalog_status === 'cataloged' ? { checkScope: { ...LEGACY_CATALOG_VERIFICATION_SCOPE } } : {}),
     extractionError: r.extraction_error,
     charCount: r.char_count,
     createdAt: String(r.created_at),
@@ -537,17 +581,11 @@ export async function listProjectDocuments(
   };
 }
 
-export interface VaultDocDigest {
-  fileName: string;
-  documentTitle: string;
-  programName: string | null;
-  folderId: string | null;
-  ctdSection: string | null;
-  placementStatus: string;
-  catalogStatus: CatalogStatus | 'uncataloged';
-  documentKind: string | null;
-  purpose: string | null;
-  catalogState: string | null;
+export function listProjectDocumentsForActor(
+  input: AnaSourceReadScopeInput,
+  opts: { limit?: number } = {},
+): Promise<ActorProjectDocumentPage> {
+  return runListProjectDocumentsForActor(input, opts, listProjectDocuments);
 }
 
 /** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
@@ -560,6 +598,8 @@ export interface ChatUploadDigest {
   dossier: unknown;
   programId: string | null;
   uploadedAt: string;
+  originalFileAvailable?: boolean;
+  sourceAccessNotice?: string;
 }
 
 /** A page of chat uploads, and whether the limit hid any. */
@@ -633,6 +673,8 @@ export interface CatalogBootstrapDigest {
   notYetStudied: number;
   extractionFailed: number;
   unfiled: number;
+  actorFiltered?: true;
+  sourceAccessNotice?: string;
 }
 
 export async function getCatalogBootstrapDigest(
@@ -652,11 +694,31 @@ export async function getCatalogBootstrapDigest(
       documentKind: r.documentKind,
       purpose: r.purpose,
       catalogState: r.catalogState,
+      ...(r.checkScope ? { checkScope: r.checkScope } : {}),
     })),
     total: page.total,
     withheld: page.withheld,
     notYetStudied: page.notYetStudied,
     extractionFailed: page.extractionFailed,
     unfiled: page.unfiled,
+  };
+}
+
+/** Bootstrap receives session identity from the serving host, never the body. */
+export async function getCatalogBootstrapDigestForActor(
+  input: AnaSourceReadScopeInput,
+  limit = 12,
+): Promise<CatalogBootstrapDigest & { actorFiltered: true; admittedScope: ActorProjectDocumentPage['admittedScope']; sourceAccessNotice: string }> {
+  const page = await listProjectDocumentsForActor(input, { limit });
+  return {
+    files: page.documents.map(r => ({ fileName: r.fileName, documentTitle: r.documentTitle,
+      programName: r.programName, folderId: r.location.folderId, ctdSection: r.location.ctdSection,
+      placementStatus: r.location.placementStatus, catalogStatus: r.catalogStatus,
+      documentKind: r.documentKind, purpose: r.purpose, catalogState: r.catalogState,
+      ...(r.checkScope ? { checkScope: r.checkScope } : {}),
+    })),
+    total: page.total, withheld: page.withheld, notYetStudied: page.notYetStudied,
+    extractionFailed: page.extractionFailed, unfiled: page.unfiled,
+    actorFiltered: true, admittedScope: page.admittedScope, sourceAccessNotice: page.sourceAccessNotice,
   };
 }
