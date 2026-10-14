@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T07:47:37.587Z",
+  "generatedAt": "2026-10-14T08:31:01.912Z",
   "git": {
-    "sha": "a80d2fa65784714a1aa97b367b8042000c830ed6",
+    "sha": "baffbeac2fb3a0c9bb5f05f64e9278708fc985e7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2168,7 +2168,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 402142
+        "bytes": 402665
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2251,6 +2251,10 @@
         "bytes": 136488
       },
       {
+        "file": "server/routes/report-os.ts",
+        "bytes": 136120
+      },
+      {
         "file": "shared/regulatory/global-document-registry.ts",
         "bytes": 135326
       },
@@ -2283,16 +2287,12 @@
         "bytes": 124958
       },
       {
-        "file": "server/routes/report-os.ts",
-        "bytes": 121387
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "bytes": 120736
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 119982
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 118830
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2394,7 +2394,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8673
+        "lines": 8681
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2481,6 +2481,10 @@
         "lines": 3046
       },
       {
+        "file": "server/routes/report-os.ts",
+        "lines": 3028
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "lines": 3002
       },
@@ -2495,10 +2499,6 @@
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "lines": 2889
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "lines": 2798
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2594,7 +2594,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2121
+        "lines": 2150
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
