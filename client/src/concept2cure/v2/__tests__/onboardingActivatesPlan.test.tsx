@@ -37,16 +37,25 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 
 import { Onboarding } from '../surfaces/Onboarding';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { completeDiscovery } from './onboardingDiscoveryFixtures';
 
 interface Sent { url: string; body: Record<string, unknown> }
 let sent: Sent[];
 let responder: (url: string) => { ok: boolean; status: number; body: unknown };
 let assigned: string[];
+let discoveryRevision: number;
 
 const fetchMock = vi.fn((url: string, init?: RequestInit) => {
   const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {};
   sent.push({ url, body });
-  const r = responder(url);
+  if (url === '/api/onboarding/discovery' && init?.method === 'PATCH') discoveryRevision += 1;
+  const r = url === '/api/onboarding/discovery' ? {
+    ok: true, status: 200, body: { data: { canEdit: true, discovery: {
+      schemaVersion: 1, revision: discoveryRevision, answers: completeDiscovery(),
+      updatedAt: '2026-10-14T00:00:00.000Z', updatedBy: 1,
+      completedAt: init?.method === 'PATCH' && body.complete ? '2026-10-14T00:00:00.000Z' : null,
+    } } },
+  } : responder(url);
   return Promise.resolve({
     ok: r.ok,
     status: r.status,
@@ -63,6 +72,7 @@ const PROPS = {
 
 beforeEach(() => {
   sent = [];
+  discoveryRevision = 1;
   assigned = [];
   responder = () => ({ ok: true, status: 200, body: {} });
   fetchMock.mockClear();
@@ -84,22 +94,23 @@ afterEach(() => {
 /** Walk the wizard to the review step with `tierName` selected. */
 async function toReview(tierName: string) {
   render(<Onboarding {...PROPS} />);
-  fireEvent.change(screen.getByLabelText('Organization name'), {
-    target: { value: 'Bright Biosciences' },
-  });
-  fireEvent.click(screen.getByText(/Continue/));                  // → pricing model
-  fireEvent.click(screen.getByText(/Continue/));                  // → choose plan
-  const tile = Array.from(document.querySelectorAll('.ob-tier')).find((b) =>
-    b.textContent?.includes(tierName),
-  );
+  fireEvent.change(screen.getByLabelText('Organization name'), { target: { value: 'Bright Biosciences' } });
+  await waitFor(() => expect((screen.getByRole('button', { name: /^Continue/ }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // client discovery
+  fireEvent.click(screen.getByRole('button', { name: /Save & continue/ }));
+  await screen.findByTestId('discovery-project');
+  fireEvent.click(screen.getByRole('button', { name: /Save & continue/ }));
+  await waitFor(() => expect(screen.queryByTestId('discovery-project')).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // plan
+  const tile = Array.from(document.querySelectorAll('.ob-tier')).find((b) => b.textContent?.includes(tierName));
   if (!tile) throw new Error(`tier tile "${tierName}" not rendered`);
   fireEvent.click(tile);
-  fireEvent.click(screen.getByText(/Continue/));                  // → invite personnel
-  fireEvent.click(screen.getByText(/Continue/));                  // → modules
-  fireEvent.click(screen.getByText(/Continue/));                  // → agency accounts
-  // The gateway account choice is offered at onboarding and can wait (D7, 2026-10-01).
-  expect(screen.getByTestId('gateway-accounts-setting')).toBeTruthy();
-  fireEvent.click(screen.getByText(/Continue/));                  // → review & activate
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // personnel
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // modules
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // security
+  fireEvent.click(screen.getByRole('button', { name: /Save & continue/ }));
+  await screen.findByTestId('gateway-accounts-setting');
+  fireEvent.click(screen.getByRole('button', { name: /^Continue/ })); // review
 }
 
 const bodyFor = (path: string) => sent.find((s) => s.url === path)?.body;

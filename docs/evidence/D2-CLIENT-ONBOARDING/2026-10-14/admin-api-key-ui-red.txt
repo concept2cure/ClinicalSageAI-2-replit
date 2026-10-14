@@ -1,0 +1,15 @@
+Condensed captured failing test output; repeated DOM dumps removed.
+
+ FAIL  client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > requires scopes and a reason before sending a request
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Create API key"
+     36|   return screen.findByRole('dialog', { name: 'Create API key' });
+ FAIL  client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > creates with selected scopes and optional expiry, then shows the secret once without storage or AnA publication
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Create API key"
+     36|   return screen.findByRole('dialog', { name: 'Create API key' });
+ FAIL  client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > keeps entered values when the server refuses creation
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Create API key"
+     36|   return screen.findByRole('dialog', { name: 'Create API key' });
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  02:52:36
+   Duration  2.80s (transform 650ms, setup 142ms, import 888ms, tests 1.12s, environment 480ms)

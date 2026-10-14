@@ -68,4 +68,53 @@ describe('authService.adoptSession', () => {
     expect(localStorage.getItem('trialsage_access_token')).toBeNull();
     expect(sessionStorage.getItem('trialsage_access_token')).toBeNull();
   });
+
+  it('removes previous credentials from both storage tiers after a verified workspace adoption', async () => {
+    const authService = await load();
+    authService.setToken('old-organization-access', { id: '7', organizationId: '1' }, 'old-organization-refresh', 3600);
+    sessionStorage.setItem('trialsage_access_token', 'older-tab-access');
+    sessionStorage.setItem('trialsage_refresh_token', 'older-tab-refresh');
+    for (const storage of [sessionStorage, localStorage]) {
+      storage.setItem('token', 'old-legacy-access');
+      storage.setItem('auth_token', 'older-legacy-access');
+    }
+
+    expect(await authService.adoptSession('sso-1', false, { userId: '7', organizationId: '42' })).toMatchObject({ id: '7', organizationId: '42' });
+    expect(sessionStorage.getItem('trialsage_access_token')).toBe('sso-1');
+    expect(sessionStorage.getItem('trialsage_refresh_token')).toBe('');
+    expect(localStorage.getItem('trialsage_access_token')).toBeNull();
+    expect(localStorage.getItem('trialsage_refresh_token')).toBeNull();
+    for (const storage of [sessionStorage, localStorage]) {
+      expect(storage.getItem('token')).toBeNull();
+      expect(storage.getItem('auth_token')).toBeNull();
+    }
+    expect(localStorage.getItem('currentOrganizationId')).toBe('42');
+    expect(await authService.refreshToken()).toBe(false);
+  });
+
+  it('does not adopt a confirmed token for the wrong selected organization or account', async () => {
+    const authService = await load();
+    authService.setToken('old-organization-access', { id: '7', organizationId: '1' }, 'old-organization-refresh', 3600);
+    expect(await authService.adoptSession('sso-1', false, { userId: '7', organizationId: '43' })).toBeNull();
+    expect(await authService.adoptSession('sso-1', false, { userId: '8', organizationId: '42' })).toBeNull();
+    expect(authService.getUser()).toMatchObject({ id: '7', organizationId: '1' });
+    expect(localStorage.getItem('trialsage_access_token')).toBe('old-organization-access');
+  });
+
+  it('an old workspace refresh completing after adoption cannot replace the newly verified session', async () => {
+    const authService = await load();
+    authService.setToken('old-organization-access', { id: '7', organizationId: '1' }, 'old-organization-refresh', 3600);
+    let finish!: (response: ReturnType<typeof jsonResponse>) => void;
+    const previousFetch = fetch;
+    vi.stubGlobal('fetch', vi.fn((url: string, init: RequestInit) => url.endsWith('/refresh')
+      ? new Promise(resolve => { finish = resolve; })
+      : previousFetch(url, init)));
+    const refreshing = authService.refreshToken();
+    expect(await authService.adoptSession('sso-1', false, { userId: '7', organizationId: '42' })).toBeTruthy();
+    finish(jsonResponse(200, { accessToken: 'late-old-access', refreshToken: 'late-old-refresh', expiresIn: 3600 }));
+    expect(await refreshing).toBe(false);
+    expect(await authService.getValidAccessToken()).toBe('sso-1');
+    expect(sessionStorage.getItem('trialsage_access_token')).toBe('sso-1');
+    expect(localStorage.getItem('trialsage_refresh_token')).toBeNull();
+  });
 });

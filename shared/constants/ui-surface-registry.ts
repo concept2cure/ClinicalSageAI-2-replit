@@ -293,8 +293,8 @@ export const UI_SURFACES: UiSurface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
     // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
     // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
-    // (server/routes/vault-legal-holds.ts). No screen calls them yet, so ci:launch-scope-api could not
-    // see they were unclaimed, and production refused every one 403 LAUNCH_SCOPE. Its /retention
+    // (server/routes/vault-legal-holds.ts). Setup's LegalHoldsCard now calls them;
+    // Vault retains the preservation API family for its records. Its /retention
     // sub-path is Setup's, below.
     // /api/regulatory/documents: a Vault version's review and approval, on the
     // one document lifecycle (VR-13).
@@ -926,8 +926,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
     // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
-    // reads and sets the organisation's retention period.
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention'],
+    // reads and sets the organisation's retention period. LegalHoldsCard (2026-10-14, D2)
+    // lists, places and lifts holds, using named project and Vault document choices.
+    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/regulatory-programs', '/api/c2c/project-vault'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

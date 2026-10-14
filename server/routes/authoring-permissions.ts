@@ -1,6 +1,8 @@
 import { Router, type Request, type Response } from 'express';
-import { getPool } from '../db';
-import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
+import { z } from 'zod';
+import { getPool, transaction } from '../db';
+import type { RequestSqlClient } from '../db/requestDb';
+import { writeChainedAuditRow } from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 import {
@@ -15,277 +17,167 @@ import {
 
 const router = Router();
 const logger = createScopedLogger('authoring-permissions-router');
+const reasonSchema = z.string().trim().min(1).max(500);
+const grantSchema = z.object({
+  principalId: z.string().trim().min(1).max(200),
+  role: z.string().transform(normalizeAuthoringRole).refine(role => role !== null),
+  sectionId: z.string().uuid().nullable().optional(),
+  reason: reasonSchema,
+  validUntil: z.string().datetime({ offset: true }).refine(value => Date.parse(value) > Date.now()).nullable().optional(),
+});
+const revokeSchema = z.object({ reason: reasonSchema });
 
-function requestContext(req: Request): {
-  tenantId: number;
-  principal: NonNullable<ReturnType<typeof authoringPrincipalFromRequest>>;
-} | null {
-  const tenantId = authedOrgId(req);
-  const principal = authoringPrincipalFromRequest(req);
-  if (tenantId == null || !principal) return null;
-  return { tenantId, principal };
+class PermissionRefusal extends Error {
+  constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
 
-async function requirePermissionManager(req: Request, res: Response): Promise<{
-  tenantId: number;
-  principal: NonNullable<ReturnType<typeof authoringPrincipalFromRequest>>;
-  docId: string;
-} | null> {
-  const ctx = requestContext(req);
-  if (!ctx) {
-    res.status(401).json({
-      error: {
-        code: 'AUTHORING_AUTHENTICATION_REQUIRED',
-        message: 'Authenticated authoring principal and tenant context are required.',
-      },
-    });
-    return null;
+function requestContext(req: Request) {
+  const tenantId = authedOrgId(req);
+  const principal = authoringPrincipalFromRequest(req);
+  if (tenantId == null || !principal) {
+    throw new PermissionRefusal(401, 'AUTHORING_AUTHENTICATION_REQUIRED', 'Authenticated authoring principal and tenant context are required.');
   }
+  return { tenantId, principal, docId: String(req.params.docId ?? '').trim() };
+}
 
-  const docId = String(req.params.docId ?? '').trim();
-  const scope = await resolveAuthoringDocumentScope(getPool(), ctx.tenantId, docId);
-  const decision = await decideAuthoringPermission({
-    pool: getPool(),
-    principal: ctx.principal,
-    scope,
-    action: 'manage_permissions',
-  });
+type PermissionContext = ReturnType<typeof requestContext>;
 
+async function requirePermissionManager(client: RequestSqlClient, ctx: PermissionContext): Promise<void> {
+  const scope = await resolveAuthoringDocumentScope(client, ctx.tenantId, ctx.docId);
+  const decision = await decideAuthoringPermission({ pool: client, principal: ctx.principal, scope, action: 'manage_permissions' });
   if (decision.reason === 'object-not-found') {
-    res.status(404).json({
-      error: { code: 'AUTHORING_OBJECT_NOT_FOUND', message: 'Authoring document not found.' },
-    });
-    return null;
+    throw new PermissionRefusal(404, 'AUTHORING_OBJECT_NOT_FOUND', 'Authoring document not found.');
   }
   if (!decision.allowed) {
-    res.status(403).json({
-      error: {
-        code: 'AUTHORING_PERMISSION_ADMIN_FORBIDDEN',
-        message: 'Only a document owner or platform administrator may manage permissions.',
-      },
-    });
-    return null;
+    throw new PermissionRefusal(403, 'AUTHORING_PERMISSION_ADMIN_FORBIDDEN', decision.reason === 'document-immutable'
+      ? 'Access cannot be changed while this document is sealed or archived.'
+      : 'Only a document owner or platform administrator may manage permissions.');
   }
-
-  return { ...ctx, docId };
 }
 
 /**
- * Record the §11.10(e) row for a permission grant or revoke, and REPORT what
- * happened to it.
- *
- * WO-16C #133, and this site had two defects rather than one.
- *
- * The outcome was discarded: `void auditService.logAction(…)`, and `logAction`
- * never rejects when persistence fails — by deliberate policy, an audit-trail
- * outage must not break the action it records — so the discarded
- * `AuditWriteResult` was the only place a lost row was visible. The function
- * returned `void`, so neither handler could report one either.
- *
- * And the `.catch()` on the end could never run. It logged "Failed to reflect
- * authoring permission event into central audit log" and read, to anyone
- * auditing this file, as handling — for a promise documented never to reject on
- * exactly the failure the message names. That is the defect
- * `ci:dead-audit-catch` exists for; it only matches `try`/`await`/`catch`, so
- * this `.catch()` form slipped past it. Unreachable handling is worse than none:
- * a reviewer checking "is the audit failure handled here?" finds a handler and
- * moves on.
- *
- * `recordAuditRow` replaces both. It never throws, it logs the store's own
- * reason itself, and it returns the outcome — which the grant and revoke
- * handlers now put on the wire. Who may read and change a governed document is
- * precisely the kind of change an inspector traces, so a silently lost record of
- * it is worth surfacing.
+ * 2026-10-14 · D2: access changes and their chained audit record now commit
+ * together. The old post-commit recordAuditRow could lose the record while
+ * retaining access. A refused chained audit write rolls the change back.
+ * Locking the document also serializes competing last-owner revocations and
+ * rechecks management authority after a preceding revocation has committed.
  */
-function recordPermissionAudit(input: {
-  tenantId: number;
-  actorId: string;
-  action: string;
-  docId: string;
-  permissionId?: string;
-  details: Record<string, unknown>;
-}): Promise<AuditRowOutcome> {
-  return recordAuditRow({
-    tenantId: input.tenantId,
-    userId: input.actorId,
-    action: input.action,
-    resourceType: 'authoring_document_permission',
-    resourceId: input.permissionId ?? input.docId,
-    details: { docId: input.docId, ...input.details },
+async function inPermissionTransaction<T>(ctx: PermissionContext, work: (client: RequestSqlClient) => Promise<T>): Promise<T> {
+  return transaction(async (client: RequestSqlClient) => {
+    await client.query('SELECT id FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE', [ctx.docId, ctx.tenantId]);
+    await requirePermissionManager(client, ctx);
+    return work(client);
   });
 }
 
-// This router is mounted once at `/api` before the legacy `/api/authoring`
-// router. Including `/authoring` in each path avoids a second static mount at the
-// same prefix, preserving the route-mount no-regression contract.
+async function recordPermissionAudit(client: RequestSqlClient, req: Request, ctx: PermissionContext, input: {
+  action: string;
+  permissionId: string;
+  reason: string;
+  details: Record<string, unknown>;
+}): Promise<void> {
+  await writeChainedAuditRow(client, {
+    tenantId: ctx.tenantId,
+    userId: ctx.principal.id,
+    action: input.action,
+    resourceType: 'authoring_document_permission',
+    resourceId: input.permissionId,
+    reason: input.reason,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+    details: { docId: ctx.docId, ...input.details, reason: input.reason },
+  });
+}
 
-// GET /api/authoring/docs/:docId/permissions
+function refusal(res: Response, error: unknown, verb: string): void {
+  if (error instanceof PermissionRefusal) {
+    res.status(error.status).json({ error: { code: error.code, message: error.message } });
+    return;
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  if (message === 'DOCUMENT_NOT_FOUND' || message === 'SECTION_SCOPE_MISMATCH') {
+    res.status(404).json({ error: { code: message, message: message === 'SECTION_SCOPE_MISMATCH'
+      ? 'The requested section does not belong to this document and tenant.' : 'Authoring document not found.' } });
+    return;
+  }
+  if (message === 'LAST_OWNER') {
+    res.status(409).json({ error: { code: 'AUTHORING_LAST_OWNER_REQUIRED', message: 'A document must retain at least one active owner.' } });
+    return;
+  }
+  logger.error(`Failed to ${verb} authoring permissions`, { error: message });
+  res.status(503).json({ error: { code: 'AUTHORING_AUTHORIZATION_UNAVAILABLE', message: verb === 'list'
+    ? 'Authoring permissions could not be verified.'
+    : 'The access change could not be completed with its audit record. No change was confirmed. Reload access before retrying.' } });
+}
+
+// This router owns these paths once, mounted at /api before /api/authoring.
 router.get('/authoring/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
-    const ctx = await requirePermissionManager(req, res);
-    if (!ctx) return;
+    const ctx = requestContext(req);
+    await requirePermissionManager(getPool(), ctx);
     const permissions = await listAuthoringPermissions(getPool(), ctx.tenantId, ctx.docId);
     res.json({ success: true, docId: ctx.docId, permissions });
-  } catch (error) {
-    logger.error('Failed to list authoring permissions', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    res.status(503).json({
-      error: {
-        code: 'AUTHORING_AUTHORIZATION_UNAVAILABLE',
-        message: 'Authoring permissions could not be verified.',
-      },
-    });
-  }
+  } catch (error) { refusal(res, error, 'list'); }
 });
 
-// POST /api/authoring/docs/:docId/permissions
-// Reviewer and approver authority is explicit: it exists only after this
-// owner/admin-controlled grant, never because a user carries a broad QA/RA role.
+// Reviewer and approver authority is an explicit owner/admin-controlled grant.
 router.post('/authoring/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
-    const ctx = await requirePermissionManager(req, res);
-    if (!ctx) return;
-
-    const principalId = String(req.body?.principalId ?? '').trim();
-    const email = req.body?.email == null ? null : String(req.body.email).trim().toLowerCase();
-    const role = normalizeAuthoringRole(req.body?.role);
-    const sectionId = req.body?.sectionId == null ? null : String(req.body.sectionId).trim();
-    const reason = req.body?.reason == null ? null : String(req.body.reason).trim();
-    const validUntil = req.body?.validUntil == null ? null : String(req.body.validUntil).trim();
-
-    if (!principalId || !role) {
-      return res.status(400).json({
-        error: {
-          code: 'AUTHORING_PERMISSION_INVALID',
-          message: 'principalId and a valid role are required.',
-        },
-      });
+    const ctx = requestContext(req);
+    const parsed = grantSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      throw new PermissionRefusal(400, 'AUTHORING_PERMISSION_INVALID', 'Choose a member and a valid role, give a reason (1–500 characters), and use a future expiry if supplied.');
     }
-    if (validUntil && Number.isNaN(Date.parse(validUntil))) {
-      return res.status(400).json({
-        error: {
-          code: 'AUTHORING_PERMISSION_INVALID_EXPIRY',
-          message: 'validUntil must be an ISO-8601 date-time.',
-        },
+    const { principalId, role, sectionId = null, reason, validUntil = null } = parsed.data;
+    if (!role) throw new PermissionRefusal(400, 'AUTHORING_PERMISSION_INVALID', 'A valid document role is required.');
+    const permission = await inPermissionTransaction(ctx, async client => {
+      // Never trust a caller-provided email: authorization matches id OR email.
+      // Resolve the selected member and their canonical email in THIS tenant,
+      // holding membership through commit so removal cannot race the grant.
+      const member = await client.query(
+        `SELECT u.id::text AS principal_id, u.email
+           FROM users u JOIN organization_users ou ON ou.user_id = u.id
+          WHERE ou.organization_id = $1 AND u.id::text = $2
+          FOR SHARE OF ou`, [ctx.tenantId, principalId],
+      );
+      if (!member.rows[0]) {
+        throw new PermissionRefusal(400, 'AUTHORING_PERMISSION_MEMBER_REQUIRED', 'Choose a current member of this organization.');
+      }
+      const email = typeof member.rows[0].email === 'string' ? member.rows[0].email.trim().toLowerCase() : null;
+      const granted = await grantAuthoringPermission({
+        pool: client, tenantId: ctx.tenantId, docId: ctx.docId, sectionId,
+        principalId, email, role, grantedBy: ctx.principal.id, reason, validUntil,
       });
-    }
-
-    const permission = await grantAuthoringPermission({
-      pool: getPool(),
-      tenantId: ctx.tenantId,
-      docId: ctx.docId,
-      sectionId,
-      principalId,
-      email,
-      role,
-      grantedBy: ctx.principal.id,
-      reason,
-      validUntil,
-    });
-
-    const auditTrail = await recordPermissionAudit({
-      tenantId: ctx.tenantId,
-      actorId: ctx.principal.id,
-      action: 'authoring.permission.grant',
-      docId: ctx.docId,
-      permissionId: permission.id,
-      details: {
-        principalId,
-        email,
-        role,
-        sectionId,
-        validUntil,
-        reason,
-      },
-    });
-
-    return res.status(201).json({ success: true, permission, auditTrail });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (message === 'DOCUMENT_NOT_FOUND' || message === 'SECTION_SCOPE_MISMATCH') {
-      return res.status(404).json({
-        error: {
-          code: message,
-          message:
-            message === 'SECTION_SCOPE_MISMATCH'
-              ? 'The requested section does not belong to this document and tenant.'
-              : 'Authoring document not found.',
-        },
+      await recordPermissionAudit(client, req, ctx, {
+        action: 'authoring.permission.grant', permissionId: granted.id, reason,
+        details: { principalId: granted.principal_id, email: granted.email, role: granted.role, sectionId: granted.section_id, validUntil: granted.valid_until },
       });
-    }
-    logger.error('Failed to grant authoring permission', { error: message });
-    return res.status(503).json({
-      error: {
-        code: 'AUTHORING_AUTHORIZATION_UNAVAILABLE',
-        message: 'Authoring permission could not be granted.',
-      },
+      return granted;
     });
-  }
+    res.status(201).json({ success: true, permission, auditTrail: { persisted: true, chained: true } });
+  } catch (error) { refusal(res, error, 'grant'); }
 });
 
-// DELETE /api/authoring/docs/:docId/permissions/:permissionId
-router.delete(
-  '/authoring/docs/:docId/permissions/:permissionId',
-  async (req: Request, res: Response) => {
-    try {
-      const ctx = await requirePermissionManager(req, res);
-      if (!ctx) return;
-
-      const permissionId = String(req.params.permissionId ?? '').trim();
-      const reason = req.body?.reason == null ? null : String(req.body.reason).trim();
-      const permission = await revokeAuthoringPermission({
-        pool: getPool(),
-        tenantId: ctx.tenantId,
-        docId: ctx.docId,
-        permissionId,
-        revokedBy: ctx.principal.id,
-        reason,
+router.delete('/authoring/docs/:docId/permissions/:permissionId', async (req: Request, res: Response) => {
+  try {
+    const ctx = requestContext(req);
+    const parsed = revokeSchema.safeParse(req.body ?? {});
+    if (!parsed.success) throw new PermissionRefusal(400, 'AUTHORING_PERMISSION_REASON_REQUIRED', 'Give a reason for revoking access (1–500 characters).');
+    const reason = parsed.data.reason;
+    const permission = await inPermissionTransaction(ctx, async client => {
+      const revoked = await revokeAuthoringPermission({
+        pool: client, tenantId: ctx.tenantId, docId: ctx.docId,
+        permissionId: String(req.params.permissionId ?? '').trim(), revokedBy: ctx.principal.id, reason,
       });
-
-      if (!permission) {
-        return res.status(404).json({
-          error: {
-            code: 'AUTHORING_PERMISSION_NOT_FOUND',
-            message: 'Active authoring permission not found.',
-          },
-        });
-      }
-
-      const auditTrail = await recordPermissionAudit({
-        tenantId: ctx.tenantId,
-        actorId: ctx.principal.id,
-        action: 'authoring.permission.revoke',
-        docId: ctx.docId,
-        permissionId: permission.id,
-        details: {
-          principalId: permission.principal_id,
-          role: permission.role,
-          sectionId: permission.section_id,
-          reason,
-        },
+      if (!revoked) throw new PermissionRefusal(404, 'AUTHORING_PERMISSION_NOT_FOUND', 'Active authoring permission not found.');
+      await recordPermissionAudit(client, req, ctx, {
+        action: 'authoring.permission.revoke', permissionId: revoked.id, reason,
+        details: { principalId: revoked.principal_id, role: revoked.role, sectionId: revoked.section_id },
       });
-
-      return res.json({ success: true, permission, auditTrail });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message === 'LAST_OWNER') {
-        return res.status(409).json({
-          error: {
-            code: 'AUTHORING_LAST_OWNER_REQUIRED',
-            message: 'A document must retain at least one active owner.',
-          },
-        });
-      }
-      logger.error('Failed to revoke authoring permission', { error: message });
-      return res.status(503).json({
-        error: {
-          code: 'AUTHORING_AUTHORIZATION_UNAVAILABLE',
-          message: 'Authoring permission could not be revoked.',
-        },
-      });
-    }
-  },
-);
+      return revoked;
+    });
+    res.json({ success: true, permission, auditTrail: { persisted: true, chained: true } });
+  } catch (error) { refusal(res, error, 'revoke'); }
+});
 
 export default router;

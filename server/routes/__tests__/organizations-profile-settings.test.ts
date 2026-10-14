@@ -573,6 +573,22 @@ describe('D6: platform staff is a platform grant, never the membership role', ()
       expect(res.body.organizations.map((o: { id: string }) => o.id)).toEqual(['1', '7', '9']);
     });
 
+    it('membershipOnly=true lists actual memberships even for platform staff, for the account switcher', async () => {
+      directory();
+      const res = await request(makeApp()).get('/api/organizations?membershipOnly=true').set('x-test-user', USER);
+      expect(res.status).toBe(200);
+      expect(res.body.organizations.map((o: { id: string }) => o.id)).toEqual(['1']);
+      expect(grantLookupsFor(22)).toBe(0);
+    });
+
+    it('refuses a malformed membershipOnly filter before reading the organization directory', async () => {
+      directory();
+      const res = await request(makeApp()).get('/api/organizations?membershipOnly=everything').set('x-test-user', USER);
+      expect(res.status).toBe(400);
+      expect(res.body.organizations).toBeUndefined();
+      expect(grantLookupsFor(22)).toBe(0);
+    });
+
     it('reads another organization: GET /api/organizations/7 is 200', async () => {
       nextSelectRows = [{ id: 7, name: 'Bright Bio' }];
       const res = await request(makeApp()).get('/api/organizations/7').set('x-test-user', USER);

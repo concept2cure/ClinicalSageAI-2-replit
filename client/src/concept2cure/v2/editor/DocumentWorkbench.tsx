@@ -60,6 +60,7 @@ import { newDocumentAction } from '../newDocumentAction';
 import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
+import { DocumentPermissionsPanel } from './DocumentPermissionsPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
@@ -1329,6 +1330,7 @@ export function DocumentWorkbench({
     | 'exports'
     | 'vault'
     | 'tasks'
+    | 'access'
     | null
   >(null);
   /* The two governed dialogs this workbench opens itself: filing the document
@@ -4219,6 +4221,15 @@ export function DocumentWorkbench({
             >
               {I.checkSquare} Tasks
             </button>
+            <button
+              className="btn ghost"
+              ref={el => { railToggleRefs.current.access = el; }}
+              onClick={() => setRail(rail === 'access' ? null : 'access')}
+              data-active={rail === 'access' || undefined}
+              data-testid="access-rail-open"
+            >
+              {I.shieldCheck} Access
+            </button>
             {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
                 will refuse this caller — the reason is the text beside it.
                 2026-10-08: "Assign review" created a task the Review board
@@ -5617,6 +5628,22 @@ export function DocumentWorkbench({
             signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
             onOpenBoard={() => onNav('review')}
             onClose={closeRail}
+            fireToast={fireToast}
+          />
+        </aside>
+      )}
+
+      {rail === 'access' && (
+        <aside className="ed-comments" aria-label="Document access">
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Document access</span>
+            <RailClose label="Close document access" onClose={closeRail} />
+          </div>
+          <DocumentPermissionsPanel
+            docId={activeDocId}
+            docTitle={activeDoc?.title ?? null}
+            organizationId={user?.organizationId}
+            sections={sectionsState === 'ready' ? sections.filter(s => s.doc_id === activeDocId) : []}
             fireToast={fireToast}
           />
         </aside>
