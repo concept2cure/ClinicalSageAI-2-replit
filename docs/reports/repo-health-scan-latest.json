@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T04:35:15.836Z",
+  "generatedAt": "2026-10-14T05:11:11.067Z",
   "git": {
-    "sha": "8e99dc867037a603a6ff4c87cbd9810f2030aa03",
+    "sha": "6813286dcbadfe3ccf649badeef0427925d801a1",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 227,
+    "duplicateBasenames": 228,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -1279,6 +1279,14 @@
         ]
       },
       {
+        "basename": "generate",
+        "count": 2,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/generate.ts",
+          "server/services/audit/compliance-reports/generate.ts"
+        ]
+      },
+      {
         "basename": "global.d",
         "count": 2,
         "paths": [
@@ -2143,7 +2151,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 399696
+        "bytes": 400603
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2151,7 +2159,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 299345
+        "bytes": 299742
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2369,7 +2377,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8635
+        "lines": 8640
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2377,7 +2385,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6117
+        "lines": 6122
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2821,13 +2829,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 429,
+      "duplicateGroups": 430,
       "largeByBytes": 41,
       "largeByLines": 87
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 163,
+      "duplicateGroups": 164,
       "largeByBytes": 2,
       "largeByLines": 8
     },
