@@ -47,6 +47,8 @@ beforeAll(async () => {
       'db/migrations/20260727_authoring_object_permissions.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
+      'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'migrations/20260728_authoring_reviews.sql',
     ],
   });

@@ -2,9 +2,8 @@
  * GET /api/submissions?programId=<uuid> lists one program's submissions (QA j3 finding (b), 2026-10-08).
  *
  * The filing picker asks for its program's list, and the server answers with the
- * scoped rows in the success envelope, with the count it left out in meta.notOffered
- * so the picker can say what it did not offer. Without programId the bare organization
- * list is returned, as the Submission Center and Dispatch Readiness read it. A malformed
+ * admitted rows in the success envelope, without disclosing hidden-row counts.
+ * Without programId the admitted list keeps its existing bare-array shape. A malformed
  * programId is refused, not ignored: an ignored filter would offer everything.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,9 +14,9 @@ vi.hoisted(() => {
 });
 
 const svc = vi.hoisted(() => ({ listSubmissions: vi.fn() }));
-vi.mock('../../services/submission-service/submission-service', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../services/submission-service/submission-service')>();
-  return { ...actual, listSubmissions: (...a: unknown[]) => svc.listSubmissions(...a) };
+vi.mock('../../services/submission-service/submission-request-read', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/submission-service/submission-request-read')>();
+  return { ...actual, listSubmissionsForRequest: (...a: unknown[]) => svc.listSubmissions(...a) };
 });
 
 import request from 'supertest';
@@ -26,9 +25,11 @@ import { expandRoleClaims } from '../../middleware/auth';
 import submissionsRouter from '../submissions';
 
 const app = express();
+const q = { query: vi.fn() };
 app.use(express.json());
 app.use((req: any, _res, next) => {
   req.user = { id: 3, userId: 3, organizationId: 7, role: 'member', roles: expandRoleClaims('member', undefined) };
+  req.dbClient = q;
   next();
 });
 app.use('/api/submissions', submissionsRouter);
@@ -41,8 +42,9 @@ const ALL = [
 ];
 
 /* The service answers as the database would: scoped by programId when given. */
-function answer(_ctx: unknown, scope?: { programId?: string }) {
-  return Promise.resolve(scope?.programId ? ALL.filter((row) => row.programId === scope.programId) : ALL);
+function answer(_q: unknown, _ctx: unknown, programId?: string) {
+  const admitted = [ALL[0]];
+  return Promise.resolve(programId ? admitted.filter((row) => row.programId === programId) : admitted);
 }
 
 beforeEach(() => {
@@ -51,19 +53,20 @@ beforeEach(() => {
 });
 
 describe('GET /api/submissions', () => {
-  it('without programId, returns the whole organization as a bare list, as the Submission Center reads it', async () => {
+  it('without programId, keeps the existing bare list shape for admitted records', async () => {
     const res = await request(app).get('/api/submissions');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(ALL);
+    expect(res.body).toEqual([ALL[0]]);
     expect(svc.listSubmissions).toHaveBeenCalledTimes(1);
-    expect(svc.listSubmissions.mock.calls[0][1]).toBeUndefined();
+    expect(svc.listSubmissions.mock.calls[0][0]).toBe(q);
+    expect(svc.listSubmissions.mock.calls[0][2]).toBeUndefined();
   });
 
-  it("with programId, returns only that program's submissions, and says how many it left out", async () => {
+  it("with programId, returns admitted submissions without a hidden-row count", async () => {
     const res = await request(app).get(`/api/submissions?programId=${PROGRAM.toUpperCase()}`);
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ data: [ALL[0]], meta: { notOffered: 2 } });
-    expect(svc.listSubmissions.mock.calls.map((c) => c[1])).toContainEqual({ programId: PROGRAM });
+    expect(res.body).toEqual({ data: [ALL[0]] });
+    expect(svc.listSubmissions.mock.calls.map((c) => c[2])).toContain(PROGRAM);
   });
 
   it('refuses a programId that is not a program uuid, rather than ignoring it and offering everything', async () => {

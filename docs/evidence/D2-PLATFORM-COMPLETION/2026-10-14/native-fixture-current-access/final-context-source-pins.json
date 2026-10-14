@@ -1,0 +1,50 @@
+[
+  {
+    "path": "server/middleware/tenantContext.ts",
+    "sha256": "bfe6a2b5188021194449ad1ccfad71b0009c468d7293d1953259a039d7d8169e"
+  },
+  {
+    "path": "server/services/c2c/current-program-access.ts",
+    "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+  },
+  {
+    "path": "server/services/c2c/program-project-anchor.ts",
+    "sha256": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496"
+  },
+  {
+    "path": "server/services/c2c/organization-default-workspace.ts",
+    "sha256": "027d195455dd76fa8a9087f9e3c239ed86fd85d972cc2de82e21444bb22ad7d8"
+  },
+  {
+    "path": "server/services/vault/vault-ingest-access.ts",
+    "sha256": "8c262c2f3c473d7fe31a6b16d724230d4d8330b28202031cb9a0d498bc949103"
+  },
+  {
+    "path": "scripts/db/install-fresh.mjs",
+    "sha256": "23469635136c354930de376a07ab840eb4be7e34952b6c71d4cb94383a46389d"
+  },
+  {
+    "path": "scripts/db/deploy-migrate.mjs",
+    "sha256": "b2c407a24e6c92d03002bb3d59ed1c189bed02cb2523fc191886c8b7b949ded5"
+  },
+  {
+    "path": "scripts/db/provision-app-role.mjs",
+    "sha256": "1cf41357d41035bd9d3fbe71343050697c1f089fe3415f6cd7ad1a3f6a91aa63"
+  },
+  {
+    "path": "vitest.db.config.ts",
+    "sha256": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d"
+  },
+  {
+    "path": "tests/setup.db.ts",
+    "sha256": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3"
+  },
+  {
+    "path": "docs/design/NATIVE_FIXTURE_CURRENT_ACCESS_RECONCILIATION.md",
+    "sha256": "6946f3c798f255e0b73911439606d92c7893cc07627939aba3ec42795ae9622d"
+  },
+  {
+    "path": "docs/design/NATIVE_FIXTURE_CURRENT_ACCESS_RECONCILIATION_OBSERVED.md",
+    "sha256": "0c2a4c14204c93faedba55d9573ac8853a301dcedad6583af31bf53514f790ed"
+  }
+]

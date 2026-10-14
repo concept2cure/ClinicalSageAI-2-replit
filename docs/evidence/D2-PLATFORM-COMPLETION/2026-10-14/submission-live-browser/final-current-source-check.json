@@ -1,0 +1,18 @@
+{
+  "verifiedAt": "2026-10-14T21:49:13.850433+00:00",
+  "currentHeadAfterUnrelatedMerge": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
+  "pinnedRunHead": "31ec977a619ebb380f8e06737b8692ab852e7d15",
+  "productionFiles": 62,
+  "productionFilesChanged": [],
+  "sourceStableBeforeAfter": true,
+  "coveragePassed": true,
+  "cleanRuntime": false,
+  "knownRefusals": {
+    "path": "/api/submissions/12/sequences",
+    "status": 409,
+    "code": "PATHWAY_REGION_CONFLICT",
+    "count": 4
+  },
+  "mobilePanPixels": 11,
+  "qualification": "The unrelated Review literal/test-fixture merge did not change any of the62 pinned reader/UI/template dependencies; no redundant browser rerun. No credential values or server logs packaged."
+}

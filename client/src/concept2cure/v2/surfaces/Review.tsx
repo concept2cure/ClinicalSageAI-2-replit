@@ -331,7 +331,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
             : 'The review board could not be read.',
         };
       if (!queue.some((r) => r.state !== 'approved'))
-        return { ok: false, reason: 'Every document in the queue is already approved.' };
+        return { ok: false, reason: 'The queue has no next review decision to open. Check final sign-off separately.' };
       const next = openQueue();
       return { ok: true, detail: next ? `Opened the queue at ${next.doc}` : 'Opened the queue' };
     },

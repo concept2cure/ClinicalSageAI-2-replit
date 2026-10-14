@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T21:11:12.851Z",
+  "generatedAt": "2026-10-14T22:06:38.437Z",
   "git": {
-    "sha": "34389d3af6330effb361c28ee69d9988dea10df2",
+    "sha": "1bd3af0bc5abaff99f9eea0a0c139617842a32a2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2383,16 +2383,16 @@
         "bytes": 103227
       },
       {
+        "file": "server/routes/submissions.ts",
+        "bytes": 102929
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "bytes": 101287
       },
       {
         "file": "server/routes/knowledge-base.ts",
         "bytes": 101005
-      },
-      {
-        "file": "server/routes/submissions.ts",
-        "bytes": 100363
       }
     ],
     "largeFilesByLines": [
@@ -2610,7 +2610,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2116
+        "lines": 2119
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2689,12 +2689,12 @@
         "lines": 1936
       },
       {
-        "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
-        "lines": 1929
+        "file": "server/routes/submissions.ts",
+        "lines": 1930
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1904
+        "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
+        "lines": 1929
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2703,6 +2703,10 @@
       {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1878
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1876
       },
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
@@ -2730,10 +2734,6 @@
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
-        "lines": 1849
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
         "lines": 1849
       },
       {

@@ -20,6 +20,7 @@
  */
 
 import type { Pathway } from './index';
+import type { PathwayEvidenceSlot } from './source-aware-evidence';
 
 /**
  * 'undetermined' and 'not-applicable' come from engines that model them (CTIS
@@ -28,7 +29,9 @@ import type { Pathway } from './index';
  */
 export type PathwaySectionStatus = 'present' | 'missing' | 'optional-absent' | 'undetermined' | 'not-applicable';
 
-export interface PathwayManifestEntry {
+export interface PathwayManifestEntry extends PathwayEvidenceSlot {
+  applicability?: string;
+  checkApplicability?: boolean;
   /** Deterministic, sortable path, e.g. "03-annex-ii/device-description". */
   path: string;
   id: string;
@@ -48,6 +51,8 @@ export interface PathwayManifest {
   /** `undetermined`: slots whose need or placement is unanswered; they block `ready` like missing ones. */
   totals: { sections: number; requiredPresent: number; requiredMissing: number; undetermined: number };
   entries: PathwayManifestEntry[];
+  contradictions?: Array<{section:string;flag:string;sources:string[]}>;
+  checkApplicability?: string[];
 }
 
 const FRAMEWORK: Record<Pathway, string> = {
@@ -76,7 +81,7 @@ const DEFAULT_GROUP: Record<Pathway, string> = {
   prestar_513g: 'PreSTAR',
 };
 
-interface FlatSlot {
+interface FlatSlot extends PathwayEvidenceSlot {
   id: string;
   label: string;
   required: boolean;
@@ -89,9 +94,9 @@ interface FlatSlot {
 interface FlatResult {
   sections: FlatSlot[];
   /** `undetermined`: eSTAR only (W1-5). */
-  summary: { missingRequired: string[]; undetermined?: string[]; ready: boolean };
+  summary: { missingRequired: string[]; undetermined?: string[]; ready: boolean; contradictions?: Array<{section:string;flag:string;sources:string[]}>; checkApplicability?:string[] };
 }
-interface CtisSlot {
+interface CtisSlot extends PathwayEvidenceSlot {
   id: string;
   label: string;
   required: boolean;
@@ -108,6 +113,7 @@ interface CtisResult {
     partIIMissingByState: Record<string, string[]>;
     partIIUndeterminedByState: Record<string, string[]>;
     ready: boolean;
+    checkApplicability?:string[];
   };
 }
 
@@ -138,9 +144,22 @@ function toEntry(s: FlatSlot | CtisSlot, group: string, status: PathwaySectionSt
     required: s.required,
     status,
     sources: s.sources,
+    ...(s.sourceRefs ? {sourceRefs:s.sourceRefs,contentUndetermined:s.contentUndetermined} : {}),
+    ...('applicability' in s ? {applicability:s.applicability,checkApplicability:s.applicability==='when-applicable'} : {}),
+    ...('status' in s && s.status==='check-applicability' && s.sourceRefs ? {checkApplicability:true} : {}),
   };
 }
 
+function flatStatus(s:FlatSlot):PathwaySectionStatus {
+  if(s.sourceRefs&&s.applicability==='not-applicable')return 'not-applicable';
+  if(!s.present&&(s.applicability==='undetermined'||s.contentUndetermined))return 'undetermined';
+  return statusOf(s.required,s.present);
+}
+function flatExplanations(flat:FlatResult):Pick<PathwayManifest,'contradictions'|'checkApplicability'> {
+  if(!flat.sections.some(s=>s.sourceRefs))return {};
+  return {...(flat.summary.contradictions?{contradictions:flat.summary.contradictions}:{}),
+    ...(flat.summary.checkApplicability?{checkApplicability:flat.summary.checkApplicability}:{})};
+}
 /**
  * Build the universal manifest for a pathway from its engine `detail` result.
  * Handles both the flat-section pathways (eSTAR / PMDA / MDR / IVDR) and the
@@ -151,6 +170,7 @@ export function buildPathwayManifest(pathway: Pathway, detail: unknown): Pathway
   let requiredMissing: number;
   let undetermined: number;
   let ready: boolean;
+  let explanations: Pick<PathwayManifest,'contradictions'|'checkApplicability'> = {};
 
   const probe = detail as Partial<FlatResult & CtisResult> | null | undefined;
 
@@ -167,15 +187,18 @@ export function buildPathwayManifest(pathway: Pathway, detail: unknown): Pathway
       ctis.summary.partIUndetermined.length +
       Object.values(ctis.summary.partIIUndeterminedByState).reduce((a, b) => a + b.length, 0);
     ready = ctis.summary.ready;
+    if (ctis.partI.some(s=>s.sourceRefs)) explanations={checkApplicability:ctis.summary.checkApplicability??[]};
   } else if (probe && Array.isArray(probe.sections)) {
     const flat = detail as FlatResult;
     for (const s of flat.sections) {
-      const status = !s.present && s.applicability === 'undetermined' ? 'undetermined' : statusOf(s.required, s.present);
+      const status=flatStatus(s);
       entries.push(toEntry(s, s.annex ?? DEFAULT_GROUP[pathway], status));
     }
     requiredMissing = flat.summary.missingRequired.length;
     undetermined = flat.summary.undetermined?.length ?? 0;
+    if (flat.sections.some(s=>s.sourceRefs)) undetermined=entries.filter(e=>e.status==='undetermined').length;
     ready = flat.summary.ready;
+    explanations=flatExplanations(flat);
   } else {
     throw new Error('Unrecognized pathway result shape (expected sections[] or partI[]).');
   }
@@ -193,6 +216,7 @@ export function buildPathwayManifest(pathway: Pathway, detail: unknown): Pathway
     ready,
     totals: { sections: entries.length, requiredPresent, requiredMissing, undetermined },
     entries,
+    ...explanations,
   };
 }
 

@@ -22,3 +22,8 @@ Only these three exact commit/path/rule/line fingerprints are added to the
 existing `.gitleaksignore`. No scanner rule or path is suppressed. The new range
 and staged release metadata are scanned again with redacted reports; final
 observed results are recorded in [release verification](../release-verification.json).
+
+The completed hosted full-history job for published source `5a7c0ae09` scanned
+all 10,240 commits (656,915,605 bytes) and found no leaks. The GitHub App fetched
+both its completed success status and decoded summary. Exact source, run, job
+and counts are retained in [hosted-scan-result.json](hosted-scan-result.json).

@@ -1,0 +1,16 @@
+{
+  "verifiedAt": "2026-10-14T21:36:05.529682+00:00",
+  "files": {
+    "diagnose_one.py": "5d713312cb10c74893f40ee6bacd782a73bb961e407fc98c4069d9f539f39bdb",
+    "fixture-identities.json": "c03ff4a089ead0002399a420514c56d58fc2b139d69d8164ba3f0b152818c273",
+    "inspect_retained_reads.py": "e281f6415c3495aa7ad64f733545566806c1b2cee42aaf84596cd5ad380817a3",
+    "owned_environment.py": "0e58bf91e07ab524f23d60093d12faae3adf7ac9ec5ac095bf0179c3a2368840",
+    "pin_final_source.py": "168d38b3cc11f0d022e5ca003206ea32e221e1cb70dfba19a7c493f80434c226",
+    "qa-server.mts": "970b2de6a1adc7411b1979d5f1737165f5c1effd9eb5e266460b7cdcc1a2c143",
+    "review_checked.py": "440c68c7247f9361641ea0d4d4435664e6e5058da562c3bad8116d7031f595c0",
+    "review_live.pre-correction.py": "64bf63063a8ad8d4d905f224f373c703311c7996afdc4b9958bf54c5cd0df3fd",
+    "review_live.py": "3264cd625558ca392f2c96e3030261437aa10d2b46ab3231471c1cef35643dc7",
+    "start_qa.py": "aaabdb4134a84a603867733059b37ac567a38f07b103b80fdbb5624757bca61f",
+    "stop_qa.py": "fabaa26b9fea992f390480b0795f6906126d0893235d708069d2409f6982eebd"
+  }
+}

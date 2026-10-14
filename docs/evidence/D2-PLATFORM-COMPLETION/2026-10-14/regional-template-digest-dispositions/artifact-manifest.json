@@ -1,0 +1,43 @@
+{
+  "originalCommit": "34389d3af6330effb361c28ee69d9988dea10df2",
+  "findings": 16,
+  "uniqueVerifiedDigests": 2,
+  "disposition": "Exact content-digest false positives only; no broad rule/path suppression, credential revocation claim or history rewrite. Original full-history scan failed with16. The final scan after16 exact ignore entries is recorded separately.",
+  "records": [
+    {
+      "path": "root-exact-review.json.gz",
+      "decodedBytes": 8957,
+      "decodedHexDigest": "e516771503a7e3cb0b745e8dbcd62eeb7872585017e3016c9e5d96820bb851a0",
+      "archivedHexDigest": "9d783ef5d6adc8e1b2cc65c08a908da3a9cb3f0b01dd2828222325ff35ff77a5",
+      "encoding": "gzip"
+    },
+    {
+      "path": "independent-exact-review.json.gz",
+      "decodedBytes": 27191,
+      "decodedHexDigest": "b88b0e0a987b8cb8bb6f92f2614b56da21d217f306aadb673ed1672f32d34a9e",
+      "archivedHexDigest": "7942c6dc39e3a51282c20d73a8a830688e6adbe5701f65ff7f9d8cd5ce793b39",
+      "encoding": "gzip"
+    },
+    {
+      "path": "independent-producer-review.json.gz",
+      "decodedBytes": 3724,
+      "decodedHexDigest": "2f54db466681a75a415bf3f75bc4a0748ffef1607743ab9bbb1860270e1f6c9a",
+      "archivedHexDigest": "178203e8d13b2a239c8a1e8324822edfddba064fde169c619913143a77436e3e",
+      "encoding": "gzip"
+    },
+    {
+      "path": "full-history-red-report.json.gz",
+      "decodedBytes": 33898,
+      "decodedHexDigest": "abdad2a94e376e8d238d7301054d019afdf13194c28e90e6bc569de6af329541",
+      "archivedHexDigest": "01d9102d6b1a2dd0dfb87bbefdbed8cb40d3fa8148165e05587b2a593a14fc96",
+      "encoding": "gzip"
+    },
+    {
+      "path": "full-history-red.raw.txt.gz",
+      "decodedBytes": 118,
+      "decodedHexDigest": "9142d8849be61b933dcd36f22647faa72933aa879b601c18841c6a24ba7ee6fb",
+      "archivedHexDigest": "e6dc900f88cb4702b7f41ada500bfbd2f6fefffececcaaf98b2b5c55a6c65308",
+      "encoding": "gzip"
+    }
+  ]
+}

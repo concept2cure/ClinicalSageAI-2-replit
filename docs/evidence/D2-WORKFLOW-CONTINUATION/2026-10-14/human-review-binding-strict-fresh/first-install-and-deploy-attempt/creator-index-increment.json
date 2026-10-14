@@ -1,0 +1,110 @@
+{
+  "installedPhysicalSha256": "3d1f6b876e099a62601f6c8ee4e4b54f37eae126426d3c378ec4a77351642f89",
+  "afterFirstDeployPhysicalSha256": "ccbf222dd6a018c47911abf99d69109e547d43a4d8b18a3082ca6332b24fbd51",
+  "onlyChangedCategory": "keys",
+  "addedIndexCount": 11,
+  "addedIndexes": [
+    {
+      "relname": "concept2cure_review_assignments",
+      "index_name": "c2c_review_assign_artifact_idx",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX c2c_review_assign_artifact_idx ON public.concept2cure_review_assignments USING btree (artifact_id)"
+    },
+    {
+      "relname": "concept2cure_review_assignments",
+      "index_name": "c2c_review_assign_org_idx",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX c2c_review_assign_org_idx ON public.concept2cure_review_assignments USING btree (organization_id)"
+    },
+    {
+      "relname": "concept2cure_review_assignments",
+      "index_name": "c2c_review_assign_reviewer_idx",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX c2c_review_assign_reviewer_idx ON public.concept2cure_review_assignments USING btree (reviewer_id, status)"
+    },
+    {
+      "relname": "concept2cure_review_assignments",
+      "index_name": "c2c_review_assign_unique",
+      "indisunique": true,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE UNIQUE INDEX c2c_review_assign_unique ON public.concept2cure_review_assignments USING btree (artifact_id, reviewer_id, review_round)"
+    },
+    {
+      "relname": "concept2cure_review_decisions",
+      "index_name": "c2c_review_decision_artifact_idx",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX c2c_review_decision_artifact_idx ON public.concept2cure_review_decisions USING btree (artifact_id, review_round)"
+    },
+    {
+      "relname": "concept2cure_review_decisions",
+      "index_name": "c2c_review_decision_assignment_idx",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX c2c_review_decision_assignment_idx ON public.concept2cure_review_decisions USING btree (assignment_id)"
+    },
+    {
+      "relname": "concept2cure_review_decisions",
+      "index_name": "c2c_review_decision_org_idx",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX c2c_review_decision_org_idx ON public.concept2cure_review_decisions USING btree (organization_id)"
+    },
+    {
+      "relname": "concept2cure_review_decisions",
+      "index_name": "c2c_review_decision_reviewer_idx",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX c2c_review_decision_reviewer_idx ON public.concept2cure_review_decisions USING btree (reviewer_id)"
+    },
+    {
+      "relname": "project_members",
+      "index_name": "idx_project_members_org_project",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX idx_project_members_org_project ON public.project_members USING btree (organization_id, project_id)"
+    },
+    {
+      "relname": "project_members",
+      "index_name": "idx_project_members_user",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX idx_project_members_user ON public.project_members USING btree (organization_id, user_id, status)"
+    },
+    {
+      "relname": "project_visibility_settings",
+      "index_name": "idx_project_visibility_org",
+      "indisunique": false,
+      "indisvalid": true,
+      "indisready": true,
+      "indimmediate": true,
+      "definition": "CREATE INDEX idx_project_visibility_org ON public.project_visibility_settings USING btree (organization_id, visibility)"
+    }
+  ],
+  "removedOrChangedPriorIndexes": 0,
+  "columnsConstraintsPoliciesForceCountsUnchanged": true,
+  "globalRoleAttributeDigestUnchanged": true
+}

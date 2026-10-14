@@ -1,0 +1,13 @@
+{
+  "phase": "current9ba-native-distinct-retained-results",
+  "files": {
+    "README.md": "cb290a2227995c951d087552d888d9dbab735b876b2aee779be70e047344286d",
+    "actual-observations.raw.json.gz": "763fbada6594a2061bab0dd4a014a2c2f13c074346fb499b3ecb9b5d514225f1",
+    "native-pass-cases.txt": "7d7ace9fc7933fa04846e35b8d6b2f873678cce821933e48d14ac30369fa3e79",
+    "native-terminal.raw.txt.gz": "b2999722802a2816ce22309d3008957c90f423b7354bdd528135d684cb6864e2",
+    "observed-http-matrix.json": "c1dfc24de9d95b79868762625f34130e0db3680934350b2b9774eb4e51b5246f",
+    "observed-results.json": "3cd1e0218b4c650f8197af76870845c991c572a51af1b27bef26eedf57a51961",
+    "preservation.json": "4320b55e2fccaa529bc9c8911398fd21a3eb1b138f10b263e085c06e307102bc",
+    "source-pins.json": "b1aee1beab2a3cce93d7389ae3246f45ef7c6a8099ca808ffffb391321ad9070"
+  }
+}

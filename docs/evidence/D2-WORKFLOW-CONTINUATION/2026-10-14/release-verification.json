@@ -47,7 +47,75 @@
     }
   },
   "publication": {
-    "state": "verified; awaiting canonical push and hosted results"
+    "state": "feature published; fully verified fixture/copy/evidence follow-up ready for normal push",
+    "sourceCommit": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
+    "commitUrl": "https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
+    "githubAppVerified": true,
+    "prePush": {
+      "allGatesPassed": true,
+      "hookBypass": false,
+      "typecheckErrors": 0,
+      "eslintErrors": 0,
+      "eslintWarningNet": -2,
+      "lintableChangedFiles": 51,
+      "log": "pre-push.txt"
+    },
+    "hosted": {
+      "ciRun": 38633619197,
+      "semgrepRun": 38633619046,
+      "codeqlRun": 38633619072,
+      "tier5BrowserRun": 38633619121,
+      "agentValidateAuditRun": 38633619304,
+      "snapshotState": "separate security/browser/static-analysis workflows successful; main proof fixtures need repair",
+      "securityContractTests": {
+        "conclusion": "success",
+        "jobId": 116091142849
+      },
+      "securityScan": {
+        "conclusion": "success",
+        "jobId": 116091143490
+      },
+      "secretScan": {
+        "conclusion": "success",
+        "jobId": 116091143271
+      },
+      "tier5Browser": {
+        "conclusion": "success",
+        "jobId": 116091142011
+      },
+      "agentValidateAudit": {
+        "conclusion": "success",
+        "typecheckEslintJobId": 116091144147,
+        "optionalJobs": "4 skipped as configured; not claimed as passes"
+      },
+      "semgrep": {
+        "conclusion": "success",
+        "jobId": 116091143098,
+        "blockingScan": "success",
+        "fullReportingScan": "success"
+      },
+      "codeql": {
+        "conclusion": "success",
+        "javascriptTypescriptJobId": 116091150552,
+        "pythonJobId": 116091150319
+      },
+      "initialProofTier": {
+        "passed": 1428,
+        "failed": 4,
+        "files": 127,
+        "failedFiles": 2,
+        "jobId": 116091143276,
+        "cause": "Harness migration lists are not ALTER-closed; old schema-contract review payloads do not send current binding/identity prerequisites.",
+        "repair": "canonical migration, wire and auth fixtures aligned; final official proof-tier1433/1433, no guard or baseline weakened"
+      }
+    },
+    "followUp": {
+      "sourcePins": "source-manifest.json",
+      "typecheckErrors": 0,
+      "buildPassed": true,
+      "proofTierPassed": 1433,
+      "hostedState": "pending new follow-up commit; earlier hosted successes belong only to sourceCommit"
+    }
   },
   "productionQualification": "Not performed; see human and production boundary in README.",
   "featureCommit": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
@@ -77,14 +145,44 @@
     "exactExceptions": "security/README.md",
     "newRangeAfterExactDispositions": {
       "baseExclusive": "404e94efc2b23c691f7adbf1efb792fd2fe796e1",
-      "headInclusive": "0d6243ab32551acc89bc90b53424a8c37daf756d",
-      "commits": 3,
+      "headInclusive": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
+      "commits": 4,
       "findings": 0,
       "passed": true
     },
     "stagedReleaseMetadata": {
       "findings": 0,
       "passed": true
+    },
+    "hostedFullHistory": {
+      "sourceCommit": "5a7c0ae09f047a1c12a1ceb70d64c90c816178ab",
+      "runId": 38633619197,
+      "jobId": 116091143271,
+      "jobName": "Secret scan (full history)",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38633619197/job/116091143271",
+      "conclusion": "success",
+      "commitsScanned": 10240,
+      "bytesScanned": 656915605,
+      "findings": 0,
+      "scanCompletedAt": "2026-10-14T20:41:13Z",
+      "evidence": "GitHub App fetched completed job metadata and decoded log; summary extracted without raw credential output."
+    },
+    "followUpStaged": {
+      "findings": 0,
+      "passed": true,
+      "scope": "Final fixture, queue-copy, work-order and evidence delta; redacted report retained privately."
+    },
+    "regionalIncoming": {
+      "initialFindings": 16,
+      "exactOriginalFixtureChecksums": 16,
+      "independentProof": "security/regional-independent.json",
+      "leadProof": "security/regional-lead.json",
+      "noRuleOrPathSuppression": true,
+      "rescanned": {
+        "commits": 2,
+        "findings": 0,
+        "passed": true
+      }
     }
   },
   "publicationRepairs": {
@@ -107,7 +205,58 @@
       "path": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts",
       "repair": "Reuse shared/authoring/plain-text-html plainTextToHtml. No suppression.",
       "generatedContractIdentical": true,
-      "fixedHostedScan": "pending"
+      "fixedHostedScan": "success"
     }
+  },
+  "finalFixtureVerification": {
+    "canonicalMigrationLists": {
+      "missingApplicationsRepaired": 7,
+      "affectedFiles": 5,
+      "casesPassed": 210,
+      "closureCasesPassed": 4,
+      "guardsChanged": false
+    },
+    "schemaReviewAudit": {
+      "casesPassed": 14,
+      "existingCasesPreserved": 13,
+      "foreignAssignmentNegativeAdded": true,
+      "auditDenialStatusStrengthened": true
+    },
+    "uiAndAuth": {
+      "rootReplay": {
+        "files": 3,
+        "passed": 34
+      },
+      "additionalConsumers": {
+        "files": 18,
+        "passed": 262
+      },
+      "authMocksRepaired": 2,
+      "productionAuthUnchanged": true
+    },
+    "typecheckErrors": 0,
+    "buildPassed": true,
+    "queueCopy": "Next review decision is distinguished from final sign-off.",
+    "separateRunsOverlap": "Do not add these replay counts to the 726 unique feature run."
+  },
+  "finalProofTier": {
+    "command": "npm run test:proof-tier",
+    "files": 127,
+    "passed": 1433,
+    "failed": 0,
+    "durationSeconds": 873.42,
+    "log": "final-proof-tier.txt"
+  },
+  "postRegionalIntegration": {
+    "commit": "34389d3af6330effb361c28ee69d9988dea10df2",
+    "mergeCommit": "a893c9eaa39e24889c3bbeeb9fd9bb5ccf8ebf51",
+    "tests": {
+      "files": 6,
+      "passed": 201,
+      "failed": 0,
+      "separateOverlappingRun": true
+    },
+    "buildPassed": true,
+    "independentPeerReviewOverlapAssessment": "No snapshot, round, SOD, authorization or adoption/release gate change. Existing creator and audit path reused."
   }
 }

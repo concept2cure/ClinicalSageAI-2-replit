@@ -1,0 +1,23 @@
+[
+  {
+    "RuleID": "generic-api-key",
+    "File": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json",
+    "StartLine": 22,
+    "Commit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+    "Fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:22"
+  },
+  {
+    "RuleID": "generic-api-key",
+    "File": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json",
+    "StartLine": 27,
+    "Commit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+    "Fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:27"
+  },
+  {
+    "RuleID": "generic-api-key",
+    "File": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json",
+    "StartLine": 32,
+    "Commit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+    "Fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:32"
+  }
+]

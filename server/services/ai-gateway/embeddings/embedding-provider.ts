@@ -193,11 +193,16 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
   }
 
   // Lazily construct the client so resolving a provider never throws when a key
-  // is absent (keyless boot / tests); the auth error surfaces at call time.
+  // is absent (keyless boot / tests); configuration is checked at call time.
   // Lazy construction is also what lets the placement gate in embed() refuse a
   // call before any client exists.
   private getClient(): OpenAI {
     if (!this.client) {
+      if (this.kind === 'openai' && !this.opts.apiKey.trim()) {
+        throw new EmbeddingConfigurationError(
+          'OPENAI_API_KEY is required for the OpenAI embedding lane. No embedding request was sent.',
+        );
+      }
       this.client = new OpenAI({
         apiKey: this.opts.apiKey || 'not-configured',
         ...(this.opts.baseURL ? { baseURL: this.opts.baseURL.replace(/\/$/, '') } : {}),

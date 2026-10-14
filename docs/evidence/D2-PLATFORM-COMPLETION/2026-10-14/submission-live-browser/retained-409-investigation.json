@@ -1,0 +1,149 @@
+{
+  "qualification": "Retained read-only 409 investigation on the first pre-repair diagnostic runtime; no fixture or source changes.",
+  "reads": [
+    {
+      "path": "/api/submissions?programId=b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+      "status": 200,
+      "rows": [
+        {
+          "id": 20,
+          "title": "sdd_mv8kwco3_ac6856a8 late-body retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 19,
+          "title": "sdd_mv8kwco3_ac6856a8 sibling-source retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 18,
+          "title": "sdd_mv8kwco3_ac6856a8 unknown-pointer retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 17,
+          "title": "sdd_mv8kwco3_ac6856a8 placeholder retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 16,
+          "title": "sdd_mv8kwco3_ac6856a8 empty retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 15,
+          "title": "sdd_mv8kwco3_ac6856a8 changed-pin retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 14,
+          "title": "sdd_mv8kwco3_ac6856a8 unpinned retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 13,
+          "title": "sdd_mv8kwco3_ac6856a8 draft retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 3,
+          "title": "sdd_mv8kwco3_ac6856a8 private retained filing",
+          "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+          "projectId": null,
+          "applicationType": "US_510K"
+        }
+      ]
+    },
+    {
+      "path": "/api/submissions?programId=da1b4ad7-6023-46f8-8d9d-81da2e575951",
+      "status": 200,
+      "rows": [
+        {
+          "id": 12,
+          "title": "sdd_mv8kwco3_ac6856a8 region-conflict retained filing",
+          "programId": "da1b4ad7-6023-46f8-8d9d-81da2e575951",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 11,
+          "title": "sdd_mv8kwco3_ac6856a8 recorded-conflict retained filing",
+          "programId": "da1b4ad7-6023-46f8-8d9d-81da2e575951",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 10,
+          "title": "sdd_mv8kwco3_ac6856a8 missing-framework retained filing",
+          "programId": "da1b4ad7-6023-46f8-8d9d-81da2e575951",
+          "projectId": null,
+          "applicationType": "US_510K"
+        },
+        {
+          "id": 4,
+          "title": "sdd_mv8kwco3_ac6856a8 public retained filing",
+          "programId": "da1b4ad7-6023-46f8-8d9d-81da2e575951",
+          "projectId": null,
+          "applicationType": "US_510K"
+        }
+      ]
+    },
+    {
+      "path": "/api/submissions?programId=ddda67ac-4cf0-4d02-9b3b-fc1898877ff8",
+      "status": 200,
+      "rows": [
+        {
+          "id": 7,
+          "title": "sdd_mv8kwco3_ac6856a8 mdr retained filing",
+          "programId": "ddda67ac-4cf0-4d02-9b3b-fc1898877ff8",
+          "projectId": null,
+          "applicationType": "EU_MDR_TECHDOC"
+        }
+      ]
+    },
+    {
+      "path": "/api/submissions?programId=b9f771bf-80b4-48da-9884-d0acb4efa5b0",
+      "status": 200,
+      "rows": [
+        {
+          "id": 6,
+          "title": "sdd_mv8kwco3_ac6856a8 ind retained filing",
+          "programId": "b9f771bf-80b4-48da-9884-d0acb4efa5b0",
+          "projectId": null,
+          "applicationType": "IND"
+        }
+      ]
+    },
+    {
+      "path": "/api/submissions/12",
+      "status": 200,
+      "failure": {}
+    },
+    {
+      "path": "/api/submissions/12/sequences",
+      "status": 409,
+      "failure": {
+        "error": {
+          "code": "PATHWAY_REGION_CONFLICT",
+          "message": "The recorded filing and sequence region do not agree."
+        }
+      }
+    }
+  ]
+}

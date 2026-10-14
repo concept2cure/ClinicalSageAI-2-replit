@@ -2,7 +2,7 @@
  * Submission Center — kit app/submission-center.jsx ported (registry id
  * `submission-center`, contract-ready).
  *
- * Real-data standard (no mock in product): the 7 workspaces are scaffolded from
+ * Real-data standard (no mock in product): the workspaces are scaffolded from
  * the REAL contract SUBMISSION_WORKSPACES (@shared/types/submission-ui). The
  * portfolio list binds live to GET /api/submissions and the per-submission
  * sequences to GET /api/submissions/:id/sequences (both DB-backed via
@@ -49,7 +49,7 @@ import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
-import { readShellProject, shellProgramId, type ShellProject } from '../shellProject';
+import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
 import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
@@ -85,6 +85,8 @@ import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { consumeNavParams } from '../navParams';
 import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
+import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
+import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -425,7 +427,13 @@ function scopedMissReason(wanted: string, projectName: string | null, notOffered
 }
 
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
-const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'dispatch']);
+const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'dispatch', 'required-deliverables']);
+interface ScopedBuilderNotice extends Notice { builderGeneration?: number; builderSequenceId?: number }
+
+function visibleSubmissionNotice(notice: ScopedBuilderNotice | null, generation: number, sequenceId: number | undefined): Notice | null {
+  if (notice?.builderGeneration === undefined) return notice;
+  return notice.builderGeneration === generation && (sequenceId === undefined || sequenceId === notice.builderSequenceId) ? notice : null;
+}
 
 export function SubmissionCenter({
   onAsk,
@@ -452,10 +460,12 @@ export function SubmissionCenter({
      whose submissions these are and how many others the organization has, as
      the server counted them, with a control to list them all. With no project
      open, or one that is not a regulatory_programs uuid, nothing changes. */
-  const shell = readShellProject();
+  const shell = useShellProject();
   const openProgramId = shellProgramId(shell);
   const [orgWide, setOrgWide] = React.useState(false);
   const scopedTo = openProgramId && !orgWide ? openProgramId : null;
+  const readSession = useSubmissionReadSession();
+  const selectorContext = JSON.stringify([openProgramId, orgWide]);
 
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const [subsBump, setSubsBump] = React.useState(0);
@@ -464,7 +474,7 @@ export function SubmissionCenter({
      it was flattened to zero rows, and New submission preselected the
      project's region as if that market did not exist (design review
      2026-10-08, honest-state lens). */
-  const subs = useLiveRows<SubRow>(subsPath, [subsPath, subsBump], isRowsWith<SubRow>('id', 'applicationType', 'primaryRegion'));
+  const subs = useSubmissionScopedRows<SubRow>(subsPath, selectorContext, subsBump, readSession, isRowsWith<SubRow>('id', 'applicationType', 'primaryRegion'));
   const notOffered = scopedTo && !subs.loading && !subs.error ? notOfferedCount(subs.meta) : null;
   /* The org's programmes, so the required programId is PICKED rather than
      typed as a uuid — createSubmissionSchema requires one (the submission's
@@ -555,7 +565,8 @@ export function SubmissionCenter({
   // the rendered status always comes from the server, never an optimistic guess.
   const [seqBump, setSeqBump] = React.useState(0);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
-  const seqs = useLiveRows<SeqRow>(seqPath, [seqPath, seqBump]);
+  const sequenceContext = JSON.stringify([selectorContext, subs.loadedScope, sub?.id, sub?.programId]);
+  const seqs = useSubmissionScopedRows<SubmissionCoverageSequence>(seqPath, sequenceContext, seqBump, readSession, isRowsWith<SubmissionCoverageSequence>('id', 'sequenceNumber', 'region'));
 
   /* ── The Planner's region profile ────────────────────────────────────────
      The Planner named this profile's contents in prose — "required modules,
@@ -599,7 +610,18 @@ export function SubmissionCenter({
   const seq = seqs.rows.find((r) => r.id === selSeq) ?? seqs.rows[0] ?? null;
 
   // Server-verdict line (transitions, governed outcomes) — verbatim, role=status.
-  const [notice, setNotice] = React.useState<Notice | null>(null);
+  const [notice, setNotice] = React.useState<ScopedBuilderNotice | null>(null);
+  const builderContext = JSON.stringify([readSession.key, selectorContext, sub?.id, sub?.programId, selSeq]);
+  const builderOwner = React.useRef({ context: builderContext, generation: 0 });
+  if (builderOwner.current.context !== builderContext) builderOwner.current = { context: builderContext, generation: builderOwner.current.generation + 1 };
+  const builderGeneration = builderOwner.current.generation;
+  const currentSequence = React.useRef(seq);
+  currentSequence.current = seq;
+  const builderSequenceChanged = (verdict: Notice) => {
+    if (!seq || builderOwner.current.generation !== builderGeneration || currentSequence.current !== seq || !seqs.isCurrent() || !readSession.sameRevision()) return;
+    setNotice({ ...verdict, builderGeneration, builderSequenceId: seq.id });
+    setSeqBump(value => value + 1);
+  };
   // The in-flight governed flow (freeze | dispatch | transmit) driving the EsignModal.
   const [flow, setFlow] = React.useState<GovernedFlow | null>(null);
   // Sequence id with a transition POST in flight (buttons disable, no double-fire).
@@ -1236,7 +1258,7 @@ export function SubmissionCenter({
       </div>
 
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
-      <VerdictNote notice={notice} />
+      <VerdictNote notice={visibleSubmissionNotice(notice, builderOwner.current.generation, seq?.id)} />
       <VerdictNote notice={navMiss} />
 
       {newOpen && (
@@ -1664,10 +1686,15 @@ export function SubmissionCenter({
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
-                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} onNav={onNav} />
+                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={builderSequenceChanged} onNav={onNav} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
+              {ws === 'required-deliverables' && <SubmissionRequiredDeliverables
+                key={`${readSession.key}:${sequenceContext}:${seq.id}`}
+                sub={sub} seq={seq} session={readSession} context={sequenceContext} openProgramId={openProgramId}
+                onNav={onNav} onValidation={() => setWs('validation')}
+              />}
               {ws === 'dispatch' && (
                 <DispatchWorkspace
                   key={`${seq.id}:${seq.status}`}

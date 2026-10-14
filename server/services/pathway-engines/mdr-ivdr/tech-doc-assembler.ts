@@ -1,3 +1,4 @@
+import { matchedSourceEvidence, type PathwayEvidenceLeaf, type PathwayEvidenceSlot } from '../source-aware-evidence';
 /**
  * MDR / IVDR technical-documentation engine (EU MedTech device & IVD)
  *
@@ -21,7 +22,7 @@
 export type EuRegulation = 'mdr' | 'ivdr';
 
 /** A canonical leaf as tech-doc input (device docs are keyed by documentType). */
-export interface TechDocInputLeaf {
+export interface TechDocInputLeaf extends PathwayEvidenceLeaf {
   /** CTD section code or a device tech-doc code (free text). */
   sectionCode: string;
   title: string;
@@ -37,7 +38,7 @@ export interface TechDocSlot {
   required: boolean;
 }
 
-export interface TechDocSlotStatus extends TechDocSlot {
+export interface TechDocSlotStatus extends TechDocSlot, PathwayEvidenceSlot  {
   present: boolean;
   /** Section code (or title, when the leaf has no code) of each matched leaf. */
   sources: string[];
@@ -71,6 +72,7 @@ export interface TechDocResult {
   sections: TechDocSlotStatus[];
   summary: {
     missingRequired: string[];
+    undetermined?: string[];
     /** True when every required tech-doc section has a source leaf. */
     ready: boolean;
   };
@@ -380,7 +382,7 @@ const IVDR_SECTIONS: Array<TechDocSlot & { match: Matcher }> = [
  * ANNEX_II_III_KEY).
  */
 
-function evalSlot(slot: TechDocSlot & { match: Matcher }, leaves: TechDocInputLeaf[]): TechDocSlotStatus {
+function evalSlot(slot: TechDocSlot & { match: Matcher }, leaves: TechDocInputLeaf[], sourceAware?: boolean): TechDocSlotStatus {
   const leafIndices: number[] = [];
   const titleOnlyLeafIndices: number[] = [];
   leaves.forEach((l, i) => {
@@ -392,10 +394,13 @@ function evalSlot(slot: TechDocSlot & { match: Matcher }, leaves: TechDocInputLe
   });
   const sources = leafIndices.map((i) => leaves[i].sectionCode || leaves[i].title);
   const { match, ...rest } = slot;
-  return { ...rest, present: sources.length > 0, sources, leafIndices, titleOnlyLeafIndices };
+  const proof = matchedSourceEvidence(leafIndices.map(i => leaves[i]), sourceAware, sources.length > 0);
+  return { ...rest, ...proof, sources, leafIndices, titleOnlyLeafIndices };
 }
 
 export interface AssembleTechDocInput {
+  /** Request-owned coverage only; omitted preserves legacy structural behavior. */
+  sourceAware?: boolean;
   leaves: TechDocInputLeaf[];
   regulation: EuRegulation;
 }
@@ -404,12 +409,13 @@ export interface AssembleTechDocInput {
 export function assembleTechDoc(input: AssembleTechDocInput): TechDocResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
   const registry = input.regulation === 'ivdr' ? IVDR_SECTIONS : MDR_SECTIONS;
-  const sections = registry.map((s) => evalSlot(s, leaves));
-  const missingRequired = sections.filter((s) => s.required && !s.present).map((s) => s.id);
+  const sections = registry.map((s) => evalSlot(s, leaves, input.sourceAware));
+  const missingRequired = sections.filter((s) => s.required && !s.present && !s.contentUndetermined).map((s) => s.id);
+  const undetermined = sections.filter(s => s.required && s.contentUndetermined).map(s => s.id);
   return {
     regulation: input.regulation,
     sections,
-    summary: { missingRequired, ready: missingRequired.length === 0 },
+    summary: { missingRequired, ready: missingRequired.length === 0 && undetermined.length === 0, ...(input.sourceAware ? { undetermined } : {}) },
   };
 }
 

@@ -1,0 +1,11 @@
+{
+  "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+  "originalBytes": 6392,
+  "originalSha256": "5b06793d2744b1ca37b5420dde5256e1b2c11bf852424bf4f2afe906ce150ff5",
+  "newBytes": 7639,
+  "newSha256": "fb97c51feb824b1949b79aede1f8396eb01f1bc713fe6f809fdda5d2b08b9e63",
+  "addedCommentBytes": 1247,
+  "entireOriginalSuffixByteIdentical": true,
+  "addedPrefixCommentsOnly": true,
+  "qualification": "Static byte comparison; no SQL/native/database execution."
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "path": "README.md",
+    "bytes": 1563,
+    "hexDigest": "e4b8a4215ca2861088f1454b3ba10ac5e09011b3c08ced12e4a0cd9b9eae76e5"
+  },
+  {
+    "path": "exact-findings.json",
+    "bytes": 1176,
+    "hexDigest": "1ee676c0c31510c006f34dcd51917debe509bac902d1bcc319e73ca09907549e"
+  },
+  {
+    "path": "independent-digest-verification.json",
+    "bytes": 3438,
+    "hexDigest": "c860539b3fb1496eeeb55afa7cda459b92c4d9f690c3663a65b62bb46a6813cd"
+  },
+  {
+    "path": "root-digest-verification.json",
+    "bytes": 562,
+    "hexDigest": "7bbdc2fd1411a056068f18a37474537a5dfe40faa29a0f163baf75d161d35105"
+  },
+  {
+    "path": "scanner-green.log.gz.base64",
+    "bytes": 153,
+    "hexDigest": "279aac5930347493f3569f64f2090d9826a6655147aaceaa9962ebcfc7075b2c"
+  },
+  {
+    "path": "scanner-green.metadata.json",
+    "bytes": 417,
+    "hexDigest": "8fb2b036c5429fb338019b032b6b6d63f5cb8ddc95ec9e8ca4abdc8098b330e4"
+  },
+  {
+    "path": "scanner-red.log.gz.base64",
+    "bytes": 157,
+    "hexDigest": "7bb992514f84fdb090cb2d27345ac395507b8a534300a42f345d3db58bdbfe64"
+  },
+  {
+    "path": "scanner-red.metadata.json",
+    "bytes": 417,
+    "hexDigest": "991de95878049fd774c82de5d859aeedbee258d4ebbc85d5673a04f6ec48adc0"
+  }
+]
