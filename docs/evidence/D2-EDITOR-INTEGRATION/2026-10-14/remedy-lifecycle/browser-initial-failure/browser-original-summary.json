@@ -1,0 +1,41 @@
+{
+  "testedHead": "bd8738868e1ebd0519ac39608f142dfacdd0a6fe",
+  "sourceSha256": {
+    "DocumentWorkbench.tsx": "ae67b3013d54ab23436f1acf62cd9f966e87ff0080cd5a34e0e18ab45e2464c6",
+    "AuthoringRemedies.tsx": "804aaa444437aabfc882cf6eb11933830af8910019eadbb7dd551bfbd1e4f322",
+    "RichSectionEditor.tsx": "5a9ff038eb4d8fa32dcb2b23623d534465d9dc90103712e680c0b4d833af6ede",
+    "suggestions.ts": "aa71c2c8513eb22daa501c93df7a752ccb03c0ebf8e6b31a5d332b881edf1a3d",
+    "proposalLifecycle.ts": "d804f5aaffe7a11e894d2cf0174f9a32a35734a0d566023402020691eeb9633a",
+    "editorProposalReceipt.ts": "55d0cbdb87618c4d57169f183538f9c1b6992e40f2600be132092d2570290a35"
+  },
+  "apiContractSha256": "3b78ffb48cbaadd0977fea1f22a0342e8421c95342a129a4fcbffa45e5b68f63",
+  "completedAt": "2026-10-14T07:05:10.489Z",
+  "syntheticApisOnly": true,
+  "contexts": [
+    {
+      "label": "desktop-light",
+      "status": "fail",
+      "error": "Error: Unconfigured API path\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:17:41)\n    at qualifyRequests (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:126:3)\n    at matrix (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:134:97)\n    at async Promise.all (index 0)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:145:17"
+    },
+    {
+      "label": "desktop-dark",
+      "status": "fail",
+      "error": "Error: Unconfigured API path\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:17:41)\n    at qualifyRequests (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:126:3)\n    at matrix (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:134:97)\n    at async Promise.all (index 1)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:145:17"
+    },
+    {
+      "label": "touch-light",
+      "status": "fail",
+      "error": "Error: Visible editing viewport inaccessible\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:17:41)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:38:15)\n    at async fullRejectionAndAcceptance (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:69:15)\n    at async matrix (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:134:22)\n    at async Promise.all (index 2)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:145:17"
+    },
+    {
+      "label": "touch-dark",
+      "status": "fail",
+      "error": "Error: Visible editing viewport inaccessible\n    at assert (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:17:41)\n    at capture (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:38:15)\n    at async fullRejectionAndAcceptance (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:69:15)\n    at async matrix (file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:134:22)\n    at async Promise.all (index 3)\n    at async file:///workspace/ClinicalSageAI/docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/browser.mjs:145:17"
+    }
+  ],
+  "limitations": [
+    "Synthetic browser fixtures do not qualify live model approval, backend authorization, database audit persistence, RLS or deployment.",
+    "The browser uses a two-part replacement and exact saved source/version; broader low-level proposal cases are covered by separate tests."
+  ],
+  "preservationNote": "Original summary reproduced from the recorded tool output; a repeated unchanged-source failure run overwrote main artifacts before diagnostic edits. Companion before screenshots/reports are the identical-source failure reproduction at 07:07 UTC, before any fixture correction."
+}

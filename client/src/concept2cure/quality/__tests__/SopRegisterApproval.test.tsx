@@ -303,14 +303,14 @@ describe('SopRegister — a failed read is not an empty register', () => {
     renderRegister();
     expect(screen.getByTestId('sop-training-failed').textContent).toMatch(/Training records could not be read/);
     expect(screen.queryByText('No training-controlled documents yet.')).toBeNull();
-    expect(kpi('Training compliance').querySelector('.val')?.textContent).toBe('—');
+    expect(kpi('Acknowledgement coverage').querySelector('.val')?.textContent).toBe('—');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(H.trainRefresh).toHaveBeenCalled();
   });
 
   it('shows no training compliance figure when nothing is training-controlled, instead of a red 0%', () => {
     renderRegister();
-    const k = kpi('Training compliance');
+    const k = kpi('Acknowledgement coverage');
     expect(k.querySelector('.val')?.textContent).toBe('—');
     expect(k.getAttribute('data-tone')).toBe('');
     expect(k.textContent).toMatch(/No training-controlled documents yet/);

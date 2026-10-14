@@ -1,0 +1,74 @@
+✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > reopens a completely rejected application and gives the explicit retry another receipt 307ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > keeps a partial rejection pending until every application mark is gone 126ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > keeps any accepted part settled after the remaining part is rejected 103ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > retains acceptance after all proposal marks disappear 94ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > does not treat a command capability check as an actual acceptance 103ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > observes a deletion-only application after accept 83ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > observes a deletion-only application after reject 101ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > notifies content and decision subscribers and honors unsubscribe 106ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the rich editor observes actual remedy applications > does not infer absence before hydration, then notifies readiness on the clean baseline 74ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > refuses before hydration without creating pending marks or saving 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > waits for the cache choice, then becomes available after Discard it 268ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > waits for the cache choice, then becomes available after Restore the device draft 137ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > refuses on a read-only editor and after its rich editor is destroyed 74ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > the first proposal waits for an available editor > refuses source mode without changing the authored source or saving 29ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > observes a known application when the device cache cannot be read 117ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > waits for explicit Discard before an older-instance receipt becomes absent 127ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > cannot infer rejection from a restored modified draft without its marks 206ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > reads restored application marks as pending and complete rejection as absent 189ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > reads application marks from a saved redline after remount without enabling a duplicate 116ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > keeps source-mode and destroyed editor receipts unavailable 92ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the selected text as the person’s deletion, then inserts AnA’s text 123ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > strikes the text of every paragraph a selection spans, joining none of them 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > withdraws a pending insertion inside the selection, as a hand deletion does 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > a collapsed caret still inserts with nothing struck (the shipped behaviour) 21ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > strikes the single match and inserts the replacement after it, both AnA’s 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > reads the replacement as the markdown subset insertSuggestedContent reads 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses not-found when the quote is not in the section, and changes nothing 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > refuses ambiguous when the quote occurs twice, and changes nothing 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a suffix pick the occurrence it follows 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — which place, if exactly one > lets a prefix pick the occurrence it precedes, across a paragraph break 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > an empty replacement is a deletion proposal only 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses rather than restrike text that is already a pending suggestion 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — deletions, and what it will not touch > refuses not-editable on an editor that is not editable 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a phrase replaced inside a sentence 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by two paragraphs 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > a whole paragraph replaced by a list: accepting takes the struck paragraph with it 49ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > the tail of a paragraph replaced by two paragraphs 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > refuses structural, changing nothing, when paragraphs would go inside a sentence 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — reject restores the section exactly, accept is the proposal > keeps the whitespace a replacement carries (no trimming of an inline edit) 75ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a phrase 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > paragraphs drafted over words mid-sentence go after that paragraph, never into it 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection — reject restores, accept is the proposal > a list drafted over a whole paragraph 52ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > one paragraph at the end of a paragraph 29ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > two paragraphs at the end of the section 42ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a paragraph with the caret mid-sentence goes after that paragraph 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs at the start of a paragraph go before it 36ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > paragraphs into an empty paragraph fill it, and rejecting leaves it empty again 45ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a table at the end of a paragraph 76ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent at a caret — reject restores, accept is the proposal > a person typing inside a drafted paragraph keeps it standing when the draft is rejected 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > treats a non-breaking space and any whitespace run as one space 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads list markers in a prefix as the reader writes them 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads heading markers and numbered items in a prefix and a suffix 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > reads table cell separators in a prefix 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — a quote as the reader wrote it > a quote across a paragraph break is not found — it names no one place to redline 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > does not count an occurrence inside a pending suggestion toward ambiguity 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses overlaps-suggestion when the only occurrence is inside a pending suggestion 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses overlaps-suggestion when the quote runs into a pending deletion 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when a given prefix or suffix contradicts the one occurrence 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — pending suggestions and anchors > refuses not-found when the context fits none of several occurrences 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > does not move the caret, and does not scroll 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — the person keeps their place > a caret after the quote is carried past the proposal, still at the same words 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > redlines an editable rich section 138ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable on a frozen section 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable in source mode, where the editor is not the document 15ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > returns the UUID carried by every real mark without changing the source turn 117ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > preserves distinct adjacent same-turn applications when serialized and reopened 34ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > keeps actual adjacent deletion proposals separate within one turn and minute 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > retains one application identity across a block replacement after reopening 44ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > gives reject/reapply/accept distinct decision IDs even in the same minute 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/proposalApplicationIdentity.test.tsx > explicit proposal applications keep their own identity > includes application identity in decision IDs while preserving legacy typing grouping 21ms
+ Test Files  3 passed (3)
+      Tests  70 passed (70)
+   Start at  06:55:56
+   Duration  8.20s (transform 795ms, setup 344ms, import 1.57s, tests 4.07s, environment 1.64s)

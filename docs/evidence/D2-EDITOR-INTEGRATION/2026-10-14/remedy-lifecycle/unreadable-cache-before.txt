@@ -1,0 +1,6 @@
+× client/src/concept2cure/v2/editor/__tests__/richProposalLifecycle.test.tsx > device drafts cannot fabricate a missing application > observes a known application when the device cache cannot be read 245ms
+AssertionError: actual pending marks became unobservable after a best-effort cache read failed: expected 'unavailable' to be 'pending' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  06:39:44
+   Duration  2.02s (transform 633ms, setup 169ms, import 909ms, tests 249ms, environment 500ms)

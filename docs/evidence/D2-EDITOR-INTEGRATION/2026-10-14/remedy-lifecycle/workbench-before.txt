@@ -1,0 +1,9 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx > AnA remedies reach the existing editor > offers the same guarded remedy again after every tracked part is rejected
+AssertionError: expected null to be truthy
+
+- Expected:
+AssertionError: expected null to be truthy
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Duration  4.97s (transform 1.88s, setup 154ms, import 2.39s, tests 1.79s, environment 474ms)

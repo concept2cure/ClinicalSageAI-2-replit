@@ -72,6 +72,7 @@ import {
   type SignatureDbClient,
 } from '../part11/signature-persistence';
 import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
+import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from './controlled-text-authorship';
 
 /**
  * The §11.50(a)(3) meaning an approval carries. Taken from the platform's
@@ -159,7 +160,7 @@ export function computeQmsDocumentRetirementDigest(row: QmsDocumentRow): string 
   return computeQmsDocumentContentDigest({ ...row, metadata });
 }
 
-export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL';
+export type QmsApprovalRefusalCode = 'NOT_FOUND' | 'INVALID_STATE' | 'SELF_APPROVAL' | 'INVALID_AUTHORSHIP';
 
 /** A refusal the route maps to a status. Nothing has been written when thrown. */
 export class QmsApprovalRefusedError extends Error {
@@ -243,11 +244,15 @@ async function lockApprovableDocument(
         : `Document is ${row.status}; only a document under review can be approved. Nothing was signed.`,
     );
   }
-  // §11.10(d) two-person rule, the same rule the RBM approvals in this family
-  // and the governed sign action apply: the author may not approve their own
-  // controlled document. A row with no recorded author cannot be checked, and
-  // the signed record says so (twoPersonRule) rather than staying silent.
-  if (row.author_id != null && row.author_id === userId) {
+  // The original creator and every recorded controlled-text contributor remain
+  // authors; changing the procedure never lets its writer sign their own work.
+  let contributors: number[];
+  try { contributors = qmsControlledTextAuthorIds(row.metadata); }
+  catch (error) {
+    if (error instanceof QmsControlledTextAuthorshipInvalid) throw new QmsApprovalRefusedError('INVALID_AUTHORSHIP', error.message);
+    throw error;
+  }
+  if (row.author_id === userId || contributors.includes(userId)) {
     throw new QmsApprovalRefusedError(
       'SELF_APPROVAL',
       'You authored this document, so you cannot also approve it. A second person has to review and sign it (21 CFR Part 11 §11.10(d)).',
@@ -319,7 +324,8 @@ export async function approveQmsDocumentSigned(
 ): Promise<ApproveQmsDocumentSignedResult> {
   const { orgId, userId, documentId } = params;
   const row = await lockApprovableDocument(client, orgId, userId, documentId);
-  const twoPersonRule = row.author_id != null ? 'enforced' : 'not_applicable_no_author_recorded';
+  const controlledTextAuthorUserIds = qmsControlledTextAuthorIds(row.metadata);
+  const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';
   const contentDigest = computeQmsDocumentContentDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
@@ -341,6 +347,8 @@ export async function approveQmsDocumentSigned(
       version: row.version,
       fromStatus: row.status,
       toStatus: 'effective',
+      originalAuthorId: row.author_id,
+      controlledTextAuthorUserIds,
     },
     domain: 'qms',
     surface: 'api',
@@ -368,7 +376,7 @@ export async function approveQmsDocumentSigned(
       note:
         'sha256 over the canonical qms_documents version content (id, organization, doc number, version, title, type, category, artifact pointer, next review date, metadata minus metadata.approval) read under FOR UPDATE at approval time — the same digest stored on metadata.approval.contentDigest.',
     },
-    extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule },
+    extraManifest: { docNumber: row.doc_number, version: row.version, twoPersonRule, originalAuthorId: row.author_id, controlledTextAuthorUserIds },
     complianceStatement:
       'QMS controlled-document approval (21 CFR 820.40 / ISO 13485 §4.2.4) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
   });

@@ -1,0 +1,54 @@
+2026-10-14 UTC — final integrated verification
+Latest canonical integration: merged 695a906ebab6c7ce7fa8d8f81f5e4149b23f380e, preserving upstream 4894de1f7a075e43138319a6c7e8d18d0ef28bde.
+
+Combined native Quality, canonical SQL/approval, AnA authorization, inherited route and reused editor regression:
+Test Files  29 passed (29)
+Tests  516 passed (516)
+Duration  89.07s
+
+Official whole-repository TypeScript gate:
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+Production build:
+✓ built in 21.56s
+✅ Server build complete → dist/index.js
+Existing bundle-size warnings remain; build exits 0.
+
+Strict lint: new Quality files, focused QMS services/tests and root-owned contract/tool/demo/OQ files pass without new warnings.
+Existing register warnings decreased; existing native route warnings unchanged.
+OQ-006 and demo callers syntax checked; credentialed OQ execution is not claimed.
+
+Relevant guards:
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+✅ ci:unauthenticated-fetch — 75 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+✅ no new ungated fixture fallback. 0 baselined.
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baselined.
+check-discarded-audit-write: no new occurrences. 113 baselined across 50 file(s).
+
+Browser: both light1440 and dark390 actual QualityRoute/AuthProvider/RichSectionEditor flows pass; synthetic API/accounts only.
+One explicit acknowledgement and one controlled-text PATCH per flow; declaration initially unchecked; own receipt shown; zero page errors and horizontal overflow.
+
+See backend-verification.md and README.md for audit cryptography, credential ceremony, RLS and production boundaries.
+
+Publication-gate follow-up:
+The SQL interpolation gate initially refused a variable locking suffix in the new standing query.
+Two fixed SQL literals preserve the reader/no-lock and mutation/FOR SHARE paths; no baseline/config change.
+Affected canonical SQL/native training regression: 88/88 in 3 files.
+Direct PGlite lock/no-lock trace: 2/2 (scratch-only qualification).
+AnA native refusal and canonical QMS/Vault creation/audit regression after private parsing-helper extraction: 17/17 in 2 files.
+Pushed warnings ratchet: no file gained warnings against 11fb58f19.
+Pushed import guard: every relative import in 40 source files resolves to a tracked file.
+Selected raw logs: qms-standing-sql-interpolation-{before,after}.log; qms-training-validation/final-fixed-standing-suites-private.log; qms-training-validation/fixed-standing-lock-trace-private.log; qms-final-native-create-regression.log; qms-pushed-lint-warnings.log; qms-pushed-imports.log.
+
+Final static-error recovery follow-up:
+Both uncertain COMMIT 503 responses use fixed recovery text and a literal stable code.
+Hostile exception message/code negative: 2 failed before repair -> both pass after repair.
+ci:server-error-leaks: red mdx-qms 0->2, then green with no baseline change.
+Final backend replay: 149/149 in seven suites.
+Final combined source-frozen replay: 516/516 in29suites,89.07s; exact log qms-latest-regression.log.
+Official merged whole-repository typecheck: errors found0,tsc exit0; qms-latest-typecheck.log.
+Final production build: client built21.56s/server build complete; qms-latest-build.log.
+Latest actual-browser replay: both light1440 and dark390 editor/reader/receipt flows pass; synthetic accounts/API only.
