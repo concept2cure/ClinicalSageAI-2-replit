@@ -1,0 +1,438 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+stdout | server/routes/__tests__/onboarding-proposals.test.ts
+{
+  "timestamp": "2026-10-14T03:11:14.179Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:11:14.181Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts
+{
+  "timestamp": "2026-10-14T03:11:14.181Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/onboarding-proposals.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > returns verified proposals with their provenance
+{
+  "timestamp": "2026-10-14T03:11:15.374Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > passes through an honest empty result rather than inventing content
+{
+  "timestamp": "2026-10-14T03:11:15.379Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "scan.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > degrades honestly when extraction throws
+{
+  "timestamp": "2026-10-14T03:11:15.383Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > degrades honestly when extraction throws
+{
+  "timestamp": "2026-10-14T03:11:15.383Z",
+  "level": "error",
+  "message": "[onboarding-proposals] onboarding ingest failed",
+  "context": {
+    "err": "boom"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 403s a non-admin member (fail-closed authorization)
+{
+  "timestamp": "2026-10-14T03:11:15.387Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 400s without a reason — it is never synthesized
+{
+  "timestamp": "2026-10-14T03:11:15.399Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > applies an approved field and audits it as AnA-on-behalf-of with server provenance
+{
+  "timestamp": "2026-10-14T03:11:15.409Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > applies an approved field and audits it as AnA-on-behalf-of with server provenance
+{
+  "timestamp": "2026-10-14T03:11:15.412Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > cannot be tricked into writing a value the server never proposed
+{
+  "timestamp": "2026-10-14T03:11:15.416Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > enforces the governed minimum reason length, not a token one
+{
+  "timestamp": "2026-10-14T03:11:15.421Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > records the governed command name in the audit entry
+{
+  "timestamp": "2026-10-14T03:11:15.425Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > records the governed command name in the audit entry
+{
+  "timestamp": "2026-10-14T03:11:15.426Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > rejects a human edit that the canonical governed PATCH would reject
+{
+  "timestamp": "2026-10-14T03:11:15.429Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > reports a field with no governed write path instead of writing it elsewhere
+{
+  "timestamp": "2026-10-14T03:11:15.433Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 401s without authentication 18ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 400s without an organization context 11ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 400s when no document is attached 3ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > 415s an unreadable file type instead of pretending to read it 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > returns verified proposals with their provenance 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > passes through an honest empty result rather than inventing content 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/ingest > degrades honestly when extraction throws 3ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 403s a non-admin member (fail-closed authorization) 12ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 400s without a reason — it is never synthesized 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > 410s an expired or unknown review session rather than trusting the body 2ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > applies an approved field and audits it as AnA-on-behalf-of with server provenance 7ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > cannot be tricked into writing a value the server never proposed 5ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > is registered as a Part 11 governed command at the reason-only tier 0ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > enforces the governed minimum reason length, not a token one 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > records the governed command name in the audit entry 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > rejects a human edit that the canonical governed PATCH would reject 5ms
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was lost still answers 200, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:11:15.438Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was lost still answers 200, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:11:15.440Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "reason": "deadlock detected"
+  }
+}
+
+stderr | server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was written says so
+{
+  "timestamp": "2026-10-14T03:11:15.444Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "profile.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > reports a field with no governed write path instead of writing it elsewhere 4ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was lost still answers 200, and says the row is missing 5ms
+ ✓ server/routes/__tests__/onboarding-proposals.test.ts > POST /api/onboarding/commit — governed, server-authoritative > an applied change whose audit row was written says so 5ms
+stdout | server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it
+{
+  "timestamp": "2026-10-14T03:11:16.442Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:11:16.444Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it
+{
+  "timestamp": "2026-10-14T03:11:16.445Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it
+[database] Database connection successful
+
+stderr | server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+{
+  "timestamp": "2026-10-14T03:11:16.638Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error changing the connector setting for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it 817ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > the administrator of this organization is told they can change it 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > an owner of this organization is told they can change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a manager is refused with 403, and nothing is written or recorded 10ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a member is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a viewer is refused with 403, and nothing is written or recorded 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's administrator is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's owner is refused with 403, and nothing is written or recorded 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > an owner, if one is ever provisioned, changes it too 8ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator enables it: one transaction, the setting and its chained audit row with the value before and after 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator disables it, and the row records true → false 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {} is refused with 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of null is refused with 400 and nothing is written 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role admin → 403, nothing written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role owner → 403, nothing written 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role super_admin → 403, nothing written 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role member → 403, nothing written 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > control: PATCH /settings without it still writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings/claudeConnector is not a section the section door writes 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > a reset keeps the stored connector setting: it is not a default to restore 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it on is refused: rolled back before the UPDATE, nothing recorded 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it off is refused too: only its own door changes it, either way 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > nulling it is refused (a null reads as off, so it would turn it off) 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > erasing it is refused (a door that replaces the settings whole and leaves the key out) 2ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: a general write that leaves it as stored is written, and keeps it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: the connector's own door changes it 3ms
+stdout | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+{
+  "timestamp": "2026-10-14T03:11:17.817Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:11:17.821Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+{
+  "timestamp": "2026-10-14T03:11:17.821Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+[database] Database connection successful
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-14T03:11:17.931Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating security settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-14T03:11:17.934Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-14T03:11:17.937Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error resetting settings for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT 950ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention 6ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a reset restores the defaults and keeps the tool policy and the session limit 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a PATCH of one field of a section keeps the section's other fields 3ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 24ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 8ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 2ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:11:18.876Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 37ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 2ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('x') 3ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import('pdfkit' as any) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > /* prose mentioning /*) inside */ await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > const s = 'has /* inside'; await import(v) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > // await import(v)
+await import('y') 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > await import(`../routes/${n}`) 0ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > the guard can see the whole file > sees the whole of the largest bootstrap file 7ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > no guarded file imports a module by computed specifier 12ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > the families that were missing are imported statically by name 1ms
+ ✓ server/bootstrap/__tests__/routes-reach-the-bundle.test.ts > route registration reaches the production bundle > every regional blueprint is imported statically by both catalogs 1ms
+
+ Test Files  5 passed (5)
+      Tests  113 passed (113)
+   Start at  03:11:12
+   Duration  7.06s (transform 1.50s, setup 143ms, import 591ms, tests 5.42s, environment 0ms)
+

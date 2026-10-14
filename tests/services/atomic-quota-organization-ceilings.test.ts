@@ -29,6 +29,10 @@ const state = vi.hoisted(() => ({
   released: 0,
 }));
 
+// Consent auditing is proven in tenant-user-invitation-handoff.test.ts; this
+// suite keeps its scope on the organization ceiling and its transaction.
+vi.mock('../../server/services/auditService.js', () => ({ writeChainedAuditRow: vi.fn(async () => undefined) }));
+
 vi.mock('../../server/db.js', () => ({
   pool: {
     connect: async () => ({
@@ -90,7 +94,7 @@ function answerWith(opts: {
     }
     if (/^INSERT INTO users/.test(q)) return { rows: [], rowCount: 1 };
     if (/^INSERT INTO organization_invitations/.test(q)) return { rows: [{ id: 31 }] };
-    if (/^INSERT INTO organization_users/.test(q)) return { rows: [] };
+    if (/^INSERT INTO organization_users/.test(q)) return { rows: [{ role: params[2] }], rowCount: 1 };
     if (/^UPDATE organization_invitations/.test(q)) return { rows: [] };
     throw new Error(`unexpected SQL in test: ${q}`);
   };

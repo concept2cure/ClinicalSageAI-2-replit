@@ -1,0 +1,26 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/types/__tests__/onboarding-discovery-contract.test.ts [ shared/types/__tests__/onboarding-discovery-contract.test.ts ]
+Error: Cannot find module '../onboarding-discovery' imported from /workspace/concept2cure/shared/types/__tests__/onboarding-discovery-contract.test.ts
+ ❯ shared/types/__tests__/onboarding-discovery-contract.test.ts:3:1
+      1| import { describe, expect, it } from 'vitest';
+      2| import { LAUNCH_SURFACE_IDS } from '../../constants/launch-scope';
+      3| import {
+       | ^
+      4|   assessOnboardingDiscovery,
+      5|   emptyDiscoveryAnswers,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  02:52:02
+   Duration  372ms (transform 97ms, setup 93ms, import 0ms, tests 0ms, environment 0ms)
+

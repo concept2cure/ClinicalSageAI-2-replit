@@ -349,7 +349,7 @@ export async function revokeAuthoringPermission(input: {
   const { pool, tenantId, docId, permissionId, revokedBy, reason = null } = input;
 
   const candidate = await pool.query(
-    `SELECT id::text, role, principal_id
+    `SELECT id::text, role, principal_id, section_id
        FROM doc_permissions
       WHERE id = $1 AND tenant_id = $2 AND doc_id = $3 AND revoked_at IS NULL
       LIMIT 1`,
@@ -358,13 +358,14 @@ export async function revokeAuthoringPermission(input: {
   const row = candidate.rows[0];
   if (!row) return null;
 
-  if (String(row.role).toUpperCase() === 'OWNER') {
+  if (String(row.role).toUpperCase() === 'OWNER' && row.section_id == null) {
     const owners = await pool.query(
       `SELECT COUNT(*)::int AS count
          FROM doc_permissions
         WHERE tenant_id = $1
           AND doc_id = $2
           AND role = 'OWNER'
+          AND section_id IS NULL
           AND revoked_at IS NULL
           AND valid_from <= NOW()
           AND (valid_until IS NULL OR valid_until > NOW())`,

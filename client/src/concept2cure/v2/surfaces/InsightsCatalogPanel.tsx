@@ -22,6 +22,7 @@ import React, { useMemo, useState } from 'react';
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
 import { isRowList, PanelHead, rowsOf, type LibraryReportType } from './insightsLibraryShared';
+import { useCatalogReportingRole } from '../reportingPersona';
 
 /** Family ids to the words a client reads; anything unlisted shows its id. */
 const FAMILY_LABEL: Readonly<Record<string, string>> = {
@@ -142,12 +143,12 @@ export function CatalogPanel({
 }) {
   const [q, setQ] = useState('');
   const [region, setRegion] = useState('');
-  const [persona, setPersona] = useState('');
   const [scope, setScope] = useState('');
   const [state, setState] = useState('');
   const searchId = React.useId();
   const regions = [...new Set(types.map(t => t.region).filter((v): v is string => Boolean(v)))].sort();
   const personas = [...new Set(types.flatMap(t => t.allowedPersonas ?? []))].sort();
+  const { persona, choose: choosePersona, profile } = useCatalogReportingRole(personas);
   const scopes = [...new Set(types.flatMap(t => t.computedScope === 'organization' ? ['organization'] : t.computedScopes))].sort();
 
   const { runnable, notComputed, needsContext } = useMemo(() => {
@@ -194,10 +195,11 @@ export function CatalogPanel({
           />
         </div>
         <CatalogFilter label="Region" value={region} onChange={setRegion} options={regions} />
-        <CatalogFilter label="Reporting role" value={persona} onChange={setPersona} options={personas} />
+        <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} />
         <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} />
         <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'disabled', 'unregistered', 'not-computed']} />
       </div>
+      <ReportingPersonaError profile={profile} />
 
       {needsContext.map(type => type.availabilityState === 'scope-required' && type.computedScopes.includes('document') ? <DocumentTracePicker key={type.typeId} type={type} projectId={projectId} canRun={canRun} busy={busy} onRun={onRun} /> : <div key={type.typeId} className="ro-dash-note" role="note">{I.info} {type.label} — {type.availabilityReason || 'This report is unavailable in the current context.'}</div>)}
 
@@ -242,6 +244,11 @@ function matchesCatalog(type: LibraryReportType, filter: { q: string; region: st
     !filter.persona || !type.allowedPersonas?.length || type.allowedPersonas.includes(filter.persona),
     !filter.scope || scopeMatches, !filter.state || catalogAvailability(type) === filter.state].every(Boolean);
 }
+function ReportingPersonaError({ profile }: { profile: ReturnType<typeof useCatalogReportingRole>['profile'] }) {
+  if (!profile.enabled || !profile.isError) return null;
+  return <ErrorState variant="inline" title="Your saved reporting role could not be read." message={profile.error?.message} retry={() => void profile.refetch()} />;
+}
+
 function CatalogFilter({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
   const id = React.useId();
   return <div className="rl-filter"><label className="gov-label" htmlFor={id}>{label}</label><select id={id} className="rl-input" value={value} onChange={e => onChange(e.target.value)}><option value="">All</option>{options.map(option => <option key={option} value={option}>{readable(option)}</option>)}</select></div>;

@@ -65,7 +65,14 @@ const UPLOAD_STARTER: WelcomeStarter = {
   navTo: 'onboarding-ingest',
 };
 
-/** Per-family greeting + the type-specific starters (upload starter appended). */
+const DISCOVERY_STARTER: WelcomeStarter = {
+  label: 'Discover and set up my workspace',
+  prompt: 'Help me clarify my company goals, regulatory experience and first project, then review my team and security setup.',
+  iconKey: 'sparkles',
+  navTo: 'onboarding',
+};
+
+/** Per-family greeting + the type-specific starters and setup entry points. */
 const FAMILIES: Record<
   ReturnType<typeof familyOf>,
   { label: string; subline: string; starters: WelcomeStarter[] }
@@ -132,6 +139,6 @@ export function welcomeFor(segment: string | null | undefined, name: string): On
     greeting: `Welcome, ${who} — let’s get your ${f.label} set up.`,
     subline: f.subline,
     // Type-specific starters first, then the always-available upload bridge to P2/P3.
-    starters: [...f.starters, UPLOAD_STARTER],
+    starters: [...f.starters, DISCOVERY_STARTER, UPLOAD_STARTER],
   };
 }

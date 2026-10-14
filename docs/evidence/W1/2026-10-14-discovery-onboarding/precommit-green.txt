@@ -1,0 +1,22 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+
+  client/src/concept2cure/v2/AccountPanel.tsx (569 lines)
+  client/src/concept2cure/v2/surfaces/AdminAccess.tsx (744 lines)
+  client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx (3824 lines)
+  client/src/concept2cure/v2/surfaces/Onboarding.tsx (1132 lines)
+  client/src/concept2cure/v2/surfaces/Projects.tsx (1439 lines)
+  server/routes/organizations-routes.ts (590 lines)
+  server/routes/tenant-users.ts (681 lines)
+  server/services/session-inactivity.ts (507 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3182 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete

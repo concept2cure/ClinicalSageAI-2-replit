@@ -60,7 +60,7 @@ const baseHandlers = {
       { id: 'sys0001', user_id: null, action: 'sso.sync', table_name: null, record_id: null, created_at: '2026-07-19T00:00:00Z', sha256_chain: null, description: null, actor_name: null, actor_email: null, target_name: null, target_email: null },
     ],
   }),
-  org: () => ({ rows: [{ name: 'Bright Biosciences', domain: 'brightbio.io', settings: { security: { mfaEnabled: true, ssoEnabled: false, sessionTimeout: 30 } } }] }),
+  org: () => ({ rows: [{ name: 'Bright Biosciences', domain: 'brightbio.io', settings: { security: { mfaEnabled: true, ssoEnabled: false, sessionTimeoutMinutes: 30, sessionTimeout: 960 } } }] }),
   scim: () => ({ rows: [] }),
 };
 
@@ -174,4 +174,21 @@ describe('GET /api/mdx/admin — real facets', () => {
     // No estate data leaks in the denial.
     expect(res.body.data).toBeUndefined();
   });
+});
+
+describe('session policy follows the enforced sign-in policy', () => {
+  it.each([
+    [{ sessionTimeout: 120 }, '15 minutes'],
+    [{ sessionTimeoutMinutes: 99999 }, '1440 minutes'],
+    [{ sessionTimeoutMinutes: 0 }, '1 minute'],
+    [{ sessionTimeoutMinutes: '90' }, '15 minutes'],
+    [{ sessionTimeoutMinutes: 22.9 }, '22 minutes'],
+  ])('shows the idle interval sign-in actually enforces for %j', async (security, expected) => {
+    dispatch({ ...baseHandlers, org: () => ({ rows: [{ name: 'Bright Biosciences', domain: null, settings: { security } }] }) });
+    const res = await request(app).get('/api/mdx/admin');
+    expect(res.status).toBe(200);
+    const row = res.body.data.settings.find((s: { id: string }) => s.id === 'session-ttl');
+    expect(row?.value).toBe(expected);
+  });
+
 });

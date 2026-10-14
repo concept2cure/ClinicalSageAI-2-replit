@@ -1,0 +1,440 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > preserves metadata/expiry/rate normalization and stores the trimmed creation reason in both audit fields 291ms
+   → expected { …(7) } to match object { name: 'Research integration', …(5) }
+(2 matching properties omitted from actual)
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > legacy callers may omit reason; tenant/user spoofing never changes the authenticated generation or audit actor 4ms
+   → expected { …(7) } to match object { …(3) }
+(5 matching properties omitted from actual)
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a blank supplied reason before generating or auditing a key 4ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too short after trimming supplied reason before generating or auditing a key 2ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too long supplied reason before generating or auditing a key 3ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a null supplied reason before generating or auditing a key 3ms
+   → expected 201 to be 400 // Object.is equality
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 3-character reason boundary 3ms
+   → expected { tenantId: 777, userId: 42, …(6) } to match object { reason: 'rrr', …(1) }
+(10 matching properties omitted from actual)
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 500-character reason boundary 3ms
+   → expected { tenantId: 777, userId: 42, …(6) } to match object { …(2) }
+(10 matching properties omitted from actual)
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > reports a tamper-proof-only audit as persisted but not chained 3ms
+   → expected undefined to deeply equal { persisted: true, chained: false }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a lost audit still returns the already-created key once with 201 and a safe warning 4ms
+   → expected undefined to deeply equal { persisted: false, …(2) }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a rejected audit still returns the already-created key once with 201 and a safe warning 3ms
+   → {"error":"Failed to create API key"}: expected 500 to be 201 // Object.is equality
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a later list never returns the raw key, including after a rejected creation audit 3ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a chained audit remains scoped and 200 20ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a tamper-proof-only audit remains scoped and 200 3ms
+   → expected undefined to deeply equal { persisted: true, chained: false }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a lost audit remains scoped and 200 3ms
+   → expected undefined to deeply equal { persisted: false, …(2) }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a rejected audit remains scoped and 200 2ms
+   → {"error":"Failed to revoke API key"}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a chained audit remains 404 3ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a tamper-proof-only audit remains 404 2ms
+   → expected undefined to deeply equal { persisted: true, chained: false }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a lost audit remains 404 2ms
+   → expected undefined to deeply equal { persisted: false, …(2) }
+ × server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a rejected audit remains 404 2ms
+   → {"error":"Failed to revoke API key"}: expected 500 to be 404 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > preserves metadata/expiry/rate normalization and stores the trimmed creation reason in both audit fields
+AssertionError: expected { …(7) } to match object { name: 'Research integration', …(5) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,6 @@
+  {
+-   "auditTrail": {
+-     "chained": true,
+-     "persisted": true,
+-   },
+    "expiresAt": "2100-10-14T00:00:00.000Z",
+    "keyId": 31,
+    "keyPrefix": "unit-key",
+    "name": "Research integration",
+    "scopes": [
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:126:22
+    124|     const res = await create({ name: '  Research integration  ', expir…
+    125|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    126|     expect(res.body).toMatchObject({ name: 'Research integration', sco…
+       |                      ^
+    127|     expect(h.generateCalls).toEqual([[ORG, 'Research integration', SCO…
+    128|     expect(h.auditEntries).toEqual([expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > legacy callers may omit reason; tenant/user spoofing never changes the authenticated generation or audit actor
+AssertionError: expected { …(7) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "apiKey": "synthetic-api-key-for-unit-test-only",
+-   "auditTrail": {
+-     "chained": true,
+-     "persisted": true,
+-   },
+    "expiresAt": null,
+  }
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:140:22
+    138|     const res = await create({ tenantId: '999', organizationId: 999, u…
+    139|     expect(res.status).toBe(201);
+    140|     expect(res.body).toMatchObject({ apiKey: SYNTHETIC_KEY, expiresAt:…
+       |                      ^
+    141|     expect(h.generateCalls).toEqual([[ORG, 'Research integration', SCO…
+    142|     expect(h.auditEntries[0]).toMatchObject({ tenantId: ORG, userId: C…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a blank supplied reason before generating or auditing a key
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too short after trimming supplied reason before generating or auditing a key
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a too long supplied reason before generating or auditing a key
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > rejects a null supplied reason before generating or auditing a key
+AssertionError: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:151:24
+    149|   ])('rejects a %s supplied reason before generating or auditing a key…
+    150|     const res = await create({ reason });
+    151|     expect(res.status).toBe(400);
+       |                        ^
+    152|     expect(res.body.error).toBe('Validation failed');
+    153|     expect(res.body.details).toEqual(expect.arrayContaining([expect.ob…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 3-character reason boundary
+AssertionError: expected { tenantId: 777, userId: 42, …(6) } to match object { reason: 'rrr', …(1) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "details": {
+-     "reason": "rrr",
++     "reason": undefined,
+    },
+-   "reason": "rrr",
+  }
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:162:31
+    160|     const res = await create({ reason: `  ${reason}  ` });
+    161|     expect(res.status).toBe(201);
+    162|     expect(h.auditEntries[0]).toMatchObject({ reason, details: { reaso…
+       |                               ^
+    163|     expectOneTimeKey(res.body);
+    164|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > accepts the trimmed 500-character reason boundary
+AssertionError: expected { tenantId: 777, userId: 42, …(6) } to match object { …(2) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "details": {
+-     "reason": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
++     "reason": undefined,
+    },
+-   "reason": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+  }
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:162:31
+    160|     const res = await create({ reason: `  ${reason}  ` });
+    161|     expect(res.status).toBe(201);
+    162|     expect(h.auditEntries[0]).toMatchObject({ reason, details: { reaso…
+       |                               ^
+    163|     expectOneTimeKey(res.body);
+    164|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > reports a tamper-proof-only audit as persisted but not chained
+AssertionError: expected undefined to deeply equal { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:170:33
+    168|     const res = await create();
+    169|     expect(res.status).toBe(201);
+    170|     expect(res.body.auditTrail).toEqual({ persisted: true, chained: fa…
+       |                                 ^
+    171|     expectOneTimeKey(res.body);
+    172|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a lost audit still returns the already-created key once with 201 and a safe warning
+AssertionError: expected undefined to deeply equal { persisted: false, …(2) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "message": Any<String>,
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ expectLostAudit server/routes/__tests__/api-key-audit-outcome.test.ts:114:27
+    112|
+    113| function expectLostAudit(body: Record<string, unknown>) {
+    114|   expect(body.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW…
+       |                           ^
+    115|   expect(JSON.stringify(body)).not.toContain(AUDIT_DRIVER_MARKER);
+    116|   expect(JSON.stringify(body)).not.toContain('relation audit_logs');
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:178:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a rejected audit still returns the already-created key once with 201 and a safe warning
+AssertionError: {"error":"Failed to create API key"}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:177:50
+    175|     h.auditMode = mode;
+    176|     const res = await create({ reason: 'Approved read-only integration…
+    177|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    178|     expectOneTimeKey(res.body); expectLostAudit(res.body);
+    179|     expect(h.revokeCalls).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > POST API keys — one-time delivery with an honest audit outcome > a later list never returns the raw key, including after a rejected creation audit
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:185:28
+    183|     h.auditMode = 'rejected';
+    184|     const created = await create();
+    185|     expect(created.status).toBe(201); expectOneTimeKey(created.body);
+       |                            ^
+    186|     const listed = await request(app).get('/api/api-keys');
+    187|     expect(listed.status).toBe(200); expect(listed.body.total).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a chained audit remains scoped and 200
+AssertionError: expected undefined to deeply equal { persisted: true, chained: true }
+
+- Expected:
+{
+  "chained": true,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:206:38
+    204|     expect(h.auditEntries[0]).toMatchObject({ tenantId: ORG, userId: C…
+    205|     if (mode === 'lost' || mode === 'rejected') expectLostAudit(res.bo…
+    206|     else expect(res.body.auditTrail).toEqual({ persisted: true, chaine…
+       |                                      ^
+    207|     expect(h.generateCalls).toHaveLength(0); expectNoCredentialCopies(…
+    208|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a tamper-proof-only audit remains scoped and 200
+AssertionError: expected undefined to deeply equal { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:206:38
+    204|     expect(h.auditEntries[0]).toMatchObject({ tenantId: ORG, userId: C…
+    205|     if (mode === 'lost' || mode === 'rejected') expectLostAudit(res.bo…
+    206|     else expect(res.body.auditTrail).toEqual({ persisted: true, chaine…
+       |                                      ^
+    207|     expect(h.generateCalls).toHaveLength(0); expectNoCredentialCopies(…
+    208|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a lost audit remains scoped and 200
+AssertionError: expected undefined to deeply equal { persisted: false, …(2) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "message": Any<String>,
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ expectLostAudit server/routes/__tests__/api-key-audit-outcome.test.ts:114:27
+    112|
+    113| function expectLostAudit(body: Record<string, unknown>) {
+    114|   expect(body.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW…
+       |                           ^
+    115|   expect(JSON.stringify(body)).not.toContain(AUDIT_DRIVER_MARKER);
+    116|   expect(JSON.stringify(body)).not.toContain('relation audit_logs');
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:205:49
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > successful revocation with a rejected audit remains scoped and 200
+AssertionError: {"error":"Failed to revoke API key"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:199:50
+    197|     h.auditMode = mode;
+    198|     const res = await revoke({ organizationId: 999, tenantId: '999', u…
+    199|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    200|     expect(res.body.keyId).toBe(KEY_ID);
+    201|     expect(h.revokeCalls).toEqual([[KEY_ID, ORG]]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a chained audit remains 404
+AssertionError: expected undefined to deeply equal { persisted: true, chained: true }
+
+- Expected:
+{
+  "chained": true,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:222:38
+    220|     });
+    221|     if (mode === 'lost' || mode === 'rejected') expectLostAudit(res.bo…
+    222|     else expect(res.body.auditTrail).toEqual({ persisted: true, chaine…
+       |                                      ^
+    223|     expect(h.generateCalls).toHaveLength(0); expectNoCredentialCopies(…
+    224|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a tamper-proof-only audit remains 404
+AssertionError: expected undefined to deeply equal { persisted: true, chained: false }
+
+- Expected:
+{
+  "chained": false,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:222:38
+    220|     });
+    221|     if (mode === 'lost' || mode === 'rejected') expectLostAudit(res.bo…
+    222|     else expect(res.body.auditTrail).toEqual({ persisted: true, chaine…
+       |                                      ^
+    223|     expect(h.generateCalls).toHaveLength(0); expectNoCredentialCopies(…
+    224|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a lost audit remains 404
+AssertionError: expected undefined to deeply equal { persisted: false, …(2) }
+
+- Expected:
+{
+  "code": "AUDIT_ROW_NOT_PERSISTED",
+  "message": Any<String>,
+  "persisted": false,
+}
+
++ Received:
+undefined
+
+ ❯ expectLostAudit server/routes/__tests__/api-key-audit-outcome.test.ts:114:27
+    112|
+    113| function expectLostAudit(body: Record<string, unknown>) {
+    114|   expect(body.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW…
+       |                           ^
+    115|   expect(JSON.stringify(body)).not.toContain(AUDIT_DRIVER_MARKER);
+    116|   expect(JSON.stringify(body)).not.toContain('relation audit_logs');
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:221:49
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  server/routes/__tests__/api-key-audit-outcome.test.ts > DELETE API keys — the actual audit outcome accompanies the revocation result > a missing/foreign/already-revoked key with a rejected audit remains 404
+AssertionError: {"error":"Failed to revoke API key"}: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/api-key-audit-outcome.test.ts:213:50
+    211|     h.auditMode = mode; h.revoked = false;
+    212|     const res = await revoke({ organizationId: 999, userId: 99 });
+    213|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+       |                                                  ^
+    214|     expect(res.body.error).toBe('API key not found or already revoked'…
+    215|     expect(h.revokeCalls).toEqual([[KEY_ID, ORG]]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed (20)
+   Start at  03:19:43
+   Duration  714ms (transform 140ms, setup 58ms, import 143ms, tests 364ms, environment 0ms)

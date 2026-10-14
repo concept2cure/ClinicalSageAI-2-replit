@@ -27,6 +27,20 @@ export function asSettings(value: unknown): Settings {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Settings) : {};
 }
 
+export const DISCOVERY_NOT_A_GENERAL_SETTING = 'Save shared discovery answers through the onboarding questionnaire.';
+
+/** All general settings doors refuse this managed section, even a null. */
+export function namesOnboardingDiscovery(value: unknown): boolean {
+  return Object.prototype.hasOwnProperty.call(asSettings(value), 'onboardingDiscovery');
+}
+
+export class DiscoverySettingRefusedError extends Error {
+  constructor() {
+    super(DISCOVERY_NOT_A_GENERAL_SETTING);
+    this.name = 'DiscoverySettingRefusedError';
+  }
+}
+
 /**
  * The settings whose values a write's audit row carries, before and after
  * (P1-41, DP-57): the organisation's access-control posture and its audit-trail
@@ -35,7 +49,7 @@ export function asSettings(value: unknown): Settings {
  * in an append-only chain can never be removed.
  */
 const VALUE_AUDITED: Readonly<Record<string, readonly string[]>> = {
-  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'ipRestrictions'],
+  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'maxConcurrentSessions', 'ipRestrictions'],
   qmp: ['auditTrailRetentionDays'],
   // Whether the organisation's members may use the connector for Claude, set by
   // its owner or administrator (P1-47, ADR-0014 §10; mcp/auth/connector-enablement.ts).
@@ -94,6 +108,8 @@ export interface SettingsWrite {
    * Any other write that would change that setting is refused below.
    */
   connectorDoor?: true;
+  /** Only PATCH /api/onboarding/discovery supplies this managed-section door. */
+  discoveryDoor?: true;
 }
 
 /**
@@ -119,6 +135,11 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
       return null;
     }
     const current = asSettings(tenant.settings);
+    // A callback may build its result by mutating the object it was given.
+    // Keep this managed JSON value before invoking it, so in-place mutation
+    // cannot make the before/after comparison accidentally see the same value.
+    const discoveryBefore = current.onboardingDiscovery === undefined
+      ? undefined : JSON.parse(JSON.stringify(current.onboardingDiscovery));
     const next = change.next(current, tenant.tier || 'standard');
     // The connector for Claude has one door (P1-47 fix round, 2026-10-01,
     // IAM-24). A write from any other door that would change it, on, off, null
@@ -127,6 +148,12 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
     // keys, a door added later) cannot open it.
     if (!change.connectorDoor && claudeConnectorChanged(current, next)) {
       throw new ConnectorSettingRefusedError();
+    }
+    // The questionnaire has one write door because revision/completion and
+    // server-owned attribution must not be rewritten by generic settings or
+    // an AnA tool. Keep a stored discovery intact on resets and unrelated edits.
+    if (!change.discoveryDoor && !isDeepStrictEqual(discoveryBefore, next.onboardingDiscovery)) {
+      throw new DiscoverySettingRefusedError();
     }
     const [updated] = await rdb
       .update(organizations)
