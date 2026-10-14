@@ -1,0 +1,26 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > surfaces citations it could NOT re-read, with the server’s reason
+AssertionError: expected '2 citations could not be re-readDismi…' to match /source no longer exists/
+
+- Expected:
+/source no longer exists/
+
++ Received:
+"2 citations could not be re-readDismissThe recorded source could not be verified. Nothing was changed.The recorded source could not be verified. Nothing was changed."
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx:108:31
+    106|     expect(panel.textContent).toMatch(/2 citations could not be re-rea…
+    107|     // The reason is the finding — not a count.
+    108|     expect(panel.textContent).toMatch(/source no longer exists/);
+       |                               ^
+    109|     expect(panel.textContent).toMatch(/source is frozen/);
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 77 passed (78)
+      Tests  1 failed | 916 passed (917)
+   Start at  21:54:28
+   Duration  468.20s (transform 8.14s, setup 13.03s, import 61.97s, tests 275.75s, environment 88.45s)

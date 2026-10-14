@@ -1,0 +1,10 @@
+{
+  "qualification": "Explicitly synthetic local API records; no database, authorization, persistence, provider or deployed-environment claim.",
+  "actor": { "id": 1, "email": "creation-evaluator@example.invalid", "displayName": "Synthetic evaluator", "organizationId": 1, "roles": ["regulatory-author"] },
+  "program": { "id": "bbbbbbbb-0000-4000-8000-000000000093", "name": "Synthetic creation recovery project", "stage": "IND", "status": "ACTIVE", "product_type": "drug" },
+  "otherProgram": "bbbbbbbb-0000-4000-8000-000000000094",
+  "document": { "id": "dddddddd-0000-4000-8000-000000000093", "client_program_id": "bbbbbbbb-0000-4000-8000-000000000093", "program_id": "bbbbbbbb-0000-4000-8000-000000000093", "title": "Synthetic existing working document", "module": "M3", "status": "DRAFT", "updated_at": "2026-10-14T10:00:00.000Z", "section_count": 1, "created_by": 1, "product_code": null, "c2c_document_id": null, "template_id": null },
+  "createdDocument": { "id": "dddddddd-0000-4000-8000-000000000094", "client_program_id": "bbbbbbbb-0000-4000-8000-000000000093", "program_id": "bbbbbbbb-0000-4000-8000-000000000093", "title": "Synthetic created document", "module": "M3", "status": "DRAFT", "updated_at": "2026-10-14T10:01:00.000Z", "section_count": 0, "created_by": 1, "product_code": null, "c2c_document_id": null, "template_id": null },
+  "section": { "id": "eeeeeeee-0000-4000-8000-000000000093", "doc_id": "dddddddd-0000-4000-8000-000000000093", "code": "3.2.S.1", "title": "Synthetic saved section", "content": "<p>Synthetic saved paragraph for local creation recovery testing.</p>", "order_index": 0, "track_changes": false, "comment_count": 0, "revision_count": 1, "citation_count": 0, "updated_at": "2026-10-14T10:00:00.000Z" },
+  "createdSection": { "id": "eeeeeeee-0000-4000-8000-000000000094", "doc_id": "dddddddd-0000-4000-8000-000000000093", "code": "3.2.S.2", "title": "Synthetic created section", "content": "", "order_index": 1, "track_changes": false, "comment_count": 0, "revision_count": 1, "citation_count": 0, "updated_at": "2026-10-14T10:01:00.000Z" }
+}

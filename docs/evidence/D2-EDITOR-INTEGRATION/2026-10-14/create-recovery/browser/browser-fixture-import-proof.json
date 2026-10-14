@@ -1,0 +1,146 @@
+{
+  "status": "pass",
+  "repositoryRoot": "/workspace/ClinicalSageAI",
+  "checks": [
+    {
+      "file": "browser-checks.mjs",
+      "imported": "./mock-api.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/mock-api.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "browser-checks.mjs",
+      "imported": "./visual-checks.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/visual-checks.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "browser.mjs",
+      "imported": "./browser-checks.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "browser.mjs",
+      "imported": "./unknown-cases.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/unknown-cases.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "browser.mjs",
+      "imported": "./workbench-cases.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/workbench-cases.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../design-system/colors_and_type.css",
+      "target": "design-system/colors_and_type.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/app-v2.css",
+      "target": "client/src/concept2cure/v2/styles/app-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/journey-v2.css",
+      "target": "client/src/concept2cure/v2/styles/journey-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/coverage-v2.css",
+      "target": "client/src/concept2cure/v2/styles/coverage-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/authoring-v2.css",
+      "target": "client/src/concept2cure/v2/styles/authoring-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "target": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "target": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/editor/DocumentWorkbench",
+      "target": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/surfaces/AuthoringCreateExport",
+      "target": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/services/portal/authService",
+      "target": "client/src/services/portal/authService.tsx",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/shellProject",
+      "target": "client/src/concept2cure/v2/shellProject.ts",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "../../../../../../client/src/concept2cure/v2/editorTarget",
+      "target": "client/src/concept2cure/v2/editorTarget.ts",
+      "exists": true,
+      "productionTargetTracked": true
+    },
+    {
+      "file": "probe.tsx",
+      "imported": "./records.json",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/records.json",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "unknown-cases.mjs",
+      "imported": "./browser-checks.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    },
+    {
+      "file": "workbench-cases.mjs",
+      "imported": "./browser-checks.mjs",
+      "target": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/browser-checks.mjs",
+      "exists": true,
+      "productionTargetTracked": null
+    }
+  ]
+}
