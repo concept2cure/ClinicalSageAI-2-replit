@@ -278,3 +278,9 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:118
 14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:120
 14362ef006b728d8b9bc6247e05c644d0575c6df:docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/final-integration/stream-fixtures/source-manifest.json:generic-api-key:121
+
+# status: not a secret
+# reason: Two apiContractSha256 fields equal SHA-256 of the original committed API-contract JSON.
+# Review: docs/evidence/D2-QMS-TRAINING/2026-10-14/security-verification.json.
+2c299974d41ffa9144cb5c2ceeb774e7b408ae7c:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-summary.json:generic-api-key:11
+2c299974d41ffa9144cb5c2ceeb774e7b408ae7c:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-initial-failure/browser-original-summary.json:generic-api-key:11

@@ -125,6 +125,54 @@ npx vitest run \
   server/routes/__tests__/mdx-qms-retire.test.ts --reporter=dot
 ```
 
+## Published Semgrep blocker qualification
+
+The blocking hosted scan of
+`a80d2fa65784714a1aa97b367b8042000c830ed6`, against baseline `10f4e4557`,
+reported exactly two new
+`javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp`
+findings: the canonical-DDL extraction helpers in
+`training.pglite.integration.test.ts:82` and
+`training-controlled-text.pglite.integration.test.ts:65`.
+The inspected helper blobs match that published commit. Their callers use only
+the two fixed QMS table names; no request input reaches these test helpers.
+
+Each helper now selects between two regex literals instead of interpolating its
+argument into `new RegExp`. The tests still read the actual migration. An
+independent Node 22 comparison of the original cooked constructor patterns and
+new literals proves byte-identical extraction in all four cases: both helpers
+times `qms_documents` and `qms_training_records`. No production source,
+suppression, rule or scanner baseline changed for this repair.
+
+The local replay uses the exact workflow image
+`semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198`
+with `--config=p/default --config=p/ci --metrics=off --error`. Both runs scan
+`server/services/qms`, `server/routes/mdx-qms.ts`, the native personal-training
+route test, `client/src/concept2cure/quality` and `shared/qms/training.ts`.
+The runtime keeps its configured proxy and mounts the combined system CA bundle
+read-only for Python trust; TLS verification remains enabled.
+
+```text
+/workspace/scratch/qms-semgrep-local/qms-scan.json
+version: 1.177.0; findings: 2; exit: 1
+
+/workspace/scratch/qms-semgrep-local/qms-scan-after.json
+version: 1.177.0; findings: 0; exit: 0
+
+/workspace/scratch/qms-training-validation/final-literal-DDL-suites-private.log
+Test Files  2 passed (2)
+Tests  69 passed (69)
+Duration  24.73s
+```
+
+Both scanner runs retain the same four nonblocking `PartialParsing` warnings
+(three UI syntax locations and one test import/type annotation). This is a
+finding-free targeted replay, not a claim of complete parser coverage or a
+whole-repository scan. Strict ESLint of both edited test files passes with zero
+warnings (`/workspace/scratch/qms-semgrep-local/fixed-regex-lint-private.log`),
+and `git diff --check` passes. These 69 cases are the two SQL suites already
+listed above, not additional tests added to the 149-case total.
+
 ## Publication SQL gate follow-up
 
 The repository SQL interpolation gate refused the optional lock suffix in the
