@@ -167,19 +167,33 @@ interface SafetySignalSummary {
 }
 
 export interface StrategyRecommendation {
-  recommendedStrategy: string;
-  confidence: number;
+  /**
+   * 'no-precedents' when no approved precedent that records a strategy
+   * matched: nothing is recommended, and strategy, confidence and timeline
+   * are null. It answered 'Standard submission approach' at confidence 0.3
+   * with a '6-12 months (standard)' timeline — a recommendation no precedent
+   * made (2026-10-15).
+   */
+  basis: 'precedents' | 'no-precedents';
+  recommendedStrategy: string | null;
+  confidence: number | null;
   supportingPrecedents: PrecedentRecord[];
   alternativeStrategies: AlternativeStrategy[];
   testingRequirements: string[];
-  estimatedTimeline: string;
+  /** From the top precedent's clearance type; null when it maps to none. */
+  estimatedTimeline: string | null;
   keyRisks: string[];
 }
 
 interface AlternativeStrategy {
   strategy: string;
   precedentCount: number;
-  successRate: number;
+  /**
+   * The share of the approved precedents that used this strategy. It was
+   * called successRate and printed as "% success rate"; it is not one — every
+   * precedent counted was an approved one.
+   */
+  shareOfApprovedPrecedents: number;
   description: string;
 }
 
@@ -898,15 +912,17 @@ export class PrecedentEngine {
     const strategyPatterns = new Map<string, { count: number; precedents: PrecedentRecord[] }>();
 
     for (const p of approved) {
-      const strategy = p.strategySummary || p.testingApproach || p.clearanceType || 'Standard';
+      // A precedent that records no strategy supports none; it was counted as 'Standard'.
+      const strategy = p.strategySummary || p.testingApproach || p.clearanceType;
+      if (!strategy) continue;
       const existing = strategyPatterns.get(strategy) || { count: 0, precedents: [] };
       existing.count++;
       existing.precedents.push(p);
       strategyPatterns.set(strategy, existing);
     }
 
-    // Find the most common successful strategy
-    let recommendedStrategy = 'Standard submission approach';
+    // The most common strategy among approved precedents, or none.
+    let recommendedStrategy: string | null = null;
     let maxCount = 0;
     for (const [strategy, data] of strategyPatterns) {
       if (data.count > maxCount) {
@@ -922,8 +938,8 @@ export class PrecedentEngine {
       alternativeStrategies.push({
         strategy,
         precedentCount: data.count,
-        successRate: data.count / (approved.length || 1),
-        description: `Used in ${data.count} successful precedent(s)`,
+        shareOfApprovedPrecedents: data.count / approved.length,
+        description: `Used in ${data.count} approved precedent(s)`,
       });
     }
 
@@ -947,9 +963,9 @@ export class PrecedentEngine {
     }
 
     const confidence =
-      approved.length > 0
-        ? Math.min(approved.length / (approved.length + rejected.length + 1), 0.95)
-        : 0.3;
+      recommendedStrategy === null
+        ? null
+        : Math.min(approved.length / (approved.length + rejected.length + 1), 0.95);
 
     // Estimate timeline based on clearance type
     const timelineMap: Record<string, string> = {
@@ -961,12 +977,13 @@ export class PrecedentEngine {
     };
 
     return {
+      basis: recommendedStrategy === null ? 'no-precedents' : 'precedents',
       recommendedStrategy,
       confidence,
       supportingPrecedents: approved.slice(0, 5),
       alternativeStrategies: alternativeStrategies.slice(0, 3),
       testingRequirements: Array.from(testingSet).slice(0, 10),
-      estimatedTimeline: timelineMap[approved[0]?.clearanceType || ''] || '6-12 months (standard)',
+      estimatedTimeline: timelineMap[approved[0]?.clearanceType || ''] ?? null,
       keyRisks: keyRisks.slice(0, 5),
     };
   }

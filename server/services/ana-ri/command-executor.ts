@@ -3885,7 +3885,10 @@ export async function recommendStrategy(
       success: true,
       action: 'recommend_strategy',
       data: { strategy: result },
-      message: `Strategy recommendation generated based on regulatory precedent analysis.`,
+      message:
+        result.basis === 'no-precedents'
+          ? 'No approved precedent that records a strategy matched, so no strategy is recommended.'
+          : `Recommended "${result.recommendedStrategy}", the strategy most used by the ${result.supportingPrecedents.length} approved precedent(s) matched.`,
     };
   } catch (err: unknown) {
     return {

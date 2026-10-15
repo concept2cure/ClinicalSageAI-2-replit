@@ -193,6 +193,8 @@ function emptyRisk(): RiskAnalysisDTO {
 }
 
 function mapStrategy(s: StrategyResult): StrategyDTO {
+  // No approved precedent recorded a strategy: nothing is recommended.
+  if (s.basis === 'no-precedents' || s.recommendedStrategy === null) return emptyStrategy();
   const rationale: string[] = [];
   const top = s.supportingPrecedents?.[0];
   if (top) {

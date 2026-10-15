@@ -623,7 +623,12 @@ router.get('/precedent/search', requireApiScope('precedent:read'), requireScope(
 router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, phase, primaryEndpoint, submissionType } = req.query;
-    const resolvedSubmissionType = sanitizeQueryParam(submissionType) || 'NDA';
+    // Required: it defaulted to NDA, so a device sponsor's query was answered
+    // with drug precedents (2026-10-15).
+    const resolvedSubmissionType = sanitizeQueryParam(submissionType);
+    if (!resolvedSubmissionType) {
+      return res.status(400).json({ error: 'submissionType is required (e.g. NDA, BLA, 510(k), PMA)' });
+    }
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_trial_design', 1, {
