@@ -54,21 +54,25 @@ export class IbcError extends Error {
 export interface RegistrationInput {
   registrationNumber: string;
   title: string;
-  nihGuidelinesSection?: NihGuidelinesSection;
+  /** Absent/null means NOT RECORDED, not 'not_applicable'. */
+  nihGuidelinesSection?: NihGuidelinesSection | null;
   biosafetyLevel: BiosafetyLevel;
   submissionId?: number | null;
   involvesRecombinantDna?: boolean;
-  involvesHumanGeneTransfer?: boolean;
+  /** Absent/null means NOT RECORDED, not "no". */
+  involvesHumanGeneTransfer?: boolean | null;
 }
 
 export async function createRegistrationTx(client: Queryable, orgId: number, userId: number, input: RegistrationInput): Promise<{ id: number }> {
+  // The section and the gene-transfer flag were written as 'not_applicable' /
+  // false when absent, so convened review read as not required (2026-10-15).
   const { rows } = await client.query(
     `INSERT INTO ibc_registrations
        (organization_id, submission_id, registration_number, title, nih_guidelines_section, biosafety_level,
         involves_recombinant_dna, involves_human_gene_transfer, status, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9) RETURNING id`,
-    [orgId, input.submissionId ?? null, input.registrationNumber, input.title, input.nihGuidelinesSection ?? 'not_applicable',
-      input.biosafetyLevel, input.involvesRecombinantDna === true, input.involvesHumanGeneTransfer === true, userId],
+    [orgId, input.submissionId ?? null, input.registrationNumber, input.title, input.nihGuidelinesSection ?? null,
+      input.biosafetyLevel, input.involvesRecombinantDna === true, input.involvesHumanGeneTransfer ?? null, userId],
   );
   return { id: Number(rows[0].id) };
 }
@@ -166,20 +170,28 @@ export async function listRegistrations(orgId: number, submissionId?: number): P
 
 export async function getContainmentInput(client: Queryable, orgId: number, id: number): Promise<{
   declaredBsl: BiosafetyLevel;
-  nihGuidelinesSection: NihGuidelinesSection;
-  involvesHumanGeneTransfer: boolean;
+  nihGuidelinesSection: NihGuidelinesSection | null;
+  involvesHumanGeneTransfer: boolean | null;
   agents: Array<{ agentName: string; riskGroup: RiskGroup; requiredBsl: BiosafetyLevel }>;
   approvalDate: string | null;
 }> {
-  const reg = await getRegistration(client, orgId, id);
+  // approval_date as text: node-postgres returns a DATE as a Date, on which
+  // addYears returned its input, so `expired` was always false (2026-10-15).
+  const { rows: found } = await client.query(
+    `SELECT biosafety_level, nih_guidelines_section, involves_human_gene_transfer, approval_date::text AS approval_date
+       FROM ibc_registrations WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [id, orgId],
+  );
+  if (found.length === 0) throw new IbcError('NOT_FOUND', 'IBC registration not found for this organization.');
+  const reg = found[0];
   const { rows } = await client.query(
     `SELECT agent_name, risk_group, required_bsl FROM ibc_biological_agents WHERE registration_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`,
     [id, orgId],
   );
   return {
     declaredBsl: reg.biosafety_level,
-    nihGuidelinesSection: reg.nih_guidelines_section,
-    involvesHumanGeneTransfer: reg.involves_human_gene_transfer,
+    nihGuidelinesSection: reg.nih_guidelines_section ?? null,
+    involvesHumanGeneTransfer: reg.involves_human_gene_transfer ?? null,
     agents: rows.map((a) => ({ agentName: a.agent_name, riskGroup: a.risk_group, requiredBsl: a.required_bsl })),
     approvalDate: reg.approval_date,
   };

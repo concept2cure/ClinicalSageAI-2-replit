@@ -68,6 +68,7 @@ describe('registrationExpiration', () => {
     expect(r.expired).toBe(true);
   });
   it('returns nulls for an unapproved registration', () => {
-    expect(registrationExpiration(null, '2026-06-10')).toEqual({ expirationDate: null, expired: false });
+    // 2026-10-15: this pinned `expired: false` for a registration nobody dated.
+    expect(registrationExpiration(null, '2026-06-10')).toMatchObject({ undetermined: true, expirationDate: null, expired: null });
   });
 });

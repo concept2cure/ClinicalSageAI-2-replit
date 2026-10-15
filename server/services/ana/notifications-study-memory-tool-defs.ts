@@ -227,7 +227,7 @@ export const REGISTER_ANIMAL_COHORT: AnaTool = {
 export const REVIEW_IACUC_PROTOCOL: AnaTool = {
   name: 'review_iacuc_protocol',
   description:
-    "Run the deterministic IACUC completeness gate on a protocol (read-only): the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. Returns cited findings + risk level. Use to tell the user what is missing before committee review.",
+    "Run the deterministic IACUC completeness gate on a protocol (read-only): text present for the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status (undetermined when no approval date is recorded). Returns cited findings, the checks run and a risk level; medium means a major finding is open. Use to tell the user what is missing before committee review.",
   input_schema: {
     type: 'object',
     properties: { protocol_id: { type: 'number' } },
@@ -238,7 +238,7 @@ export const REVIEW_IACUC_PROTOCOL: AnaTool = {
 export const CREATE_IRB_SUBMISSION: AnaTool = {
   name: 'create_irb_submission',
   description:
-    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
+    "Open an IRB/IEC human-subjects review submission (revised Common Rule 45 CFR 46 / 21 CFR 56 / ICH E6). risk_level drives the review pathway (greater-than-minimal → full board). Flag vulnerable populations and single-IRB (sIRB) for multi-site studies. Omit involves_vulnerable_populations unless the user has answered it: omitted is recorded as not recorded, never as no. Returns the submission id and recommended review type. Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
@@ -277,7 +277,7 @@ export const ADD_IRB_SITE: AnaTool = {
 export const REVIEW_IRB_SUBMISSION: AnaTool = {
   name: 'review_irb_submission',
   description:
-    "Run the deterministic IRB approval-criteria gate (45 CFR 46.111) on a submission (read-only): informed consent / waiver, vulnerable-population safeguards, sIRB for multi-site, risk-vs-review-type, plus continuing-review status. Returns cited findings + risk level.",
+    "Run four deterministic checks on an IRB submission (read-only): an informed-consent document or waiver, vulnerable-population safeguards (46.111(b)), sIRB for multi-site, and risk versus review type. The other 45 CFR 46.111 criteria are the board's and are not evaluated. Returns cited findings, the checks run and those not assessed (an unrecorded fact), a risk level (undetermined when a check could not run), and the approval lifecycle (approval, expiration and its source, continuing review), which says unknown where the record is silent.",
   input_schema: {
     type: 'object',
     properties: { irb_submission_id: { type: 'number' } },
@@ -288,7 +288,7 @@ export const REVIEW_IRB_SUBMISSION: AnaTool = {
 export const CREATE_IBC_REGISTRATION: AnaTool = {
   name: 'create_ibc_registration',
   description:
-    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Returns the registration id and whether convened IBC review is required. Governed + audited, org-scoped.",
+    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Omit nih_guidelines_section and involves_human_gene_transfer unless the user has stated them: omitted is recorded as not recorded. Returns the registration id and whether convened IBC review is required (true, false, or null when that cannot be determined yet). Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
@@ -325,7 +325,7 @@ export const ADD_BIOLOGICAL_AGENT: AnaTool = {
 export const REVIEW_IBC_REGISTRATION: AnaTool = {
   name: 'review_ibc_registration',
   description:
-    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings + risk level.",
+    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings, the checks run and those not assessed (no agents, an unrecorded section or gene-transfer answer), and a risk level; highestRequiredBsl and the expiry are null when they cannot be derived.",
   input_schema: {
     type: 'object',
     properties: { registration_id: { type: 'number' } },

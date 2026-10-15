@@ -207,7 +207,17 @@ export async function getProtocolCompletenessInput(client: Queryable, orgId: num
   plannedAnimalTotal: number;
   approvalDate: string | null;
 }> {
-  const p = await getProtocol(client, orgId, id);
+  // approval_date as text: node-postgres returns a DATE as a Date, on which
+  // addYears returned its input, so the expiry was the approval date itself
+  // and `expired` was always false (2026-10-15).
+  const { rows: found } = await client.query(
+    `SELECT pain_category, three_rs_replacement, three_rs_reduction, three_rs_refinement, pain_justification,
+            approval_date::text AS approval_date
+       FROM iacuc_protocols WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [id, orgId],
+  );
+  if (found.length === 0) throw new IacucError('NOT_FOUND', 'Protocol not found for this organization.');
+  const p = found[0];
   const { rows } = await client.query(
     `SELECT COUNT(*)::int AS species_count, COALESCE(SUM(planned_count),0)::int AS planned_total
        FROM iacuc_animal_cohorts WHERE protocol_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,

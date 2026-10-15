@@ -109,6 +109,8 @@ const submissionSchema = z.object({
   riskLevel: z.enum(['minimal', 'greater_than_minimal']),
   studyId: z.number().int().positive().optional(),
   submissionId: z.number().int().positive().optional(),
+  // Tri-state like the four facts below: omitted is stored NULL (not recorded),
+  // not false (2026-10-15).
   involvesVulnerablePopulations: z.boolean().optional(),
   vulnerablePopulationProtections: z.string().max(4000).optional(),
   isSingleIrb: z.boolean().optional(),
@@ -227,6 +229,9 @@ const reviewSchema = z.object({
   outcome: z.enum(['approved', 'modifications_required', 'deferred', 'disapproved']),
   conditions: z.string().max(4000).optional(),
   determinationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'determinationDate must be YYYY-MM-DD'),
+  // The expiration the BOARD set on an approval. Absent, none is stored and the
+  // lifecycle computes one, labelled 'computed' (2026-10-15).
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expirationDate must be YYYY-MM-DD').optional(),
   reason,
 });
 
@@ -296,7 +301,9 @@ router.post('/submissions/:id/amendments', async (req, res) => {
 const eventSchema = z.object({
   eventType: z.enum(['unanticipated_problem', 'serious_adverse_event', 'protocol_deviation', 'noncompliance', 'other']),
   description: z.string().min(1).max(4000),
-  reportedDate: z.string().optional(),
+  // Required: it was optional and unchecked, and the service stamped a missing
+  // one as today (2026-10-15).
+  reportedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'reportedDate must be YYYY-MM-DD: the date the event was reported to the board'),
   reason,
 });
 router.post('/submissions/:id/reportable-events', async (req, res) => {

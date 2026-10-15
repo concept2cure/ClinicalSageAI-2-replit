@@ -105,7 +105,9 @@ router.post('/registrations', async (req, res) => {
   await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id } = await createRegistrationTx(client, orgId, userId, parsed.data);
     recordIbcRegistrationCreated(parsed.data.biosafetyLevel);
-    const convened = requiresConvenedReview(parsed.data.nihGuidelinesSection ?? 'not_applicable', parsed.data.involvesHumanGeneTransfer === true);
+    // null when the section or the gene-transfer answer is not recorded; both
+    // used to default to "no", reporting convened review as not required (2026-10-15).
+    const convened = requiresConvenedReview(parsed.data.nihGuidelinesSection ?? null, parsed.data.involvesHumanGeneTransfer ?? null);
     return { target: `ibc-registration:${id}`, payload: { bsl: parsed.data.biosafetyLevel }, body: { id, requiresConvenedReview: convened } };
   });
 });

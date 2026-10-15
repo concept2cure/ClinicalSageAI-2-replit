@@ -4,7 +4,7 @@
  * Tenant-scoped transaction functions over irb_submissions / irb_sites /
  * irb_consent_documents / irb_reviews / irb_amendments / irb_reportable_events.
  * Mutations run inside the caller's transaction with the governed-action ledger.
- * An `approved` determination sets the continuing-review expiration (full board)
+ * An `approved` determination records the expiration the board set, if any,
  * and threads the provenance link irb_submission → submission_module5
  * ('supports') — ethics approval woven into the clinical conduct record.
  *
@@ -16,11 +16,17 @@
 
 import { pool } from '../../db';
 import { linkProvenanceTx } from '../provenance/provenance-service';
-import { continuingReviewStatus } from './irb-logic';
 import type { IrbReviewType, IrbRiskLevel, ReportableEventType } from '../../../shared/schema/irb';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
+}
+
+/** `value` as a YYYY-MM-DD calendar date, or null. 2026-02-30 is not one. */
+function calendarDate(value: string | null | undefined): string | null {
+  const v = typeof value === 'string' ? value.trim() : '';
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00Z`) : null;
+  return d && !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v ? v : null;
 }
 
 /**
@@ -34,9 +40,8 @@ function requireDeterminationDate(
   value: string | null | undefined,
   Err: new (code: 'BAD_INPUT', message: string) => Error,
 ): string {
-  const v = typeof value === 'string' ? value.trim() : '';
-  const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00Z`) : null;
-  if (!d || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) {
+  const v = calendarDate(value);
+  if (!v) {
     throw new Err('BAD_INPUT', 'determinationDate is required, as the date the board made the determination (YYYY-MM-DD).');
   }
   return v;
@@ -57,7 +62,8 @@ export interface IrbSubmissionInput {
   riskLevel: IrbRiskLevel;
   studyId?: number | null;
   submissionId?: number | null;
-  involvesVulnerablePopulations?: boolean;
+  /** 45 CFR 46.111(b). Absent/null means NOT RECORDED, not "none involved". */
+  involvesVulnerablePopulations?: boolean | null;
   vulnerablePopulationProtections?: string | null;
   isSingleIrb?: boolean;
   consentWaiverRequested?: boolean;
@@ -97,8 +103,10 @@ export async function createSubmissionTx(client: Queryable, orgId: number, userI
         involves_vulnerable_populations, vulnerable_population_protections, is_single_irb, consent_waiver_requested,
         involves_children, is_ind_study, uses_phi, uses_recruitment_material, status, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'draft',$15) RETURNING id`,
+    // involvesVulnerablePopulations was `=== true`: unanswered became "none
+    // involved" and the 46.111(b) check never fired (2026-10-15).
     [orgId, input.studyId ?? null, input.submissionId ?? null, input.protocolNumber, input.title, input.riskLevel,
-      input.involvesVulnerablePopulations === true, input.vulnerablePopulationProtections ?? null,
+      recordedFact(input.involvesVulnerablePopulations), input.vulnerablePopulationProtections ?? null,
       input.isSingleIrb === true, input.consentWaiverRequested === true,
       recordedFact(input.involvesChildren), recordedFact(input.isIndStudy),
       recordedFact(input.usesPhi), recordedFact(input.usesRecruitmentMaterial), userId],
@@ -184,18 +192,31 @@ export async function setSubmissionStatusTx(client: Queryable, orgId: number, id
 
 /**
  * Record a determination. `approved` flips the submission to approved, stamps the
- * approval date + continuing-review expiration (full board only), and threads the
- * provenance link to Module 5 when the submission feeds a regulatory filing.
+ * approval date and the expiration the board set (if it set one), and threads
+ * the provenance link to Module 5 when the submission feeds a regulatory filing.
+ *
+ * `expirationDate` is the BOARD's. It used to be computed here as determination
+ * + 1 year and stored where lifecycle.ts reads the board's date, so a six-month
+ * approval read as current after it lapsed (2026-10-15). Without one the column
+ * stays NULL and the lifecycle derives the date itself, labelled 'computed'.
  */
 export async function recordReviewTx(
   client: Queryable,
   orgId: number,
   userId: number,
   submissionId: number,
-  input: { reviewType: IrbReviewType; outcome: 'approved' | 'modifications_required' | 'deferred' | 'disapproved'; conditions?: string | null; determinationDate?: string | null },
+  input: { reviewType: IrbReviewType; outcome: 'approved' | 'modifications_required' | 'deferred' | 'disapproved'; conditions?: string | null; determinationDate?: string | null; expirationDate?: string | null },
 ): Promise<{ reviewId: number; expirationDate: string | null; provenanceLinkId: number | null }> {
   const submission = await getSubmission(client, orgId, submissionId);
   const determinationDate = requireDeterminationDate(input.determinationDate, IrbError);
+  let expirationDate: string | null = null;
+  if (input.expirationDate != null && input.expirationDate.trim() !== '') {
+    if (input.outcome !== 'approved') throw new IrbError('BAD_INPUT', 'expirationDate is recorded only with an approval.');
+    expirationDate = calendarDate(input.expirationDate);
+    if (!expirationDate || expirationDate <= determinationDate) {
+      throw new IrbError('BAD_INPUT', 'expirationDate must be the calendar date (YYYY-MM-DD) the board set for this approval to expire, after the determination date.');
+    }
+  }
   const { rows } = await client.query(
     `INSERT INTO irb_reviews (organization_id, irb_submission_id, review_type, outcome, conditions, determination_date, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
@@ -203,11 +224,8 @@ export async function recordReviewTx(
   );
   const reviewId = Number(rows[0].id);
 
-  let expirationDate: string | null = null;
   let provenanceLinkId: number | null = null;
   if (input.outcome === 'approved') {
-    const cr = continuingReviewStatus(input.reviewType, determinationDate, determinationDate);
-    expirationDate = cr.expirationDate;
     await client.query(
       `UPDATE irb_submissions SET status = 'approved', review_type = $3, approval_date = $4, expiration_date = $5, updated_at = now()
         WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
@@ -267,11 +285,18 @@ export async function addAmendmentTx(client: Queryable, orgId: number, userId: n
 }
 
 export async function addReportableEventTx(client: Queryable, orgId: number, userId: number, submissionId: number, input: { eventType: ReportableEventType; description: string; reportedDate?: string | null }): Promise<{ id: number }> {
+  // The date the event was reported to the board. A missing one was stamped as
+  // the day the row was entered, so a late report read as prompt and
+  // IRB-LC-022 could never fire (2026-10-15).
+  const reportedDate = calendarDate(input.reportedDate);
+  if (!reportedDate) {
+    throw new IrbError('BAD_INPUT', 'reportedDate is required, as the date the event was reported to the board (YYYY-MM-DD).');
+  }
   await getSubmission(client, orgId, submissionId);
   const { rows } = await client.query(
     `INSERT INTO irb_reportable_events (organization_id, irb_submission_id, event_type, description, reported_date, status, created_by)
      VALUES ($1,$2,$3,$4,$5,'reported',$6) RETURNING id`,
-    [orgId, submissionId, input.eventType, input.description, input.reportedDate ?? new Date().toISOString().slice(0, 10), userId],
+    [orgId, submissionId, input.eventType, input.description, reportedDate, userId],
   );
   return { id: Number(rows[0].id) };
 }
@@ -291,7 +316,8 @@ export async function listSubmissions(orgId: number, submissionId?: number): Pro
 export async function getCompletenessInput(client: Queryable, orgId: number, id: number): Promise<{
   riskLevel: IrbRiskLevel;
   reviewType: IrbReviewType | null;
-  involvesVulnerablePopulations: boolean;
+  /** NULL = not recorded; the gate reports its check as not assessed. */
+  involvesVulnerablePopulations: boolean | null;
   vulnerablePopulationProtections: string | null;
   isSingleIrb: boolean;
   consentWaiverRequested: boolean;
@@ -311,7 +337,7 @@ export async function getCompletenessInput(client: Queryable, orgId: number, id:
   return {
     riskLevel: s.risk_level,
     reviewType: s.review_type,
-    involvesVulnerablePopulations: s.involves_vulnerable_populations,
+    involvesVulnerablePopulations: s.involves_vulnerable_populations ?? null,
     vulnerablePopulationProtections: s.vulnerable_population_protections,
     isSingleIrb: s.is_single_irb,
     consentWaiverRequested: s.consent_waiver_requested,

@@ -10760,6 +10760,49 @@ registerToolHandler('add_disclosure_interest', async (input, ctx) => {
   }
 });
 
+/**
+ * A deterministic gate's non-critical verdict, in words that match it. The
+ * review handlers below said "passes the deterministic … gate (medium risk)" for
+ * results made medium by an open MAJOR finding, and "passes" for low ones that
+ * only mean the checks that ran found nothing (2026-10-15). Callers keep their
+ * own wording for 'high'.
+ */
+function gateVerdictMessage(gate: { riskLevel: string; findings: Array<{ severity: string }>; checksRun?: string[]; notAssessed?: string[] }): string {
+  const n = gate.findings.length;
+  const counts = ['critical', 'major', 'minor']
+    .map((s) => [s, gate.findings.filter((f) => f.severity === s).length] as const)
+    .filter(([, c]) => c > 0)
+    .map(([s, c]) => `${c} ${s}`)
+    .join(', ');
+  const found = n === 0 ? 'No findings' : `${n} finding${n === 1 ? '' : 's'} (${counts})`;
+  const ran = gate.checksRun?.length ? ` Checks run: ${gate.checksRun.join('; ')}.` : '';
+  const unassessed = gate.notAssessed?.length ? ` Not assessed: ${gate.notAssessed.join('; ')}.` : '';
+  if (gate.riskLevel === 'medium') return `${found}, risk medium — does not pass while a major finding is open.${ran}`;
+  if (gate.riskLevel === 'undetermined') return `${found} among the checks that ran; risk undetermined — does not pass while a check cannot run.${unassessed}${ran}`;
+  return `${found} among the checks run${n > 0 ? ', risk low' : ''}.${ran}`;
+}
+
+/** A yes/no answer as stated in tool input, or null when not stated — never coerced to false. */
+function statedBoolean(v: unknown): boolean | null {
+  return typeof v === 'boolean' ? v : null;
+}
+
+const NIH_GUIDELINES_SECTIONS = ['III-A', 'III-B', 'III-C', 'III-D', 'III-E', 'III-F', 'exempt', 'not_applicable'] as const;
+
+/** The NIH Guidelines section as stated, null when not stated, or a refusal outside the vocabulary. */
+function statedNihSection(v: unknown): { section: (typeof NIH_GUIDELINES_SECTIONS)[number] | null } | { error: string } {
+  if (v == null) return { section: null };
+  const section = NIH_GUIDELINES_SECTIONS.find((s) => s === v);
+  return section
+    ? { section }
+    : { error: `nih_guidelines_section must be one of ${NIH_GUIDELINES_SECTIONS.join(', ')}, or omitted while not yet determined.` };
+}
+
+function convenedReviewText(convened: boolean | null): string {
+  if (convened === null) return '; whether it needs convened IBC review is not determined: the NIH Guidelines section or the human-gene-transfer answer is not recorded';
+  return convened ? '; requires convened IBC review' : '';
+}
+
 registerToolHandler('review_financial_disclosure', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
   const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
@@ -10776,7 +10819,7 @@ registerToolHandler('review_financial_disclosure', async (input, ctx) => {
       certifiable: gate.riskLevel !== 'high',
       message: gate.riskLevel === 'high'
         ? 'Critical 21 CFR 54 findings — cannot certify until resolved.'
-        : `Disclosure passes the deterministic gate (${gate.riskLevel} risk).`,
+        : `${gateVerdictMessage({ ...gate, checksRun: ['form type against the disclosable-interests flag', 'interest rows present or absent to match', 'disclosure period start and end (21 CFR 54.4)', 'each interest: type, description and bias-minimization steps'] })}${gate.riskLevel === 'medium' ? ' Certification is not blocked: only critical findings block it.' : ''}`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_financial_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -10975,17 +11018,21 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
   if (!Number.isInteger(protocolId)) return JSON.stringify({ error: 'protocol_id is required.' });
   const { getPool } = await import('../../db.js');
   const { getProtocolCompletenessInput } = await import('../iacuc/iacuc-service.js');
-  const { evaluateProtocolCompleteness, reviewStatus } = await import('../iacuc/iacuc-logic.js');
+  const { evaluateProtocolCompleteness, approvalReviewStatus } = await import('../iacuc/iacuc-logic.js');
   const client = await getPool().connect();
   try {
     const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
     const gate = evaluateProtocolCompleteness(inp);
-    const rs = reviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    // Undetermined without an approval date; reviewStatus said "not expired" (2026-10-15).
+    const rs = approvalReviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    const review = rs.undetermined
+      ? ` Review status: ${rs.reason}`
+      : ` De novo review due by ${rs.expirationDate}${rs.expired ? ' (expired)' : ''}${rs.annualReviewDue ? '; annual review due' : ''}.`;
     return JSON.stringify({
-      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, reviewStatus: rs,
-      message: gate.riskLevel === 'high'
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, reviewStatus: rs,
+      message: (gate.riskLevel === 'high'
         ? 'Critical IACUC findings (e.g. category-E justification) — resolve before committee review.'
-        : `Protocol passes the deterministic gate (${gate.riskLevel} risk).`,
+        : gateVerdictMessage(gate)) + review,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_iacuc_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -11021,7 +11068,8 @@ registerToolHandler('create_irb_submission', async (input, ctx) => {
       protocolNumber, title, riskLevel: riskLevel as any,
       studyId: typeof input.study_id === 'number' ? input.study_id : null,
       submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
-      involvesVulnerablePopulations: input.involves_vulnerable_populations === true,
+      // Unstated stays NULL (not recorded); `=== true` stored it as "none involved" (2026-10-15).
+      involvesVulnerablePopulations: statedBoolean(input.involves_vulnerable_populations),
       vulnerablePopulationProtections: typeof input.vulnerable_population_protections === 'string' ? input.vulnerable_population_protections : null,
       isSingleIrb: input.is_single_irb === true,
       consentWaiverRequested: input.consent_waiver_requested === true,
@@ -11080,18 +11128,33 @@ registerToolHandler('review_irb_submission', async (input, ctx) => {
   const submissionId = typeof input.irb_submission_id === 'number' ? input.irb_submission_id : NaN;
   if (!Number.isInteger(submissionId)) return JSON.stringify({ error: 'irb_submission_id is required.' });
   const { getPool } = await import('../../db.js');
-  const { getCompletenessInput } = await import('../irb/irb-service.js');
-  const { evaluateIrbCompleteness, continuingReviewStatus } = await import('../irb/irb-logic.js');
+  const { getCompletenessInput, getLifecycleStatus } = await import('../irb/irb-service.js');
+  const { evaluateIrbCompleteness } = await import('../irb/irb-logic.js');
   const client = await getPool().connect();
   try {
     const inp = await getCompletenessInput(client, ctx.organizationId, submissionId);
     const gate = evaluateIrbCompleteness(inp);
-    const cr = continuingReviewStatus(inp.reviewType, inp.approvalDate, new Date().toISOString().slice(0, 10));
+    /* The three-valued lifecycle, as GET /api/irb/submissions/:id/completeness
+       serves it. continuingReviewStatus answered "not required, not expired"
+       for an unrecorded review type or approval date, and the message called
+       any non-critical result a pass of "the 45 CFR 46.111 gate" though four
+       checks ran (2026-10-15). */
+    const { status: lifecycle } = await getLifecycleStatus(ctx.organizationId, submissionId, new Date().toISOString().slice(0, 10));
+    const approval = {
+      not_approved: 'not approved', current: 'approval current', expiring_soon: 'approval expiring soon',
+      expired: 'approval expired', unknown: 'approval status undetermined',
+    }[lifecycle.approval];
+    const lifecycleText = ` Lifecycle: ${approval}`
+      + (lifecycle.expirationDate ? `, expiration ${lifecycle.expirationDate} (${lifecycle.expirationSource})` : '')
+      + `; continuing review ${lifecycle.continuingReview.replace(/_/g, ' ')}`
+      + (lifecycle.findings.length ? `; lifecycle findings ${lifecycle.findings.map((f) => f.code).join(', ')}` : '') + '.';
     return JSON.stringify({
-      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, continuingReview: cr,
-      message: gate.riskLevel === 'high'
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, notAssessed: gate.notAssessed, lifecycle,
+      message: (gate.riskLevel === 'high'
         ? 'Critical IRB findings (e.g. consent or vulnerable-population safeguards) — resolve before approval.'
-        : `Submission passes the deterministic 45 CFR 46.111 gate (${gate.riskLevel} risk).`,
+        : gateVerdictMessage(gate))
+        + ' The other 45 CFR 46.111 criteria (risks minimized and reasonable, equitable selection, monitoring, privacy) are the board’s determinations and were not evaluated.'
+        + lifecycleText,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_irb_submission failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -11114,6 +11177,13 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   if (!registrationNumber || !title || !['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'].includes(biosafetyLevel)) {
     return JSON.stringify({ error: 'registration_number, title, and a valid biosafety_level are required.' });
   }
+  // An unstated section or gene-transfer answer stays NULL (not recorded). They
+  // were written as 'not_applicable' / false, so convened review read as not
+  // required (2026-10-15).
+  const stated = statedNihSection(input.nih_guidelines_section);
+  if ('error' in stated) return JSON.stringify({ error: stated.error });
+  const section = stated.section;
+  const geneTransfer = statedBoolean(input.involves_human_gene_transfer);
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createRegistrationTx } = await import('../ibc/ibc-service.js');
@@ -11123,13 +11193,12 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    const section = typeof input.nih_guidelines_section === 'string' ? input.nih_guidelines_section : 'not_applicable';
     const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
       registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
-      nihGuidelinesSection: section as any,
+      nihGuidelinesSection: section,
       submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
       involvesRecombinantDna: input.involves_recombinant_dna === true,
-      involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
+      involvesHumanGeneTransfer: geneTransfer,
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
@@ -11137,8 +11206,8 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
       payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
     });
     await client.query('COMMIT');
-    const convened = requiresConvenedReview(section as any, input.involves_human_gene_transfer === true);
-    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convened ? '; requires convened IBC review' : ''}.` });
+    const convened = requiresConvenedReview(section, geneTransfer);
+    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convenedReviewText(convened)}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `create_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -11193,12 +11262,16 @@ registerToolHandler('review_ibc_registration', async (input, ctx) => {
   try {
     const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
     const gate = evaluateContainment(inp);
+    // highestRequiredBsl is null with no agents, and the expiry undetermined
+    // with no approval date; they were 'BSL-1' and "not expired" (2026-10-15).
     const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10));
+    const expiry = exp.undetermined ? ` Expiry: ${exp.reason}` : ` Expiry: ${exp.expirationDate}${exp.expired ? ' (expired)' : ''}.`;
     return JSON.stringify({
-      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
-      message: gate.riskLevel === 'high'
+      ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, notAssessed: gate.notAssessed,
+      highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
+      message: (gate.riskLevel === 'high'
         ? 'Critical biosafety finding (containment below the agents’ requirement) — resolve before approval.'
-        : `Registration passes the deterministic containment gate (${gate.riskLevel} risk).`,
+        : gateVerdictMessage(gate)) + expiry,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });

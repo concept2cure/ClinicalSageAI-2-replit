@@ -26,7 +26,7 @@ import {
   listProtocols,
   getProtocolCompletenessInput,
 } from '../services/iacuc/iacuc-service';
-import { evaluateProtocolCompleteness, reviewStatus, recommendReviewType } from '../services/iacuc/iacuc-logic';
+import { evaluateProtocolCompleteness, approvalReviewStatus, recommendReviewType } from '../services/iacuc/iacuc-logic';
 import { recordIacucProtocolCreated, recordIacucApproval, recordIacucReview } from '../services/iacuc-metrics';
 
 const router = Router();
@@ -233,7 +233,8 @@ router.get('/protocols/:id/completeness', async (req, res) => {
   try {
     const input = await getProtocolCompletenessInput(client, orgId, id);
     const completeness = evaluateProtocolCompleteness(input);
-    const status = reviewStatus(input.approvalDate, new Date().toISOString().slice(0, 10));
+    // Undetermined without an approval date; reviewStatus said "not expired" (2026-10-15).
+    const status = approvalReviewStatus(input.approvalDate, new Date().toISOString().slice(0, 10));
     res.json({ completeness, reviewStatus: status, recommendedReview: recommendReviewType(input.painCategory) });
   } catch (err) {
     fail(res, err);

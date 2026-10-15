@@ -3273,6 +3273,15 @@ export const C2C_MIGRATION_FILES = [
   // installed earlier. Conditional on the function existing; creates nothing.
   'migrations/20261015g_innovation_readiness_score_refuses.sql',
 
+  // ibc_registrations.nih_guidelines_section and involves_human_gene_transfer
+  // become nullable (2026-10-15): an unanswered NIH Guidelines category or
+  // gene-transfer question was stored as "not applicable" / "no", so the
+  // convened-IBC review read as not required. The creator,
+  // migrations/20260610_ibc_biosafety.sql, is amended in place but runs on
+  // install-fresh only; this relaxes the columns where an earlier install
+  // created them. Conditional on the table and the live shape; creates nothing.
+  'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

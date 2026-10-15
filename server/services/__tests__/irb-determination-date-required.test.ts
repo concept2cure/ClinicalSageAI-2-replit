@@ -46,9 +46,13 @@ describe('a determination needs its date', () => {
   it('derives the approval from the date the board gave', async () => {
     const c = client();
     const r = await irbReview(c as never, 3, 7, 5, { reviewType: 'full_board', outcome: 'approved', determinationDate: '2026-03-02' });
-    expect(r.expirationDate).toBe('2027-03-02');
+    // 2026-10-15: this pinned a COMPUTED '2027-03-02' as the expiration on file;
+    // with no board-set expiration none is stored (board-expiration-recorded-not-computed.test.ts).
+    expect(r.expirationDate).toBeNull();
     const insert = c.query.mock.calls.find(([t]) => /INSERT INTO irb_reviews/.test(String(t)));
     expect(insert?.[1]).toContain('2026-03-02');
+    const approve = c.query.mock.calls.find(([t]) => /UPDATE irb_submissions SET status = 'approved'/.test(String(t)));
+    expect(approve?.[1]).toEqual([5, 3, 'full_board', '2026-03-02', null]);
   });
 });
 

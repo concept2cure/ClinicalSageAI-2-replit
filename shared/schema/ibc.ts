@@ -40,12 +40,14 @@ export const ibcRegistrations = pgTable(
     submissionId: integer('submission_id').references(() => submissions.id),
     registrationNumber: text('registration_number').notNull(),
     title: text('title').notNull(),
-    nihGuidelinesSection: text('nih_guidelines_section').$type<NihGuidelinesSection>().notNull().default('not_applicable'),
+    /** NULL means not recorded, NOT "not applicable" (2026-10-15: was NOT NULL DEFAULT 'not_applicable'). */
+    nihGuidelinesSection: text('nih_guidelines_section').$type<NihGuidelinesSection>(),
     /** Declared containment for the work. */
     biosafetyLevel: text('biosafety_level').$type<BiosafetyLevel>().notNull().default('BSL-1'),
     involvesRecombinantDna: boolean('involves_recombinant_dna').notNull().default(false),
     /** Human gene transfer (CGT) — NIH Guidelines III-C / additional oversight. */
-    involvesHumanGeneTransfer: boolean('involves_human_gene_transfer').notNull().default(false),
+    /** NULL means not recorded, NOT "no" (2026-10-15: was NOT NULL DEFAULT false). */
+    involvesHumanGeneTransfer: boolean('involves_human_gene_transfer'),
     status: text('status').$type<IbcStatus>().notNull().default('draft'),
     approvalDate: date('approval_date'),
     expirationDate: date('expiration_date'),
