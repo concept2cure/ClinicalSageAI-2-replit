@@ -2927,6 +2927,16 @@ export const C2C_MIGRATION_FILES = [
   // was missing. Replayed twice on PGlite: 0 of 5 tables before, 5 of 5 after.
   // (report_subscriptions, the sixth 20260615 file, is created by the report-os
   // push.)
+  // 2026-10-15 (P-33): the two IND registers the one dispatch verdict now reads
+  // for every US IND sequence — the Letter of Authorization register (a missing
+  // LOA blocks, and an unreadable register blocks) and the safety-report
+  // register (an overdue report warns) — had the same gap: created only by
+  // their 20260614 files, which deploy-migrate never applied and drizzle-kit
+  // does not push. On a database without them every US IND sequence would read
+  // "register unreadable" and be blocked. CREATE TABLE/INDEX IF NOT EXISTS only,
+  // public, organization_id INTEGER NOT NULL, no later ALTER anywhere.
+  'migrations/20260614_ind_safety_reports.sql',
+  'migrations/20260614_ind_cross_references.sql',
   'migrations/20260615_ind_amendments.sql',
   'migrations/20260615_ind_annual_reports.sql',
   'migrations/20260615_ind_icsr_transmissions.sql',
@@ -3218,6 +3228,22 @@ export const C2C_MIGRATION_FILES = [
   // auto-trigger claims. Matches only those exact id formats; creates nothing,
   // so it sits anywhere after its four tables' creators and above the pair.
   'migrations/20261015b_contradiction_consequence_invented_ids.sql',
+  // P-34 (2026-10-15): a failed Shadow Review run records why it failed (a closed
+  // failure code), and a 'waived' row names the signature and the failed run a
+  // signed waiver relies on. Three columns on shadow_review_runs, after its
+  // creator 20260604_shadow_review.sql; the FK is pg_constraint-guarded and the
+  // indexes IF NOT EXISTS, so a replay is a no-op. public + organization_id
+  // INTEGER already, so it creates nothing the sweeps below must reach. Drops
+  // nothing. Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p34-shadow-review-waiver/.
+  'migrations/20261015_shadow_review_waiver.sql',
+  // P-35 (2026-10-15): a critical Shadow Review finding is closed by a named
+  // person's signature. Four columns on shadow_review_findings (the signature's
+  // sign action, the signer, when, the signature's reason), after its creator
+  // 20260604_shadow_review.sql; the FK is pg_constraint-guarded and the indexes
+  // IF NOT EXISTS, so a replay is a no-op. public + organization_id INTEGER
+  // already, so it creates nothing the sweeps below must reach. Drops nothing.
+  // Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p35-shadow-finding-disposition/.
+  'migrations/20261015b_shadow_finding_disposition.sql',
   // Removes the sentinel "findings" the rules engine's trigger_ai_analysis
   // action wrote for analyses nothing performed (2026-10-15). Deletes only
   // rows matching everything that writer stamped; creates nothing.

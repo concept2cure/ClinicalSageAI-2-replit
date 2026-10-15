@@ -13,6 +13,17 @@ import { MCP_SCOPES } from '../config';
 
 const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
+/**
+ * The gates that clear without having assessed what they guard, each with the
+ * engine's own note: the external validator advisory, a US IND's clinical hold
+ * (P-33), a Shadow Review waived by signature (P-34). A model narrating
+ * "dispatch gate CLEAR" over one of these would say a check passed that never
+ * ran, so the summary carries the notes verbatim. Pure.
+ */
+export function notAssessedOf(gates: ReadonlyArray<{ key: string; cleared: boolean; notAssessed?: string }>): Array<{ gate: string; note: string }> {
+  return gates.filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim()).map((g) => ({ gate: g.key, note: g.notAssessed as string }));
+}
+
 export const assessSequenceReadiness = defineTool({
   name: 'c2c_assess_sequence_readiness',
   title: 'Assess sequence readiness',
@@ -37,11 +48,13 @@ export const assessSequenceReadiness = defineTool({
     }
     const gate = a.gate;
     const freeze = a.freezeGate;
+    const notAssessed = notAssessedOf(a.gates);
     const summary =
       `Sequence ${a.sequenceId} (${a.region}, ${a.sequenceStatus}): ${a.leafCount} leaves, ` +
       `${a.validationErrors} structural error(s), ${a.unacknowledgedShadowCriticals} unacknowledged shadow critical(s); ` +
       `freeze gate ${freeze.cleared ? 'CLEAR' : 'BLOCKED'}, dispatch gate ${gate.cleared ? 'CLEAR' : 'BLOCKED'}` +
-      (gate.blockers.length ? ` — ${gate.blockers.join(' | ')}` : '') + '.';
+      (gate.blockers.length ? ` — ${gate.blockers.join(' | ')}` : '') + '.' +
+      (notAssessed.length ? ` Cleared but not assessed: ${notAssessed.map((n) => `${n.gate}: ${n.note}`).join(' | ')}` : '');
     return ok(summary, {
       sequenceId: a.sequenceId,
       region: a.region,
@@ -51,6 +64,8 @@ export const assessSequenceReadiness = defineTool({
       unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
       shadowReviewRunCount: a.shadowReviewRunCount,
       shadowReviewMissing: a.shadowReviewMissing,
+      shadowReviewWaiver: a.shadowReviewWaiver,
+      notAssessed,
       externalValidation: a.externalValidation,
       releaseSignature: a.releaseSignature,
       freezeGate: a.freezeGate,

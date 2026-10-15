@@ -1,0 +1,8 @@
+# Guard (h) shown red by mutation. Added temporarily, then removed (file restored byte-for-byte):
+#   if (leaves.some((l) => !l.checksum)) appendReadinessFindings(readiness, [{ severity: 'error', code: 'MISSING_CHECKSUMS', sectionCode: null, message: 'Leaves have no checksum.' }]);
+# npx vitest run server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts -t "no checksum"
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > what P-33 did not carry stays uncarried > (h) a leaf with no checksum does not block — the packager computes it from the bytes 46ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 1 open error-severity validation finding(s) must be resolved before dispatch.: expected false to be true // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)

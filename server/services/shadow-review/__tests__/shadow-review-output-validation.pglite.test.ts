@@ -9,6 +9,8 @@
  * exactly, so a model's 'Critical' was persisted and never blocked anything.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any, reply: '' }));
@@ -29,6 +31,19 @@ beforeAll(async () => {
   await h.pglite.exec(`
     CREATE TABLE shadow_review_runs (id serial PRIMARY KEY, sequence_id int NOT NULL, region text NOT NULL, lens text NOT NULL DEFAULT 'fda_filing', model text, prompt_version text, status text NOT NULL DEFAULT 'running', rtf_risk_score real, crl_risk_score real, summary text, organization_id int NOT NULL, created_by int NOT NULL, created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
     CREATE TABLE shadow_review_findings (id serial PRIMARY KEY, run_id int NOT NULL, dimension text NOT NULL, severity text NOT NULL, title text NOT NULL, detail text, basis text, recommendation text, leaf_ref text, status text NOT NULL DEFAULT 'open', organization_id int NOT NULL, created_by int NOT NULL, created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
+  `);
+  // The P-34 columns (failure_code, the waiver's signature and failed run) the
+  // service now writes, applied over the 20260604 shape above as a deploy does.
+  await h.pglite.exec(
+    fs.readFileSync(path.resolve(__dirname, '../../../../migrations/20261015_shadow_review_waiver.sql'), 'utf8'),
+  );
+  // The P-35 disposition columns the finding insert now names (who closed a
+  // critical, when, why, under which signature). Their FK names users(id).
+  await h.pglite.exec(`CREATE TABLE IF NOT EXISTS users (id serial PRIMARY KEY);`);
+  await h.pglite.exec(
+    fs.readFileSync(path.resolve(__dirname, '../../../../migrations/20261015b_shadow_finding_disposition.sql'), 'utf8'),
+  );
+  await h.pglite.exec(`
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1,'A','ind','biotech','fda',${ORG},${USER}), (2,'B','ind','biotech','fda',${ORG},${USER}),
       (3,'C','ind','biotech','fda',${ORG},${USER}), (4,'D','ind','biotech','fda',${ORG},${USER});

@@ -31,7 +31,11 @@ import { requireScope as requireApiScope } from '../middleware/enterprise-securi
 import { recordUsage, checkQuota } from '../services/usage-metering.js';
 import { checkWeeklyLimit, recordWeeklyAlerts, recordOverageUnits } from '../services/weekly-usage-limits.js';
 import { csrSearchService } from '../services/csr-search-service.js';
-import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
+import {
+  recommendPathway,
+  type Market,
+  type ProductType,
+} from '../services/global-ri/regulatory-pathway-advisor.js';
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
 import { precedentEngine } from '../services/precedent-engine.js';
 import { createScopedLogger } from '../utils/logger.js';
@@ -481,6 +485,21 @@ router.get('/csr/search', requireScope('csr:read'), requireQuota('api_csr_search
 // GET /api/v1/regulatory/pathways — Regulatory Pathway Recommendations
 // ============================================================================
 
+/** The agencies this route accepts, and the market each regulates. */
+const PATHWAY_AGENCY_MARKET: Record<string, Market> = {
+  FDA: 'US', EMA: 'EU', PMDA: 'JP', HealthCanada: 'CA', MHRA: 'UK', TGA: 'AU',
+};
+
+/** This route's product types, as the pathway advisor names them. */
+const PATHWAY_PRODUCT_TYPE: Record<string, ProductType> = {
+  drug: 'small_molecule_nce',
+  biologic: 'biologic',
+  biosimilar: 'biosimilar',
+  generic: 'generic',
+  vaccine: 'vaccine',
+  cell_gene_therapy: 'cell_gene_therapy',
+};
+
 router.get('/regulatory/pathways', requireScope('regulatory:read'), requireQuota('api_regulatory_pathways'), async (req: ApiRequest, res: Response) => {
   try {
     const { productType, indication, targetAgencies } = req.query;
@@ -495,22 +514,45 @@ router.get('/regulatory/pathways', requireScope('regulatory:read'), requireQuota
       });
     }
 
-    const agencies = targetAgencies
-      ? (targetAgencies as string).split(',').map((a) => a.trim())
-      : ['FDA'];
+    /* The canonical pathway advisor, the one AnA and the global-RI routes use
+       (2026-10-15). This route ran a second engine,
+       services/regulatory-pathway-intelligence.ts, that gave EMA, PMDA and
+       every other agency FDA's NDA (or 510(k)) document list, gave generics,
+       biosimilars and combination products the 510(k) list, quoted constant
+       review timelines from no source ("~10 months (standard)"), counted
+       unmet need or orphan status as expedited-review eligibility, dropped an
+       unknown agency silently (200, recommendations []), and defaulted the
+       product to a drug and the agencies to FDA. */
+    const requested = sanitizeQueryParam(targetAgencies);
+    const type = sanitizeQueryParam(productType);
+    if (!requested || !type) {
+      return res.status(400).json({ error: 'productType and targetAgencies are required' });
+    }
+    const agencies = requested.split(',').map((a) => a.trim()).filter(Boolean);
+    const owns = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
+    const unknownAgencies = agencies.filter((a) => !owns(PATHWAY_AGENCY_MARKET, a));
+    const advisorType = owns(PATHWAY_PRODUCT_TYPE, type) ? PATHWAY_PRODUCT_TYPE[type] : undefined;
+    if (unknownAgencies.length > 0 || !advisorType) {
+      return res.status(422).json({
+        error: 'Unsupported productType or agency',
+        unsupportedAgencies: unknownAgencies,
+        unsupportedProductType: advisorType ? null : type,
+        supportedAgencies: Object.keys(PATHWAY_AGENCY_MARKET),
+        supportedProductTypes: Object.keys(PATHWAY_PRODUCT_TYPE),
+      });
+    }
 
-    const engine = getRegulatoryPathwayIntelligence();
-    const recommendations = engine.recommendPathway({
-      productType: (productType as 'drug' | 'biologic' | 'device' | 'biosimilar' | 'generic' | 'combination') || 'drug',
-      indication: (indication as string) || 'general',
-      targetAgencies: agencies,
+    const result = recommendPathway({
+      productType: advisorType,
+      targetMarkets: agencies.map((a) => PATHWAY_AGENCY_MARKET[a]),
     });
 
     return res.json({
-      productType: productType || 'drug',
+      productType: type,
       indication: indication || null,
       agencies,
-      recommendations,
+      recommendations: result.recommendations,
+      generalNotes: result.generalNotes,
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
@@ -623,7 +665,12 @@ router.get('/precedent/search', requireApiScope('precedent:read'), requireScope(
 router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, phase, primaryEndpoint, submissionType } = req.query;
-    const resolvedSubmissionType = sanitizeQueryParam(submissionType) || 'NDA';
+    // Required: it defaulted to NDA, so a device sponsor's query was answered
+    // with drug precedents (2026-10-15).
+    const resolvedSubmissionType = sanitizeQueryParam(submissionType);
+    if (!resolvedSubmissionType) {
+      return res.status(400).json({ error: 'submissionType is required (e.g. NDA, BLA, 510(k), PMA)' });
+    }
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_trial_design', 1, {

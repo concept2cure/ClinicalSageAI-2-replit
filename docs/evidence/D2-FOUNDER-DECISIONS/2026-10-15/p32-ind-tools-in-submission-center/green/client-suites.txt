@@ -1,0 +1,76 @@
+# green: npx vitest run --config vitest.config.ts <client files below>
+# per file: tests run (failures)
+#   anaContextDeclaresItsCaps.test.tsx: 5 (0)
+#   filingPathNoDeadEnds.test.tsx: 7 (0)
+#   indFormsPanel.test.tsx: 28 (0)
+#   indFormsPanelAttachmentVerdict.test.tsx: 3 (0)
+#   indFormsPanelProgramFacts.test.tsx: 4 (0)
+#   indLifecycleAssessedDate.test.tsx: 6 (0)
+#   indLifecycleDeliverables.test.tsx: 20 (0)
+#   indLifecycleNoFixtures.test.ts: 4 (0)
+#   indLifecycleProgramScope.test.tsx: 9 (0)
+#   indLifecycleTargetDate.test.tsx: 14 (0)
+#   launchScopeLock.test.tsx: 3 (0)
+#   microWireups.test.tsx: 6 (0)
+#   projectHomeLaunchScope.test.tsx: 4 (0)
+#   projectHomeStages.test.tsx: 7 (0)
+#   railPiecesRehomed.test.tsx: 4 (0)
+#   registryModel.test.ts: 27 (0)
+#   shellNav.test.tsx: 23 (0)
+#   surfaceRouting.test.ts: 8 (0)
+#   zeroStateNarrative.test.tsx: 15 (0)
+# the P-32-relevant cases, verbatim:
+ ✓ indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: not offered — no card, a plain sentence in its place, and no request to a safety route 295ms
+ ✓ indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > the screen does not import the withheld card, and names no safety route (ci:launch-scope-api walks it) 2ms
+ ✓ indLifecycleDeliverables.test.tsx > the withheld safety-report card (surfaces/indSafetyReportCard.ts): its intake > only what was entered goes up — nothing invented 1ms
+ ✓ indLifecycleDeliverables.test.tsx > the withheld safety-report card (surfaces/indSafetyReportCard.ts): its intake > no regulated select is pre-selected, and an untouched one is never sent 1ms
+ ✓ indLifecycleDeliverables.test.tsx > the withheld safety-report card (surfaces/indSafetyReportCard.ts): its intake > an onset stated as unknown goes up as "unknown", never as a blank 0ms
+ ✓ indLifecycleDeliverables.test.tsx > the withheld safety-report card (surfaces/indSafetyReportCard.ts): its view of the server verdict > renders the server classification, and a reportable event can be filed 1ms
+ ✓ indLifecycleDeliverables.test.tsx > the withheld safety-report card (surfaces/indSafetyReportCard.ts): its view of the server verdict > a NOT_REPORTABLE classification removes the filing affordance with the server’s reason 0ms
+ ✓ indLifecycleDeliverables.test.tsx > the withheld safety-report card (surfaces/indSafetyReportCard.ts): its view of the server verdict > a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file 0ms
+ ✓ indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen 95ms
+ ✓ microWireups.test.tsx > Dossier — per-section readiness binding > binds the real readiness endpoint and renders the section rollups 136ms
+ ✓ microWireups.test.tsx > Dossier — per-section readiness binding > asks for a program honestly with no numeric project (no call) 8ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — 30-day clock from the RECORDED target date only > renders "No target date set" (reason + next action) when no target is recorded 151ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — 30-day clock from the RECORDED target date only > renders the org's RECORDED target date when one exists 83ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — a projected 30-day clock never speaks as the regulatory one > does not show a cleared-to-proceed chip or the may-proceed sentence over a target date 103ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — a projected 30-day clock never speaks as the regulatory one > publishes the clock to AnA as a projection with safeToProceed unknown 102ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > shows the clock the server computed from the recorded target date 148ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > while the server computes, says so — no number, no date 70ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > a failed computation reads as a failure with a retry — never as a clock, never as "no target date" 502ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > a 200 that is not a clock is a failure, not a clock at zero 73ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > with no recorded target date, nothing is asked of the server and nothing is projected 64ms
+ ✓ indLifecycleTargetDate.test.tsx > IndLifecycle — the 30-day clock is the server engine's, never a client copy > the screen carries no client copy of the readiness or clock engine 2ms
+ ✓ indLifecycleAssessedDate.test.tsx > IndLifecycle — the readiness cover reflects whether anything was assessed > an empty IND says NOT ASSESSED and does NOT date-stamp an assessment 119ms
+ ✓ indLifecycleAssessedDate.test.tsx > IndLifecycle — the readiness cover reflects whether anything was assessed > a populated IND still shows the assessment date — the stamp stays reachable 140ms
+ ✓ indLifecycleAssessedDate.test.tsx > IND readiness comes from the server, including Ana context > does not infer completeness from an old server returning only approved inventory 73ms
+ ✓ indLifecycleAssessedDate.test.tsx > IND readiness comes from the server, including Ana context > shows missing requirements and gives Ana the identical server verdict 167ms
+ ✓ indLifecycleAssessedDate.test.tsx > IND readiness comes from the server, including Ana context > exposes a lifecycle blocker to Ana even when all section and form completion percentages are 100 46ms
+ ✓ indLifecycleAssessedDate.test.tsx > IND readiness comes from the server, including Ana context > retains READY TO FILE when the server has evaluated the complete required set 38ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the open program’s IND, not rows[0], when a match exists 317ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > does not expose another IND for drafting or filing when the open program has none 24ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > with no program open and several INDs, says which one is shown and how to scope 83ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > shows the IND anchored to the open program, not a same-named IND of another project 70ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a same-named IND anchored to another project is not the open program’s 13ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > does not guess between two unlinked, identically named INDs 7ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > an IND whose submission names no program is never matched to the open program by name 13ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a BLA program is told its own type, and is not shown a same-named legacy IND 16ms
+ ✓ indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a single IND with no program open needs no note — nothing to disambiguate 71ms
+ ✓ filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row does not offer the locked 510(k) surface 124ms
+ ✓ filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface 26ms
+ ✓ filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with a project open: no "Inspection readiness" door into the locked eTMF 53ms
+ ✓ indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > with a program open, the recorded sponsor address and IND type are shown, and a build sends neither — the record is the source 284ms
+ ✓ indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > "Save to program" records the sponsor address and IND type on the program, then re-reads the record 87ms
+ ✓ indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a refused save says why, in the server's words, as an error 62ms
+ ✓ indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a program that is not an IND has no IND type to record 49ms
+ ✓ zeroStateNarrative.test.tsx > NDA cockpit over an empty program > does not assert a review clock it has no store for 20ms
+ ✓ zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > derives no clearance from zero items: not ready, never 100% 8ms
+ ✓ zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > is still clearance-capable when every required item passes 1ms
+ ✓ zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > the screen carries no copy of it 2ms
+ ✓ zeroStateNarrative.test.tsx > IND Lifecycle over an empty checklist > says nothing has been assessed, never READY TO FILE 105ms
+ ✓ indLifecycleNoFixtures.test.ts > IND lifecycle deliverables carry no invented programme > every deliverable defines an ask 2ms
+ ✓ indLifecycleNoFixtures.test.ts > IND lifecycle deliverables carry no invented programme > no ask string names a fixture programme 1ms
+ ✓ indLifecycleNoFixtures.test.ts > IND lifecycle deliverables carry no invented programme > the two previously-broken deliverables are generic 0ms
+ ✓ indLifecycleNoFixtures.test.ts > IND lifecycle deliverables carry no invented programme > INDL_PROGRAM is not re-exported 0ms
+ Test Files  19 passed (19)
+      Tests  197 passed (197)

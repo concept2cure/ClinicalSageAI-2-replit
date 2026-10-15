@@ -35,6 +35,9 @@ export interface CatalogDocumentRow {
   ctdSection: string | null;
   placementStatus: string;
   catalog: {
+    /** 'other': the record describes other bytes. Only its hash and status
+     * are carried; every extraction and comprehension field is withheld. */
+    version?: 'current' | 'other';
     contentHash?: string;
     status: CatalogStatus;
     extractionMethod: string | null;
@@ -110,9 +113,12 @@ export async function loadDocumentForOrg(
             c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
             c.extraction_error, c.char_count, c.word_count, c.page_count,
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
-            c.catalog_state, c.proposed_model
+            c.catalog_state, c.proposed_model,
+            cv.content_hash AS recorded_catalog_content_hash, cv.catalog_status AS recorded_catalog_status
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+       -- Only the identity of a record for other bytes: its content never leaves the database.
+       LEFT JOIN vault.document_catalog cv ON cv.document_id = d.id
       WHERE d.id = $1::uuid AND d.program_id = $3::uuid AND d.organization_id = $2 AND d.deleted_at IS NULL
         AND ${vaultDataEligibleSql('d')}${currentClause}
         AND EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
@@ -163,14 +169,35 @@ function catalogDate(value: unknown): string | null {
   return invalidDocumentRow();
 }
 
-function projectCatalogRow(r: Record<string, unknown>): CatalogDocumentRow['catalog'] {
-  const status = r.catalog_status;
+const isCatalogStatus = (v: unknown): v is CatalogStatus => v === 'extracted' || v === 'extraction_failed' || v === 'cataloged';
+
+/** A record for other bytes: its identity, so a reader can say the source
+ * changed rather than "no record", and nothing it says about those bytes. */
+function otherVersionCatalog(status: CatalogStatus, contentHash: string | undefined): NonNullable<CatalogDocumentRow['catalog']> {
+  return {
+    version: 'other', status, contentHash,
+    extractionMethod: null, extractionConfidence: null, extractionError: null, charCount: 0,
+    wordCount: null, pageCount: null, documentKind: null, purpose: null, summary: null,
+    keyData: null, catalogedAt: null, state: null, proposedModel: null,
+  };
+}
+
+/** c.* is joined on the current bytes; cv.* names the bytes the document's one
+ * record describes, whichever they are. */
+function projectCatalogRow(r: Record<string, unknown>, contentHash: string): CatalogDocumentRow['catalog'] {
+  const joined = r.catalog_status !== null;
+  const status = joined ? r.catalog_status : r.recorded_catalog_status ?? null;
   if (status === null) return null;
-  if (status !== 'extracted' && status !== 'extraction_failed' && status !== 'cataloged') return invalidDocumentRow();
+  if (!isCatalogStatus(status)) return invalidDocumentRow();
+  const recordedHash = sourceHash(joined ? r.catalog_content_hash : r.recorded_catalog_content_hash);
+  if (!joined || recordedHash !== contentHash) {
+    // The join refused it; equal after case folding means its bytes cannot be verified.
+    return recordedHash === contentHash ? invalidDocumentRow() : otherVersionCatalog(status, recordedHash);
+  }
   const charCount = nullableNumber(r.char_count);
   if (charCount === null || !Number.isSafeInteger(charCount) || charCount < 0) return invalidDocumentRow();
   return {
-    status, contentHash: sourceHash(r.catalog_content_hash),
+    version: 'current', status, contentHash: recordedHash,
     extractionMethod: nullableText(r.extraction_method), extractionConfidence: nullableNumber(r.extraction_confidence),
     extractionError: nullableText(r.extraction_error), charCount,
     wordCount: nullableNumber(r.word_count), pageCount: nullableNumber(r.page_count),
@@ -187,14 +214,15 @@ function projectDocumentRow(r: Record<string, unknown>, bound: { documentId: str
   const disposition = r.disposition;
   if (disposition !== null && disposition !== 'keep_data' && disposition !== 'remove_data' && disposition !== 'supersede') return invalidDocumentRow();
   if (typeof r.original_file_available !== 'boolean') return invalidDocumentRow();
+  const contentHash = sourceHash(r.content_hash);
   return {
     id, programId,
     documentCode: nullableText(r.document_code), documentTitle: nullableText(r.document_title),
     documentType: nullableText(r.document_type), fileName: nullableText(r.file_name),
-    mimeType: nullableText(r.mime_type), contentHash: sourceHash(r.content_hash),
+    mimeType: nullableText(r.mime_type), contentHash,
     disposition, originalFileAvailable: r.original_file_available, extractedText: nullableText(r.extracted_text),
     folderId: nullableText(r.folder_id), evidenceKind: nullableText(r.evidence_kind), ctdSection: nullableText(r.ctd_section),
-    placementStatus: requiredText(r.placement_status), catalog: projectCatalogRow(r),
+    placementStatus: requiredText(r.placement_status), catalog: projectCatalogRow(r, contentHash),
   };
 }
 
@@ -222,9 +250,12 @@ export async function loadDocumentForAdmittedScope(
             c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
             c.extraction_error, c.char_count, c.word_count, c.page_count,
             c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
-            c.catalog_state, c.proposed_model
+            c.catalog_state, c.proposed_model,
+            cv.content_hash AS recorded_catalog_content_hash, cv.catalog_status AS recorded_catalog_status
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+       -- Only the identity of a record for other bytes: its content never leaves the database.
+       LEFT JOIN vault.document_catalog cv ON cv.document_id = d.id
       WHERE d.id = $1 AND d.organization_id = $2 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}${currentClause}
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
                      WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL)
@@ -255,25 +286,35 @@ function projectAdmittedDocumentRow(r: Record<string, any>): CatalogDocumentRow 
     evidenceKind: r.evidence_kind,
     ctdSection: r.ctd_section,
     placementStatus: r.placement_status,
-    catalog: r.catalog_status
-      ? {
-          status: r.catalog_status,
-          contentHash: r.catalog_content_hash,
-          extractionMethod: r.extraction_method,
-          extractionConfidence: r.extraction_confidence,
-          extractionError: r.extraction_error,
-          charCount: r.char_count ?? 0,
-          wordCount: r.word_count,
-          pageCount: r.page_count,
-          documentKind: r.document_kind,
-          purpose: r.purpose,
-          summary: r.summary,
-          keyData: r.key_data,
-          catalogedAt: r.cataloged_at ? String(r.cataloged_at) : null,
-          state: catalogStateOf(r),
-          proposedModel: r.proposed_model ?? null,
-        }
-      : null,
+    catalog: admittedCatalog(r),
+  };
+}
+
+/** As projectCatalogRow, for trusted callers that validate the row themselves.
+ * A legacy in-memory shape without a recorded hash keeps that hash unknown. */
+function admittedCatalog(r: Record<string, any>): CatalogDocumentRow['catalog'] {
+  const joined = Boolean(r.catalog_status);
+  const status = joined ? r.catalog_status : r.recorded_catalog_status;
+  if (!status) return null;
+  const recordedHash = joined ? r.catalog_content_hash : r.recorded_catalog_content_hash;
+  if (!joined || (recordedHash !== undefined && recordedHash !== r.content_hash)) return otherVersionCatalog(status, recordedHash);
+  return {
+    ...(recordedHash === undefined ? {} : { version: 'current' as const }),
+    status,
+    contentHash: recordedHash,
+    extractionMethod: r.extraction_method,
+    extractionConfidence: r.extraction_confidence,
+    extractionError: r.extraction_error,
+    charCount: r.char_count ?? 0,
+    wordCount: r.word_count,
+    pageCount: r.page_count,
+    documentKind: r.document_kind,
+    purpose: r.purpose,
+    summary: r.summary,
+    keyData: r.key_data,
+    catalogedAt: r.cataloged_at ? String(r.cataloged_at) : null,
+    state: catalogStateOf(r),
+    proposedModel: r.proposed_model ?? null,
   };
 }
 

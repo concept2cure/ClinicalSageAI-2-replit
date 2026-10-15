@@ -1,0 +1,70 @@
+# Red: the P-33 tests run against the code BEFORE the change (HEAD 18d58cbb2 + the new test files only).
+# npx vitest run --silent=true <focused set incl. the three new test files>
+
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > an amendment: one CROSS_REFERENCE_LOA_MISSING per reference, and the gate is not cleared
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > the original too, even with its Module 3 placed
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > with every LOA on file the same amendment clears
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > a register that cannot be read blocks, and says why
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > another application type is not judged by it
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (c) an overdue IND safety report is a warning, never a block > warns on an amendment, and the gate stays cleared
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (c) an overdue IND safety report is a warning, never a block > is not raised against the sequence that carries the safety report itself
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > every US IND sequence carries CLINICAL_HOLD_NOT_ASSESSED and the structural gate says so
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > the response that would lift a hold is not blocked either
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > an NDA sequence is not given an IND hold statement
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > an amendment with only its Form FDA 1571 is blocked
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > an amendment with no 1571 is blocked on 1.1, naming the Form FDA 1571
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > the complete amendment clears, and an annual report is held to 1.13
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > what P-33 did not carry stays uncarried > (g) a dispatched, clean sequence keeps gate.cleared — transmit requires exactly that
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > what P-33 did not carry stays uncarried > (h) a leaf with no checksum does not block — the packager computes it from the bytes
+ × server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a complete amendment: both clear it — no hold read from a body, no checksum the governed path cannot set
+ × server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > an amendment with only its 1571: both block it, for the same missing sections
+ × server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a cross-reference with no LOA: both block it
+ × server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > the snapshot records that verdict and the gate that produced it; the cockpit agrees, sequence by sequence
+ × server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a snapshot recorded under the previous gate is reported as such, not as drift
+ × tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > the IND dispatch gate is gone
+ × tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > nothing imports the IND dispatch gate, source or test
+ × tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > evaluateDispatchGate is defined only in the eCTD dispatch gate
+ × tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > every import of evaluateDispatchGate is the eCTD dispatch gate
+ × tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > the IND lifecycle routes answer from the assessor
+
+# Failure messages (first line of each, trimmed):
+ FAIL  tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > the IND dispatch gate is gone
+    AssertionError: expected true to be false // Object.is equality
+ FAIL  tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > nothing imports the IND dispatch gate, source or test
+    AssertionError: expected [ …(6) ] to deeply equal []
+ FAIL  tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > evaluateDispatchGate is defined only in the eCTD dispatch gate
+    AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+ FAIL  tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > every import of evaluateDispatchGate is the eCTD dispatch gate
+    AssertionError: server/routes/ind-lifecycle/sequence.routes.ts imports evaluateDispatchGate from ../../services/ind-lifecycle/ind-dispatch-gate: expected false to be true // Object.is equality
+ FAIL  tests/schema-contract/one-dispatch-verdict.contract.test.ts > one dispatch verdict per sequence (P-33) > the IND lifecycle routes answer from the assessor
+    AssertionError: server/routes/ind-lifecycle/sequence.routes.ts does not call the assessor: expected '/**\n * IND lifecycle — sequence-scop…' to match /assessSequenceDispatchReadiness/
+ FAIL  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a complete amendment: both clear it — no hold read from a body, no checksum the governed path cannot set
+    AssertionError: expected false to be true // Object.is equality
+ FAIL  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > an amendment with only its 1571: both block it, for the same missing sections
+    AssertionError: expected false to be true // Object.is equality
+ FAIL  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a cross-reference with no LOA: both block it
+    AssertionError: expected false to be true // Object.is equality
+ FAIL  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > the snapshot records that verdict and the gate that produced it; the cockpit agrees, sequence by sequence
+    AssertionError: expected false to be true // Object.is equality
+ FAIL  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a snapshot recorded under the previous gate is reported as such, not as drift
+    AssertionError: expected { total: +0, drifted: +0, …(1) } to match object { drifted: +0, …(1) }
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > an amendment: one CROSS_REFERENCE_LOA_MISSING per reference, and the gate is not cleared
+    AssertionError: expected [] to deeply equal [ 'error', 'error' ]
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > the original too, even with its Module 3 placed
+    AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > with every LOA on file the same amendment clears
+    AssertionError: expected undefined to be +0 // Object.is equality
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > a register that cannot be read blocks, and says why
+    AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (c) an overdue IND safety report is a warning, never a block > warns on an amendment, and the gate stays cleared
+    AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (c) an overdue IND safety report is a warning, never a block > is not raised against the sequence that carries the safety report itself
+    AssertionError: expected undefined to match object { carriesSafetyReport: true, …(2) }
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > every US IND sequence carries CLINICAL_HOLD_NOT_ASSESSED and the structural gate says so
+    AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > the response that would lift a hold is not blocked either
+    AssertionError: expected [] to have a length of 1 but got +0
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > an amendment with only its Form FDA 1571 is blocked
+    AssertionError: expected [] to deeply equal [ [ '1.2', 'error' ], …(1) ]
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > the complete amendment clears, and an annual report is held to 1.13
+    AssertionError: expected [] to deeply equal [ '1.13' ]

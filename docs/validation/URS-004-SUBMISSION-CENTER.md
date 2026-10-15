@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-004 |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-004 (`tests/validation/oq/submission-center/run.mjs`) |
@@ -16,6 +16,7 @@
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | Drafted from `server/routes/submissions.ts`, `server/services/submission-service/submission-service.ts`, `server/services/ectd/leaf-document-tables.ts`, `server/routes/c2c/actions.ts`, `server/routes/dossier-map.routes.ts`, `server/routes/ectd-compile.ts` and the `SubmissionCenter`, `EctdCompile`, `PublishingCenter`, `DossierMap` surfaces. |
 | 0.2 | 2026-09-27 | W3 | URS-SUBC-004: the placed document must belong to the submission's own project. The product refuses another project's document since PF-11 (2026-09-26, `39dfd9b7`); OQ-SUBC-04 (OQ-004 v0.4) verifies it. |
+| 0.3 | 2026-10-15 | D2 | URS-SUBC-013 is new: the signed Shadow Review waiver (decision P-34, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Tested by OQ-004 OQ-SUBC-15 (v0.5). |
 
 ## 1. Intended use
 
@@ -37,6 +38,7 @@ The Submission Center plans, assembles, validates and dispatches a regulatory su
 | URS-SUBC-010 | eCTD compile for a program answers with a spine/status or an explained refusal; it never answers 500. | none | medium | `server/routes/ectd-compile.ts:425, 984` |
 | URS-SUBC-011 | The Submission Center, eCTD Compile and Publishing surfaces render the organisation's submissions and the open program's sequence. | none | medium | `client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx`, `EctdCompile.tsx`, `PublishingCenter.tsx` |
 | URS-SUBC-012 | Transmit requires a signature action id and a dispatched, gate-clear sequence; without a configured gateway it reports `transmitted:false` with the reason and never fabricates an acknowledgement. | §11.10(e) | high | `server/routes/submissions.ts:1644-1680` |
+| URS-SUBC-013 | A Shadow Review waiver is offered only while the sequence has no completed Shadow Review, is not frozen, and its newest run failed within 24 hours because every AI provider failed or was overloaded (`provider_unavailable`, `provider_overloaded`); a missing configuration or any other failure is not an outage. It is recorded only with a Part 11 signature on `ectd-sequence:<id>` with intent `shadow-waiver` and the meaning responsibility or approval, by someone who did not author the sequence; without one it is refused and nothing is recorded. An active waiver clears the dispatch verdict's Shadow Review presence gate as *not assessed*, naming the signature; it lapses when the leaves change, and it never clears an open critical finding. | §11.10(e) §11.50 §11.70 §11.200 | high | `server/services/ectd/shadow-review-waiver.ts`, `server/services/ectd/assess-dispatch-readiness.ts`, `server/routes/submissions.ts` (`POST /sequences/:seqId/shadow-review/waive`) |
 
 ## 3. Assumptions and constraints
 

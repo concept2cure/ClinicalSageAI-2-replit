@@ -86,8 +86,10 @@ export interface GateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
-  /** The server's sentence when an external assessment did not qualify and
-   *  is not required here. Not blocking, and not passed. */
+  /** The server's sentence when the gate cleared without assessing what it
+   *  guards: an external assessment that did not qualify and is not required
+   *  here, a US IND's clinical hold (P-33), a Shadow Review waived by
+   *  signature (P-34). Not blocking, and not passed. */
   notAssessed?: string;
   assessmentStatus?: 'passed' | 'failed' | 'not_assessed' | 'invalid';
   assessmentNote?: string;

@@ -254,6 +254,8 @@ export async function writeCatalogSuggestion(input: CatalogSuggestion): Promise<
     return { ok: true, embeddingStatus };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
+    // The record no longer describes the bytes AnA read: say that, not "no longer eligible".
+    if (err instanceof CatalogAdmissionError && err.code === 'SOURCE_VERSION_CHANGED') return { ok: false, refusal: VERSION_CHANGED };
     if (err instanceof CatalogAdmissionError || err instanceof ProgramReadAccessError) return { ok: false, refusal: err.message };
     throw err;
   } finally {

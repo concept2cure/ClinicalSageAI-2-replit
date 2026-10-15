@@ -89,7 +89,8 @@ export interface PrecedentRecord {
   riskFactors: string[];
   similarityScore?: number;
   sourceType: string | null;
-  confidenceScore: number;
+  /** As recorded; null when the stored precedent records none. */
+  confidenceScore: number | null;
 }
 
 /**
@@ -133,12 +134,66 @@ interface ComparisonItem {
 }
 
 export interface RiskAnalysisResult {
-  overallRisk: 'low' | 'medium' | 'high' | 'critical';
-  riskScore: number;
+  /**
+   * 'not_assessed' when none of the three sources could be read. Each read
+   * swallowed its failure and answered "none found", so an analysis that read
+   * nothing reported 'low', score 0, "No risk factors identified" (2026-10-15).
+   */
+  overallRisk: 'low' | 'medium' | 'high' | 'critical' | 'not_assessed';
+  riskScore: number | null;
   factors: RiskFactor[];
   historicalObjections: HistoricalObjection[];
   mitigationStrategies: string[];
   safetySignals: SafetySignalSummary[];
+  /** What each source answered: read, or why it was not. */
+  sources: Record<'adversarialPrecedents' | 'safetySignals' | 'toxicPredicates', SourceStatus>;
+}
+
+/** 'read', or why a source was not: it failed, or it does not apply. */
+export type SourceStatus = 'read' | { notRead: string };
+
+/** A source's answer, or the reason there is none. */
+type SourceRead<T> = { ran: true; value: T } | { ran: false; reason: string };
+
+const statusOf = (r: SourceRead<unknown>): SourceStatus => (r.ran ? 'read' : { notRead: r.reason });
+
+/** Risk factors from the safety signals and toxic predicates found. */
+function signalFactors(safetySignals: SafetySignalSummary[], toxicCount: number): RiskFactor[] {
+  const factors: RiskFactor[] = [];
+  if (safetySignals.length > 0) {
+    factors.push({
+      category: 'Safety Signal History',
+      description: `${safetySignals.length} safety signal(s) found in similar devices (recalls, MDR reports, warnings)`,
+      severity: safetySignals.some(s => s.severity > 0.7) ? 'critical' : 'high',
+      precedentCount: safetySignals.length,
+      mitigation:
+        'Include comprehensive safety data addressing known signal patterns in your submission',
+    });
+  }
+  if (toxicCount > 0) {
+    factors.push({
+      category: 'Toxic Predicate Risk',
+      description: `${toxicCount} predicate(s) in this product code have safety concerns`,
+      severity: 'high',
+      precedentCount: toxicCount,
+      mitigation: 'Avoid toxic predicates. Select predicates with clean safety history.',
+    });
+  }
+  return factors;
+}
+
+/** Overall risk from the factors' severities. */
+function scoreFactors(factors: RiskFactor[]): {
+  riskScore: number;
+  overallRisk: Exclude<RiskAnalysisResult['overallRisk'], 'not_assessed'>;
+} {
+  const severityWeights = { low: 1, medium: 2, high: 3, critical: 4 };
+  const totalWeight = factors.reduce((sum, f) => sum + severityWeights[f.severity], 0);
+  const avgWeight = factors.length > 0 ? totalWeight / factors.length : 0;
+  const riskScore = Math.min(avgWeight / 4, 1);
+  const overallRisk =
+    riskScore >= 0.75 ? 'critical' : riskScore >= 0.5 ? 'high' : riskScore >= 0.25 ? 'medium' : 'low';
+  return { riskScore, overallRisk };
 }
 
 interface RiskFactor {
@@ -155,7 +210,6 @@ interface HistoricalObjection {
   failureMode: string;
   therapeuticArea: string;
   submissionType: string;
-  similarity: number;
 }
 
 interface SafetySignalSummary {
@@ -167,19 +221,33 @@ interface SafetySignalSummary {
 }
 
 export interface StrategyRecommendation {
-  recommendedStrategy: string;
-  confidence: number;
+  /**
+   * 'no-precedents' when no approved precedent that records a strategy
+   * matched: nothing is recommended, and strategy, confidence and timeline
+   * are null. It answered 'Standard submission approach' at confidence 0.3
+   * with a '6-12 months (standard)' timeline — a recommendation no precedent
+   * made (2026-10-15).
+   */
+  basis: 'precedents' | 'no-precedents';
+  recommendedStrategy: string | null;
+  confidence: number | null;
   supportingPrecedents: PrecedentRecord[];
   alternativeStrategies: AlternativeStrategy[];
   testingRequirements: string[];
-  estimatedTimeline: string;
+  /** From the top precedent's clearance type; null when it maps to none. */
+  estimatedTimeline: string | null;
   keyRisks: string[];
 }
 
 interface AlternativeStrategy {
   strategy: string;
   precedentCount: number;
-  successRate: number;
+  /**
+   * The share of the approved precedents that used this strategy. It was
+   * called successRate and printed as "% success rate"; it is not one — every
+   * precedent counted was an approved one.
+   */
+  shareOfApprovedPrecedents: number;
   description: string;
 }
 
@@ -278,14 +346,10 @@ async function loadCrlPatternsFromStore(organizationId?: string): Promise<CRLPat
       category: String(r.pattern_name),
       submissionTypes: Array.isArray(r.submission_types) ? r.submission_types : [],
       severity: DIFFICULTY_TO_SEVERITY[String(r.resolution_difficulty)] ?? 'medium',
-      // The store has no per-pattern confidence column; the seeded rows came
-      // from the inline arrays, whose confidences are recorded there. Rather
-      // than invent one, a stored pattern reports the frequency it carries and
-      // leaves confidence at the neutral value.
-      confidence: 0.8,
+      // frequency_rate is not served: the platform rows copied it from the
+      // inline arrays, and neither cites a source (2026-10-15).
       description: String(r.trigger_description),
       mitigation: '',
-      historicalRate: r.frequency_rate == null ? 0 : Number(r.frequency_rate),
     }));
   } catch {
     // 42P01 and anything else: the store cannot answer, so the inline knowledge
@@ -301,10 +365,13 @@ async function loadRtfTriggersFromStore(organizationId?: string): Promise<RTFTri
     'pattern_name, trigger_description, frequency_rate, typical_fda_language',
     organizationId,
   );
+  /* The table has no severity column. The platform rows carry the curated
+     severity encoded in frequency_rate (>= 0.2 critical, >= 0.1 high), which
+     is read for that and not served as a frequency: no source is cited for it
+     (2026-10-15). */
   return rows?.map(r => ({
     evidenceBasis: basisOf(r),
     trigger: String(r.pattern_name),
-    frequency: r.frequency_rate == null ? 0 : Number(r.frequency_rate),
     severity: (Number(r.frequency_rate) >= 0.2 ? 'critical' : Number(r.frequency_rate) >= 0.1 ? 'high' : 'medium') as RTFTriggerPattern['severity'],
     description: String(r.trigger_description),
   })) ?? null;
@@ -552,7 +619,9 @@ export class PrecedentEngine {
       fdaComments: null,
       fdaQuestions: [],
       riskFactors: [],
-      similarityScore: 0.5, // structured match on product code / device name
+      // A structured match on product code / device name has no similarity
+      // to report; it was 0.5, which the board showed as a 50% match.
+      similarityScore: undefined,
       sourceType: 'FDA_510k',
       confidenceScore: 1.0,
     }));
@@ -560,10 +629,19 @@ export class PrecedentEngine {
     return { records, registry: { consulted: true, available: true, resultCount: records.length } };
   }
 
+  /** Objections for the corpus search, where a failed read adds none. */
   private async searchAdversarialPrecedents(
     input: PrecedentSearchInput,
     limit: number
   ): Promise<HistoricalObjection[]> {
+    const read = await this.readAdversarialPrecedents(input, limit);
+    return read.ran ? read.value : [];
+  }
+
+  private async readAdversarialPrecedents(
+    input: PrecedentSearchInput,
+    limit: number
+  ): Promise<SourceRead<HistoricalObjection[]>> {
     const conditions: string[] = [];
     const params: any[] = [];
     let paramIdx = 1;
@@ -589,17 +667,19 @@ export class PrecedentEngine {
         [...params, limit]
       );
 
-      return result.rows.map(row => ({
-        question: row.historical_question,
-        agency: row.agency_code,
-        failureMode: row.failure_mode,
-        therapeuticArea: row.therapeutic_area || '',
-        submissionType: row.submission_type || '',
-        similarity: 0.7,
-      }));
+      return {
+        ran: true,
+        value: result.rows.map(row => ({
+          question: row.historical_question,
+          agency: row.agency_code,
+          failureMode: row.failure_mode,
+          therapeuticArea: row.therapeutic_area || '',
+          submissionType: row.submission_type || '',
+        })),
+      };
     } catch (err: any) {
       log.warn(`Adversarial precedent search failed: ${err.message}`);
-      return [];
+      return { ran: false, reason: 'the historical-objection store could not be read' };
     }
   }
 
@@ -797,7 +877,8 @@ export class PrecedentEngine {
     const factors: RiskFactor[] = [];
 
     // 1. Check adversarial precedents for historical FDA objections
-    const objections = await this.searchAdversarialPrecedents(input, 20);
+    const adversarial = await this.readAdversarialPrecedents(input, 20);
+    const objections = adversarial.ran ? adversarial.value : [];
     const objectionGroups = new Map<string, HistoricalObjection[]>();
     for (const o of objections) {
       const group = objectionGroups.get(o.failureMode) || [];
@@ -823,46 +904,32 @@ export class PrecedentEngine {
     }
 
     // 2. Check safety signals for related devices
-    const safetySignals = await this.getSafetySignals(input);
-
-    if (safetySignals.length > 0) {
-      factors.push({
-        category: 'Safety Signal History',
-        description: `${safetySignals.length} safety signal(s) found in similar devices (recalls, MDR reports, warnings)`,
-        severity: safetySignals.some(s => s.severity > 0.7) ? 'critical' : 'high',
-        precedentCount: safetySignals.length,
-        mitigation:
-          'Include comprehensive safety data addressing known signal patterns in your submission',
-      });
-    }
-
+    const safety = await this.readSafetySignals(input);
+    const safetySignals = safety.ran ? safety.value : [];
     // 3. Check predicate lineage for toxic predicates
-    if (['510(k)', '510k'].includes(input.submissionType) && input.productCode) {
-      const toxicCount = await this.checkToxicPredicates(input.productCode);
-      if (toxicCount > 0) {
-        factors.push({
-          category: 'Toxic Predicate Risk',
-          description: `${toxicCount} predicate(s) in this product code have safety concerns`,
-          severity: 'high',
-          precedentCount: toxicCount,
-          mitigation: 'Avoid toxic predicates. Select predicates with clean safety history.',
-        });
-      }
+    const toxic = await this.readToxicPredicatesFor(input);
+    factors.push(...signalFactors(safetySignals, toxic.ran ? toxic.value : 0));
+
+    const sources = {
+      adversarialPrecedents: statusOf(adversarial),
+      safetySignals: statusOf(safety),
+      toxicPredicates: statusOf(toxic),
+    };
+    // Nothing read is not "low risk": it is no assessment.
+    if (!adversarial.ran && !safety.ran && !toxic.ran) {
+      return {
+        overallRisk: 'not_assessed',
+        riskScore: null,
+        factors: [],
+        historicalObjections: [],
+        mitigationStrategies: [],
+        safetySignals: [],
+        sources,
+      };
     }
 
-    // Calculate overall risk
-    const severityWeights = { low: 1, medium: 2, high: 3, critical: 4 };
-    const totalWeight = factors.reduce((sum, f) => sum + severityWeights[f.severity], 0);
-    const avgWeight = factors.length > 0 ? totalWeight / factors.length : 0;
-    const riskScore = Math.min(avgWeight / 4, 1);
-    const overallRisk: RiskAnalysisResult['overallRisk'] =
-      riskScore >= 0.75
-        ? 'critical'
-        : riskScore >= 0.5
-          ? 'high'
-          : riskScore >= 0.25
-            ? 'medium'
-            : 'low';
+    // Calculate overall risk over the sources that were read
+    const { riskScore, overallRisk } = scoreFactors(factors);
 
     // Generate mitigation strategies
     const mitigationStrategies = factors
@@ -877,6 +944,7 @@ export class PrecedentEngine {
       historicalObjections: objections.slice(0, 10),
       mitigationStrategies,
       safetySignals,
+      sources,
     };
   }
 
@@ -899,15 +967,17 @@ export class PrecedentEngine {
     const strategyPatterns = new Map<string, { count: number; precedents: PrecedentRecord[] }>();
 
     for (const p of approved) {
-      const strategy = p.strategySummary || p.testingApproach || p.clearanceType || 'Standard';
+      // A precedent that records no strategy supports none; it was counted as 'Standard'.
+      const strategy = p.strategySummary || p.testingApproach || p.clearanceType;
+      if (!strategy) continue;
       const existing = strategyPatterns.get(strategy) || { count: 0, precedents: [] };
       existing.count++;
       existing.precedents.push(p);
       strategyPatterns.set(strategy, existing);
     }
 
-    // Find the most common successful strategy
-    let recommendedStrategy = 'Standard submission approach';
+    // The most common strategy among approved precedents, or none.
+    let recommendedStrategy: string | null = null;
     let maxCount = 0;
     for (const [strategy, data] of strategyPatterns) {
       if (data.count > maxCount) {
@@ -923,8 +993,8 @@ export class PrecedentEngine {
       alternativeStrategies.push({
         strategy,
         precedentCount: data.count,
-        successRate: data.count / (approved.length || 1),
-        description: `Used in ${data.count} successful precedent(s)`,
+        shareOfApprovedPrecedents: data.count / approved.length,
+        description: `Used in ${data.count} approved precedent(s)`,
       });
     }
 
@@ -948,9 +1018,9 @@ export class PrecedentEngine {
     }
 
     const confidence =
-      approved.length > 0
-        ? Math.min(approved.length / (approved.length + rejected.length + 1), 0.95)
-        : 0.3;
+      recommendedStrategy === null
+        ? null
+        : Math.min(approved.length / (approved.length + rejected.length + 1), 0.95);
 
     // Estimate timeline based on clearance type
     const timelineMap: Record<string, string> = {
@@ -962,12 +1032,13 @@ export class PrecedentEngine {
     };
 
     return {
+      basis: recommendedStrategy === null ? 'no-precedents' : 'precedents',
       recommendedStrategy,
       confidence,
       supportingPrecedents: approved.slice(0, 5),
       alternativeStrategies: alternativeStrategies.slice(0, 3),
       testingRequirements: Array.from(testingSet).slice(0, 10),
-      estimatedTimeline: timelineMap[approved[0]?.clearanceType || ''] || '6-12 months (standard)',
+      estimatedTimeline: timelineMap[approved[0]?.clearanceType || ''] ?? null,
       keyRisks: keyRisks.slice(0, 5),
     };
   }
@@ -1126,8 +1197,11 @@ export class PrecedentEngine {
 
   async ingestPrecedent(
     data: Omit<PrecedentRecord, 'id' | 'similarityScore'>,
-    organizationId: number
+    organizationId: number,
+    /** Who ingested it. Every ingest was recorded as created_by 'system'. */
+    createdBy: string
   ): Promise<string> {
+    if (!createdBy) throw new Error('ingestPrecedent requires the person who ingested the precedent');
     // A precedent a tenant ingests is that tenant's: it is written private to
     // its organization, never into the shared public corpus. Refused, not
     // defaulted, when there is no organization to attribute it to.
@@ -1176,7 +1250,7 @@ export class PrecedentEngine {
         (data as any).sourceDocuments || [],
         data.sourceType,
         data.confidenceScore,
-        'system',
+        createdBy,
         org,
       ]
     );
@@ -1248,7 +1322,7 @@ export class PrecedentEngine {
     return null;
   }
 
-  private async getSafetySignals(input: PrecedentSearchInput): Promise<SafetySignalSummary[]> {
+  private async readSafetySignals(input: PrecedentSearchInput): Promise<SourceRead<SafetySignalSummary[]>> {
     try {
       const conditions: string[] = [];
       const params: any[] = [];
@@ -1263,7 +1337,7 @@ export class PrecedentEngine {
         params.push(`%${input.deviceName}%`);
       }
 
-      if (conditions.length === 0) return [];
+      if (conditions.length === 0) return { ran: false, reason: 'no product code or device name to match on' };
 
       const result = await pool.query(
         `SELECT s.*, c.device_name
@@ -1275,28 +1349,40 @@ export class PrecedentEngine {
         params
       );
 
-      return result.rows.map(row => ({
-        kNumber: row.k_number,
-        deviceName: row.device_name,
-        signalType: row.signal_type,
-        severity: row.severity_score,
-        description: row.description || '',
-      }));
+      return {
+        ran: true,
+        value: result.rows.map(row => ({
+          kNumber: row.k_number,
+          deviceName: row.device_name,
+          signalType: row.signal_type,
+          severity: row.severity_score,
+          description: row.description || '',
+        })),
+      };
     } catch (err: any) {
       log.warn(`Safety signal query failed: ${err.message}`);
-      return [];
+      return { ran: false, reason: 'the predicate safety-signal store could not be read' };
     }
   }
 
-  private async checkToxicPredicates(productCode: string): Promise<number> {
+  /** Toxic predicates, for a 510(k) with a product code; not applicable otherwise. */
+  private async readToxicPredicatesFor(input: PrecedentSearchInput): Promise<SourceRead<number>> {
+    if (!['510(k)', '510k'].includes(input.submissionType) || !input.productCode) {
+      return { ran: false, reason: 'applies to a 510(k) with a product code' };
+    }
+    return this.readToxicPredicates(input.productCode);
+  }
+
+  private async readToxicPredicates(productCode: string): Promise<SourceRead<number>> {
     try {
       const result = await pool.query(
         `SELECT COUNT(*) as count FROM predicate.toxic_predicates WHERE product_code = $1`,
         [productCode]
       );
-      return parseInt(result.rows[0]?.count || '0', 10);
-    } catch {
-      return 0;
+      return { ran: true, value: parseInt(result.rows[0]?.count || '0', 10) };
+    } catch (err: any) {
+      log.warn(`Toxic predicate query failed: ${err.message}`);
+      return { ran: false, reason: 'the toxic-predicate store could not be read' };
     }
   }
 
@@ -1345,7 +1431,9 @@ export class PrecedentEngine {
       fdaQuestions: row.fda_questions || [],
       riskFactors: row.risk_factors || [],
       sourceType: row.source_type || null,
-      confidenceScore: row.confidence_score ?? 1.0,
+      // A stored precedent that records no confidence has none; it read as
+      // full confidence (2026-10-15).
+      confidenceScore: row.confidence_score ?? null,
     };
   }
 
@@ -1371,78 +1459,64 @@ export class PrecedentEngine {
         category: 'Efficacy Endpoint Failure',
         submissionTypes: ['NDA', 'BLA', 'MAA'],
         severity: 'critical',
-        confidence: 0.92,
         description: 'Primary endpoint did not meet statistical significance (p > 0.05)',
         mitigation:
           'Consider hierarchical testing, pre-specified subgroup analysis, or adaptive design',
-        historicalRate: 0.34,
       },
       {
         evidenceBasis: 'curated',
         category: 'Safety Signal — Hepatotoxicity',
         submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'],
         severity: 'critical',
-        confidence: 0.88,
         description: 'Drug-induced liver injury (DILI) signals detected in pivotal trials',
         mitigation: "Include Hy's Law analysis, proactive REMS proposal, hepatic monitoring plan",
-        historicalRate: 0.18,
       },
       {
         evidenceBasis: 'curated',
         category: 'Cardiovascular Risk Signal',
         submissionTypes: ['NDA', 'BLA', 'ANDA'],
         severity: 'high',
-        confidence: 0.85,
         description: 'CV event imbalance (MACE) or QTc prolongation concerns',
         mitigation: 'Pre-submission CV safety meta-analysis, thorough QT study, DSMB charter',
-        historicalRate: 0.22,
       },
       {
         evidenceBasis: 'curated',
         category: 'Manufacturing Deficiency (CMC)',
         submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)', 'MAA'],
         severity: 'high',
-        confidence: 0.9,
         description:
           'Incomplete or inadequate CMC data — process validation, stability, specifications',
         mitigation:
           'Complete ICH Q8-Q12 compliance, pre-submission CMC meeting, process validation protocol',
-        historicalRate: 0.28,
       },
       {
         evidenceBasis: 'curated',
         category: 'Inadequate Clinical Pharmacology',
         submissionTypes: ['NDA', '505(b)(2)', 'ANDA'],
         severity: 'medium',
-        confidence: 0.82,
         description:
           'Missing PK/PD data, drug-drug interaction studies, or special population studies',
         mitigation:
           'Complete PBPK modeling, DDI risk assessment per FDA guidance, renal/hepatic impairment studies',
-        historicalRate: 0.15,
       },
       {
         evidenceBasis: 'curated',
         category: 'Labeling Deficiency',
         submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'],
         severity: 'medium',
-        confidence: 0.78,
         description:
           'Proposed labeling not supported by submitted data or inconsistent with clinical findings',
         mitigation:
           'Align labeling claims with pivotal trial endpoints, FDA structured labeling template',
-        historicalRate: 0.12,
       },
       {
         evidenceBasis: 'curated',
         category: 'Bioequivalence Failure',
         submissionTypes: ['ANDA', '505(b)(2)'],
         severity: 'critical',
-        confidence: 0.94,
         description: 'Failed to demonstrate bioequivalence to reference listed drug (RLD)',
         mitigation:
           'Review dissolution methodology, consider fed/fasted crossover, consult OGD pre-submission',
-        historicalRate: 0.41,
       },
       // Device CRL triggers
       {
@@ -1450,71 +1524,50 @@ export class PrecedentEngine {
         category: 'Predicate Device Mismatch',
         submissionTypes: ['510(k)', 'PMA', 'De Novo'],
         severity: 'high',
-        confidence: 0.87,
         description:
           'Substantial equivalence argument not supported — different intended use or technology',
         mitigation:
           'Re-evaluate predicate selection, consider De Novo if no valid predicate exists',
-        historicalRate: 0.19,
       },
       {
         evidenceBasis: 'curated',
         category: 'Insufficient Clinical Data (Device)',
         submissionTypes: ['PMA', 'De Novo'],
         severity: 'critical',
-        confidence: 0.91,
         description: 'Clinical evidence insufficient to demonstrate safety and effectiveness',
         mitigation: 'Power analysis review, consider supplemental clinical study or registry data',
-        historicalRate: 0.31,
       },
     ];
 
-    // Match patterns to submission context
+    /* A curated checklist, not an assessment of the submission (2026-10-15).
+       Each pattern carried a "historical rate" (0.34, 0.41 ...) and a
+       confidence (0.92 ...) with no cited source, nudged up 0.05 per objection
+       the precedent search returned; and the overall risk was 'high' whenever
+       two 'critical' categories applied — which depends on the submission
+       type alone: every NDA, BLA, ANDA and 505(b)(2) read "high CRL risk" and
+       every 510(k) and IND "low", with nothing of the submission consulted.
+       The categories, their curated severity and the objections the
+       precedent search actually found remain; the figures and the verdict
+       do not. */
     for (const pattern of crlPatterns) {
-      if (pattern.submissionTypes.includes(input.submissionType)) {
-        // Check if adversarial data supports this pattern
-        let adjustedConfidence = pattern.confidence;
-        const objections = await this.searchAdversarialPrecedents(
-          {
-            ...input,
-            query: pattern.category,
-          },
-          5
-        );
-
-        if (objections.length > 0) {
-          adjustedConfidence = Math.min(adjustedConfidence + 0.05 * objections.length, 0.99);
-        }
-
-        triggers.push({
-          evidenceBasis: pattern.evidenceBasis,
-          category: pattern.category,
-          description: pattern.description,
-          severity: pattern.severity,
-          confidence: Math.round(adjustedConfidence * 100) / 100,
-          mitigation: pattern.mitigation,
-          historicalRate: pattern.historicalRate,
-          supportingObjections: objections.slice(0, 3).map(o => o.question),
-        });
-      }
+      if (!pattern.submissionTypes.includes(input.submissionType)) continue;
+      const objections = await this.searchAdversarialPrecedents({ ...input, query: pattern.category }, 5);
+      triggers.push({
+        evidenceBasis: pattern.evidenceBasis,
+        category: pattern.category,
+        description: pattern.description,
+        severity: pattern.severity,
+        mitigation: pattern.mitigation,
+        supportingObjections: objections.slice(0, 3).map(o => o.question),
+      });
     }
 
-    // Sort by severity then confidence
+    // Grouped by curated severity; the curated order within each.
     const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    triggers.sort(
-      (a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.confidence - a.confidence
-    );
-
-    const overallCRLRisk =
-      triggers.filter(t => t.severity === 'critical').length >= 2
-        ? 'high'
-        : triggers.filter(t => t.severity === 'critical').length >= 1
-          ? 'medium'
-          : 'low';
+    triggers.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
     return {
       submissionType: input.submissionType,
-      overallCRLRisk,
       triggers,
       totalPatterns: triggers.length,
       criticalCount: triggers.filter(t => t.severity === 'critical').length,
@@ -1646,42 +1699,36 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'Missing or Incomplete Module 3 (CMC)',
-        frequency: 0.35,
         severity: 'critical',
         description: 'CMC deficiencies are the #1 cause of RTF actions across NDA/BLA/ANDA',
       },
       {
         evidenceBasis: 'curated',
         trigger: 'Absent Pivotal Study CSR',
-        frequency: 0.22,
         severity: 'critical',
         description: 'Pivotal clinical study report not included or grossly incomplete',
       },
       {
         evidenceBasis: 'curated',
         trigger: 'Non-CDISC Datasets',
-        frequency: 0.18,
         severity: 'high',
         description: 'Clinical datasets not submitted in SDTM/ADaM format per FDA binding guidance',
       },
       {
         evidenceBasis: 'curated',
         trigger: 'Incomplete Labeling Package',
-        frequency: 0.12,
         severity: 'high',
         description: 'Draft prescribing information not provided or inconsistent with data',
       },
       {
         evidenceBasis: 'curated',
         trigger: 'Missing Environmental Assessment',
-        frequency: 0.08,
         severity: 'medium',
         description: 'Neither EA nor categorical exclusion provided',
       },
       {
         evidenceBasis: 'curated',
         trigger: 'Incorrect Patent Certifications',
-        frequency: 0.15,
         severity: 'high',
         description:
           'Para IV certification without required notification or incorrect patent listing (ANDA)',
@@ -1689,7 +1736,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'Missing Pre-submission Meeting Minutes',
-        frequency: 0.06,
         severity: 'medium',
         description: 'No reference to Type A/B/C meeting agreements in cover letter',
       },
@@ -1730,8 +1776,6 @@ export class PrecedentEngine {
         pattern:
           'The primary endpoint {endpoint} has not been validated in {therapeutic_area}. Justify the clinical relevance.',
         therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular', 'Immunology', 'Rare Disease'],
-        frequency: 0.45,
-        confidence: 0.88,
       },
       {
         phase: 'Day 120',
@@ -1740,8 +1784,6 @@ export class PrecedentEngine {
         pattern:
           'The chosen comparator ({comparator}) does not represent current standard of care in the EU.',
         therapeuticAreas: ['Oncology', 'Cardiovascular', 'Immunology'],
-        frequency: 0.38,
-        confidence: 0.85,
       },
       {
         phase: 'Day 120',
@@ -1750,8 +1792,6 @@ export class PrecedentEngine {
         pattern:
           'Long-term safety data beyond {duration} months is insufficient for a chronic condition.',
         therapeuticAreas: ['CNS', 'Cardiovascular', 'Metabolic', 'Immunology'],
-        frequency: 0.32,
-        confidence: 0.82,
       },
       {
         phase: 'Day 120',
@@ -1760,8 +1800,6 @@ export class PrecedentEngine {
         pattern:
           'Process validation at commercial scale has not been demonstrated. Provide PPQ data.',
         therapeuticAreas: ['all'],
-        frequency: 0.28,
-        confidence: 0.9,
       },
       {
         phase: 'Day 120',
@@ -1770,8 +1808,6 @@ export class PrecedentEngine {
         pattern:
           'The DDI potential with {interacting_drug_class} has not been adequately characterized.',
         therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular'],
-        frequency: 0.25,
-        confidence: 0.8,
       },
       // Day 180 (List of Outstanding Issues)
       {
@@ -1780,8 +1816,6 @@ export class PrecedentEngine {
         severity: 'major_objection',
         pattern: 'The benefit-risk balance in {subpopulation} has not been established.',
         therapeuticAreas: ['Oncology', 'Rare Disease', 'Pediatrics'],
-        frequency: 0.3,
-        confidence: 0.86,
       },
       {
         phase: 'Day 180',
@@ -1790,8 +1824,6 @@ export class PrecedentEngine {
         pattern:
           'The Risk Management Plan requires additional risk minimisation measures for {risk}.',
         therapeuticAreas: ['all'],
-        frequency: 0.22,
-        confidence: 0.84,
       },
       {
         phase: 'Day 180',
@@ -1799,8 +1831,6 @@ export class PrecedentEngine {
         severity: 'other_concern',
         pattern: 'Section 4.{section} of the SmPC is not aligned with the clinical data presented.',
         therapeuticAreas: ['all'],
-        frequency: 0.2,
-        confidence: 0.82,
       },
       {
         phase: 'Day 180',
@@ -1809,8 +1839,6 @@ export class PrecedentEngine {
         pattern:
           'GMP compliance at {site} has not been confirmed. Provide GMP certificate or schedule inspection.',
         therapeuticAreas: ['all'],
-        frequency: 0.15,
-        confidence: 0.92,
       },
       {
         phase: 'Day 180',
@@ -1819,8 +1847,6 @@ export class PrecedentEngine {
         pattern:
           'If conditional MA is sought, the applicant must commit to {study_type} with results by {date}.',
         therapeuticAreas: ['Oncology', 'Rare Disease', 'Infectious Disease'],
-        frequency: 0.18,
-        confidence: 0.8,
       },
     ];
 
@@ -1836,6 +1862,10 @@ export class PrecedentEngine {
 
     return {
       submissionType: input.submissionType,
+      // Curated question patterns. Each carried a frequency (0.45 ...) and a
+      // confidence (0.88 ...) with no cited source; neither is served
+      // (2026-10-15).
+      evidenceBasis: 'curated',
       therapeuticArea: input.therapeuticArea || 'General',
       day120Questions: day120,
       day180Questions: day180,
@@ -1860,7 +1890,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'First-in-class mechanism of action',
-        probability: 0.85,
         severity: 'high',
         description: 'Novel MOA with limited clinical experience increases AdCom likelihood',
         submissionTypes: ['NDA', 'BLA'],
@@ -1869,7 +1898,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'Accelerated Approval with surrogate endpoint',
-        probability: 0.75,
         severity: 'high',
         description: 'Surrogate endpoint-based approvals frequently reviewed by AdCom',
         submissionTypes: ['NDA', 'BLA'],
@@ -1878,7 +1906,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'Significant safety signal in pivotal trial',
-        probability: 0.8,
         severity: 'critical',
         description: 'Identified safety concern that affects benefit-risk assessment',
         submissionTypes: ['NDA', 'BLA', 'PMA'],
@@ -1887,7 +1914,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'Pediatric indication with extrapolated efficacy',
-        probability: 0.65,
         severity: 'medium',
         description: 'Efficacy extrapolation from adult data without dedicated pediatric trial',
         submissionTypes: ['NDA', 'BLA'],
@@ -1896,7 +1922,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'REMS with ETASU elements',
-        probability: 0.6,
         severity: 'medium',
         description: 'REMS involving elements to assure safe use (restricted distribution, etc.)',
         submissionTypes: ['NDA', 'BLA'],
@@ -1905,7 +1930,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'Controversial benefit-risk profile',
-        probability: 0.7,
         severity: 'high',
         description: 'Marginal efficacy with notable side effect burden',
         submissionTypes: ['NDA', 'BLA', 'PMA'],
@@ -1914,7 +1938,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'Novel device with no predicate (De Novo)',
-        probability: 0.55,
         severity: 'medium',
         description: 'First-of-kind device classification requires panel review',
         submissionTypes: ['De Novo', 'PMA'],
@@ -1923,7 +1946,6 @@ export class PrecedentEngine {
       {
         evidenceBasis: 'curated',
         trigger: 'PMA with novel AI/ML algorithm',
-        probability: 0.7,
         severity: 'high',
         description: 'AI/ML-based SaMD requiring clinical validation and algorithmic transparency',
         submissionTypes: ['PMA', 'De Novo', '510(k)'],
@@ -1938,28 +1960,14 @@ export class PrecedentEngine {
       return t.therapeuticAreas.includes(input.therapeuticArea);
     });
 
-    const overallAdcomRisk =
-      matched.filter(t => t.probability >= 0.7).length >= 2
-        ? 'high'
-        : matched.filter(t => t.probability >= 0.6).length >= 1
-          ? 'medium'
-          : 'low';
-
-    // Historical AdCom voting patterns
-    const votingInsights = [
-      'Unanimous favorable votes correlate with well-characterized safety profiles and clear endpoints',
-      'Split votes (e.g., 8-4) often occur when surrogate endpoint validity is questioned',
-      'AdCom panels frequently request post-marketing confirmatory studies even with favorable votes',
-      'Pre-meeting briefing documents are publicly available 1-2 days before — prepare for media scrutiny',
-    ];
-
+    /* The curated triggers that apply (2026-10-15). Each carried a
+       probability (0.85 ...) with no cited source; an overall risk was derived
+       from those; and four "historical voting patterns" were uncited
+       generalisations served as findings. None is served. */
     return {
       submissionType: input.submissionType,
-      overallAdcomRisk,
       triggers: matched,
       totalTriggers: matched.length,
-      highProbabilityTriggers: matched.filter(t => t.probability >= 0.7).length,
-      votingInsights,
     };
   }
 }
@@ -1978,10 +1986,8 @@ interface CRLPattern {
   category: string;
   submissionTypes: string[];
   severity: 'low' | 'medium' | 'high' | 'critical';
-  confidence: number;
   description: string;
   mitigation: string;
-  historicalRate: number;
 }
 
 export interface CRLTrigger {
@@ -1996,15 +2002,13 @@ export interface CRLTrigger {
   category: string;
   description: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  confidence: number;
   mitigation: string;
-  historicalRate: number;
+  /** Objections the precedent search found for this category. */
   supportingObjections: string[];
 }
 
 export interface CRLTriggerResult {
   submissionType: string;
-  overallCRLRisk: 'low' | 'medium' | 'high';
   triggers: CRLTrigger[];
   totalPatterns: number;
   criticalCount: number;
@@ -2028,7 +2032,6 @@ interface RTFTriggerPattern {
    */
   evidenceBasis: 'curated' | 'cited';
   trigger: string;
-  frequency: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
 }
@@ -2047,12 +2050,11 @@ export interface EMAQuestionPattern {
   severity: 'major_objection' | 'other_concern';
   pattern: string;
   therapeuticAreas: string[];
-  frequency: number;
-  confidence: number;
 }
 
 export interface EMAPatternResult {
   submissionType: string;
+  evidenceBasis: 'curated';
   therapeuticArea: string;
   day120Questions: EMAQuestionPattern[];
   day180Questions: EMAQuestionPattern[];
@@ -2070,7 +2072,6 @@ export interface AdvisoryCommitteeTrigger {
    */
   evidenceBasis: 'curated' | 'cited';
   trigger: string;
-  probability: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   submissionTypes: string[];
@@ -2079,11 +2080,8 @@ export interface AdvisoryCommitteeTrigger {
 
 export interface AdvisoryCommitteeResult {
   submissionType: string;
-  overallAdcomRisk: 'low' | 'medium' | 'high';
   triggers: AdvisoryCommitteeTrigger[];
   totalTriggers: number;
-  highProbabilityTriggers: number;
-  votingInsights: string[];
 }
 
 // Singleton instance

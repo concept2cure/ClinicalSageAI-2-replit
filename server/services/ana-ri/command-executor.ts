@@ -3785,23 +3785,46 @@ export async function searchPrecedents(
   }
 }
 
-/** Analyze CRL (Complete Response Letter) trigger risks */
+/**
+ * The submission type a precedent checklist is for. Both commands defaulted
+ * it to 'NDA', so a question about a 510(k) was answered with the NDA list.
+ */
+function checklistSubmissionType(action: string, params: Record<string, unknown>): string | CommandResult {
+  const type = typeof params.submissionType === 'string' ? params.submissionType.trim() : '';
+  if (type) return type;
+  return {
+    success: false,
+    action,
+    message: 'Which submission type? The trigger categories differ by application type (NDA, BLA, ANDA, 505(b)(2), 510(k), PMA, De Novo).',
+    error: 'submissionType is required',
+  };
+}
+
+/** The curated CRL (Complete Response Letter) trigger checklist for a submission type */
 export async function analyzeCRLTriggers(
   ctx: CommandContext,
   params: Record<string, unknown>
 ): Promise<CommandResult> {
+  const submissionType = checklistSubmissionType('analyze_crl_triggers', params);
+  if (typeof submissionType !== 'string') return submissionType;
   try {
     const result = await precedentEngine.analyzeCRLTriggers({
-      submissionType: String(params.submissionType || 'NDA'),
+      submissionType,
       indication: params.indication as string | undefined,
       therapeuticArea: params.therapeuticArea as string | undefined,
       query: params.query as string | undefined,
     });
+    /* It said "Identified risk factors based on regulatory precedents" over
+       uncited rates and an overall risk set by the submission type alone
+       (precedent-engine.ts, 2026-10-15). */
     return {
       success: true,
       action: 'analyze_crl_triggers',
       data: { analysis: result },
-      message: `CRL trigger analysis complete. Identified risk factors based on regulatory precedents.`,
+      message:
+        `Curated CRL trigger checklist for ${result.submissionType}: ${result.totalPatterns} categories, ` +
+        `${result.criticalCount} curated as critical. This is a checklist, not an assessment of this ` +
+        `submission: no historical rate or overall CRL risk is given, because none has a cited source.`,
     };
   } catch (err: unknown) {
     return {
@@ -3813,14 +3836,16 @@ export async function analyzeCRLTriggers(
   }
 }
 
-/** Analyze RTF (Refuse to File) trigger risks */
+/** The curated RTF (Refuse to File) checklist and trigger categories for a submission type */
 export async function analyzeRTFTriggers(
   ctx: CommandContext,
   params: Record<string, unknown>
 ): Promise<CommandResult> {
+  const submissionType = checklistSubmissionType('analyze_rtf_triggers', params);
+  if (typeof submissionType !== 'string') return submissionType;
   try {
     const result = await precedentEngine.analyzeRTFTriggers({
-      submissionType: String(params.submissionType || 'NDA'),
+      submissionType,
       indication: params.indication as string | undefined,
       therapeuticArea: params.therapeuticArea as string | undefined,
       query: params.query as string | undefined,
@@ -3829,7 +3854,10 @@ export async function analyzeRTFTriggers(
       success: true,
       action: 'analyze_rtf_triggers',
       data: { analysis: result },
-      message: `RTF trigger analysis complete. Identified filing risk factors.`,
+      message:
+        `Curated RTF checklist for ${result.submissionType}: ${result.totalChecklistItems} items ` +
+        `(${result.requiredItems} required) and ${result.triggers.length} trigger categories. ` +
+        `This is a checklist, not an assessment of this dossier: no frequency is given, because none has a cited source.`,
     };
   } catch (err: unknown) {
     return {
@@ -3857,7 +3885,10 @@ export async function recommendStrategy(
       success: true,
       action: 'recommend_strategy',
       data: { strategy: result },
-      message: `Strategy recommendation generated based on regulatory precedent analysis.`,
+      message:
+        result.basis === 'no-precedents'
+          ? 'No approved precedent that records a strategy matched, so no strategy is recommended.'
+          : `Recommended "${result.recommendedStrategy}", the strategy most used by the ${result.supportingPrecedents.length} approved precedent(s) matched.`,
     };
   } catch (err: unknown) {
     return {
@@ -5002,14 +5033,14 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   {
     name: 'analyze_crl_triggers',
     description:
-      'Analyze Complete Response Letter (CRL) trigger risks based on regulatory precedents',
-    parameters: 'submissionType?, indication?, therapeuticArea?, query?',
+      'The curated checklist of Complete Response Letter (CRL) trigger categories for a submission type, with objections the precedent search found. Not an assessment of the submission: no rate or overall risk.',
+    parameters: 'submissionType, indication?, therapeuticArea?, query?',
     example: '"What CRL risks does our NDA face?"',
   },
   {
     name: 'analyze_rtf_triggers',
-    description: 'Analyze Refuse to File (RTF) trigger risks',
-    parameters: 'submissionType?, indication?, therapeuticArea?, query?',
+    description: 'The curated Refuse to File (RTF) checklist and trigger categories for a submission type. Not an assessment of the dossier: no frequency.',
+    parameters: 'submissionType, indication?, therapeuticArea?, query?',
     example: '"Check RTF risks for our submission"',
   },
   {
