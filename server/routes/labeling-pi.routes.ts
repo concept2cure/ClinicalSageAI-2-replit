@@ -144,6 +144,9 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   const userId = getUserId(req);
+  if (userId === null) {
+    return res.status(401).json({ error: { code: 'USER_REQUIRED', message: 'A signed-in user is required to record a label section.' } });
+  }
   const b = (req.body ?? {}) as Record<string, unknown>;
   try {
     const row = await upsertLabelingPiSection(orgId, {
@@ -196,6 +199,9 @@ router.post('/:sectionNo/accept-agency-text', async (req: Request, res: Response
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   const userId = getUserId(req);
+  if (userId === null) {
+    return res.status(401).json({ error: { code: 'USER_REQUIRED', message: 'A signed-in user is required to accept agency-proposed label text.' } });
+  }
   const b = (req.body ?? {}) as Record<string, unknown>;
   const reason = typeof b.reasonForChange === 'string' ? b.reasonForChange.trim() : '';
   if (reason.length < 8) {
