@@ -34,11 +34,11 @@ export const START_LEGACY_IMPORT: AnaTool = {
   },
 };
 
-// 2026-10-15: said mapping_source='manual'; the handler stores 'ana' ('manual' is the REST PATCH's).
+// 2026-10-15: said mapping_source='manual' (the handler stores 'ana'; 'manual' is the REST PATCH's) and mapping_confidence=1.00, which a person's placement is not.
 export const OVERRIDE_IMPORT_MAPPING: AnaTool = {
   name: 'override_import_mapping',
   description:
-    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='ana' and mapping_confidence=1.00.",
+    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='ana' and stores no mapping confidence: a confirmed or corrected placement is a person's decision, not a measurement. Name at least one field to change.",
   input_schema: {
     type: 'object',
     properties: {

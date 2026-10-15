@@ -15191,9 +15191,12 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
   const source = workspacePathOrRefusal(input.source_path, 'source_path', ctx.organizationId);
   if (!source.ok) return source.refusal;
   const sourcePath = source.path;
+  let createdJobId: number | null = null;
   try {
     const { getPool } = await import('../../db.js');
     const { detectArchive } = await import('../legacy-importer/detector.js');
+    // Loaded before the job row exists, so a failure after it can still mark the job.
+    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     const programId = typeof input.program_id === 'string' && UUID_RE.test(input.program_id)
       ? input.program_id : null;
 
@@ -15212,6 +15215,7 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       ],
     );
     const jobId = jobInsert.rows[0].id;
+    createdJobId = jobId;
 
     /* Run detection. */
     const detected = await detectArchive(sourcePath);
@@ -15220,7 +15224,6 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
        derived status from mappingConfidence >= 0.5, so a filename suggestion was
        stored 'pending' at mapping_confidence 0.00 with no rule id; it also never
        set the job's skipped_count. */
-    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     for (const f of detected.files) {
       await getPool().query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, ctx.organizationId, f));
     }
@@ -15269,8 +15272,13 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
         'Review then call approve_import.',
     });
   } catch (err) {
+    /* 2026-10-15: a failure after the job row existed left it at 'detecting', which
+       reads as an import still running; it is marked 'failed' through the REST route's write. */
+    const jobMarkedFailed = createdJobId !== null
+      && await (await import('../../routes/mdx-imports.js')).markImportJobFailed(createdJobId, err);
     return JSON.stringify({
       error: `start_legacy_import failed: ${err instanceof Error ? err.message : String(err)}`,
+      ...(createdJobId !== null ? { jobId: createdJobId, jobMarkedFailed } : {}),
     });
   }
 });
@@ -15294,8 +15302,11 @@ registerToolHandler('override_import_mapping', async (input, ctx) => {
     const col = COL[k]; if (!col || v === undefined) continue;
     args.push(v); setFrags.push(`${col} = $${args.length}`);
   }
-  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = 1.00`);
   if (setFrags.length === 0) return JSON.stringify({ error: 'No fields to update.' });
+  // A placement confirmed through AnA is a decision, not a measurement: no confidence.
+  // 2026-10-15: stored mapping_confidence = 1.00 on every override, 'skipped' too, and
+  // checked for no fields after adding these, so an empty override re-labelled the row 'ana'.
+  setFrags.push(`mapping_source = 'ana'`, `mapping_confidence = NULL`);
   args.push(fileId, jobId, ctx.organizationId);
   try {
     const { getPool } = await import('../../db.js');
