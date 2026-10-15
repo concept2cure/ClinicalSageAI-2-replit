@@ -24,9 +24,12 @@ export interface TableHealth {
   name: string;
   /** Logical role this table plays in the MDX surfaces. */
   role: string;
-  /** True when the table exists and is selectable. */
-  exists: boolean;
-  /** Row count when present, null when the table is missing. */
+  /** True when the table exists, false when it does not; null when the
+   *  probe itself failed, so whether it exists is not known. A failed probe
+   *  reported "not provisioned" until 2026-10-15. */
+  exists: boolean | null;
+  /** Row count when counted; null when the table is missing or could not
+   *  be probed or counted. */
   rowCount: number | null;
   /** True when this table is required for the module's core function;
    *  false when its absence degrades a panel but doesn't block beta. */
@@ -45,11 +48,13 @@ export interface ShadowServiceHealth {
 
 export interface PathwayCoverage {
   pathway: RegulatoryPathway;
-  /** True when at least one program in any org uses this pathway —
-   *  signal to ops that the seed is broad enough for paying-client
-   *  demos. */
-  hasPrograms: boolean;
-  programCount: number;
+  /** Whether any program in the deployment uses this pathway; null when
+   *  the count could not be read. A pathway no program uses is a fact, not
+   *  a defect: this was framed as a check that "the seed is broad enough
+   *  for paying-client demos", and its warning told ops to seed invented
+   *  programs and Q-Submissions (2026-10-15). */
+  hasPrograms: boolean | null;
+  programCount: number | null;
 }
 
 export type ReadinessLevel = 'ready' | 'partial' | 'not_ready';
@@ -224,15 +229,14 @@ async function probeTable(
       return { name, role, exists: true, rowCount: null, required };
     }
   } catch {
-    return { name, role, exists: false, rowCount: null, required };
+    // The probe failed: whether the table exists is not known.
+    return { name, role, exists: null, rowCount: null, required };
   }
 }
 
 /**
- * Probe pathway coverage across the entire database. Reports whether
- * each pathway (k510 / pma / cer) has at least one program — the
- * kit's pathway tabs need this so a paying-client demo can navigate
- * each tab and see real data.
+ * Count programs per pathway across the entire database (deployment-wide,
+ * DP-40). A count that could not be read is null, never zero.
  */
 async function probePathwayCoverage(): Promise<PathwayCoverage[]> {
   try {
@@ -264,8 +268,36 @@ async function probePathwayCoverage(): Promise<PathwayCoverage[]> {
       programCount: counts.get(p) ?? 0,
     }));
   } catch {
-    return REGULATORY_PATHWAYS.map((p) => ({ pathway: p, hasPrograms: false, programCount: 0 }));
+    return REGULATORY_PATHWAYS.map((p) => ({ pathway: p, hasPrograms: null, programCount: null }));
   }
+}
+
+/**
+ * What the table and pathway probes found, as warnings, and the two facts the
+ * schema verdict rests on. A table whose probe failed is neither present nor
+ * missing: it is reported as not known.
+ */
+function tableWarnings(tables: TableHealth[], pathwayCoverage: PathwayCoverage[]) {
+  const warnings: string[] = [];
+  const missingRequired = tables.filter((t) => t.required && t.exists === false);
+  for (const t of missingRequired) {
+    warnings.push(
+      `Required table ${t.name} is not provisioned — apply the relevant migration. Affects: ${t.role}.`,
+    );
+  }
+  for (const t of tables.filter((x) => !x.required && x.exists === false)) {
+    warnings.push(
+      `Optional table ${t.name} is not provisioned — ${t.role} will render the empty-state copy until provisioned.`,
+    );
+  }
+  const unprobed = tables.filter((t) => t.exists === null);
+  for (const t of unprobed) {
+    warnings.push(`Table ${t.name} could not be probed — whether it is provisioned is not known. Affects: ${t.role}.`);
+  }
+  if (pathwayCoverage.some((p) => p.programCount === null)) {
+    warnings.push('Pathway coverage could not be read — the number of programs per pathway is not known.');
+  }
+  return { warnings, missingRequired, requiredUnprobed: unprobed.some((t) => t.required) };
 }
 
 /** Run the full health probe. Returns a single shaped report. */
@@ -282,28 +314,7 @@ export async function probeMdxHealth(): Promise<MdxHealthReport> {
   }));
 
   /* Compose readiness + warnings. */
-  const warnings: string[] = [];
-
-  const missingRequired = tables.filter((t) => t.required && !t.exists);
-  for (const t of missingRequired) {
-    warnings.push(
-      `Required table ${t.name} is not provisioned — apply the relevant migration. Affects: ${t.role}.`,
-    );
-  }
-
-  const missingOptional = tables.filter((t) => !t.required && !t.exists);
-  for (const t of missingOptional) {
-    warnings.push(
-      `Optional table ${t.name} is not provisioned — ${t.role} will render the empty-state copy until provisioned.`,
-    );
-  }
-
-  const emptyPathways = pathwayCoverage.filter((p) => !p.hasPrograms);
-  for (const p of emptyPathways) {
-    warnings.push(
-      `No programs found for pathway '${p.pathway}' — run scripts/seed-mdx-beta.mjs to seed all pathways before paying-client demo.`,
-    );
-  }
+  const { warnings, missingRequired, requiredUnprobed } = tableWarnings(tables, pathwayCoverage);
 
   const unconfiguredShadows = shadowServices.filter((s) => !s.configured);
   for (const s of unconfiguredShadows) {
@@ -312,14 +323,16 @@ export async function probeMdxHealth(): Promise<MdxHealthReport> {
     );
   }
 
-  const requiredTablesPresent = missingRequired.length === 0;
+  const requiredTablesPresent = missingRequired.length === 0 && !requiredUnprobed;
   const schema: MdxHealthReport['schema'] = {
-    status: requiredTablesPresent ? 'pass' : 'fail',
+    status: missingRequired.length > 0 ? 'fail' : requiredUnprobed ? 'unverified' : 'pass',
     requiredTablesPresent,
     tables,
   };
   const dependencies: MdxHealthReport['dependencies'] = {
-    database: { status: requiredTablesPresent ? 'pass' : 'fail', detail: 'Required-table queries completed during this probe.' },
+    database: requiredUnprobed
+      ? { status: 'fail', detail: 'A required-table query failed during this probe.' }
+      : { status: requiredTablesPresent ? 'pass' : 'fail', detail: 'Required-table queries completed during this probe.' },
     objectStorage: { status: 'unverified', detail: 'Configuration is not an availability or read/write qualification.' },
     predicateService: {
       status: shadowServices.find((service) => service.name === 'predicate-intelligence')?.configured ? 'unverified' : 'fail',

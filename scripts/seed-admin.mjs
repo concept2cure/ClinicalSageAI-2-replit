@@ -5,6 +5,7 @@
 // Uses DATABASE_URL / DATABASE_NEON_NEW_SECRET env var (falls back to local).
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
+import { isLocalDatabase } from './seed/local-only.mjs';
 
 const { Pool } = pg;
 
@@ -37,10 +38,14 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'jm.smith@concept2cure.pro';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'pass-word';
 const ADMIN_NAME = process.env.ADMIN_NAME || 'JM Smith';
 
-if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
+/* The built-in password, reset on every run, is for a database on this
+   machine only. NODE_ENV alone let a UAT or customer database through
+   (2026-10-15). With ADMIN_PASSWORD set this provisions an administrator
+   anywhere — the compose stack documents it for that. */
+if (!process.env.ADMIN_PASSWORD && (process.env.NODE_ENV === 'production' || !isLocalDatabase(dbUrl))) {
   console.error(
-    'seed-admin: refusing to run in production without an explicit ADMIN_PASSWORD. ' +
-      'The built-in default is a development convenience, not a credential.',
+    'seed-admin: refusing the built-in default password for a database that is not on this machine, ' +
+      'or in production. Set ADMIN_PASSWORD. The default is a development convenience, not a credential.',
   );
   process.exit(1);
 }
