@@ -21,6 +21,9 @@
 import { PLR_FORMAT_RULES } from '../ind/ctd/fda-technical-rules.js';
 import { SMPC_QRD_SECTIONS } from './smpc-qrd-catalog';
 import { ComputationRefusal } from '../ana-biostats/computation-engine';
+import { ETASU_ELEMENTS, EXISTING_REMS_MODELS, type ETASUDetail, type ExistingREMSModel, type REMSElement } from './rems-reference';
+
+export type { ETASUDetail, ExistingREMSModel, REMSElement } from './rems-reference';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Types
@@ -30,11 +33,12 @@ export type ProductType = 'prescription_drug' | 'biological' | 'biosimilar' | 'g
 export type ApplicationType = 'NDA' | 'BLA' | 'ANDA' | 'supplement';
 export const OTC_CATEGORIES = ['analgesic', 'antacid', 'antihistamine', 'antidiarrheal', 'laxative', 'cough_cold', 'topical_antibiotic', 'topical_antifungal', 'sunscreen', 'antiperspirant', 'acne', 'other'] as const;
 export type OTCCategory = (typeof OTC_CATEGORIES)[number];
-export type REMSElement = 'medication_guide' | 'communication_plan' | 'etasu' | 'implementation_system';
 export const SAFETY_SIGNAL_TYPES = ['cardiovascular', 'hepatotoxicity', 'suicidality', 'infection', 'malignancy', 'teratogenicity', 'cytokine_release', 'pml', 'anaphylaxis', 'gi_perforation', 'bleeding', 'nephrotoxicity', 'other'] as const;
 export type SafetySignalType = (typeof SAFETY_SIGNAL_TYPES)[number];
-export type SmPCProcedure = 'centralized' | 'mutual_recognition' | 'decentralized' | 'national';
-export type SmPCProductType = 'medicinal_product' | 'herbal' | 'homeopathic';
+const SMPC_PROCEDURES = ['centralized', 'mutual_recognition', 'decentralized', 'national'] as const;
+export type SmPCProcedure = (typeof SMPC_PROCEDURES)[number];
+const SMPC_PRODUCT_TYPES = ['medicinal_product', 'herbal', 'homeopathic'] as const;
+export type SmPCProductType = (typeof SMPC_PRODUCT_TYPES)[number];
 
 export interface Citation {
   guideline: string;
@@ -163,12 +167,15 @@ export interface AssessBoxedWarningInput {
   severity: (typeof BOXED_WARNING_SEVERITIES)[number];
   clinicalEvidenceLevel: 'controlled_trials' | 'observational' | 'postmarketing' | 'case_reports';
   riskMitigationAvailable: boolean;
+  /** FDA approved (or is to approve) the drug with restrictions on distribution or use; decides criterion (iii). */
+  approvedWithRestrictions?: boolean;
   classWide: boolean;
   productSpecific: boolean;
 }
 
 export interface AssessBoxedWarningResult {
-  meetsBoxedWarningCriteria: boolean;
+  /** null when no criterion is met and one that could be was not assessed (its deciding input unstated). */
+  meetsBoxedWarningCriteria: boolean | null;
   criteriaAssessment: BoxedWarningCriterion[];
   formatRequirements: BoxedWarningFormatRequirements;
   commonCategories: BoxedWarningCategory[];
@@ -194,20 +201,6 @@ export interface REMSAssessmentSchedule {
   sunsetProvision: string;
 }
 
-export interface ExistingREMSModel {
-  programName: string;
-  drugNames: string[];
-  elements: REMSElement[];
-  keyFeatures: string[];
-  yearEstablished: number;
-}
-
-export interface ETASUDetail {
-  subElement: string;
-  description: string;
-  examples: string[];
-}
-
 const REMS_RISK_SEVERITIES = ['high', 'moderate', 'significant'] as const;
 
 export interface DesignREMSInput {
@@ -221,6 +214,10 @@ export interface DesignREMSInput {
 }
 
 export interface DesignREMSResult {
+  /** The risk as described (identifiedRisk); null when it was not stated. */
+  identifiedRisk: string | null;
+  /** Stated inputs the elements were not chosen from: they follow from safetySignalType and riskSeverity only. */
+  inputsNotUsed: string[];
   recommendedElements: REMSElementDescriptor[];
   elementHierarchy: string[];
   assessmentSchedule: REMSAssessmentSchedule;
@@ -845,127 +842,6 @@ const BOXED_WARNING_CATEGORIES: BoxedWarningCategory[] = [
   },
 ];
 
-/** REMS Existing Program Models */
-const EXISTING_REMS_MODELS: ExistingREMSModel[] = [
-  {
-    programName: 'iPLEDGE',
-    drugNames: ['isotretinoin (Accutane, Absorica, Amnesteem, Claravis, Myorisan, Zenatane)'],
-    elements: ['medication_guide', 'etasu', 'implementation_system'],
-    keyFeatures: [
-      'Prescriber certification and enrollment',
-      'Pharmacy certification and enrollment',
-      'Patient enrollment and informed consent',
-      'Pregnancy testing protocol: two negative tests before starting, monthly tests during treatment',
-      'Two forms of contraception required for females of reproductive potential',
-      'Dispensing limited to 30-day supply with 7-day window',
-      'Central electronic system (iPLEDGE website) linking prescribers, pharmacies, and patients',
-    ],
-    yearEstablished: 2006,
-  },
-  {
-    programName: 'TIRF REMS Access Program',
-    drugNames: ['fentanyl (Actiq, Fentora, Abstral, Lazanda, Subsys, transmucosal immediate-release fentanyl products)'],
-    elements: ['medication_guide', 'communication_plan', 'etasu', 'implementation_system'],
-    keyFeatures: [
-      'Shared system REMS — covers all TIRF products under one program',
-      'Prescriber enrollment and knowledge assessment',
-      'Pharmacy enrollment and knowledge assessment',
-      'Patient-prescriber agreement form',
-      'Restricted to opioid-tolerant patients with breakthrough cancer pain',
-      'Inpatient and outpatient dispensing requirements differ',
-    ],
-    yearEstablished: 2012,
-  },
-  {
-    programName: 'Clozapine REMS Program',
-    drugNames: ['clozapine (Clozaril, FazaClo, Versacloz, generic clozapine)'],
-    elements: ['medication_guide', 'etasu', 'implementation_system'],
-    keyFeatures: [
-      'Mandatory ANC monitoring at specified intervals',
-      'Prescriber, pharmacy, and patient enrollment in central registry',
-      'ANC results must be entered before dispensing',
-      'Monitoring schedule varies by patient baseline ANC and BEN status',
-      'General population: weekly ANC x 6 months, biweekly x 6 months, then monthly',
-      'Benign Ethnic Neutropenia (BEN) patients: modified ANC thresholds',
-    ],
-    yearEstablished: 2015,
-  },
-  {
-    programName: 'Mifepristone REMS (Mifeprex)',
-    drugNames: ['mifepristone (Mifeprex)'],
-    elements: ['etasu', 'implementation_system'],
-    keyFeatures: [
-      'Must be dispensed in healthcare settings (clinics, medical offices, hospitals)',
-      'Prescriber must be certified',
-      'Patient must sign Patient Agreement Form',
-      'Not dispensed through retail pharmacies (as of original REMS — subsequently modified)',
-      'Follow-up assessment to confirm complete termination of pregnancy',
-    ],
-    yearEstablished: 2011,
-  },
-  {
-    programName: 'Addyi REMS Program',
-    drugNames: ['flibanserin (Addyi)'],
-    elements: ['communication_plan', 'etasu'],
-    keyFeatures: [
-      'Prescriber certification required — must counsel on risks of hypotension and syncope with alcohol',
-      'Pharmacy certification required',
-      'Patients must be counseled about interaction with alcohol',
-      'Limited distribution through certified pharmacies',
-    ],
-    yearEstablished: 2015,
-  },
-  {
-    programName: 'Thalomid/Revlimid/Pomalyst REMS',
-    drugNames: ['thalidomide (Thalomid)', 'lenalidomide (Revlimid)', 'pomalidomide (Pomalyst)'],
-    elements: ['medication_guide', 'communication_plan', 'etasu', 'implementation_system'],
-    keyFeatures: [
-      'Prescriber enrollment and agreement to comply with REMS requirements',
-      'Patient enrollment — females of reproductive potential have additional requirements',
-      'Pregnancy testing protocol similar to iPLEDGE',
-      'Two forms of contraception required for females of reproductive potential',
-      'Counseling on venous thromboembolism risk (lenalidomide, pomalidomide)',
-      'Monthly surveys for prescribers regarding patient compliance',
-      'Limited dispensing: maximum 28-day supply, no telephone prescriptions, no automatic refills',
-    ],
-    yearEstablished: 2005,
-  },
-];
-
-/** ETASU Sub-Elements */
-const ETASU_ELEMENTS: ETASUDetail[] = [
-  {
-    subElement: 'Prescriber Certification/Enrollment',
-    description: 'Healthcare providers must be specially certified or enrolled in the REMS program before prescribing the drug. May require passing a knowledge assessment or completing training.',
-    examples: ['iPLEDGE prescriber enrollment', 'Clozapine REMS prescriber certification', 'TIRF REMS prescriber knowledge assessment'],
-  },
-  {
-    subElement: 'Pharmacy Certification/Enrollment',
-    description: 'Pharmacies must be certified or enrolled in the REMS program. May require designated pharmacist training, specific dispensing procedures, or infrastructure requirements.',
-    examples: ['iPLEDGE pharmacy enrollment', 'TIRF REMS pharmacy enrollment and knowledge assessment', 'Clozapine REMS pharmacy certification'],
-  },
-  {
-    subElement: 'Patient Enrollment',
-    description: 'Patients must be enrolled in the program, often requiring signed acknowledgment forms, informed consent, and agreement to comply with monitoring requirements.',
-    examples: ['iPLEDGE patient registration and qualification', 'Clozapine patient enrollment', 'Thalomid REMS patient survey'],
-  },
-  {
-    subElement: 'Safe Use Conditions',
-    description: 'Specific clinical conditions that must be verified before or during prescribing, such as laboratory tests, imaging, pregnancy testing, or clinical assessments.',
-    examples: ['ANC monitoring (clozapine)', 'Pregnancy testing (iPLEDGE, Thalomid REMS)', 'Liver function test monitoring (bosentan REMS)'],
-  },
-  {
-    subElement: 'Monitoring Requirements',
-    description: 'Ongoing clinical monitoring requirements that must be completed as a condition of continued prescribing/dispensing.',
-    examples: ['Monthly ANC checks (clozapine)', 'Monthly pregnancy tests (isotretinoin)', 'Cardiac monitoring (certain kinase inhibitors)'],
-  },
-  {
-    subElement: 'Restricted Distribution',
-    description: 'Drug may only be dispensed through specific pharmacies, healthcare settings, or distribution channels rather than through all pharmacies.',
-    examples: ['Mifepristone — healthcare setting dispensing only', 'Addyi — certified pharmacies only', 'TIRF products — enrolled pharmacies/prescribers only'],
-  },
-];
-
 /** Safety Labeling Change Process Steps */
 const SAFETY_LABELING_CHANGE_STEPS: string[] = [
   'Step 1: FDA identifies safety signal through FAERS, published literature, or periodic safety reports',
@@ -1386,6 +1262,22 @@ export function assessPLRStructure(params: AssessPLRStructureInput): AssessPLRSt
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Criterion (iii): a fact about the approval, so met only as stated. 2026-10-15: it was inferred from the
+ * signal (met for a life-threatening teratogenicity, PML or cytokine-release signal, otherwise not met).
+ */
+function restrictedUseCriterion(stated: unknown): BoxedWarningCriterion {
+  const met = typeof stated === 'boolean' ? stated : null;
+  return {
+    criterionNumber: 3,
+    description: '21 CFR 201.57(c)(1)(iii): FDA approved the drug with restrictions to ensure that use of the drug is safe (e.g., restricting distribution to certain facilities, requiring special training/certification, mandating monitoring).',
+    met,
+    rationale: met === null
+      ? 'Not assessed: whether the drug is approved with restrictions on distribution or use to ensure safe use (approvedWithRestrictions) was not stated — e.g. a REMS with ETASU, or 21 CFR 314.520 / 601.42. The signal type and severity do not decide it.'
+      : `Stated: the drug is ${met ? '' : 'not '}approved with restrictions on distribution or use to ensure safe use (approvedWithRestrictions).`,
+  };
+}
+
+/**
  * Evaluates whether a safety signal meets the criteria for a Boxed Warning
  * under 21 CFR 201.57(c)(1), provides formatting requirements, and returns
  * common boxed warning categories with real drug examples.
@@ -1439,19 +1331,13 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
             : 'No risk mitigation measures have been identified. Criterion (ii) typically requires that appropriate use can prevent or reduce the adverse reaction.',
   };
 
-  // Criterion (iii): Approved with restrictions (REMS-linked)
-  const criterion3Met = severity === 'life_threatening' && (safetySignalType === 'teratogenicity' || safetySignalType === 'pml' || safetySignalType === 'cytokine_release');
-  const criterion3: BoxedWarningCriterion = {
-    criterionNumber: 3,
-    description: '21 CFR 201.57(c)(1)(iii): FDA approved the drug with restrictions to ensure that use of the drug is safe (e.g., restricting distribution to certain facilities, requiring special training/certification, mandating monitoring).',
-    met: criterion3Met,
-    rationale: criterion3Met
-      ? `The safety signal type (${safetySignalType}) and life-threatening severity suggest that restricted distribution or use conditions are appropriate. This aligns with REMS ETASU requirements.`
-      : 'Based on the provided parameters, restricted distribution or use conditions may not be the primary mechanism for managing this risk.',
-  };
+  // Criterion (iii): Approved with restrictions (REMS-linked) — as stated, never inferred
+  const criterion3 = restrictedUseCriterion(params.approvedWithRestrictions);
+  const criterion3Met = criterion3.met;
 
-  // Overall assessment
-  const meetsBoxedWarningCriteria = criterion1Met || criterion2Met === true || criterion3Met;
+  // Overall assessment: none met is "no" only when no criterion was left unassessed.
+  const anyMet = criterion1Met || criterion2Met === true || criterion3Met === true;
+  const meetsBoxedWarningCriteria = anyMet ? true : criterion2Met === null || criterion3Met === null ? null : false;
 
   // Additional assessment factors based on evidence level
   if (clinicalEvidenceLevel === 'controlled_trials') {
@@ -1494,7 +1380,7 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
 
   // REMS relationship
   let remsRelationship: string;
-  if (criterion3Met) {
+  if (criterion3Met === true) {
     remsRelationship = 'Products with boxed warnings that meet Criterion (iii) are typically accompanied by a REMS with ETASU. The REMS operationalizes the restrictions described in or implied by the boxed warning. Not all boxed warnings require a REMS, but all REMS with ETASU products have boxed warnings. Per FDA, approximately 60+ currently active REMS exist, and the majority of products with REMS ETASU carry boxed warnings.';
   } else if (criterion2Met === true) {
     remsRelationship = 'This safety signal may benefit from a REMS, but a Medication Guide or Communication Plan may suffice without ETASU. A boxed warning can be present without a REMS (e.g., NSAID cardiovascular/GI warnings). The determination of whether a REMS is needed is a separate regulatory assessment under FD&C Act Section 505-1.';
@@ -1526,8 +1412,21 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Designs a REMS (Risk Evaluation and Mitigation Strategy) based on the
- * identified risk profile, product type, and target population. Returns
+ * The stated inputs designREMS does not choose elements from. 2026-10-15: the tool said the design accounted
+ * for product type, risk frequency and target population; the engine never read them, nor the mitigation options.
+ */
+function remsInputsNotUsed(params: DesignREMSInput): string[] {
+  const keys = ['productType', 'riskFrequency', 'targetPopulation', 'riskMitigationOptions'] as const;
+  return keys.filter((k) => !isUnstated(params[k])).map((k) =>
+    k === 'productType' && params.productType === 'generic'
+      ? 'productType "generic" — FD&C Act 505-1(i), under which an ANDA product takes the reference listed drug\'s REMS elements, is not applied'
+      : `${k} ${JSON.stringify(params[k])}`,
+  );
+}
+
+/**
+ * Designs a REMS (Risk Evaluation and Mitigation Strategy) from the signal
+ * type and severity of the identified risk (other stated inputs: inputsNotUsed). Returns
  * recommended elements, assessment schedules, existing model programs,
  * and FDORA 2022 modifications.
  *
@@ -1542,6 +1441,8 @@ export function designREMS(params: DesignREMSInput): DesignREMSResult {
     oneOf('riskSeverity', params.riskSeverity, REMS_RISK_SEVERITIES),
   ]);
   const { safetySignalType, riskSeverity } = params;
+  // 2026-10-15: the stated risk was dropped for the signal type ("The identified risk (teratogenicity, ...)").
+  const identifiedRisk = typeof params.identifiedRisk === 'string' && params.identifiedRisk.trim() !== '' ? params.identifiedRisk.trim() : null;
 
   // Element hierarchy from least to most restrictive
   const elementHierarchy: string[] = [
@@ -1558,7 +1459,7 @@ export function designREMS(params: DesignREMSInput): DesignREMSResult {
   recommendedElements.push({
     element: 'medication_guide',
     description: 'A Medication Guide (MedGuide) is an FDA-approved patient labeling document that must be dispensed with each prescription fill. It is written in consumer-friendly language and addresses specific serious risks.',
-    rationale: `The identified risk (${safetySignalType}, severity: ${riskSeverity}) warrants patient-directed risk communication. Medication Guides are appropriate when patient understanding can help mitigate the risk.`,
+    rationale: `The identified risk (${identifiedRisk ?? 'not described'}; ${safetySignalType}, severity: ${riskSeverity}) warrants patient-directed risk communication. Medication Guides are appropriate when patient understanding can help mitigate the risk.`,
     implementationDetails: [
       'Must be written at or below an 8th-grade reading level',
       'Must be dispensed with each prescription and refill by the pharmacist',
@@ -1704,6 +1605,8 @@ export function designREMS(params: DesignREMSInput): DesignREMSResult {
   ];
 
   return {
+    identifiedRisk,
+    inputsNotUsed: remsInputsNotUsed(params),
     recommendedElements,
     elementHierarchy,
     assessmentSchedule,
@@ -1995,6 +1898,18 @@ export function assessPregnancyLactationLabeling(params: AssessPregnancyLactatio
 // Function 5: structureSmPC
 // ─────────────────────────────────────────────────────────────────────────────
 
+const BLACK_TRIANGLE = 'Include the inverted black triangle symbol (▼) before the product name and the standard statement: "This medicinal product is subject to additional monitoring. This will allow quick identification of new safety information. Healthcare professionals are asked to report any suspected adverse reactions."';
+
+/**
+ * Section 1's additional-monitoring text. 2026-10-15: unstated, section 1 came back as for a product stated
+ * not to be under additional monitoring; it now says that this is not determined.
+ */
+function additionalMonitoringGuidance(stated: unknown): string {
+  if (stated === true) return ` This product is subject to additional monitoring. ${BLACK_TRIANGLE}`;
+  if (stated === false) return '';
+  return ` Additional monitoring: not determined (hasAdditionalMonitoring was not stated). If the product is subject to it: ${BLACK_TRIANGLE}`;
+}
+
 /**
  * Structures an EU Summary of Product Characteristics (SmPC) based on the
  * EMA QRD template, product type, authorization procedure, and special
@@ -2006,15 +1921,22 @@ export function assessPregnancyLactationLabeling(params: AssessPregnancyLactatio
  * for centrally authorized products.
  */
 export function structureSmPC(params: StructureSmPCInput): StructureSmPCResult {
-  const { productType, procedure, specialPopulations, hasAdditionalMonitoring } = params;
+  // 2026-10-15: an unstated productType was structured as a standard medicinal product, and an unstated
+  // procedure silently got no procedure guidance. Both shape the structure, so without them it refuses.
+  refuseUnlessStated('structureSmPC', [
+    oneOf('productType', params.productType, SMPC_PRODUCT_TYPES),
+    oneOf('procedure', params.procedure, SMPC_PROCEDURES),
+  ]);
+  const { productType, procedure, specialPopulations } = params;
+  const monitoring = additionalMonitoringGuidance(params.hasAdditionalMonitoring);
 
   // Build section structure
   const smpcSections: SmPCSectionDescriptor[] = SMPC_SECTION_STRUCTURE.map(section => {
     const adjusted = { ...section };
 
-    // Add additional monitoring statement to Section 1
-    if (section.sectionNumber === '1' && hasAdditionalMonitoring) {
-      adjusted.contentGuidance += ' This product is subject to additional monitoring. Include the inverted black triangle symbol (▼) before the product name and the standard statement: "This medicinal product is subject to additional monitoring. This will allow quick identification of new safety information. Healthcare professionals are asked to report any suspected adverse reactions."';
+    // Additional monitoring: the black-triangle statement, or that it is not determined
+    if (section.sectionNumber === '1' && monitoring) {
+      adjusted.contentGuidance += monitoring;
     }
 
     // Herbal product modifications
