@@ -524,7 +524,26 @@ never-reviewed dossier is not cleared for dispatch, and an AI outage must not st
   it are each in the audit chain.
 - No AnA tool can waive.
 
-Each of P-32, P-33 and P-34 lands failing-first with its evidence under `docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/`.
+### P-35 — A critical Shadow Review finding is closed by a named person's signature, never by silence
+
+Decided 2026-10-15 under the same delegation, found while implementing P-34. The dispatch gate blocks on
+every open critical Shadow Review finding across every run of the sequence, and nothing in the product could
+ever close one: the finding's status column had `accepted`, `fixed` and `waived` in its vocabulary and no code
+that wrote them. One critical therefore blocked a sequence for ever, even after the sponsor fixed the issue and
+a later review found nothing.
+
+- Each open critical finding is dispositioned on its own by a Part 11 signature on the sequence
+  (`ectd-sequence:<id>`, intent `shadow-finding-disposition`, the finding named in the payload), with the
+  signer's reason, by a person with signing authority who did not author the sequence:
+  - **Risk accepted** (`accepted`): the finding stands and the signer accepts going forward with it;
+    meaning approval or responsibility.
+  - **Fixed** (`fixed`): the signer states what changed. Offered only when a completed Shadow Review ran after
+    the finding's run; it does not need to be the clean one, because a model's silence is not proof.
+- A later review never closes an earlier critical by itself. The disposition, its signature and its reason are
+  in the audit chain and on the finding; the readiness view names who closed each critical and how.
+- No AnA tool can disposition a finding. A non-critical finding is not gated and is not part of this act.
+
+Each of P-32 to P-35 lands failing-first with its evidence under `docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/`.
 
 ## How sessions run under this file
 
