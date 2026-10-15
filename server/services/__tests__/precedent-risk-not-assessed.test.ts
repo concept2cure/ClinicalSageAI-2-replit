@@ -96,3 +96,37 @@ describe('figures nothing measured', () => {
     expect(records.find((p) => p.clearanceNumber === 'K183282')?.similarityScore).toBeUndefined();
   });
 });
+
+describe('a stored precedent', () => {
+  it('that records no confidence carries none, not full confidence', async () => {
+    H.query.mockImplementation(async (sql: string) =>
+      /FROM precedent\.regulatory_precedents/.test(sql)
+        ? { rows: [{ id: 'p1', submission_type: 'NDA', decision_outcome: 'APPROVED', confidence_score: null }] }
+        : { rows: [] });
+    const records = await precedentEngine.search({ submissionType: 'NDA', limit: 5 } as never);
+    expect(records.find((p) => p.id === 'p1')?.confidenceScore).toBeNull();
+  });
+});
+
+describe('an ingested precedent', () => {
+  const record = {
+    submissionType: 'NDA', productType: null, deviceClass: null, therapeuticArea: null, indication: null,
+    clearanceNumber: null, deviceName: null, applicant: null, decisionDate: null, decisionOutcome: 'APPROVED',
+    clearanceType: null, predicateDevice: null, predicateKNumber: null, strategySummary: null, testingApproach: null,
+    trialDesign: null, sampleSize: null, primaryEndpoint: null, endpointMet: null, fdaComments: null,
+    fdaQuestions: [], riskFactors: [], sourceType: 'Manual', confidenceScore: null,
+  };
+
+  it('records who ingested it, and no confidence nobody stated', async () => {
+    H.query.mockResolvedValue({ rows: [{ id: 'new-1' }] });
+    await precedentEngine.ingestPrecedent(record as never, 7, '42');
+    const [, params] = H.query.mock.calls.find(([sql]) => /INSERT INTO precedent\.regulatory_precedents/.test(String(sql)))!;
+    expect(params).toContain('42');
+    expect(params).not.toContain('system');
+    expect(params).toContain(null);
+  });
+
+  it('is refused without the person who ingested it', async () => {
+    await expect(precedentEngine.ingestPrecedent(record as never, 7, '')).rejects.toThrow(/person who ingested/);
+  });
+});

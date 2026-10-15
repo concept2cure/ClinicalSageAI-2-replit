@@ -89,7 +89,8 @@ export interface PrecedentRecord {
   riskFactors: string[];
   similarityScore?: number;
   sourceType: string | null;
-  confidenceScore: number;
+  /** As recorded; null when the stored precedent records none. */
+  confidenceScore: number | null;
 }
 
 /**
@@ -1196,8 +1197,11 @@ export class PrecedentEngine {
 
   async ingestPrecedent(
     data: Omit<PrecedentRecord, 'id' | 'similarityScore'>,
-    organizationId: number
+    organizationId: number,
+    /** Who ingested it. Every ingest was recorded as created_by 'system'. */
+    createdBy: string
   ): Promise<string> {
+    if (!createdBy) throw new Error('ingestPrecedent requires the person who ingested the precedent');
     // A precedent a tenant ingests is that tenant's: it is written private to
     // its organization, never into the shared public corpus. Refused, not
     // defaulted, when there is no organization to attribute it to.
@@ -1246,7 +1250,7 @@ export class PrecedentEngine {
         (data as any).sourceDocuments || [],
         data.sourceType,
         data.confidenceScore,
-        'system',
+        createdBy,
         org,
       ]
     );
@@ -1427,7 +1431,9 @@ export class PrecedentEngine {
       fdaQuestions: row.fda_questions || [],
       riskFactors: row.risk_factors || [],
       sourceType: row.source_type || null,
-      confidenceScore: row.confidence_score ?? 1.0,
+      // A stored precedent that records no confidence has none; it read as
+      // full confidence (2026-10-15).
+      confidenceScore: row.confidence_score ?? null,
     };
   }
 
