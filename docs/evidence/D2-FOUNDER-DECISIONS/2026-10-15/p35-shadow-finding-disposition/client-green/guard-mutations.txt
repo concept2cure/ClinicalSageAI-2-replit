@@ -1,0 +1,47 @@
+# Client guard mutations, P-35 — each applied alone, the suite run, the file restored (2026-10-15)
+
+## C1 open criticals only: offers ignore the finding's status
+# mutated client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx; ran client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an open critical with a later completed review: both, and "Mark fixed" names that review
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > a closed critical reads who closed it, how, when and why — and offers nothing
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an older server that sends no offer: nothing is offered and nothing is claimed
+Tests  3 failed | 7 passed (10)
+=> RED as expected (target case failed)
+
+## C2 "Mark fixed" shown whether or not the server offers it
+# mutated client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx; ran client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an open critical with no later review: "Accept risk" only, and the screen says when "Mark fixed" comes
+Tests  1 failed | 9 passed (10)
+=> RED as expected (target case failed)
+
+## C3 the sign payload stops naming the finding and the disposition
+# mutated client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx; ran client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > asks the precheck before the signature, signs the finding and the disposition, then closes that finding
+Tests  1 failed | 9 passed (10)
+=> RED as expected (target case failed)
+
+## C4 an older server with no offer is treated as offering risk acceptance
+# mutated client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx; ran client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an open critical with no later review: "Accept risk" only, and the screen says when "Mark fixed" comes
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > a closed critical reads who closed it, how, when and why — and offers nothing
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > an older server that sends no offer: nothing is offered and nothing is claimed
+Tests  3 failed | 7 passed (10)
+=> RED as expected (target case failed)
+
+## C5 the sequence author is offered the controls
+# mutated client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx; ran client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > Shadow review tab — what is offered on which finding > nothing is offered to the sequence author, and the screen says why
+Tests  1 failed | 9 passed (10)
+=> RED as expected (target case failed)
+
+## C6 an unconfirmed answer reads as closed
+# mutated client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx; ran client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > an unconfirmed act says so and claims nothing
+Tests  1 failed | 9 passed (10)
+=> RED as expected (target case failed)
+
+## C7 the POST stops sending the disposition
+# mutated client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx; ran client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx
+× client/src/concept2cure/v2/__tests__/shadowFindingDisposition.test.tsx > the disposition chain — precheck, sign, close, read again > asks the precheck before the signature, signs the finding and the disposition, then closes that finding
+Tests  1 failed | 9 passed (10)
+=> RED as expected (target case failed)

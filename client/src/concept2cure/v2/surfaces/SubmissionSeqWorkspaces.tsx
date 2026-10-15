@@ -24,6 +24,8 @@
  *   Shadow       POST/GET /api/submissions/sequences/:seqId/shadow-review
  *                GET /api/submissions/shadow-review/:runId/findings
  *                POST /api/submissions/sequences/:seqId/shadow-review/waive (P-34; ShadowReviewWaiver.tsx)
+ *                POST /api/submissions/sequences/:seqId/shadow-review/findings/:findingId/disposition
+ *                     (P-35; ShadowFindingDisposition.tsx, through the parent's governed chain)
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
  *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
  *                GET /api/mdx/gateways/transmittals?program_id=&region=  (the market's transmissions, F13)
@@ -51,11 +53,10 @@ import {
   type WaiverReadiness,
   type WaiverRequest,
 } from './ShadowReviewWaiver';
+import { ShadowFindingList, type DispositionRequest, type ShadowFindingRow } from './ShadowFindingDisposition';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
-  SC_FIND_SEV,
-  SC_FIND_STATUS,
   SC_SEQ_STATUS,
   type ToneMap,
 } from '../fixtures/submission';
@@ -1198,19 +1199,8 @@ interface ShadowRunRow {
   failureCode?: string | null;
 }
 
-// GET /shadow-review/:runId/findings → shadow_review_findings rows.
-interface ShadowFindingRow {
-  id: number;
-  runId: number;
-  dimension: string; // rtf|crl|format|nb
-  severity: string; // critical|major|minor|info (SC_FIND_SEV)
-  title: string;
-  detail: string | null;
-  basis: string | null;
-  recommendation: string | null;
-  leafRef: string | null;
-  status: string; // open|accepted|fixed|waived (SC_FIND_STATUS — the acknowledged state)
-}
+// GET /shadow-review/:runId/findings → shadow_review_findings rows, each with
+// its P-35 disposition and offers: ShadowFindingRow (ShadowFindingDisposition.tsx).
 
 const RUN_STATUS: Record<string, ToneMap> = {
   running: { l: 'Running', t: 'ai' },
@@ -1225,7 +1215,20 @@ function runWhen(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
 }
 
-export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
+/**
+ * `onDisposition` requests the parent's governed chain for closing one critical
+ * finding (P-35); without it the list offers nothing. `reread` changes after
+ * that chain ran, so the findings are read again whatever its outcome.
+ */
+export function ShadowReviewWorkspace({
+  seq,
+  onDisposition,
+  reread = 0,
+}: {
+  seq: SeqRow;
+  onDisposition?: (seq: SeqRow, d: DispositionRequest) => void;
+  reread?: number;
+}) {
   const [lens, setLens] = React.useState('fda_filing');
   const [bump, setBump] = React.useState(0);
   const runsPath = `/api/submissions/sequences/${seq.id}/shadow-review`;
@@ -1238,7 +1241,7 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   /* Without a guard, a non-array body settled as zero rows and — with the run
      complete — rendered "Run #N recorded no findings.": the false clear the
      comment block below was written to prevent. */
-  const findings = useLiveRows<ShadowFindingRow>(findingsPath, [findingsPath, bump], isRowsWith<ShadowFindingRow>('id', 'runId', 'severity'));
+  const findings = useLiveRows<ShadowFindingRow>(findingsPath, [findingsPath, bump, reread], isRowsWith<ShadowFindingRow>('id', 'runId', 'severity'));
   /* ── A run row exists before the review does ───────────────────────────────
      The findings panel used to say "Run #N recorded no findings." on the sole
      condition that the findings read settled empty. The run row, however, is
@@ -1433,31 +1436,11 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                     </div>
                   )
                 ) : (
-                  <div className="sp-list">
-                    {findings.rows.map((f) => (
-                      <div key={f.id} className="sp-row">
-                        <Chip map={SC_FIND_SEV} k={f.severity} />
-                        <span className="sp-row-b">
-                          <span className="sp-row-t">
-                            {f.title}
-                            {f.leafRef ? (
-                              <>
-                                {' '}
-                                {I.dot} <span className="sc-mono">{f.leafRef}</span>
-                              </>
-                            ) : null}
-                          </span>
-                          {f.detail ? <span className="sp-row-s">{f.detail}</span> : null}
-                          {f.basis ? <span className="sp-row-s">Basis: {f.basis}</span> : null}
-                          {f.recommendation ? (
-                            <span className="sp-row-s">Fix: {f.recommendation}</span>
-                          ) : null}
-                        </span>
-                        <span className="sc-cap sp-q-s">{f.dimension}</span>
-                        <Chip map={SC_FIND_STATUS} k={f.status} />
-                      </div>
-                    ))}
-                  </div>
+                  <ShadowFindingList
+                    seq={seq}
+                    rows={findings.rows}
+                    onDisposition={onDisposition ? (d) => onDisposition(seq, d) : undefined}
+                  />
                 )}
                 {run.status === 'failed' && <FailedRunNote seqId={seq.id} run={run} />}
               </div>
@@ -1493,8 +1476,10 @@ interface DispatchQcResult {
 }
 
 /** The governed steps the parent's e-signature chain runs. 'shadow-waiver' is
- *  the P-34 Shadow Review waiver (ShadowReviewWaiver.tsx). */
-export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver';
+ *  the P-34 Shadow Review waiver (ShadowReviewWaiver.tsx);
+ *  'shadow-finding-disposition' closes one critical finding (P-35,
+ *  ShadowFindingDisposition.tsx). */
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition';
 /** What a transmit needs beyond its signature (POST /sequences/:id/transmit). */
 export interface TransmitRequest {
   environment: 'staging' | 'production';

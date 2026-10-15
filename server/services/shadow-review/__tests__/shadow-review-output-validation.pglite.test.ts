@@ -37,6 +37,12 @@ beforeAll(async () => {
   await h.pglite.exec(
     fs.readFileSync(path.resolve(__dirname, '../../../../migrations/20261015_shadow_review_waiver.sql'), 'utf8'),
   );
+  // The P-35 disposition columns the finding insert now names (who closed a
+  // critical, when, why, under which signature). Their FK names users(id).
+  await h.pglite.exec(`CREATE TABLE IF NOT EXISTS users (id serial PRIMARY KEY);`);
+  await h.pglite.exec(
+    fs.readFileSync(path.resolve(__dirname, '../../../../migrations/20261015b_shadow_finding_disposition.sql'), 'utf8'),
+  );
   await h.pglite.exec(`
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1,'A','ind','biotech','fda',${ORG},${USER}), (2,'B','ind','biotech','fda',${ORG},${USER}),

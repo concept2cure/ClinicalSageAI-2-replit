@@ -74,6 +74,13 @@ export const shadowReviewFindings = pgTable(
     recommendation: text('recommendation'), // concrete fix
     leafRef: text('leaf_ref'), // section code / leaf
     status: text('status').default('open').notNull(), // open|accepted|fixed|waived
+    // P-35 (migrations/20261015b_shadow_finding_disposition.sql). A critical
+    // closed as 'accepted' or 'fixed' by a Part 11 signature: its governed sign
+    // action, the signer, when, and the signature's own reason.
+    dispositionSignatureActionId: text('disposition_signature_action_id'),
+    disposedBy: integer('disposed_by').references(() => users.id),
+    disposedAt: timestamp('disposed_at', { withTimezone: true }),
+    dispositionReason: text('disposition_reason'),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
@@ -87,6 +94,13 @@ export const shadowReviewFindings = pgTable(
   (table) => ({
     runIdx: index('idx_shadow_findings_run_id').on(table.runId),
     orgIdx: index('idx_shadow_findings_organization_id').on(table.organizationId),
+    // P-35: every FK indexed, and a disposition signature is used once.
+    disposedByIdx: index('idx_shadow_findings_disposed_by')
+      .on(table.disposedBy)
+      .where(sql`${table.disposedBy} IS NOT NULL`),
+    dispositionSignatureUq: uniqueIndex('uq_shadow_findings_disposition_signature')
+      .on(table.organizationId, table.dispositionSignatureActionId)
+      .where(sql`${table.dispositionSignatureActionId} IS NOT NULL`),
   })
 );
 

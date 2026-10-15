@@ -3236,6 +3236,14 @@ export const C2C_MIGRATION_FILES = [
   // INTEGER already, so it creates nothing the sweeps below must reach. Drops
   // nothing. Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p34-shadow-review-waiver/.
   'migrations/20261015_shadow_review_waiver.sql',
+  // P-35 (2026-10-15): a critical Shadow Review finding is closed by a named
+  // person's signature. Four columns on shadow_review_findings (the signature's
+  // sign action, the signer, when, the signature's reason), after its creator
+  // 20260604_shadow_review.sql; the FK is pg_constraint-guarded and the indexes
+  // IF NOT EXISTS, so a replay is a no-op. public + organization_id INTEGER
+  // already, so it creates nothing the sweeps below must reach. Drops nothing.
+  // Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p35-shadow-finding-disposition/.
+  'migrations/20261015b_shadow_finding_disposition.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
