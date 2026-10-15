@@ -553,6 +553,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
@@ -640,6 +641,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
@@ -720,6 +722,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
