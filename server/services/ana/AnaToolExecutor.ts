@@ -12947,8 +12947,9 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'screen_subaward requires tenant + user context.' });
   const subawardId = typeof input.subaward_id === 'number' ? input.subaward_id : NaN;
   const screenStatus = typeof input.screen_status === 'string' ? input.screen_status : '';
-  if (!Number.isInteger(subawardId) || !['cleared', 'excluded'].includes(screenStatus)) {
-    return JSON.stringify({ error: 'subaward_id and screen_status (cleared|excluded) are required. Use screen_restricted_party to perform the live SAM.gov lookup first.' });
+  const screenSource = typeof input.screen_source === 'string' ? input.screen_source.trim() : '';
+  if (!Number.isInteger(subawardId) || !['cleared', 'excluded'].includes(screenStatus) || !screenSource) {
+    return JSON.stringify({ error: 'subaward_id, screen_status (cleared|excluded) and screen_source (the lookup this result came from) are required. Use screen_restricted_party to perform the live SAM.gov lookup first.' });
   }
   const RISK = ['low', 'medium', 'high'];
   const { getPool } = await import('../../db.js');
@@ -12961,7 +12962,7 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
     await setTenantContextTx(client, ctx.organizationId);
     await screenSubawardTx(client, ctx.organizationId, subawardId, {
       screenStatus: screenStatus as any,
-      screenSource: typeof input.screen_source === 'string' ? input.screen_source : 'sam_exclusions',
+      screenSource,
       riskLevel: typeof input.risk_level === 'string' && RISK.includes(input.risk_level) ? input.risk_level as any : null,
     });
     await recordGovernedAction(client, {
