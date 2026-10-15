@@ -385,12 +385,21 @@ function each(node: ts.Node, fn: (n: ts.Node) => void) {
   visit(node);
 }
 
-/** A registration's handler: inline, a local function by name, or the last argument of a wrapper (withCaughtErrors). */
+/**
+ * A registration's handler: inline, a local function by name, or the last
+ * argument of a wrapper (withCaughtErrors) that is one — an options object
+ * after it (`{ safeOutcome: true }`) is not the handler.
+ */
 function resolveHandler(m: Module, n: ts.Node | undefined): Fn | null {
   if (!n) return null;
   if (ts.isFunctionLike(n) && 'body' in n && n.body) return n as Fn;
   if (ts.isIdentifier(n)) return m.local.get(n.text) ?? null;
-  if (ts.isCallExpression(n)) return resolveHandler(m, n.arguments[n.arguments.length - 1]);
+  if (ts.isCallExpression(n)) {
+    for (let i = n.arguments.length - 1; i >= 0; i--) {
+      if (ts.isObjectLiteralExpression(n.arguments[i])) continue;
+      return resolveHandler(m, n.arguments[i]);
+    }
+  }
   return null;
 }
 
