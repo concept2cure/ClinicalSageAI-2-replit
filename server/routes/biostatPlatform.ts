@@ -19,6 +19,7 @@ import { authenticateToken } from '../middleware/auth';
 import { adaptiveTrialOperationsService } from '../services/adaptive-trial-operations-service';
 import biostatKnowledgeGraphService from '../services/biostat-knowledge-graph-service';
 import statisticalContinuumService from '../services/statistical-continuum-service';
+import { SapInputRefusal } from '../services/sap-generator-service';
 import { regulatoryOutcomeOptimizerService } from '../services/regulatory-outcome-optimizer-service';
 import { estimandEngineService } from '../services/estimand-engine-service';
 import { CollaborativeSapService } from '../services/collaborative-sap-service';
@@ -82,8 +83,22 @@ router.post('/continuum/initialize', authMiddleware, async (req: Request, res: R
     const userId = resolveUserId(req);
     const { title, indication, phase, designType, endpoints, regulatoryContext } = req.body;
 
+    /* The sample size is the protocol's or absent. It was `sampleSize || 200`
+       until 2026-10-15, so every thread opened without one carried 200 into
+       the SAPs drafted from it; a SAP for such a thread is now refused by name. */
+    const { sampleSize } = req.body ?? {};
+    if (sampleSize != null && sampleSize !== '' && !(Number.isInteger(sampleSize) && sampleSize > 0)) {
+      return clientError(res, 400, 'sampleSize must be a positive whole number of participants, or omitted.');
+    }
+
     const result = await statisticalContinuumService.initializeThread(
-      { title, indication, phase, primaryEndpoint: endpoints?.[0], sampleSize: req.body.sampleSize || 200 },
+      {
+        title,
+        indication,
+        phase,
+        primaryEndpoint: endpoints?.[0],
+        sampleSize: Number.isInteger(sampleSize) ? sampleSize : undefined,
+      },
       orgId,
       userId
     );
@@ -143,6 +158,11 @@ router.put('/continuum/:threadId/sap', authMiddleware, async (req: Request, res:
     const result = await statisticalContinuumService.generateSAP(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
+    // The thread's protocol lacks an input the SAP is built on: the caller's
+    // answer, by name — not a 500, and not a SAP drafted around a default.
+    if (error instanceof SapInputRefusal) {
+      return clientError(res, 422, error.message, { fields: error.fields });
+    }
     return serverError(res, logger, 'updating SAP', error);
   }
 });
@@ -286,16 +306,27 @@ router.post('/estimand/define', authMiddleware, async (req: Request, res: Respon
   try {
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
-    const { population, treatment, endpoint, intercurrentEvents, summaryMeasure, threadId } = req.body;
+    const { population, treatment, endpoint, intercurrentEvents, summaryMeasure, strategy, threadId } = req.body;
+
+    /* Both are the sponsor's ICH E9(R1) choices. A missing one was filled with
+       'difference_in_means' / 'treatment_policy' until 2026-10-15 — before the
+       engine's own completeness check, which then judged the estimand
+       ichE9R1Compliant on attributes nobody chose. */
+    const unstated = (['summaryMeasure', 'strategy'] as const).filter(
+      (k) => typeof req.body?.[k] !== 'string' || req.body[k].trim() === '',
+    );
+    if (unstated.length > 0) {
+      return clientError(res, 400, `Required to define an estimand: ${unstated.join(', ')}.`, { fields: unstated });
+    }
 
     const result = await estimandEngineService.defineEstimand({
       threadId,
       endpointName: endpoint,
       population,
       variable: treatment || endpoint,
-      summaryMeasure: summaryMeasure || 'difference_in_means',
+      summaryMeasure,
       intercurrentEvents: intercurrentEvents || [],
-      strategy: req.body.strategy || 'treatment_policy',
+      strategy,
     }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {

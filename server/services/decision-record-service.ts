@@ -17,6 +17,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { assertConfidenceLevel } from './assumption-registry-service';
 import { assertDomainTrack, DEFAULT_DOMAIN_TRACK, type DomainTrack } from './domain-track.js';
 
 const log = createScopedLogger('decision-record');
@@ -209,6 +210,11 @@ export class DecisionRecordService {
        caller was told its decision had been recorded. Refuse at the boundary,
        naming the caller and the allowed set. */
     const domainTrack = assertDomainTrack(input.domainTrack, 'decisionRecordService.create');
+    /* The same boundary for confidence (2026-10-15): any string reached the
+       INSERT, so the SAP capture's 'provisional' and the defensibility
+       capture's 'strong' / 'uncertain' failed the CHECK inside their callers'
+       catch blocks. Refused here, naming the allowed values; absent is null. */
+    const confidenceLevel = assertConfidenceLevel(input.confidenceLevel, 'confidenceLevel', 'decisionRecordService.create');
 
     const result = await pool!.query(
       `
@@ -229,7 +235,7 @@ export class DecisionRecordService {
         input.recommendationType,
         input.recommendationSummary,
         input.recommendationRationale ?? null,
-        input.confidenceLevel ?? null,
+        confidenceLevel,
         input.evidenceBasis ?? null,
         input.relatedAssumptionIds ?? [],
         input.decidedBy,

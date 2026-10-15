@@ -1,9 +1,10 @@
 import { db } from '../db';
-import { csrReports, csrDetails } from 'shared/schema';
-import { eq, and, like, desc } from 'drizzle-orm';
+import { csrReports } from 'shared/schema';
+import { eq, and, like } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';
-import { OperatingSystemIntegration } from './operating-system-integration';
+import { OperatingSystemIntegration, SapCaptureIncomplete } from './operating-system-integration';
+import { LedgerInputRefusal } from './assumption-registry-service';
 import {
   renderEstimandSection,
   type EstimandInput,
@@ -36,6 +37,7 @@ export interface SapRequestData {
   dropout_rate?: number;
   // Statistical assumptions for the sample-size justification. Supplied by the
   // study statistician — this service does not fabricate them when absent.
+  alpha?: number; // two-sided significance level; it was printed as 0.05
   target_power?: number; // e.g. 0.8 for 80% power
   minimum_detectable_effect?: number; // standardized effect size
   // ICH E9(R1) estimands for the primary / key secondary objectives. When
@@ -61,7 +63,111 @@ export interface GeneratedSapData {
   // Structured metadata for the rendered estimand framework section: how many
   // estimands were rendered and their per-estimand ICH E9(R1) completeness.
   estimandSection?: RenderedEstimandSection;
+  assumptionCapture: SapAssumptionCapture;
 }
+
+/**
+ * Whether the SAP's inputs reached the assumption registry. A failed capture
+ * was a "non-fatal" log line until 2026-10-15, and the SAP came back with no
+ * word that nothing had been recorded.
+ */
+export type SapAssumptionCapture =
+  | { recorded: true; assumptionIds: string[]; decisionId: string; notCaptured: string[] }
+  | { recorded: false; reason: 'no_project_context'; message: string }
+  | { recorded: false; reason: 'capture_failed'; error: string; writtenAssumptionIds: string[] };
+
+/** A SAP asked for without an input it is built on, or with one it cannot use. Nothing was generated. */
+export class SapInputRefusal extends Error {
+  readonly code = 'SAP_INPUT_REFUSED' as const;
+  constructor(readonly fields: string[], message: string) {
+    super(message);
+    this.name = 'SapInputRefusal';
+  }
+}
+
+const isText = (v: unknown) => typeof v === 'string' && v.trim() !== '';
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const isCount = (v: unknown) => isNum(v) && Number.isInteger(v) && v > 0;
+/** An input, whether a value of it is usable, and what a usable one is. */
+type SapInputCheck = [keyof SapRequestData, (value: unknown) => boolean, string];
+const REQUIRED_SAP_INPUTS: SapInputCheck[] = [
+  ['indication', isText, 'the indication'],
+  ['phase', isText, 'the study phase'],
+  ['primary_endpoint', isText, 'the primary endpoint'],
+  ['sample_size', isCount, 'a positive whole number of participants'],
+];
+const OPTIONAL_SAP_INPUTS: SapInputCheck[] = [
+  ['dropout_rate', (v) => isNum(v) && v >= 0 && v < 1, 'a proportion from 0 to below 1'],
+  ['duration_weeks', (v) => isNum(v) && v > 0, 'a positive number of weeks'],
+  ['alpha', (v) => isNum(v) && v > 0 && v < 1, 'a proportion between 0 and 1'],
+  ['arms', (v) => (Array.isArray(v) ? v.length > 0 && v.every(isText) : isCount(v)), 'a positive whole number of arms, or their names'],
+];
+
+/**
+ * The request a SAP is built on, or a refusal naming what is missing or
+ * unusable. An optional input that is absent stays absent, and the SAP says it
+ * is not specified; one that is present but unusable is refused, not dropped.
+ */
+export function requireSapInputs(data: Partial<SapRequestData>): SapRequestData {
+  const bad = [
+    ...REQUIRED_SAP_INPUTS.filter(([key, usable]) => !usable(data[key])),
+    ...OPTIONAL_SAP_INPUTS.filter(([key, usable]) => data[key] != null && !usable(data[key])),
+  ];
+  if (bad.length > 0) {
+    throw new SapInputRefusal(
+      bad.map(([key]) => key),
+      `No SAP was generated. Missing or invalid: ${bad.map(([key, , rule]) => `${key} (${rule})`).join(', ')}. ` +
+        'Nothing is filled in in their place.',
+    );
+  }
+  return data as SapRequestData;
+}
+
+const NOT_FROM_PROTOCOL = 'not specified — to be taken from the protocol';
+const NOT_FROM_STATISTICIAN = 'not specified — to be set by the study statistician';
+const NO_PROJECT_CONTEXT =
+  'No organizationId and projectId were given, so the SAP inputs were not recorded in the assumption registry.';
+
+/** A stated value, shown; otherwise that it is not specified, and who sets it. */
+function statedOr<T>(value: T | null | undefined, unstated: string, show: (v: T) => string): string {
+  return value == null || value === '' ? unstated : show(value);
+}
+
+/**
+ * The plan's design lines, from what the request stated. A design input it did
+ * not state is printed as not specified, and nothing is computed from it.
+ * Until 2026-10-15 generateSAP filled a dropout rate of 0.15, 24 weeks, 2 arms
+ * (and an allocation ratio and per-arm size from them), 'randomized',
+ * 'blinded' and alpha 0.05, and printed stratification factors, subgroups and
+ * an interim analysis "at approximately 50%" that no request field carries —
+ * as the plan.
+ */
+function describeDesign(req: SapRequestData) {
+  const pct = (p: number) => `${(p * 100).toFixed(0)}%`;
+  // The request carries no allocation ratio, so only a single arm has a
+  // per-arm size that is not an assumption.
+  const singleArm = (Array.isArray(req.arms) ? req.arms.length : req.arms) === 1;
+  return {
+    sampleSize: statedOr(
+      req.dropout_rate,
+      `${req.sample_size} participants (dropout rate not specified; no effective sample size is computed)`,
+      (d) => `${req.sample_size} participants (${Math.round(req.sample_size * (1 - d))} effective after ${pct(d)} dropout)`,
+    ),
+    duration: statedOr(req.duration_weeks, NOT_FROM_PROTOCOL, (w) => `${w} weeks`),
+    secondary: statedOr(req.secondary_endpoints?.length ? req.secondary_endpoints : null, 'Not specified in the request.', (list) =>
+      list.map((endpoint, i) => `${i + 1}. To assess ${endpoint}`).join('\n       '),
+    ),
+    arms: statedOr(req.arms, NOT_FROM_PROTOCOL, (a) => (Array.isArray(a) ? `${a.length} (${a.join(', ')})` : String(a))),
+    randomization: statedOr(req.randomization, NOT_FROM_PROTOCOL, String),
+    blinding: statedOr(req.blinding, NOT_FROM_PROTOCOL, String),
+    allocation: singleArm ? 'not applicable (single arm)' : NOT_FROM_PROTOCOL,
+    perArm: singleArm ? String(req.sample_size) : 'not computed — the allocation ratio is not specified',
+    alpha: statedOr(req.alpha, NOT_FROM_STATISTICIAN, String),
+    dropout: statedOr(req.dropout_rate, NOT_FROM_STATISTICIAN, pct),
+  };
+}
+
+type SapCapture = Awaited<ReturnType<OperatingSystemIntegration['captureFromSapGeneration']>>;
 
 export class SapGeneratorService {
   private static instance: SapGeneratorService;
@@ -86,57 +192,38 @@ export class SapGeneratorService {
    * @returns The generated SAP content
    */
   async generateSAP(protocolData: SapRequestData): Promise<GeneratedSapData> {
+    // Refused before anything is drafted: a refusal is the caller's answer,
+    // not a service error.
+    const request = requireSapInputs(protocolData);
+    const {
+      protocol_id,
+      indication,
+      phase,
+      sample_size,
+      primary_endpoint,
+      target_power,
+      minimum_detectable_effect,
+      estimands,
+    } = request;
     try {
-      const {
-        protocol_id,
-        indication,
-        phase,
-        sample_size,
-        primary_endpoint,
-        secondary_endpoints = [],
-        arms,
-        randomization,
-        blinding,
-        duration_weeks = 24,
-        dropout_rate = 0.15,
-        target_power,
-        minimum_detectable_effect,
-        estimands,
-      } = protocolData;
-
       // Render the ICH E9(R1) estimand framework deterministically. When no
       // estimand is supplied this renders an explicit deferral, not a fabricated
       // estimand — consistent with the sample-size honesty stance below.
       const estimandSection = renderEstimandSection(estimands);
 
-      // Calculate effective sample size accounting for dropouts
-      const effectiveSampleSize = Math.round(sample_size * (1 - dropout_rate));
-
-      // Determine number of arms
-      let numArms = 2; // Default to 2 arms
-      if (typeof arms === 'number') {
-        numArms = arms;
-      } else if (Array.isArray(arms)) {
-        numArms = arms.length;
-      }
-
-      // Calculate per-arm sample size
-      const perArmSampleSize = Math.floor(sample_size / numArms);
+      // Every design line says what was stated, or that it was not (see describeDesign).
+      const design = describeDesign(request);
 
       // Statistical assumptions come from the caller (the study statistician),
       // not from fabricated random values. When absent, the SAP narrative defers
       // to the statistician rather than asserting a power figure that was never
       // computed. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
-      const powerForPrimary =
-        typeof target_power === 'number' ? target_power : null;
-      const requiredEffectSize =
-        typeof minimum_detectable_effect === 'number'
-          ? minimum_detectable_effect
-          : null;
+      const powerForPrimary = typeof target_power === 'number' ? target_power : null;
+      const requiredEffectSize = typeof minimum_detectable_effect === 'number' ? minimum_detectable_effect : null;
       const sampleSizeJustification =
         powerForPrimary !== null && requiredEffectSize !== null
-          ? `a sample size of ${sample_size} will provide ${(powerForPrimary * 100).toFixed(0)}% power to detect a difference of ${requiredEffectSize.toFixed(2)} at a two-sided significance level of 0.05, assuming a dropout rate of ${(dropout_rate * 100).toFixed(0)}%`
-          : `the target power and minimum detectable effect must be specified and computed by the study statistician. Sample size of ${sample_size} is recorded as provided; this draft does not assert a power figure that has not been calculated. Dropout rate assumed at ${(dropout_rate * 100).toFixed(0)}%`;
+          ? `a sample size of ${sample_size} will provide ${(powerForPrimary * 100).toFixed(0)}% power to detect a difference of ${requiredEffectSize.toFixed(2)}, as specified by the study statistician (significance level and dropout rate as stated below)`
+          : `the target power and minimum detectable effect must be specified and computed by the study statistician. Sample size of ${sample_size} is recorded as provided; this draft does not assert a power figure that has not been calculated`;
 
       // The renderer's text begins with its own "ESTIMAND FRAMEWORK (ICH E9(R1))"
       // title line; the numbered SAP header below prefixes the section number to
@@ -156,27 +243,31 @@ STATISTICAL ANALYSIS PLAN (SAP)
 Study Information:
 - Indication: ${indication}
 - Phase: ${phase}
-- Sample Size: ${sample_size} participants (${effectiveSampleSize} effective after ${(dropout_rate * 100).toFixed(0)}% dropout)
-- Duration: ${duration_weeks} weeks
+- Sample Size: ${design.sampleSize}
+- Duration: ${design.duration}
 
 1. STUDY OBJECTIVES
    1.1 Primary Objective
        To evaluate ${primary_endpoint}
 
    1.2 Secondary Objectives
-       ${secondary_endpoints.map((endpoint, i) => `${i + 1}. To assess ${endpoint}`).join('\n       ')}
+       ${design.secondary}
 
 2. ${estimandSapBody}
 
 3. STUDY DESIGN
-   - ${numArms}-arm, ${randomization || 'randomized'}, ${blinding || 'blinded'} study
-   - Allocation ratio: ${numArms > 1 ? `1:${numArms > 2 ? numArms - 1 : 1}` : 'N/A'}
-   - Stratification factors: Disease severity, age group, previous treatment
+   - Arms: ${design.arms}
+   - Randomization: ${design.randomization}
+   - Blinding: ${design.blinding}
+   - Allocation ratio: ${design.allocation}
+   - Stratification factors: ${NOT_FROM_PROTOCOL}
 
 4. SAMPLE SIZE JUSTIFICATION
    Based on the primary endpoint (${primary_endpoint}), ${sampleSizeJustification}.
 
-   Per-arm sample size: ${perArmSampleSize}
+   - Significance level (two-sided): ${design.alpha}
+   - Dropout rate: ${design.dropout}
+   - Per-arm sample size: ${design.perArm}
 
 5. STATISTICAL METHODS
    5.1 Primary Analysis
@@ -194,7 +285,7 @@ Study Information:
        ${statisticalMethods.multiplicityMethod}
 
 6. INTERIM ANALYSES
-   ${statisticalMethods.interimAnalysisText}
+   Interim analyses: ${NOT_FROM_STATISTICIAN}
 
 7. ANALYSIS SETS
    - Intent-to-Treat (ITT): All randomized participants
@@ -212,11 +303,7 @@ Study Information:
    Laboratory parameters, vital signs, and ECG data will be summarized using descriptive statistics and shift tables.
 
 10. EXPLORATORY ANALYSES
-    Subgroup analyses will be performed for:
-    - Age groups (<65, ≥65 years)
-    - Sex
-    - Disease severity
-    - Prior treatment history
+    Subgroup analyses: ${NOT_FROM_STATISTICIAN}
 
 11. DATA HANDLING CONVENTIONS
     - Continuous variables: mean, SD, median, min, max
@@ -243,42 +330,81 @@ Study Information:
       }
 
       // Capture structured assumptions into the operating system layer
-      let assumptionCapture;
-      if (protocolData.organizationId && protocolData.projectId) {
-        try {
-          const osIntegration = OperatingSystemIntegration.getInstance();
-          assumptionCapture = await osIntegration.captureFromSapGeneration({
-            organizationId: protocolData.organizationId,
-            projectId: protocolData.projectId,
-            indication,
-            phase,
-            sampleSize: sample_size,
-            dropoutRate: dropout_rate,
-            primaryEndpoint: primary_endpoint,
-            effectSize: requiredEffectSize ?? undefined,
-            alpha: 0.05,
-            power: powerForPrimary ?? undefined,
-            regulatorBody: protocolData.regulatorBody,
-            jurisdiction: protocolData.jurisdiction,
-            sourceArtifactId: protocolData.sourceArtifactId,
-            createdById: protocolData.createdById,
-          });
-        } catch (err) {
-          logger.warn('Operating system assumption capture failed (non-fatal)', { error: err });
-        }
-      }
+      const { assumptionCapture, captured } = await this.captureInputs(request, {
+        power: powerForPrimary,
+        effectSize: requiredEffectSize,
+      });
 
       return {
         protocol_id,
         sapContent,
         sapPath,
-        assumptions: assumptionCapture?.assumptions,
-        decision: assumptionCapture?.decision,
+        assumptions: captured?.assumptions,
+        decision: captured?.decision,
         estimandSection,
+        assumptionCapture,
       };
     } catch (error) {
       logger.error('Error in SAP generator service', { error });
       throw error;
+    }
+  }
+
+  /**
+   * Record the SAP's stated inputs in the assumption registry, and say whether
+   * that happened. A failed capture was logger.warn('... (non-fatal)') with
+   * nothing in the result until 2026-10-15. A refusal's sentence is safe to
+   * show the caller; a driver's text is not, so it stays in the log.
+   */
+  private async captureInputs(
+    request: SapRequestData,
+    figures: { power: number | null; effectSize: number | null },
+  ): Promise<{ assumptionCapture: SapAssumptionCapture; captured?: SapCapture }> {
+    if (!request.organizationId || !request.projectId) {
+      return { assumptionCapture: { recorded: false, reason: 'no_project_context', message: NO_PROJECT_CONTEXT } };
+    }
+    try {
+      const captured = await OperatingSystemIntegration.getInstance().captureFromSapGeneration({
+        organizationId: request.organizationId,
+        projectId: request.projectId,
+        indication: request.indication,
+        phase: request.phase,
+        sampleSize: request.sample_size,
+        dropoutRate: request.dropout_rate ?? undefined,
+        primaryEndpoint: request.primary_endpoint,
+        effectSize: figures.effectSize ?? undefined,
+        alpha: request.alpha ?? undefined,
+        power: figures.power ?? undefined,
+        regulatorBody: request.regulatorBody,
+        jurisdiction: request.jurisdiction,
+        sourceArtifactId: request.sourceArtifactId,
+        createdById: request.createdById,
+      });
+      return {
+        captured,
+        assumptionCapture: {
+          recorded: true,
+          assumptionIds: captured.assumptions.map((a) => a.id),
+          decisionId: captured.decision.id,
+          notCaptured: captured.notCaptured,
+        },
+      };
+    } catch (err) {
+      const failure = err instanceof SapCaptureIncomplete ? err.failure : err;
+      logger.error('SAP inputs were NOT recorded in the assumption registry', {
+        error: failure instanceof Error ? failure.message : String(failure),
+      });
+      return {
+        assumptionCapture: {
+          recorded: false,
+          reason: 'capture_failed',
+          error:
+            failure instanceof LedgerInputRefusal
+              ? failure.message
+              : 'The SAP inputs could not be written to the assumption registry; the server log has the cause.',
+          writtenAssumptionIds: err instanceof SapCaptureIncomplete ? err.writtenAssumptionIds : [],
+        },
+      };
     }
   }
 
@@ -395,7 +521,6 @@ Study Information:
       binaryMethod,
       timeToEventMethod,
       multiplicityMethod,
-      interimAnalysisText,
       primaryMissingDataApproach,
       sensitivityAnalyses;
 
@@ -408,7 +533,6 @@ Study Information:
         binaryMethod = "Fisher's exact test";
         timeToEventMethod = 'Kaplan-Meier estimates';
         multiplicityMethod = 'No formal adjustment for multiplicity will be performed';
-        interimAnalysisText = 'No interim analyses are planned for this study';
         primaryMissingDataApproach = 'Complete case analysis';
         sensitivityAnalyses = 'Not applicable for this phase';
         break;
@@ -421,7 +545,6 @@ Study Information:
         timeToEventMethod = 'Kaplan-Meier estimates and log-rank test';
         multiplicityMethod =
           'Hochberg procedure will be used to control for multiple testing of key secondary endpoints';
-        interimAnalysisText = 'One interim analysis may be conducted for safety monitoring only';
         primaryMissingDataApproach = 'LOCF';
         sensitivityAnalyses = 'Complete case analysis and MMRM';
         break;
@@ -435,8 +558,6 @@ Study Information:
         timeToEventMethod = 'Cox proportional hazards model adjusted for stratification factors';
         multiplicityMethod =
           'Hierarchical testing procedure will be used to control for multiple testing of secondary endpoints';
-        interimAnalysisText =
-          'One interim analysis for efficacy and safety is planned at approximately 50% of enrolled participants';
         primaryMissingDataApproach = 'Multiple imputation';
         sensitivityAnalyses = 'Pattern mixture models and tipping point analysis';
         break;
@@ -448,7 +569,6 @@ Study Information:
         binaryMethod = 'appropriate categorical analysis methods';
         timeToEventMethod = 'survival analysis methods as appropriate';
         multiplicityMethod = 'Methods appropriate for the number of endpoints being evaluated';
-        interimAnalysisText = 'Interim analyses will be determined based on study needs';
         primaryMissingDataApproach = 'Methods appropriate for the study design';
         sensitivityAnalyses = 'Methods appropriate for the study design';
     }
@@ -480,7 +600,6 @@ Study Information:
       binaryMethod,
       timeToEventMethod,
       multiplicityMethod,
-      interimAnalysisText,
       primaryMissingDataApproach,
       sensitivityAnalyses,
     };
@@ -542,45 +661,45 @@ Study Information:
    * Update the SAP when a protocol is updated
    * @param protocolId The protocol ID
    * @param updatedData Updated protocol data
-   * @returns Updated SAP content
+   * @returns Updated SAP content, or null when no such protocol exists
+   *
+   * Uses what the update states and, for indication and phase, what the stored
+   * report holds. Until 2026-10-15 a missing sample size became 100, the
+   * endpoint 'treatment efficacy', duration 24 weeks, dropout 0.15 and
+   * indication / phase 'Unknown', and any failure returned the null that means
+   * "no such protocol". A missing input is refused (SapInputRefusal) now, and a
+   * failure is thrown.
    */
   async updateSap(
     protocolId: string,
     updatedData: Partial<SapRequestData>
   ): Promise<GeneratedSapData | null> {
-    try {
-      // Get current protocol data
-      const dbInstance = this.getDb();
-      const protocol = await dbInstance
-        .select()
-        .from(csrReports)
-        .where(eq(csrReports.id, parseInt(protocolId)))
-        .limit(1);
+    // Get current protocol data
+    const dbInstance = this.getDb();
+    const protocol = await dbInstance
+      .select()
+      .from(csrReports)
+      .where(eq(csrReports.id, parseInt(protocolId)))
+      .limit(1);
 
-      if (protocol.length === 0) {
-        logger.warn(`No protocol found with ID ${protocolId}`);
-        return null;
-      }
-
-      // Build updated request data
-      const requestData: SapRequestData = {
-        protocol_id: protocolId,
-        indication: updatedData.indication || protocol[0].indication || 'Unknown',
-        phase: updatedData.phase || protocol[0].phase || 'Unknown',
-        sample_size: updatedData.sample_size || 100, // Default value
-        primary_endpoint: updatedData.primary_endpoint || 'treatment efficacy',
-        // Add other fields with sensible defaults
-        secondary_endpoints: updatedData.secondary_endpoints || [],
-        duration_weeks: updatedData.duration_weeks || 24,
-        dropout_rate: updatedData.dropout_rate || 0.15,
-      };
-
-      // Generate updated SAP
-      return await this.generateSAP(requestData);
-    } catch (error) {
-      logger.error('Error updating SAP', { error });
+    if (protocol.length === 0) {
+      logger.warn(`No protocol found with ID ${protocolId}`);
       return null;
     }
+
+    // Generate updated SAP
+    return this.generateSAP(
+      requireSapInputs({
+        protocol_id: protocolId,
+        indication: updatedData.indication || protocol[0].indication || undefined,
+        phase: updatedData.phase || protocol[0].phase || undefined,
+        sample_size: updatedData.sample_size,
+        primary_endpoint: updatedData.primary_endpoint,
+        secondary_endpoints: updatedData.secondary_endpoints,
+        duration_weeks: updatedData.duration_weeks,
+        dropout_rate: updatedData.dropout_rate,
+      }),
+    );
   }
 }
 

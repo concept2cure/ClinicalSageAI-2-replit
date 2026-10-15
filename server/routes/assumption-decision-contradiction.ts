@@ -38,7 +38,7 @@
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { serverError } from '../lib/api-response';
-import { assumptionRegistryService } from '../services/assumption-registry-service';
+import { assumptionRegistryService, LedgerInputRefusal } from '../services/assumption-registry-service';
 import { decisionRecordService } from '../services/decision-record-service';
 import {
   contradictionEngineService,
@@ -86,17 +86,27 @@ function getOrgId(req: Request): number {
 }
 
 /* Every write here names who made it. A request with no user was attributed
-   to 'system', an actor nothing authenticated (changed 2026-10-15). */
+   to 'system', an actor nothing authenticated (changed 2026-10-15). Refused
+   as a missing input (400), not answered as a server fault. */
 function getUserId(req: Request): string {
   const actorId = governedActorId(req);
-  if (actorId == null) throw new Error('User context required');
+  if (actorId == null) {
+    throw new LedgerInputRefusal('actor', 'A signed-in user is required: every governed record names who made it.');
+  }
   return String(actorId);
 }
 
 /* Every 500 in this file answers through the one helper: the detail is logged
    against the request id, the client gets the envelope. `context` is an
-   imperative verb phrase ('search assumptions'), hence "trying to". */
+   imperative verb phrase ('search assumptions'), hence "trying to".
+   A ledger refusal — a missing input, or a value outside its column's
+   vocabulary, named by field — is the caller's to fix: 400. It reached the
+   INSERT as a CHECK violation and came back as a 500 until 2026-10-15. */
 function handleError(res: Response, error: unknown, context: string): void {
+  if (error instanceof LedgerInputRefusal) {
+    res.status(400).json({ error: error.message, field: error.field });
+    return;
+  }
   serverError(res, log, `trying to ${context}`, error);
 }
 

@@ -18,9 +18,19 @@
 -- more than two source signals and 'moderate' otherwise — a count, not a
 -- confidence. A confidence nobody stated is now null.
 --
+-- AMENDED IN PLACE 2026-10-15 (D2, second change) — assumption_records.
+-- confidence_level is nullable, with no default, for the same reason.
+--
+-- It was `TEXT NOT NULL ... DEFAULT 'moderate'`, and assumption-registry-
+-- service recorded 'moderate' for every assumption whose confidence nobody
+-- stated; the SAP generation capture passed 'provisional' / 'uncertain',
+-- which this CHECK refuses, so it recorded nothing at all. Removed by the
+-- SAP-capture vocabulary change (server/__tests__/migrations/assumption-
+-- confidence-as-stated.pglite.test.ts). The CHECK on a stated value stays.
+--
 -- RULE 1: this file is in C2C_MIGRATION_FILES and re-executes on every
--- deploy. The CREATE TABLE below is amended for databases where the table
--- does not exist yet; the conditional block after it relaxes the column on
+-- deploy. Each CREATE TABLE below is amended for databases where the table
+-- does not exist yet; the conditional block after each relaxes the column on
 -- databases provisioned before. Relaxing a constraint removes no object and
 -- discards no data; nothing on any applier re-imposes it.
 -- ═══════════════════════════════════════════════════════════════════════════════
@@ -103,10 +113,10 @@ CREATE TABLE IF NOT EXISTS assumption_records (
   )),
   source_reference TEXT,               -- e.g., 'Protocol v3.0, Section 9.2'
 
-  -- Confidence
-  confidence_level TEXT NOT NULL CHECK (confidence_level IN (
+  -- Confidence, as the caller stated it; null when nobody did (2026-10-15)
+  confidence_level TEXT CHECK (confidence_level IN (
     'definitive', 'high', 'moderate', 'low', 'speculative'
-  )) DEFAULT 'moderate',
+  )),
 
   -- Regulator/body compatibility
   applicable_regulators TEXT[],         -- ['FDA', 'EMA', 'PMDA'] or empty for universal
@@ -130,6 +140,22 @@ CREATE TABLE IF NOT EXISTS assumption_records (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 2026-10-15 (see the header): on a database provisioned before, the column
+-- loses its NOT NULL and its 'moderate' default. Conditional, every deploy.
+DO $assumption_confidence$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = current_schema() AND table_name = 'assumption_records'
+       AND column_name = 'confidence_level'
+       AND (is_nullable = 'NO' OR column_default IS NOT NULL)
+  ) THEN
+    ALTER TABLE assumption_records ALTER COLUMN confidence_level DROP NOT NULL;
+    ALTER TABLE assumption_records ALTER COLUMN confidence_level DROP DEFAULT;
+  END IF;
+END
+$assumption_confidence$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PART 2: DECISION RECORDS
