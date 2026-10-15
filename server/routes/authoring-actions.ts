@@ -16,6 +16,8 @@ import {
    the shared `recordAuditRow`, which reports the outcome instead of discarding
    it. See server/services/audit/audit-write-outcome.ts. */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { governedActorId } from '../middleware/orgMembership';
+import type { DecisionLifecycleService } from '../services/decision-lifecycle-service.js';
 
 const router = Router();
 
@@ -181,6 +183,25 @@ export async function resolveGovernedAuthority(
         'This is a failure to CHECK, not a decision about your role.',
       checkFailed: true,
     };
+  }
+}
+
+/**
+ * Confirm, then execute, a recorded decision. Each transition answers
+ * { success: false } when it is refused or did not persist; the two routes that
+ * stepped through it ignored that answer and then wrote a receipt saying the
+ * decision was executed. A refused step now throws into the route's
+ * governed-record failure path, before any receipt.
+ */
+export async function confirmAndExecuteDecision(
+  service: Pick<DecisionLifecycleService, 'transitionDecision'>,
+  decisionId: string,
+  actorId: string,
+  what: string,
+): Promise<void> {
+  for (const status of ['confirmed', 'executed'] as const) {
+    const t = await service.transitionDecision(decisionId, status, { actorId });
+    if (!t?.success) throw new Error(t?.error ?? `the ${what} decision could not be ${status}`);
   }
 }
 
@@ -497,6 +518,12 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
+    // The decision and its receipt name who promoted; without a user the
+    // ledger recorded 'system'.
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to promote an artifact' });
+    }
 
     // Step 1: Governance boundary evaluation (includes contradiction + readiness gates)
     let blocked = false;
@@ -728,12 +755,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         });
         // Transition to confirmed → executed
         if (promotionDecision) {
-          await decisionLifecycleService.transitionDecision(promotionDecision.id, 'confirmed', {
-            actorId: (req as any).userId,
-          });
-          await decisionLifecycleService.transitionDecision(promotionDecision.id, 'executed', {
-            actorId: (req as any).userId,
-          });
+          await confirmAndExecuteDecision(decisionLifecycleService, promotionDecision.id, String(actorId), 'promotion');
           promotionReceipt = await decisionLifecycleService.createReceipt({
             organizationId: Number(orgId),
             decisionId: promotionDecision.id,
@@ -845,7 +867,13 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId;
+    // The decision and its receipt name who judged the dossier ready; without
+    // a user the ledger recorded 'system'.
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to mark an artifact submission-ready' });
+    }
+    const userId = String(actorId);
     const userRole = (req as any).userRole;
 
     // Step 1: Governance boundary check (locked → submission_ready)
@@ -877,17 +905,17 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
       });
     }
 
-    // Step 2: Authority check (requires escalation — RA/submission lead)
-    try {
-      const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
-      const authorityCheck = decisionLifecycleService.checkAuthority('judge-dossier-ready', userRole || undefined);
-      if (authorityCheck && !authorityCheck.allowed) {
-        return res.json({
-          submissionReady: false, reason: 'unauthorized',
-          message: authorityCheck.reason || 'Escalation required — RA or submission lead must approve',
-        });
-      }
-    } catch { /* non-blocking */ }
+    // Step 2: Authority check (requires escalation — RA/submission lead),
+    // fail-closed through the one resolver. Its catch was "non-blocking": a
+    // check that threw, or answered nothing, let the act through.
+    const authorityCheck = await resolveGovernedAuthority('judge-dossier-ready', userRole || undefined);
+    if (!authorityCheck.allowed) {
+      return res.json({
+        submissionReady: false,
+        reason: authorityCheck.checkFailed ? 'authority-check-failed' : 'unauthorized',
+        message: authorityCheck.reason || 'Escalation required — RA or submission lead must approve',
+      });
+    }
 
     // Step 3: Record governance-level transition (artifact stays 'locked' in DB — submission_ready is a governance boundary)
     let decision: any = null;
@@ -904,8 +932,7 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
         createdByType: 'human', createdById: userId || undefined,
       });
       if (decision) {
-        await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: userId });
-        await decisionLifecycleService.transitionDecision(decision.id, 'executed', { actorId: userId });
+        await confirmAndExecuteDecision(decisionLifecycleService, decision.id, userId, 'submission-ready');
         receipt = await decisionLifecycleService.createReceipt({
           organizationId: Number(orgId),
           decisionId: decision.id, projectId: String(projectId),
@@ -2767,12 +2794,26 @@ router.post('/decision/:decisionId/confirm', async (req: Request, res: Response)
   try {
     const { decisionId } = req.params;
     const { accepted, reason } = req.body;
-    const userId = (req as any).userId || 'unknown';
+    /* The confirmation is the record of who accepted or rejected the decision;
+       a request with no user was recorded as 'unknown'. And it resolved no
+       tenant, so a caller could confirm or reject another organization's
+       decision by id — the reads beside it were scoped, this write was not. */
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to confirm or reject a decision' });
+    }
+    const userId = String(actorId);
     const userRole = (req as any).userRole || undefined;
 
     const { decisionLifecycleService } = await import(
       '../services/decision-lifecycle-service.js'
     );
+    // Another organization's decision is not found, as on the reads.
+    if (!decisionLifecycleService.getDecision(String(decisionId ?? ''), orgId)) {
+      return res.status(404).json({ error: 'Decision not found' });
+    }
 
     const newStatus = accepted ? 'confirmed' : 'rejected';
     const result = await decisionLifecycleService.transitionDecision(
@@ -3021,7 +3062,13 @@ router.post('/contradiction-consequence', async (req: Request, res: Response) =>
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId || 'system';
+    // The decision, its receipt, the memo and the consequence log name who
+    // acted; a request with no user was attributed to 'system'.
+    const actorId = governedActorId(req);
+    if (actorId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to take a contradiction consequence' });
+    }
+    const userId = String(actorId);
     const userRole = (req as any).userRole || undefined;
 
     // Fetch the finding
@@ -3042,8 +3089,11 @@ router.post('/contradiction-consequence', async (req: Request, res: Response) =>
       { projectId: finding.projectId ?? undefined, organizationId: orgId, actorRole: userRole }
     );
 
-    return res.json({
-      status: result.success ? 'executed' : 'failed',
+    // A refusal records nothing (422); a failure part-way reports what it had
+    // already recorded (500). Both used to answer 200.
+    const httpStatus = result.success ? 200 : result.decision ? 500 : 422;
+    return res.status(httpStatus).json({
+      status: !result.success ? 'failed' : consequenceType === 'escalation' ? 'escalated' : 'executed',
       action: 'contradiction_consequence',
       findingId,
       consequenceType,
