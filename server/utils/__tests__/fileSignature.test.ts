@@ -254,3 +254,35 @@ describe('verifyDeclaredTypeForName — the extension binds the declared type an
     expect(verifyDeclaredTypeForName(HTML, 'no-extension', 'text/html').ok).toBe(true);
   });
 });
+
+describe('SAS transport and Dataset-JSON NDJSON (2026-10-15)', () => {
+  const XPT = Buffer.concat([
+    Buffer.from('HEADER RECORD*******LIBRARY HEADER RECORD!!!!!!!000000000000000000000000000000  ', 'latin1'),
+    Buffer.alloc(160, 0x20),
+  ]);
+
+  it('checks an .xpt against the transport header, declared as its own type or as a browser sends it', async () => {
+    const { verifyDeclaredTypeForName, verifyFileSignature, signatureTypeFor } = await import('../fileSignature');
+    expect(verifyFileSignature(XPT, 'application/x-sas-xport')).toEqual({ ok: true });
+    expect(verifyDeclaredTypeForName(XPT, 'ae.xpt', 'application/octet-stream')).toEqual({ ok: true });
+    expect(signatureTypeFor('ae.xpt', 'application/octet-stream')).toBe('application/x-sas-xport');
+  });
+
+  it('refuses an .xpt whose bytes are not a transport file, however it is declared', async () => {
+    const { verifyDeclaredTypeForName } = await import('../fileSignature');
+    expect(verifyDeclaredTypeForName(Buffer.from('MZ\x90\x00 an executable'), 'ae.xpt', 'application/octet-stream').ok).toBe(false);
+    expect(verifyDeclaredTypeForName(Buffer.from('%PDF-1.7'), 'ae.xpt', 'application/x-sas-xport').ok).toBe(false);
+  });
+
+  it('admits application/octet-stream for .xpt only: any other name keeps its own binding', async () => {
+    const { verifyDeclaredTypeForName, signatureTypeFor } = await import('../fileSignature');
+    expect(verifyDeclaredTypeForName(Buffer.from('%PDF-1.7'), 'report.pdf', 'application/octet-stream').ok).toBe(false);
+    expect(signatureTypeFor('report.pdf', 'application/octet-stream')).toBe('application/octet-stream');
+  });
+
+  it('checks an .ndjson as text', async () => {
+    const { verifyDeclaredTypeForName } = await import('../fileSignature');
+    expect(verifyDeclaredTypeForName(Buffer.from('{"datasetJSONVersion":"1.1.0"}\n["a"]\n'), 'ae.ndjson', 'application/x-ndjson')).toEqual({ ok: true });
+    expect(verifyDeclaredTypeForName(Buffer.from([0, 1, 2, 3, 0, 0]), 'ae.ndjson', 'application/x-ndjson').ok).toBe(false);
+  });
+});

@@ -6,7 +6,7 @@
  */
 export interface DocumentIntakeFormat {
   extension: string;
-  textExtraction: 'pdf' | 'docx' | 'xlsx' | 'utf8' | 'image-ocr' | 'none';
+  textExtraction: 'pdf' | 'docx' | 'xlsx' | 'utf8' | 'image-ocr' | 'dataset-structure' | 'none';
   /** A signature/byte-shape check exists for this format's declared MIME. */
   byteCheckSupported: boolean;
   chat: boolean;
@@ -18,7 +18,7 @@ export const DOCUMENT_INTAKE_FORMATS: readonly DocumentIntakeFormat[] = [
   { extension: '.pdf', textExtraction: 'pdf', byteCheckSupported: true, chat: true, vault: true },
   { extension: '.docx', textExtraction: 'docx', byteCheckSupported: true, chat: true, vault: true },
   { extension: '.xlsx', textExtraction: 'xlsx', byteCheckSupported: true, chat: true, vault: true, limitation: 'Workbook text extraction, not a mapped or validated scientific dataset.' },
-  ...['.txt', '.md', '.csv', '.tsv', '.json', '.xml'].map(extension => ({
+  ...['.txt', '.md', '.csv', '.tsv', '.json', '.ndjson', '.xml'].map(extension => ({
     extension, textExtraction: 'utf8' as const, byteCheckSupported: true, chat: true, vault: true,
     limitation: 'Raw UTF-8 text only; no schema, units, subject mapping, or dataset validation.',
   })),
@@ -26,6 +26,8 @@ export const DOCUMENT_INTAKE_FORMATS: readonly DocumentIntakeFormat[] = [
     extension, textExtraction: 'image-ocr' as const, byteCheckSupported: true, chat: true, vault: true,
     limitation: 'OCR requires the configured engine/languages; accuracy and readability are not guaranteed.',
   })),
+  { extension: '.xpt', textExtraction: 'dataset-structure', byteCheckSupported: true, chat: true, vault: true,
+    limitation: 'SAS transport v5 read for structure only: datasets, variables, labels, types and record counts. No observation is read, and this is not a conformance or FDA validator check.' },
   { extension: '.doc', textExtraction: 'none', byteCheckSupported: true, chat: true, vault: true, limitation: 'Legacy admission retained; no canonical DOC text parser.' },
   { extension: '.xls', textExtraction: 'none', byteCheckSupported: true, chat: true, vault: true, limitation: 'Existing landing picker and Vault legacy admission retained; no canonical XLS text parser.' },
   { extension: '.rtf', textExtraction: 'utf8', byteCheckSupported: true, chat: false, vault: true, limitation: 'Legacy admission retained; raw markup text, not an RTF document parser.' },

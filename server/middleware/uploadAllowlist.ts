@@ -33,6 +33,8 @@ export interface UploadAllowlistOptions {
 export const DEFAULT_ALLOWED_EXTENSIONS = [
   'pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'tsv', 'txt', 'md', 'rtf',
   'html', 'htm', 'json', 'xml', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'tif', 'tiff',
+  // Clinical datasets (2026-10-15): SAS transport v5 and Dataset-JSON's NDJSON form.
+  'xpt', 'ndjson',
 ];
 
 const DEFAULT_ALLOWED_MIME_PREFIXES = ['image/'];

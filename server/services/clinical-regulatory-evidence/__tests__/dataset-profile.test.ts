@@ -105,3 +105,37 @@ describe('detectCdisc', () => {
     expect(detectCdisc(['STUDYID', 'DOMAIN', 'USUBJID'])).toMatchObject({ standard: 'SDTM', domain: null });
   });
 });
+
+describe('profileDataset — SAS transport and Dataset-JSON (2026-10-15)', () => {
+  it('profiles a Dataset-JSON SDTM AE: columns, types, records, standard and domain, and keeps no value', async () => {
+    const json = JSON.stringify({ datasetJSONVersion: '1.1.0', name: 'AE', label: 'Adverse Events', records: 2,
+      columns: [{ name: 'STUDYID', label: 'Study', dataType: 'string' }, { name: 'DOMAIN', label: 'Domain', dataType: 'string' },
+        { name: 'USUBJID', label: 'Subject', dataType: 'string' }, { name: 'AESEQ', label: 'Seq', dataType: 'integer' },
+        { name: 'AESTDTC', label: 'Start', dataType: 'datetime' }],
+      rows: [['X', 'AE', 'X-0031', 1, '2024-05-09'], ['X', 'AE', 'X-0032', 1, '2024-05-10']] });
+    const p = await profileDataset(Buffer.from(json), 'ae.json', 'application/json');
+    expect(p?.format).toBe('dataset-json');
+    expect(p?.tables[0]).toMatchObject({ name: 'AE', rowCount: 2, columnCount: 5, cdisc: { standard: 'SDTM', domain: 'AE' } });
+    expect(p?.tables[0].columns.map((c) => c.type)).toEqual(['text', 'text', 'text', 'number', 'date']);
+    expect(JSON.stringify(p)).not.toContain('X-0031');
+  });
+
+  it('a .json that is not a dataset has no profile', async () => {
+    expect(await profileDataset(Buffer.from('{"a":1}'), 'notes.json', 'application/json')).toBeNull();
+  });
+
+  it('a .xpt that is not a transport file has no profile', async () => {
+    expect(profileFormat('ae.xpt', 'application/octet-stream')).toBe('xpt');
+    expect(await profileDataset(Buffer.from('nope'), 'ae.xpt', 'application/octet-stream')).toBeNull();
+  });
+  it('profiles a SAS transport SDTM AE from its headers: variables, types, rows, domain', async () => {
+    const { AE, library, member } = await import('./support/xpt-fixture');
+    const p = await profileDataset(library(member('AE', 'Adverse Events', AE, 3)), 'ae.xpt', 'application/octet-stream');
+    expect(p?.format).toBe('xpt');
+    expect(p?.tables[0]).toMatchObject({ name: 'AE', rowCount: 3, columnCount: AE.length, cdisc: { standard: 'SDTM', domain: 'AE' } });
+    // A numeric with a DATE format is a date; a plain numeric is a number.
+    expect(p?.tables[0].columns.find((c) => c.name === 'TRTSDT')?.type).toBe('date');
+    expect(p?.tables[0].columns.find((c) => c.name === 'AESEQ')?.type).toBe('number');
+  });
+});
+

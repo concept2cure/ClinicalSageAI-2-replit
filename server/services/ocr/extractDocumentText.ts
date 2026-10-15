@@ -27,6 +27,7 @@ export type ExtractionMethod =
   | 'image-ocr'
   | 'docx'
   | 'xlsx'
+  | 'xpt-structure'
   | 'none';
 
 export interface ExtractedDocumentText {
@@ -107,7 +108,7 @@ async function extractPdfText(buffer: Buffer): Promise<ExtractedDocumentText> {
 }
 
 /** Which extractor a file needs, from its media type and, failing that, its name. */
-type DocumentFormat = 'xlsx' | 'text' | 'image' | 'pdf' | 'docx' | 'unknown';
+type DocumentFormat = 'xlsx' | 'text' | 'image' | 'pdf' | 'docx' | 'xpt' | 'unknown';
 
 /** Raw source representation only: this does not validate JSON/XML or map a dataset. */
 function isRawTextFormat(mime: string, filename: string): boolean {
@@ -133,6 +134,7 @@ export function classifyDocumentFormat(mime: string | undefined, filename = ''):
   if (m.startsWith('image/') || /\.(png|jpe?g|gif|webp|tiff?|bmp)$/i.test(filename)) return 'image';
   if (m === 'application/pdf' || /\.pdf$/i.test(filename)) return 'pdf';
   if (m === DOCX_MIME || /\.docx$/i.test(filename)) return 'docx';
+  if (m === 'application/x-sas-xport' || /\.xpt$/i.test(filename)) return 'xpt';
   return 'unknown';
 }
 
@@ -171,6 +173,17 @@ async function extractDocxText(buffer: Buffer): Promise<ExtractedDocumentText> {
   }
 }
 
+/**
+ * A SAS transport file's text is its structure (2026-10-15): each dataset's
+ * name, label and record count, and each variable's name, label, type and
+ * length. Searchable and readable by AnA; no observation is read.
+ */
+async function extractXptText(buffer: Buffer): Promise<ExtractedDocumentText> {
+  const { readXptStructure, xptStructureText } = await import('../clinical-regulatory-evidence/xpt-structure');
+  const read = readXptStructure(buffer);
+  return read.ok ? { text: xptStructureText(read), method: 'xpt-structure' } : { text: '', method: 'none' };
+}
+
 export async function extractDocumentText(
   buffer: Buffer,
   mime: string | undefined,
@@ -187,6 +200,8 @@ export async function extractDocumentText(
       return extractPdfText(buffer);
     case 'docx':
       return extractDocxText(buffer);
+    case 'xpt':
+      return extractXptText(buffer);
     default:
       // A format with no extractor is not an error: the document is admitted
       // and the catalog records that its content could not be read.

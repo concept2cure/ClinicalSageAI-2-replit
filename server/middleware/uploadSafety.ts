@@ -57,7 +57,7 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { verifyDeclaredTypeForName, verifyFileSignature } from '../utils/fileSignature';
+import { verifyDeclaredTypeForName, verifyFileSignature, signatureTypeFor } from '../utils/fileSignature';
 import { scanBuffer } from '../utils/virusScan';
 import { createScopedLogger } from '../utils/logger';
 
@@ -146,7 +146,8 @@ export async function assertUploadSafe(
   }
 
   // 1) Magic-byte signature check.
-  const sig = verifyFileSignature(buffer, declaredMime);
+  // Against the type the name binds, when the declared type is one it admits.
+  const sig = verifyFileSignature(buffer, signatureTypeFor(filename, declaredMime));
   if (!sig.ok) {
     logger.warn('Upload rejected by signature check', {
       filename,

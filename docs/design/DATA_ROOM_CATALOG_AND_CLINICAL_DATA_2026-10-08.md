@@ -113,4 +113,6 @@ The following need the launch catalog extended (D2) and change what row D7 prove
 - **Standardized datasets in the submission.** This means SAS XPORT v5 reading and writing, Dataset-JSON, and `m5/datasets` leaf placement with define.xml and reviewer's guides, to meet FDA technical rejection criteria 1734 and 1736. Today the packager admits PDF leaves only (`server/services/ectd/leaf-source-resolver.ts`), and `server/services/ind/ctd/fda-technical-rules.ts` states the gap.
 - **`.zip` intake** of dataset bundles.
 
+**2026-10-15: decided ("Do it all").** Intake is done: `.xpt` v5 and Dataset-JSON are read for structure and profiled (`docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-15-clinical-dataset-intake/`). `m5/datasets` packaging and `.zip` intake follow.
+
 Recommendation: decide this before the first NDA, BLA or PMA customer. An IND (row D7) can be filed without standardized datasets in many cases. A marketing application cannot.

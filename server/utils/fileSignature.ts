@@ -41,6 +41,8 @@ const GIF87_MAGIC = Buffer.from('GIF87a');
 const GIF89_MAGIC = Buffer.from('GIF89a');
 const ZIP_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const OLE_COMPOUND_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]); // legacy .doc / .xls
+/** SAS transport v5's first record (the format FDA's Technical Conformance Guide requires for datasets). */
+const XPORT_V5_MAGIC = Buffer.from('HEADER RECORD*******LIBRARY HEADER RECORD!!!!!!!', 'latin1');
 
 const TEXT_LIKE_PREFIXES = ['text/', 'application/json', 'application/xml', 'application/csv'];
 const TEXT_LIKE_EXACT = new Set([
@@ -155,6 +157,12 @@ export function verifyFileSignature(buffer: Buffer, mimeType: string): Signature
       : { ok: false, reason: `not an OLE compound document for ${mimeType}` };
   }
 
+  if (mimeType === 'application/x-sas-xport') {
+    return matchesMagic(buffer, XPORT_V5_MAGIC)
+      ? { ok: true }
+      : { ok: false, reason: 'not a SAS transport (v5) file' };
+  }
+
   if (isTextLikeMime(mimeType)) {
     return isLikelyText(buffer)
       ? { ok: true }
@@ -214,7 +222,22 @@ const NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<string, NameBind
   ['.xml', { canonical: 'application/xml', declared: ['application/xml', 'text/xml', 'text/plain'] }],
   ['.md', { canonical: 'text/markdown', declared: ['text/markdown', 'text/x-markdown', 'text/plain'] }],
   ['.rtf', { canonical: 'text/rtf', declared: ['text/rtf', 'text/plain'] }],
+  // A browser has no type for .xpt and sends application/octet-stream; that is
+  // admitted for this name only, and only for bytes that are a v5 transport file.
+  ['.xpt', { canonical: 'application/x-sas-xport', declared: ['application/x-sas-xport', 'application/octet-stream'] }],
+  ['.ndjson', { canonical: 'application/x-ndjson', declared: ['application/x-ndjson', 'application/json', 'text/plain'] }],
 ]);
+
+/**
+ * The type a name binds when the declared type is one it admits, else the
+ * declared type: the signature is checked against what the name promises
+ * (an .xpt declared application/octet-stream is checked as a transport file).
+ */
+export function signatureTypeFor(fileName: string, declaredMime: string): string {
+  const declared = String(declaredMime ?? '').split(';')[0].trim().toLowerCase();
+  const binding = NAME_BINDINGS.get(path.extname(String(fileName ?? '')).toLowerCase());
+  return binding && binding.declared.includes(declared) ? binding.canonical : declaredMime;
+}
 
 /**
  * Verify that `declaredMime` is a type `fileName`'s extension may be declared
