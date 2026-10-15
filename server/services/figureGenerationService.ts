@@ -533,25 +533,28 @@ async function resolveSourceData(
     data: Record<string, unknown>[];
   }> = [];
 
-  // Resolve Data Room references
+  // Resolve Data Room references. 2026-10-15: a failed read was logged and the
+  // figure refused as "No source data was supplied" — data was supplied; the
+  // read failed, and that is what the caller is told now.
   if (dataRoomRefs.length > 0) {
-    try {
-      const result = await pool.query(
+    const result = await pool
+      .query(
         `SELECT id, title, metadata, content_type
          FROM concept2cure_artifacts
          WHERE id = ANY($1::int[]) AND project_id = $2 AND organization_id = $3`,
         [dataRoomRefs.map(Number).filter(Boolean), projectId, organizationId]
-      );
-      for (const row of result.rows) {
-        sources.push({
-          id: String(row.id),
-          name: row.title,
-          type: 'data_room',
-          data: row.metadata?.extractedData || [],
-        });
-      }
-    } catch (error) {
-      console.warn('[FigureService] Failed to resolve Data Room refs:', error);
+      )
+      .catch((error: unknown) => {
+        console.error('[FigureService] Could not read the linked Data Room documents:', error);
+        throw new Error('The linked Data Room documents could not be read, so no figure was generated.', { cause: error });
+      });
+    for (const row of result.rows) {
+      sources.push({
+        id: String(row.id),
+        name: row.title,
+        type: 'data_room',
+        data: row.metadata?.extractedData || [],
+      });
     }
   }
 
@@ -651,6 +654,9 @@ function rowCounts(figure: FigureSpec): { rowsSupplied: number; rowsSentToModel:
 }
 
 async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest): Promise<void> {
+  // 2026-10-15: a failed INSERT was logged and swallowed here, and generateFigure
+  // then audited and returned as generated a figure that was never stored.
+  let artifactPk: number;
   try {
     const figRes = await pool.query<{ id: number }>(
       // Named `user_id` and `content_type`, neither of which this table has —
@@ -693,9 +699,17 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
         }),
       ]
     );
-    // Uniform provenance: a generated figure is a 'generation' event.
+    artifactPk = figRes.rows[0].id;
+  } catch (error) {
+    console.error('[FigureService] Could not store the figure:', error);
+    throw new Error('The drafted figure could not be stored, so no figure was generated.', { cause: error });
+  }
+  // Uniform provenance: a generated figure is a 'generation' event. Best-effort
+  // beside an already-committed row, as for the other pool-level producers; a
+  // failure is logged, not hidden.
+  try {
     await recordArtifactProvenance(pool, {
-      artifactId: figRes.rows[0].id,
+      artifactId: artifactPk,
       organizationId: request.organizationId,
       eventType: 'generation',
       eventAction: 'figure_generate',
@@ -709,7 +723,7 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
       backendService: 'figureGenerationService',
     });
   } catch (error) {
-    console.warn('[FigureService] Failed to store figure:', error);
+    console.error(`[FigureService] Figure artifact ${artifactPk} is stored but its provenance event was not recorded:`, error);
   }
 }
 
