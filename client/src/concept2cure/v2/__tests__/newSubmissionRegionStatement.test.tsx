@@ -24,7 +24,7 @@ import { NewSubmissionForm } from '../surfaces/NewSubmissionForm';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
 const MARKETS = [
   { applicationType: 'maa', market: 'FDA', region: 'US', agency: 'FDA', summary: 'Not offered', line: 'Not offered: an MAA is not an FDA application', buildable: false, offered: false },
-  { applicationType: 'maa', market: 'EMA', region: 'EU', agency: 'EMA', summary: 'Flat Module 1, no transmit channel', line: 'Built as a flat Module 1; the EMA gateway adapter refuses', buildable: false, offered: true },
+  { applicationType: 'maa', market: 'EMA', region: 'EU', agency: 'EMA', summary: 'Module 1 without the agency\'s headings, no transmit channel', line: 'Built as a flat Module 1; the EMA gateway adapter refuses', buildable: false, offered: true },
 ];
 
 beforeEach(() => {
@@ -44,10 +44,10 @@ describe('New submission: the chosen region is stated in full', () => {
     render(form());
     fireEvent.change(screen.getByLabelText(/Application type/), { target: { value: 'maa' } });
     const region = screen.getByLabelText(/Primary region/) as HTMLSelectElement;
-    await screen.findByRole('option', { name: /EU \(EMA\) · Flat Module 1, no transmit channel/ });
+    await screen.findByRole('option', { name: /EU \(EMA\) · Module 1 without the agency's headings, no transmit channel/ });
     fireEvent.change(region, { target: { value: 'eu' } });
     const desc = () => document.getElementById(region.getAttribute('aria-describedby') ?? '')?.textContent ?? '';
-    expect(desc()).toContain('EU (EMA): Flat Module 1, no transmit channel. Built as a flat Module 1; the EMA gateway adapter refuses.');
+    expect(desc()).toContain('EU (EMA): Module 1 without the agency\'s headings, no transmit channel. Built as a flat Module 1; the EMA gateway adapter refuses.');
     fireEvent.change(region, { target: { value: 'fda' } });
     expect(desc()).toContain('FDA (US): Not offered: an MAA is not an FDA application.');
     expect(desc()).not.toContain('EU (EMA):');
@@ -62,6 +62,6 @@ describe('New submission: a market not offered cannot be chosen', () => {
     fireEvent.change(screen.getByLabelText(/Application type/), { target: { value: 'maa' } });
     const fda = await screen.findByRole('option', { name: /FDA \(US\) · Not offered/ }) as HTMLOptionElement;
     expect(fda.disabled).toBe(true);
-    expect((screen.getByRole('option', { name: /EU \(EMA\) · Flat Module 1/ }) as HTMLOptionElement).disabled).toBe(false);
+    expect((screen.getByRole('option', { name: /EU \(EMA\) · Module 1 without the agency's headings/ }) as HTMLOptionElement).disabled).toBe(false);
   });
 });

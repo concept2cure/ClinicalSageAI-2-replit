@@ -31,8 +31,8 @@ const SUBS = [
   { id: 62, title: 'ONC-221 MAA', applicationType: 'maa', clientType: 'biotech', primaryRegion: 'eu', status: 'planning', lifecycleStage: 'original', programId: PID },
 ];
 const SUPPORT: Record<string, { summary: string; line: string; buildable: boolean; offered: boolean }> = {
-  'nda|fda': { summary: 'Structured Module 1', line: 'Transmit not proven: the ESG transmission is not signed as FDA requires', buildable: true, offered: true },
-  'maa|eu': { summary: 'Flat Module 1, no channel', line: 'Applicant uploads through the EMA eSubmission Gateway / Web Client', buildable: false, offered: true },
+  'nda|fda': { summary: 'Module 1 to the agency\'s headings', line: 'Transmit not proven: the ESG transmission is not signed as FDA requires', buildable: true, offered: true },
+  'maa|eu': { summary: 'Module 1 without the agency\'s headings, no channel', line: 'Applicant uploads through the EMA eSubmission Gateway / Web Client', buildable: false, offered: true },
 };
 
 function serve(supportFails = false) {
@@ -77,9 +77,9 @@ describe('market rows state what the platform can carry (F19)', () => {
     await openSubmit();
     const [nda, maa] = screen.getAllByTestId('pj-submission');
     await waitFor(() => expect(within(nda).getByTestId('market-support').getAttribute('data-state')).toBe('buildable'));
-    expect(within(nda).getByTestId('market-support').textContent).toBe('Structured Module 1. Transmit not proven: the ESG transmission is not signed as FDA requires.');
+    expect(within(nda).getByTestId('market-support').textContent).toBe('Module 1 to the agency\'s headings. Transmit not proven: the ESG transmission is not signed as FDA requires.');
     await waitFor(() => expect(within(maa).getByTestId('market-support').getAttribute('data-state')).toBe('limited'));
-    expect(within(maa).getByTestId('market-support').textContent).toContain('Flat Module 1, no channel');
+    expect(within(maa).getByTestId('market-support').textContent).toContain('Module 1 without the agency\'s headings, no channel');
     expect(apiRequest).toHaveBeenCalledWith('GET', marketSupportPath('nda', 'fda'));
     expect(apiRequest).toHaveBeenCalledWith('GET', marketSupportPath('maa', 'eu'));
   });
@@ -117,8 +117,8 @@ describe('MarketSupportLine', () => {
 
   it('does not repeat the summary when the line says the same thing', () => {
     expect(marketSupportText({ summary: 'No outline, no channel', line: 'No outline; no channel' })).toBe('No outline, no channel.');
-    expect(marketSupportText({ summary: 'Flat Module 1, no channel', line: 'Applicant uploads through the EMA eSubmission Gateway' }))
-      .toBe('Flat Module 1, no channel. Applicant uploads through the EMA eSubmission Gateway.');
+    expect(marketSupportText({ summary: 'Module 1 without the agency\'s headings, no channel', line: 'Applicant uploads through the EMA eSubmission Gateway' }))
+      .toBe('Module 1 without the agency\'s headings, no channel. Applicant uploads through the EMA eSubmission Gateway.');
   });
 
   /* Design review 2026-10-08 (.design/filing-spine/DESIGN_REVIEW.md): a line
