@@ -1,15 +1,28 @@
 
  RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
 
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts > a surface states the type of the document it authors > a turn from that surface sends it as document_context.documentType, with no authoring pack
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts > a surface states the type of the document it authors > an authoring pack that names its type sends it in authoring_context too
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts > a surface states the type of the document it authors > a surface that states no type sends no document context, as before
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts > a surface states the type of the document it authors > the published context carries it on the wire as document_type 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts > a surface states the type of the document it authors > a turn from that surface sends it as document_context.documentType, with no authoring pack 22ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts > a surface states the type of the document it authors > an authoring pack that names its type sends it in authoring_context too 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts > a surface states the type of the document it authors > a surface that states no type sends no document context, as before 8ms
 stdout | server/services/ana-ri/__tests__/open-document-turn.test.ts
 {
-  "timestamp": "2026-10-15T03:57:37.013Z",
+  "timestamp": "2026-10-15T04:28:23.369Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-15T03:57:37.014Z",
+  "timestamp": "2026-10-15T04:28:23.370Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -19,7 +32,7 @@ stdout | server/services/ana-ri/__tests__/open-document-turn.test.ts
 
 stderr | server/services/ana-ri/__tests__/open-document-turn.test.ts
 {
-  "timestamp": "2026-10-15T03:57:37.015Z",
+  "timestamp": "2026-10-15T04:28:23.370Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -30,7 +43,7 @@ stderr | server/services/ana-ri/__tests__/open-document-turn.test.ts
 
 stderr | server/services/ana-ri/__tests__/open-document-turn.test.ts
 {
-  "timestamp": "2026-10-15T03:57:37.315Z",
+  "timestamp": "2026-10-15T04:28:23.692Z",
   "level": "error",
   "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
   "context": {}
@@ -39,21 +52,24 @@ stderr | server/services/ana-ri/__tests__/open-document-turn.test.ts
 stdout | server/services/ana-ri/__tests__/open-document-turn.test.ts
 Loaded 0 academic documents
 
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > an open Investigator's Brochure reaches the turn with its outline and basis 5ms
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > a recorded template that does not verify is said to be unverified, never read as a type 1ms
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > a failed read is stated, and listed among the unavailable context 2ms
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a surface may state the type, only as a registry id > Protocol Development stating ICH_PROTOCOL gets the ICH M11 outline 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > an open Investigator's Brochure reaches the turn with its outline and basis 11ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > a recorded template that does not verify is said to be unverified, never read as a type 3ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > a failed read is stated, and listed among the unavailable context 3ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a surface may state the type, only as a registry id > Protocol Development stating ICH_PROTOCOL gets the ICH M11 outline 2ms
  ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a surface may state the type, only as a registry id > a stated type the registry does not hold is no type, and its text never reaches the prompt 1ms
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the turn carries it > orchestrate injects the open-document block, whatever the message says 13ms
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the turn carries it > a client document type is not written into the prompt unless it is a registry id 9ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the turn carries it > orchestrate injects the open-document block, whatever the message says 15ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the turn carries it > a client document type is not written into the prompt unless it is a registry id 7ms
  ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the stream route hands it through > passes the open-document block to orchestrate 0ms
  ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the stream route hands it through > gives tool selection the resolved type, not asStr of an object 1ms
  ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > client section text reaches the prompt only as one sanitized line, Current Focus included 1ms
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > a client type the registry does not hold is said to be one, not dropped in silence 4ms
- ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > once the saved record is found, a type the surface states is never used 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > a client type the registry does not hold is said to be one, not dropped in silence 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > once the saved record is found, a type the surface states is never used 0ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a type the surface states in document_context reaches the read > is added to the authoring context only when the pack names none 0ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a type the surface states in document_context reaches the read > an IB surface with no saved record gets the IB outline 0ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a type the surface states in document_context reaches the read > the stream route passes document_context to it 0ms
 
- Test Files  1 passed (1)
-      Tests  12 passed (12)
-   Start at  03:57:33
-   Duration  12.18s (transform 8.33s, setup 90ms, import 11.78s, tests 43ms, environment 0ms)
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+   Start at  04:28:19
+   Duration  14.17s (transform 9.35s, setup 199ms, import 13.02s, tests 98ms, environment 502ms)
 

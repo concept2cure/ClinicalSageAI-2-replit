@@ -43,6 +43,8 @@ export { TABS, ProtocolWorkspaceDoc } from './ProtocolDevWorkspace';
  */
 interface AnaSurfaceContext {
   summary: string;
+  /** Registry type of the protocol on screen (surfaceContext.documentType). */
+  documentType?: string;
   facts?: Record<string, unknown>;
   availableActions?: string[];
 }
@@ -55,6 +57,11 @@ interface AnaSurfaceContext {
  * stored name spliced into a person's turn is an instruction channel
  * (periodic review 2026-09-28, editor family, SEC-C-4).
  */
+/** A clinical protocol is an ICH M11 protocol; IACUC, IRB and IBC protocols have no registry type. */
+function protocolRegistryType(kind: unknown): string | undefined {
+  return kind === 'clinical' ? 'ICH_PROTOCOL' : undefined;
+}
+
 function anaContextFor(
   state: { loading: boolean; error: unknown; empty: boolean }, doc: PdevDoc | undefined,
   openSectionId: string | null, program: string | null,
@@ -90,6 +97,7 @@ function anaContextFor(
       ? `This protocol names study design ${sd.studyId}, which could not be read for this organisation — the link is unresolved.`
       : `Bound to study design "${sd.title}" (${sd.studyId}): ${sd.findings.length} design-gate finding(s), risk ${sd.riskLevel}.`;
   return {
+    documentType: protocolRegistryType(doc.kind),
     summary:
       `Protocol development: "${doc.shortTitle}" (${doc.title}) v${doc.version}, status ` +
       `${doc.status}, ${doc.completeness}% complete — ${done} of ${secs.length} ` +
