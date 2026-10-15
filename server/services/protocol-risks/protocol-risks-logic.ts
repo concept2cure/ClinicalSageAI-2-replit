@@ -21,7 +21,14 @@ const IMPACT_RANK: Record<RiskImpact, number> = { negligible: 1, minor: 2, moder
 
 /** Numeric risk score 1–25 (likelihood-rank × impact-rank). Pure. */
 export function riskScore(likelihood: RiskLikelihood, impact: RiskImpact): number {
-  return (LIKELIHOOD_RANK[likelihood] ?? 3) * (IMPACT_RANK[impact] ?? 3);
+  // A rating outside the scale was scored as the middle of it (3) — an
+  // unrated risk then read 9, 'high'. It is refused instead (2026-10-15).
+  const l = LIKELIHOOD_RANK[likelihood];
+  const i = IMPACT_RANK[impact];
+  if (l === undefined || i === undefined) {
+    throw new RangeError(`riskScore: likelihood and impact must both be rated (got ${String(likelihood)} × ${String(impact)})`);
+  }
+  return l * i;
 }
 
 /** Qualitative band for a numeric score. Pure. */
