@@ -81,8 +81,6 @@
     "migrations/20260612_grant_costshare_nce.sql",
     "migrations/20260612_grant_subawards.sql",
     "migrations/20260612_rls_research_admin.sql",
-    "migrations/20260614_ind_cross_references.sql",
-    "migrations/20260614_ind_safety_reports.sql",
     "migrations/20260615_report_subscriptions.sql",
     "migrations/20260616_drop_unused_cdisc_reference_tables.sql",
     "migrations/20260617_ai_provider_preference.sql",

@@ -1,0 +1,27 @@
+# npx vitest run server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts
+# against HEAD's runShadowReview, with the P-34 migration applied (2026-10-15)
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a failed run records a closed failure code and an audit row > every provider failed: provider_unavailable, waivable, audited, PROVIDER_UNAVAILABLE to the caller 28ms
+   → expected { id: 1, status: 'failed', …(1) } to match object { status: 'failed', …(1) }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a failed run records a closed failure code and an audit row > every provider overloaded (529): provider_overloaded, waivable 8ms
+   → expected ShadowReviewError: Shadow review could no… { code: '…' } to match object { code: 'OVERLOADED' }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a failed run records a closed failure code and an audit row > a reply that was not JSON: invalid_ai_response, not waivable 8ms
+   → expected { id: 3, status: 'failed', …(1) } to match object { status: 'failed', …(1) }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a failed run records a closed failure code and an audit row > a reply with no findings array: invalid_ai_response, not waivable 7ms
+   → expected { id: 4, status: 'failed', …(1) } to match object { status: 'failed', …(1) }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a failed run records a closed failure code and an audit row > a rate limit inside "all providers failed" is rate_limited, never an outage 6ms
+   → expected ShadowReviewError: Shadow review could no… { code: '…' } to match object { code: 'RATE_LIMITED' }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a failed run records a closed failure code and an audit row > a safety-classifier decline on the way down is not an outage 17ms
+   → expected { id: 6, status: 'failed', …(1) } to match object { failure_code: 'policy_blocked' }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a refusal is not an outage, and the caller is told what it was > no provider configured: no_provider_configured, not waivable 6ms
+   → expected { id: 7, status: 'failed', …(1) } to match object { status: 'failed', …(1) }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a refusal is not an outage, and the caller is told what it was > a placement refusal: placement_refused, answered PLACEMENT_REFUSED rather than "provider unavailable" 5ms
+   → expected ShadowReviewError: Shadow review could no… { code: '…' } to match object { code: 'PLACEMENT_REFUSED' }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a refusal is not an outage, and the caller is told what it was > no approved model: model_not_qualified, answered MODEL_NOT_QUALIFIED 6ms
+   → expected ShadowReviewError: Shadow review could no… { code: '…' } to match object { code: 'MODEL_NOT_QUALIFIED' }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a refusal is not an outage, and the caller is told what it was > any other gateway policy refusal: policy_blocked 6ms
+   → expected { id: 10, status: 'failed', …(1) } to match object { failure_code: 'policy_blocked' }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > a refusal is not an outage, and the caller is told what it was > a fault of ours (the prompt cannot be read) fails the run as internal; it is never left running 4ms
+   → expected Error: ENOENT: no such file { …(1) } to match object { code: 'INTERNAL' }
+ × server/services/shadow-review/__tests__/shadow-review-failure-classification.pglite.test.ts > the runs read returns the failure code > a failed run carries failureCode; a complete run carries none 18ms
+   → expected { id: 10, sequenceId: 1, …(16) } to match object { failureCode: Any<String> }
+      Tests  12 failed (12)

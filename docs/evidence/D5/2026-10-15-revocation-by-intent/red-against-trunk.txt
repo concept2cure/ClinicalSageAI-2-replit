@@ -1,0 +1,75 @@
+# The finished suite run against trunk's writer and route: git show HEAD:server/services/part11/signature-persistence.ts and
+# git show HEAD:server/routes/c2c/actions.ts swapped in, run, then restored (diff -q against the backups: identical).
+# npx vitest run --config vitest.config.ts server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts
+
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > revoking the dispatch signature revokes that one and leaves the newer Shadow Review waiver in force
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > the converse: revoking the waiver leaves the newer dispatch signature in force
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > by its id: the named signature is revoked, though a newer one for another act is live
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > by the sign action it was given under
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when live signatures for more than one act are on the target and none is named
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses when more than one live signature declares the named intent (one disposition per critical finding)
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when no live signature answers to what was named
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature already revoked cannot be revoked again by naming it, and no longer counts as live
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature voided for a refused act (P-23) is out of force: not a candidate, and naming it resolves nothing
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature on another target is not this target’s, even named by id
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":"twelve"}
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":-3}
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":1.5}
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureActionId":42}
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureActionId":"  "}
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"intent":""}
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"intent":["dispatch"]}
+ ✓ server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > kept: a target whose signatures declare no intent > its one live signature is revoked without naming it
+ ✓ server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > kept: a target whose signatures declare no intent > with several live signatures, the newest is revoked, as before
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > kept: a target whose signatures declare no intent > naming an intent its signatures never declared resolves nothing
+ ✓ server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > kept: a target whose signatures declare no intent > with nothing live on the target, the refusal is the one it always was
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > answers 409 REVOCATION_TARGET_AMBIGUOUS naming the live signatures, and writes nothing
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > answers 409 REVOCATION_TARGET_UNRESOLVED when nothing answers to the selector
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > refuses a malformed selector with 400 before the credential is asked for
+ × server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > revokes the named signature and only that one
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > revoking the dispatch signature revokes that one and leaves the newer Shadow Review waiver in force
+AssertionError: expected { superseded_by: null, …(2) } to match object { is_valid: false, …(1) }
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > the converse: revoking the waiver leaves the newer dispatch signature in force
+AssertionError: expected { superseded_by: null, …(2) } to match object { is_valid: false, …(1) }
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > by its id: the named signature is revoked, though a newer one for another act is live
+AssertionError: expected null not to be null
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: the one named > by the sign action it was given under
+AssertionError: signature 1 was not superseded by a revocation row: expected undefined to be truthy
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when live signatures for more than one act are on the target and none is named
+AssertionError: an unnamed revocation picked one of two signatures given for different acts: expected null to match object { code: 'REVOCATION_TARGET_AMBIGUOUS' }
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses when more than one live signature declares the named intent (one disposition per critical finding)
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses, writing nothing, when no live signature answers to what was named
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature already revoked cannot be revoked again by naming it, and no longer counts as live
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature voided for a refused act (P-23) is out of force: not a candidate, and naming it resolves nothing
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > a signature on another target is not this target’s, even named by id
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":"twelve"}
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":-3}
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureId":1.5}
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureActionId":42}
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"signatureActionId":"  "}
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"intent":""}
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > revoking one signature on a sequence that holds signatures for several acts: refused rather than chosen > refuses a selector that names nothing it could resolve: {"intent":["dispatch"]}
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > kept: a target whose signatures declare no intent > naming an intent its signatures never declared resolves nothing
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > answers 409 REVOCATION_TARGET_AMBIGUOUS naming the live signatures, and writes nothing
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > answers 409 REVOCATION_TARGET_UNRESOLVED when nothing answers to the selector
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > refuses a malformed selector with 400 before the credential is asked for
+AssertionError: expected 200 to be 400 // Object.is equality
+ FAIL  server/routes/c2c/__tests__/revoke-signature-by-intent.pglite.integration.test.ts > POST /api/c2c/actions/revoke-signature > revokes the named signature and only that one
+AssertionError: expected null not to be null
+ Test Files  1 failed (1)
+      Tests  22 failed | 3 passed (25)

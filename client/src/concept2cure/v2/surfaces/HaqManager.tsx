@@ -692,7 +692,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     ) : (
                       <span className="haq-approved">
                         {I.checkCircle} Approved — persisted to the HAQ store
-                        (e-signature &amp; package assembly still to come)
+                        (a recorded approval, not an electronic signature)
                       </span>
                     )}
                   </div>

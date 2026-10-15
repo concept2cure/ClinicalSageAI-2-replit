@@ -85,13 +85,16 @@ const SUMMARIES: Record<string, string> = {
   'GET /api/ind-lifecycle/sequence/{seqId}/manifest/pdf': 'Package manifest PDF',
   'GET /api/ind-lifecycle/sequence/{currentId}/diff': 'eCTD sequence diff (amendment review)',
   'GET /api/ind-lifecycle/sequence/{currentId}/diff/pdf': 'Sequence diff PDF',
-  'POST /api/ind-lifecycle/sequence/{seqId}/dispatch-gate': 'Dispatch-readiness gate (go/no-go)',
-  'POST /api/ind-lifecycle/sequence/{seqId}/dispatch-gate/snapshot': 'Evaluate + persist a dispatch snapshot',
+  // P-33 (2026-10-15): one verdict per sequence. These answer from
+  // assessSequenceDispatchReadiness, the verdict Submit reads; the request body
+  // shapes only the displayed validation, manifest and action items.
+  'POST /api/ind-lifecycle/sequence/{seqId}/dispatch-gate': 'Dispatch-readiness verdict (go/no-go) — the one verdict, from assessSequenceDispatchReadiness; canDispatch is its gate.cleared',
+  'POST /api/ind-lifecycle/sequence/{seqId}/dispatch-gate/snapshot': 'Evaluate + persist a dispatch snapshot (records the gate that produced it)',
   'GET /api/ind-lifecycle/sequence/{seqId}/snapshots': 'Dispatch snapshot history',
   'GET /api/ind-lifecycle/submission/{id}/overview': 'Submission overview',
   'POST /api/ind-lifecycle/submission/{id}/dashboard': 'Unified submission dashboard',
-  'POST /api/ind-lifecycle/submission/{id}/cockpit': 'Submission cockpit (dashboard + per-sequence gates)',
-  'POST /api/ind-lifecycle/submission/{id}/drift': 'Submission drift digest',
+  'POST /api/ind-lifecycle/submission/{id}/cockpit': 'Submission cockpit (dashboard + each sequence\'s one dispatch verdict)',
+  'POST /api/ind-lifecycle/submission/{id}/drift': 'Submission drift digest (drifted, never verified, or last verified under the previous gate)',
   'POST /api/ind-lifecycle/submission/{id}/safety-reports': 'Draft + persist a 312.32 IND Safety Report',
   'GET /api/ind-lifecycle/submission/{id}/safety-reports': "List a submission's IND Safety Reports",
   'GET /api/ind-lifecycle/submission/{id}/safety-reports/overdue': 'Overdue (unfiled, past-deadline) IND Safety Reports',

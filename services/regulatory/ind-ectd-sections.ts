@@ -20,6 +20,10 @@
  * whose every miss becomes a hard blocker in `evaluateDispatchGate` — the
  * "authoritative go/no-go", written to an append-only Part 11 record — and
  * `evaluateIndReadiness`, which raises a `required_section` blocker per miss.
+ * (P-33, 2026-10-15: that IND gate is deleted. The one dispatch verdict,
+ * assessSequenceDispatchReadiness, holds an original IND to the regional
+ * Module 1 record and its Module 3 profile, and asks validateSequenceLeaves
+ * only for a continuing sequence's lifecycle set.)
  *
  * 28 nodes were marked required that the `ind:fda` ich-m4-v2.2 rule pack
  * (migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql) does not

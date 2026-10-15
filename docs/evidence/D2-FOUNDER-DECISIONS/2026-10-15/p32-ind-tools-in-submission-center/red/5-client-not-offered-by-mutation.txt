@@ -1,0 +1,26 @@
+# red, by mutation: IndLifecycle.tsx with the withheld filter removed (the card renders again), every other change in place
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx
+ ✓ IndLifecycle — briefing-book / LOA / right-of-reference cards > briefing-book POSTs the real route with the checklist identity and renders the server model + gaps 349ms
+ ✓ IndLifecycle — briefing-book / LOA / right-of-reference cards > LOA carries the checklist sponsor as the authorized party and renders the model + gap verdict 161ms
+ ✓ IndLifecycle — briefing-book / LOA / right-of-reference cards > right-of-reference carries the checklist sponsor and renders the m1.4.2 model 152ms
+ ✓ IndLifecycle — briefing-book / LOA / right-of-reference cards > a failed assemble renders the server’s words — never success 103ms
+ ✓ IndLifecycle — regulated choices on the File cards start unstated (P-21) > the meeting type and the referenced file types start on "Not stated — choose" and send nothing until chosen 144ms
+ × IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: not offered — no card, a plain sentence in its place, and no request to a safety route 269ms
+   → expected <span class="indl-dcard-t"></span> to be null
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > the screen does not import the withheld card, and names no safety route (ci:launch-scope-api walks it) 2ms
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > a refusal thrown by the request layer reads as one sentence, ending once 142ms
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > the 4-digit sequence number is required, never guessed 179ms
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > a failed filing reports the server’s words — never a fabricated sequence 182ms
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > annual-report: assemble renders the 312.33 model + gaps, then files as an annual sequence 259ms
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: the plan renders the server leaves + warnings, then files as an amendment sequence 220ms
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: category and change kind start unstated, are never sent untouched, and the planner's refusal is shown 149ms
+ ✓ IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > with no submissionId on the checklist, filing is honestly unavailable — nothing is guessed 318ms
+ ✓ the withheld safety-report card (surfaces/indSafetyReportCard.ts) > only what was entered goes up — nothing invented 1ms
+ ✓ the withheld safety-report card (surfaces/indSafetyReportCard.ts) > no regulated select is pre-selected, and an untouched one is never sent 1ms
+ ✓ the withheld safety-report card (surfaces/indSafetyReportCard.ts) > an onset stated as unknown goes up as "unknown", never as a blank 0ms
+ ✓ the withheld safety-report card (surfaces/indSafetyReportCard.ts) > renders the server classification, and a reportable event can be filed 1ms
+ ✓ the withheld safety-report card (surfaces/indSafetyReportCard.ts) > a NOT_REPORTABLE classification removes the filing affordance with the server’s reason 0ms
+ ✓ the withheld safety-report card (surfaces/indSafetyReportCard.ts) > a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)

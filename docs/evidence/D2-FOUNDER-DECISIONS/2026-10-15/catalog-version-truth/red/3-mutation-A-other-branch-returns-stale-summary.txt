@@ -1,0 +1,20 @@
+# MUTATION A (reverted): SQL also selects cv.summary AS recorded_summary; the 'other' branch of projectCatalogRow returns it. npx vitest run server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts -t 'source-version truth'
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+AssertionError: expected { version: 'other', …(15) } to match object { version: 'other', …(4) }
+(11 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "charCount": 0,
+    "keyData": null,
+    "status": "cataloged",
+-   "summary": null,
++   "summary": "stale endpoint 9 of 10",
+    "version": "other",
+  }
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:242:31
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 20 skipped (22)

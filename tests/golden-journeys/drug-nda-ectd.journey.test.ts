@@ -185,6 +185,8 @@ const R = new JourneyRecorder(
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260529_phase9_backfill.sql',
     'migrations/20260604_shadow_review.sql',
+    'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
+    'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
     'db/migrations/20260725_esig_gate_columns_port.sql',
     'migrations/20260813d_esignature_governed_unification.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
@@ -257,6 +259,8 @@ beforeAll(async () => {
       'migrations/20260804_phase9_rule_pack_outlines.sql',
       // shadow_review_runs / shadow_review_findings — a real input to the gate.
       'migrations/20260604_shadow_review.sql',
+      'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
+      'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
       // C-17: electronic_signatures.organization_id / bound_payload_digest /
       // superseded_by. D6: signed_target / binding_basis + nullable document
       // anchor, which is what a governed `sign` on an eCTD sequence needs.

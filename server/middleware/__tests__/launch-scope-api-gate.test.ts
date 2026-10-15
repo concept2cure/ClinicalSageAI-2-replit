@@ -443,3 +443,119 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     expect(uncalled, `cmc apiPrefixes no CMC screen calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
   });
 });
+
+/* The IND lifecycle and forms screen is a feature of the Submission Center app
+   (decision P-32, 2026-10-15). While `ind-checklist` claimed the bare
+   '/api/ind-lifecycle', putting it in the catalog would have made every route
+   under it answer launch — the 312.32 IND safety report, the E2B(R3) ICSR
+   composer and the ICSR transmit to an agency gateway among them. It now claims
+   the segments its screen calls; the safety namespaces are claimed by
+   `pharmacovigilance`, outside the release, so production refuses them 403
+   LAUNCH_SCOPE even where unattributed paths are only reported. The
+   agency-questions screen stays OUTSIDE the catalog until its approval is a
+   signed act, and every /api/haq-manager path is refused. Asked of the real
+   registry and the real catalog. */
+describe('the real registry with the IND tools in Submission Center, agency questions locked (P-32)', () => {
+  /** Claimed by an out-of-scope surface: refused whatever LAUNCH_SCOPE_API_UNATTRIBUTED says. */
+  const SAFETY = [
+    '/api/ind-lifecycle/safety-report',
+    '/api/ind-lifecycle/safety-report/classify',
+    '/api/ind-lifecycle/safety-report/pdf',
+    '/api/ind-lifecycle/safety-report/file',
+    '/api/ind-lifecycle/safety-report/icsr',
+    '/api/ind-lifecycle/safety-report/icsr/message',
+    '/api/ind-lifecycle/safety-reports/7',
+    '/api/ind-lifecycle/icsr-transmissions/7/transmit',
+    '/api/ind-lifecycle/icsr-transmissions/7/acknowledge',
+  ];
+  /** HaqManager.tsx's calls: the surface is outside the release. */
+  const HAQ = [
+    '/api/haq-manager/rounds',
+    '/api/haq-manager/questions',
+    '/api/haq-manager/letters/L-1/questions/934/approve',
+    '/api/haq-manager/letters/L-1/assemble',
+  ];
+  /** Claimed by nothing: refused in production (enforce), reported elsewhere. */
+  const UNCLAIMED = [
+    '/api/ind-lifecycle',
+    '/api/ind-lifecycle/submission/7/safety-reports',
+    '/api/ind-lifecycle/submission/7/icsr-transmissions',
+    '/api/ind-lifecycle/submission/7/cockpit',
+    '/api/ind-lifecycle/sequence/7/dispatch-gate',
+    '/api/ind-lifecycle/portfolio',
+    '/api/ind-lifecycle/readiness',
+    '/api/ind-master-data',
+  ];
+  const CALLED = [
+    '/api/ind-checklist',
+    '/api/ind-lifecycle/clock',
+    '/api/ind-lifecycle/cover-letter',
+    '/api/ind-lifecycle/briefing-book/pdf',
+    '/api/ind-lifecycle/loa',
+    '/api/ind-lifecycle/right-of-reference/pdf',
+    '/api/ind-lifecycle/annual-report/file',
+    '/api/ind-lifecycle/amendment-plan',
+    '/api/ind-lifecycle/amendment/file',
+    '/api/ind-forms/',
+    '/api/ind-forms/1571/build',
+  ];
+
+  it('the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not', () => {
+    expect(LAUNCH_SURFACE_IDS.has('ind-checklist')).toBe(true);
+    expect(LAUNCH_SURFACE_IDS.has('haq-manager')).toBe(false);
+    expect(LAUNCH_SURFACE_IDS.has('pharmacovigilance')).toBe(false);
+  });
+
+  it('refuses the safety and ICSR routes, and agency questions, 403 LAUNCH_SCOPE even when unattributed paths are only reported', async () => {
+    const gate = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'report' });
+    for (const p of [...SAFETY, ...HAQ]) {
+      const { res, passed } = await run(gate, p);
+      expect({ p, passed, status: res.statusCode, code: res.body?.error?.code }).toEqual({ p, passed: false, status: 403, code: 'LAUNCH_SCOPE' });
+    }
+  });
+
+  it('the gate production builds refuses the unclaimed IND routes too, and serves what the screens call', async () => {
+    const gate = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+    for (const p of [...SAFETY, ...UNCLAIMED]) {
+      const { res, passed } = await run(gate, p);
+      expect({ p, passed, status: res.statusCode, code: res.body?.error?.code }).toEqual({ p, passed: false, status: 403, code: 'LAUNCH_SCOPE' });
+    }
+    for (const p of CALLED) expect((await run(gate, p)).passed, p).toBe(true);
+  });
+
+  /* The walker ci:launch-scope-api runs, over each screen's own import graph. */
+  const walk = checkLaunchScopeApi(REAL, buildPrefixMap(), LAUNCH_SURFACE_IDS);
+  const callsOf = (id: string) => [...walk.all].filter(([, e]) => e.surfaces.has(id));
+  const owned = (p: string) => /^\/api\/(ind-lifecycle|ind-forms|ind-checklist|ind-master-data|haq-manager)(\/|$)/.test(p);
+
+  it('every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse', () => {
+    expect(walk.unresolved).toEqual([]);
+    const ind = callsOf('ind-checklist').filter(([p]) => owned(p));
+    // A wrong walk root would make the assertions below pass over nothing.
+    expect(ind.length).toBeGreaterThanOrEqual(20);
+    expect(ind.map(([p]) => p)).toContain('/api/ind-lifecycle/clock');
+    expect(ind.filter(([, e]) => e.verdict !== 'launch').map(([p, e]) => `${e.verdict} ${p}`)).toEqual([]);
+    expect(walk.violations.map((v) => `${v.verdict} ${v.path} ← ${v.surfaces.join(', ')}`)).toEqual([]);
+    // No launch or shell screen reaches the agency-questions API.
+    expect([...walk.all].filter(([p]) => p.startsWith('/api/haq-manager')).map(([p, e]) => `${p} ← ${[...e.surfaces].join(', ')}`)).toEqual([]);
+  });
+
+  it('the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph', () => {
+    const named = callsOf('ind-checklist').map(([p]) => p);
+    expect(named.filter((p) => /\/(safety-reports?|icsr-transmissions)(\/|$)/.test(p))).toEqual([]);
+  });
+
+  it('claims no IND prefix the IND screen does not call', () => {
+    const prefixes = UI_SURFACES.find((s) => s.id === 'ind-checklist')?.apiPrefixes ?? [];
+    expect(prefixes.length).toBeGreaterThan(0);
+    // A mount root admits every handler mounted under it, called or not.
+    expect(prefixes.filter((p) => p === '/api/ind-lifecycle')).toEqual([]);
+    const calls = callsOf('ind-checklist');
+    const uncalled = prefixes.filter((pre) => !calls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
+    expect(uncalled, `ind-checklist apiPrefixes no screen of it calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
+  });
+
+  it('the locked agency-questions surface claims only the namespace its screen calls', () => {
+    expect(UI_SURFACES.find((s) => s.id === 'haq-manager')?.apiPrefixes).toEqual(['/api/haq-manager']);
+  });
+});

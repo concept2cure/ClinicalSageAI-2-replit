@@ -328,13 +328,16 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'submission',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/haq-manager', '/api/regulatory-correspondence', '/api/precedent-engine'],
+    // P-32 (2026-10-15): only what HaqManager.tsx calls; correspondence and precedent stay with their own surfaces.
+    // Outside the launch catalog until approval is a signed act (launch-scope.ts, Submission Center entry).
+    apiPrefixes: ['/api/haq-manager'],
     anaToolFamilies: ['draft_haq_response', 'search_precedent_responses'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.',
+    // P-32: "governed e-sign into the response package" removed; approve records a status, no signature.
+    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL questions logged by round, routed to review and approval, and assembled into a response package from the approved answers.',
     engineering: 'Contract ref (not yet a @shared file): @shared/types/haq.',
   },
   {
@@ -1208,7 +1211,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'safety-pv',
     icon: 'shieldAlert',
     uiKit: 'biopharma',
-    apiPrefixes: ['/api/pharmacovigilance', '/api/safety-narratives'],
+    // P-32 (2026-10-15): the IND safety-reporting routes (312.32 report, E2B(R3) ICSR, tracked reports, ICSR
+    // transmit/ack) are claimed HERE, outside the launch catalog, on purpose, so production refuses them 403
+    // LAUNCH_SCOPE even where unattributed paths are only reported. Remove only by a launch decision on IND safety.
+    apiPrefixes: ['/api/pharmacovigilance', '/api/safety-narratives',
+      '/api/ind-lifecycle/safety-report', '/api/ind-lifecycle/safety-reports', '/api/ind-lifecycle/icsr-transmissions'],
     anaToolFamilies: ['assess_pv_causality'],
     sharedContract: null,
     discoveryCatalog: null,

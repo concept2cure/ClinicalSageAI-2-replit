@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { AnaProjectScopeError } from '../ana/project-scope-admission.js';
 import { assertAnaSourceProgramAllowed, type AnaSourceReadScopeInput, type AdmittedAnaSourceReadScope } from '../ana/source-read-scope.js';
 import { withAnaSourceReadScope } from './document-catalog-actor-access.js';
+import { catalogVersionRefusal } from './document-catalog-eligibility.js';
 import type { CatalogDocumentRow, ProjectDocumentPage, Queryable } from './document-catalog.service.js';
 
 export interface AnaCatalogSourceAccess {
@@ -42,7 +43,9 @@ function checkedSource(doc: CatalogDocumentRow, scope: AdmittedAnaSourceReadScop
   if (doc.organizationId !== scope.organizationId || !UUID.test(doc.id) || !SHA.test(doc.contentHash) || typeof doc.isCurrent !== 'boolean') unavailable();
   assertAnaSourceProgramAllowed(scope, doc.programId);
   if (doc.disposition === 'remove_data' || doc.disposition === 'supersede') unavailable();
-  if (doc.catalog?.contentHash !== undefined && doc.catalog.contentHash !== doc.contentHash) unavailable();
+  // A record for other bytes is a changed source, not an unverifiable one; its content is never loaded.
+  const versionRefusal = catalogVersionRefusal(doc);
+  if (versionRefusal) throw new AnaProjectScopeError(409, 'SOURCE_VERSION_CHANGED', versionRefusal);
   if (doc.extractedText !== null && typeof doc.extractedText !== 'string') unavailable();
 }
 function sourceChanged(before: CatalogDocumentRow, after: CatalogDocumentRow): boolean {

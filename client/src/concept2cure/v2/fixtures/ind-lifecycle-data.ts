@@ -1,11 +1,17 @@
 /**
- * IND Lifecycle fixture data -- deterministic compute + fixture sections,
- * forms, deliverables. Verbatim from kit ind-lifecycle-data.jsx.
+ * IND lifecycle reference configuration. No records and no engines: the folder
+ * name predates the de-mock work. The invented programme, sections and forms
+ * this file once held are gone (see the notes below), and so, since 2026-10-15,
+ * are its two client copies of server engines — a readiness evaluator and a
+ * regulatory clock, mirrors of evaluateIndReadiness and
+ * evaluateRegulatoryClock. The IND screen reads the checklist's server verdict
+ * and POST /api/ind-lifecycle/clock instead. What remains is display labels and
+ * the deliverable card definitions, each named with its reason in
+ * scripts/ci/launch-scope-fixture-allowlist.json (the IND screen is a launch
+ * surface since decision P-32, 2026-10-15).
  *
- * Mirror of:
- *   services/ind-lifecycle/ind-readiness-service.ts  (IndReadinessReport)
- *   services/ind-lifecycle/ind-regulatory-clock.ts   (ClockState)
- *   services/regulatory/ind-ectd-sections.ts         (section blueprint)
+ * Mirror of (labels only):
+ *   server/services/ind-lifecycle/ind-regulatory-clock.ts  (ClockStatus labels)
  *   server/routes/ind-lifecycle/documents.routes.ts  (deliverables)
  */
 
@@ -38,65 +44,15 @@ export interface IndlDeliverable {
   route: string;
   desc: string;
   ask: string;
+  /** Set when the deliverable is not offered in this release: the card is not
+      rendered, and this sentence is shown in its place. The entry is kept so
+      the card returns as it was (decision P-32). */
+  withheld?: string;
 }
 
 export interface IndlClockStatusEntry {
   label: string;
   tone: string;
-}
-
-export interface IndlModuleProgress {
-  module: string;
-  title: string;
-  total: number;
-  completed: number;
-  percentage: number;
-}
-
-export interface IndlIncompleteSection {
-  code: string;
-  title: string;
-  module: string;
-  status: string;
-  regulatoryRef: string;
-}
-
-export interface IndlBlocker {
-  kind: 'required_section' | 'required_form' | 'overdue_safety_report';
-  code: string;
-  message: string;
-}
-
-export interface IndlReadinessReport {
-  filingType: string;
-  /** False when the checklist held nothing to evaluate — an empty input set is
-      "nothing assessed", never clearance (BP-W0-3). `ready` is only ever true
-      when `assessed` is. */
-  assessed: boolean;
-  ready: boolean;
-  overallPercentage: number;
-  moduleProgress: IndlModuleProgress[];
-  requiredSections: {
-    total: number;
-    completed: number;
-    incomplete: IndlIncompleteSection[];
-  };
-  forms: {
-    required: string[];
-    completed: string[];
-    missing: string[];
-  };
-  blockers: IndlBlocker[];
-  warnings: string[];
-}
-
-export interface IndlClockState {
-  status: string;
-  thirtyDayDate: string;
-  safeToProceed: boolean;
-  onHold: boolean;
-  daysUntilThirtyDay: number;
-  rationale: string;
 }
 
 /* ── Fixture data ── */
@@ -127,10 +83,11 @@ export interface IndlClockState {
 
 /* The fixture form/section arrays that used to live here -- 17 invented
    sections with fabricated 'approved'/'drafting' statuses -- are deleted.
-   They had no importer, but they remained the DEFAULT ARGUMENTS of
-   indlReadiness below, so one argless call anywhere would have rendered a
-   fabricated readiness figure for a real program. The defaults are gone with
-   them: readiness is computable only from data a caller actually has. */
+   They had no importer, but they remained the DEFAULT ARGUMENTS of the
+   client readiness evaluator, so one argless call anywhere would have rendered
+   a fabricated readiness figure for a real program. The defaults went with
+   them, and the evaluator itself went on 2026-10-15: readiness is the
+   server's verdict. */
 
 export const INDL_STATUS_LABEL: Record<string, string> = {
   not_started: 'Not started',
@@ -185,6 +142,12 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
     route: 'POST /api/ind-lifecycle/safety-report',
     desc: 'Classifies the event (7/15-day reportability) and assembles the expedited safety report + E2B(R3) ICSR.',
     ask: 'Classify and assemble an IND safety report (312.32) for a serious unexpected adverse event.',
+    /* Decision P-32, 2026-10-15: 15-day safety reporting and ICSR transmission
+       are not in this release. Their routes are refused 403 LAUNCH_SCOPE in
+       production, and the card's code is kept in
+       surfaces/indSafetyReportCard.ts. */
+    withheld:
+      'IND safety reports under 21 CFR 312.32 (the 7- and 15-day expedited reports) and ICSR transmission are not in this release.',
   },
   {
     id: 'annual-report', title: 'IND Annual Report / DSUR', placement: 'eCTD annual sequence', ref: '21 CFR 312.33', ai: true, group: 'lifecycle',
@@ -199,144 +162,3 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
     ask: 'Plan a protocol amendment (312.30) for the ongoing study.',
   },
 ];
-
-/* ── Deterministic compute: mirror of evaluateIndReadiness ── */
-
-const COMPLETE_STATUSES: Record<string, boolean> = { approved: true, signed: true, locked: true };
-const MODULE_TITLES: Record<string, string> = {
-  M1: 'Module 1 -- Administrative',
-  M2: 'Module 2 -- Summaries',
-  M3: 'Module 3 -- Quality (CMC)',
-  M4: 'Module 4 -- Nonclinical',
-  M5: 'Module 5 -- Clinical',
-};
-
-export function indlReadiness(
-  sections: IndlSection[],
-  forms: IndlForm[],
-  overdueSafetyReports = 0,
-): IndlReadinessReport {
-  const incomplete: IndlIncompleteSection[] = [];
-  let completed = 0;
-  for (const s of sections) {
-    if (COMPLETE_STATUSES[s.status]) {
-      completed += 1;
-    } else {
-      incomplete.push({ code: s.code, title: s.title, module: s.module, status: s.status, regulatoryRef: s.ref });
-    }
-  }
-  const missingForms = forms.filter((f) => !f.done).map((f) => f.id);
-  const completedForms = forms.filter((f) => f.done).map((f) => f.id);
-
-  const mods: Record<string, IndlModuleProgress> = {};
-  for (const s of sections) {
-    if (!mods[s.module]) {
-      mods[s.module] = { module: s.module, title: MODULE_TITLES[s.module] || s.module, total: 0, completed: 0, percentage: 0 };
-    }
-    mods[s.module].total += 1;
-    if (COMPLETE_STATUSES[s.status]) mods[s.module].completed += 1;
-  }
-  const moduleProgress = Object.keys(mods).sort().map((k) => {
-    const m = mods[k];
-    m.percentage = m.total ? Math.round((m.completed / m.total) * 100) : 100;
-    return m;
-  });
-
-  const blockers: IndlBlocker[] = [];
-  for (const g of incomplete) {
-    blockers.push({
-      kind: 'required_section',
-      code: g.code,
-      message: 'Required section ' + g.code + ' (' + g.title + ') is ' + (INDL_STATUS_LABEL[g.status] || g.status) + ' -- must be approved/signed before filing.',
-    });
-  }
-  for (const f of missingForms) {
-    blockers.push({ kind: 'required_form', code: f, message: 'Required Module 1 form ' + f + ' is not complete.' });
-  }
-  if (overdueSafetyReports > 0) {
-    blockers.push({ kind: 'overdue_safety_report', code: 'safety', message: overdueSafetyReports + ' expedited IND safety report(s) past the 21 CFR 312.32 deadline.' });
-  }
-
-  const totalItems = sections.length + forms.length;
-  const doneItems = completed + completedForms.length;
-  // Zero items means zero evidence: nothing was evaluated, so nothing can be
-  // "ready" and nothing is 100% done. The old `totalItems === 0 ? 100` branch
-  // was literally "empty set ⇒ clearance" — the exact BP-W0-3 defect class.
-  const assessed = totalItems > 0;
-  return {
-    filingType: 'initial',
-    assessed,
-    ready: assessed && blockers.length === 0,
-    overallPercentage: assessed ? Math.round((doneItems / totalItems) * 100) : 0,
-    moduleProgress,
-    requiredSections: { total: sections.length, completed, incomplete },
-    forms: { required: forms.map((f) => f.id), completed: completedForms, missing: missingForms },
-    blockers,
-    warnings: [],
-  };
-}
-
-/* ── Deterministic compute: mirror of evaluateRegulatoryClock (30-day safe-to-proceed) ── */
-
-interface ClockEvent {
-  date: string;
-  type: string;
-}
-
-export function indlClock(
-  receiptISO: string,
-  events: ClockEvent[] = [],
-  asOfISO?: string,
-): IndlClockState {
-  const DAY = 86400000;
-  const asOf = asOfISO ? new Date(asOfISO) : new Date();
-  const thirty = new Date(new Date(receiptISO).getTime() + 30 * DAY);
-  const elapsed = asOf.getTime() >= thirty.getTime();
-  const daysUntil = elapsed ? 0 : Math.ceil((thirty.getTime() - asOf.getTime()) / DAY);
-
-  let hold = 'none';
-  let terminal: string | null = null;
-  events
-    .filter((e) => new Date(e.date).getTime() <= asOf.getTime())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .forEach((e) => {
-      if (e.type === 'clinical_hold_imposed') hold = 'clinical_hold';
-      else if (e.type === 'partial_hold_imposed') hold = 'partial_clinical_hold';
-      else if (e.type === 'hold_lifted') hold = 'none';
-      else if (e.type === 'withdrawn') terminal = 'withdrawn';
-      else if (e.type === 'inactivated') terminal = 'inactive';
-      else if (e.type === 'reactivated') terminal = null;
-    });
-
-  let status: string;
-  let rationale: string;
-  if (terminal === 'withdrawn') {
-    status = 'withdrawn';
-    rationale = 'The IND has been withdrawn by the sponsor; no clinical investigation may proceed under it.';
-  } else if (terminal === 'inactive') {
-    status = 'inactive';
-    rationale = 'The IND is on inactive status (21 CFR 312.45); it must be reactivated before proceeding.';
-  } else if (hold === 'clinical_hold') {
-    status = 'clinical_hold';
-    rationale = 'A clinical hold is in effect (21 CFR 312.42); the affected investigation(s) may not proceed until the hold is lifted.';
-  } else if (hold === 'partial_clinical_hold') {
-    status = 'partial_clinical_hold';
-    rationale = 'A partial clinical hold is in effect; only the unaffected portions of the investigation may proceed.';
-  } else if (elapsed) {
-    status = 'safe_to_proceed';
-    rationale = 'The 30-day review period has elapsed with no clinical hold; clinical investigations may proceed (21 CFR 312.40(b)).';
-  } else {
-    status = 'submitted';
-    rationale = 'Within the 30-day FDA review period; ' + daysUntil + ' calendar day(s) remain before the investigation may begin absent a hold.';
-  }
-
-  const onHold = status === 'clinical_hold' || status === 'partial_clinical_hold';
-  return {
-    status,
-    thirtyDayDate: thirty.toISOString(),
-    safeToProceed: elapsed && !onHold && terminal === null,
-    onHold,
-    daysUntilThirtyDay: daysUntil,
-    rationale,
-  };
-}
