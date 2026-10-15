@@ -19,9 +19,9 @@
  * ungated fallback — on a GxP change-control register, where the rows assert
  * `classification: 'major'` and `status: 'approved'`, and where the fallback
  * fired on an empty tenant, an expired token or a 500 with nothing on screen
- * saying so. The fallback is gone (it goes through `useSampleRows` now, which
- * substitutes only under explicit sample mode), so a null hook correctly
- * renders an empty register and these assertions correctly stopped passing.
+ * saying so. The fallback is gone (first gated behind sample mode, then removed
+ * with it on 2026-10-14), so a null hook correctly renders an empty register
+ * and these assertions correctly stopped passing.
  * Nothing they actually test — the flowchart, the stage filter, the expansion,
  * the AnA wiring — is about where the rows came from, so the mock supplies
  * them as live data and every case stands unchanged.
@@ -39,14 +39,15 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 
 vi.mock('../changeHooks', async () => {
-  const { FIXTURE_SUMMARY } = await import('../changeData');
+  const { CHANGE_SUMMARY: FIXTURE_SUMMARY } = await import('./changeRows');
   return {
     useChangeSummary: () => ({ summary: FIXTURE_SUMMARY, loading: false, error: null }),
   };
 });
 
 import { ChangeControl } from '../ChangeControl';
-import { FIXTURE_CHANGES, type ChangeState } from '../changeData';
+import { type ChangeState } from '../changeData';
+import { CHANGE_ROWS as FIXTURE_CHANGES } from './changeRows';
 
 function Harness({ onAsk }: { onAsk: (q: string) => void }) {
   const [stage, setStage] = React.useState<ChangeState | 'all'>('all');
@@ -60,7 +61,6 @@ function Harness({ onAsk }: { onAsk: (q: string) => void }) {
       onOpenIdChange={setOpenId}
       changes={FIXTURE_CHANGES}
       loading={false}
-      showingSample={false}
     />
   );
 }
@@ -145,8 +145,7 @@ describe('ChangeControl — a failed read is not an empty log', () => {
         onOpenIdChange={() => {}}
         changes={p.changes ?? []}
         loading={p.loading ?? false}
-        showingSample={false}
-        error={p.error}
+          error={p.error}
         onRetry={p.onRetry}
       />,
     );
