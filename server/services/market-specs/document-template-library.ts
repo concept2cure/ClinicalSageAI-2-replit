@@ -44,6 +44,8 @@ export interface TemplateSection {
   /** What this section is for (concise, factual). */
   purpose: string;
   required: boolean;
+  /** Sub-sections, where the record names them (e.g. the IB's 4.1–4.3). */
+  subsections?: TemplateSection[];
 }
 
 export interface DocumentTemplateStructure {
@@ -67,6 +69,8 @@ export interface DocumentTemplateStructure {
     | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string };
   /** Scope/currency limitations the author must see before using an existing scaffold. */
   outlineLimitations?: string[];
+  /** Unnumbered front matter (title page, table of contents …), with non-numeric codes. */
+  frontMatter?: TemplateSection[];
   sections: TemplateSection[];
 }
 
@@ -273,6 +277,7 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
       { number: '2.5.4', heading: 'Overview of Efficacy', purpose: 'Critical analysis of efficacy across the relevant studies and endpoints.', required: true },
       { number: '2.5.5', heading: 'Overview of Safety', purpose: 'Critical analysis of the safety database, exposure, and key risks.', required: true },
       { number: '2.5.6', heading: 'Benefits and Risks Conclusions', purpose: 'Integrated benefit-risk assessment supporting the indication.', required: true },
+      { number: '2.5.7', heading: 'Literature References', purpose: 'The literature cited in the Clinical Overview (added 2026-10-15; M4E lists it).', required: true },
     ],
   },
   {
@@ -428,12 +433,30 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     title: "Investigator's Brochure (IB)",
     families: ['ectd', 'ctis'],
     basis: IB_BASIS,
+    // Front matter and sub-sections added 2026-10-15, from the IB builder's
+    // structure, so the builder and this outline are one tree. Body codes 1–6
+    // are unchanged: seeds, rule packs and saved documents carry them.
+    frontMatter: [
+      { number: 'title_page', heading: 'Title Page', purpose: 'Sponsor name, product identifier(s), IB edition number and date, and the edition it supersedes.', required: true },
+      { number: 'confidentiality_statement', heading: 'Confidentiality Statement', purpose: 'Confidentiality notice and intended-recipient statement for investigators and IRB/IEC.', required: true },
+      { number: 'table_of_contents', heading: 'Table of Contents', purpose: 'A current table of contents consistent with the headings below.', required: true },
+    ],
     sections: [
       { number: '1', heading: 'Summary', purpose: 'Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.', required: true },
       { number: '2', heading: 'Introduction', purpose: 'Chemical/generic name, properties, rationale, and anticipated indications.', required: true },
       { number: '3', heading: 'Physical, Chemical and Pharmaceutical Properties and Formulation', purpose: 'Description of the substance and formulation.', required: true },
-      { number: '4', heading: 'Nonclinical Studies', purpose: 'Nonclinical pharmacology, pharmacokinetics, and toxicology results.', required: true },
-      { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true },
+      { number: '4', heading: 'Nonclinical Studies', purpose: 'Nonclinical pharmacology, pharmacokinetics, and toxicology results.', required: true,
+        subsections: [
+          { number: '4.1', heading: 'Nonclinical Pharmacology', purpose: 'Primary and secondary pharmacodynamics, mechanism of action, and safety pharmacology.', required: true },
+          { number: '4.2', heading: 'Pharmacokinetics and Product Metabolism in Animals', purpose: 'Absorption, distribution, metabolism and excretion in the animal species studied.', required: true },
+          { number: '4.3', heading: 'Toxicology', purpose: 'Single- and repeat-dose toxicity, genotoxicity, carcinogenicity, reproductive toxicity, NOAELs and target-organ findings.', required: true },
+        ] },
+      { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true,
+        subsections: [
+          { number: '5.1', heading: 'Pharmacokinetics and Metabolism in Humans', purpose: 'Human pharmacokinetics, including absorption, distribution, protein binding, metabolism and excretion, and special populations.', required: true },
+          { number: '5.2', heading: 'Safety and Efficacy', purpose: 'Safety and efficacy across studies; adverse drug reactions; identified and potential risks.', required: true },
+          { number: '5.3', heading: 'Marketing Experience', purpose: 'Where marketed, approved or withdrawn, and post-marketing findings significant to safety. Only where the product has been marketed.', required: false },
+        ] },
       { number: '6', heading: 'Summary of Data and Guidance for the Investigator', purpose: 'Overall discussion and guidance on recognising/treating possible overdose and adverse reactions.', required: true },
     ],
   }),

@@ -1,0 +1,158 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T21:54:15.462Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T21:54:15.466Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+{
+  "timestamp": "2026-10-15T21:54:15.466Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface)
+[database] Database connection successful
+
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > has exactly the canonical headings, in order 2ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > cites the outline basis (ICH E6(R3) Appendix A), labelled as recall 0ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > the legacy IND IB template > renders the canonical headings and files at M1 1.14.4.1 10ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the IB builder (Investigator’s Brochure surface) 7109ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Authoring "Start from" seed 32ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the Projects blueprint is not module 5 and does not cite E6 §7 1ms
+ ✓ tests/regulatory/ib-one-outline.test.ts > every IB tree a client reaches carries the canonical body headings > the medical-writing advisor and the IND question flow list the canonical headings 276ms
+ × tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > front matter: title page, confidentiality statement, table of contents; body codes stay 1–6 9ms
+   → expected [] to deeply equal [ 'Title Page', …(2) ]
+ × tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > sub-sections 4.1–4.3 and 5.1–5.3 2ms
+   → expected [] to deeply equal [ '4.1', '4.2', '4.3' ]
+ × tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > the IB builder takes its sub-sections from it 1ms
+   → Cannot read properties of undefined (reading 'map')
+ × tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > the open-document brief for an IB shows the front matter and sub-sections 34ms
+   → expected '## OPEN DOCUMENT\nThe person is worki…' to match /Front matter: Title Page; Confidentia…/
+ × tests/regulatory/ib-one-outline.test.ts > the M4E clinical overview outline > ends with 2.5.7 Literature References 2ms
+   → expected '2.5.6' to be '2.5.7' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > front matter: title page, confidentiality statement, table of contents; body codes stay 1–6
+AssertionError: expected [] to deeply equal [ 'Title Page', …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "Title Page",
+-   "Confidentiality Statement",
+-   "Table of Contents",
+- ]
++ []
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:92:65
+     90| describe('the canonical outline carries the IB front matter and sub-se…
+     91|   it('front matter: title page, confidentiality statement, table of co…
+     92|     expect((canonical.frontMatter ?? []).map((s) => s.heading)).toEqua…
+       |                                                                 ^
+     93|     expect(canonical.sections.map((s) => s.number)).toEqual(['1', '2',…
+     94|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > sub-sections 4.1–4.3 and 5.1–5.3
+AssertionError: expected [] to deeply equal [ '4.1', '4.2', '4.3' ]
+
+- Expected
++ Received
+
+- [
+-   "4.1",
+-   "4.2",
+-   "4.3",
+- ]
++ []
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:97:23
+     95|   it('sub-sections 4.1–4.3 and 5.1–5.3', () => {
+     96|     const subs = (n: string) => (canonical.sections.find((s) => s.numb…
+     97|     expect(subs('4')).toEqual(['4.1', '4.2', '4.3']);
+       |                       ^
+     98|     expect(subs('5')).toEqual(['5.1', '5.2', '5.3']);
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > the IB builder takes its sub-sections from it
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ tests/regulatory/ib-one-outline.test.ts:105:79
+    103|       const lib = canonical.sections.find((s) => s.number === n)!.subs…
+    104|       const builder = IB_STRUCTURE.find((s) => s.number === n)!.childS…
+    105|       expect(builder.map((c) => [c.number, c.title, c.required])).toEq…
+       |                                                                               ^
+    106|     }
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the canonical outline carries the IB front matter and sub-sections > the open-document brief for an IB shows the front matter and sub-sections
+AssertionError: expected '## OPEN DOCUMENT\nThe person is worki…' to match /Front matter: Title Page; Confidentia…/
+
+- Expected:
+/Front matter: Title Page; Confidentiality Statement; Table of Contents/
+
++ Received:
+"## OPEN DOCUMENT
+The person is working in a Investigator's Brochure (registry ICH_IB; stated by the surface).
+What it contains (ICH E6(R3) Appendix A (Investigator's Brochure) (recall — not checked against the regulator's text)):
+- 1 Summary — Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.
+- 2 Introduction — Chemical/generic name, properties, rationale, and anticipated indications.
+- 3 Physical, Chemical and Pharmaceutical Properties and Formulation — Description of the substance and formulation.
+- 4 Nonclinical Studies — Nonclinical pharmacology, pharmacokinetics, and toxicology results.
+- 5 Effects in Humans — Pharmacokinetics, safety, efficacy, and marketing experience in humans.
+- 6 Summary of Data and Guidance for the Investigator — Overall discussion and guidance on recognising/treating possible overdose and adverse reactions.
+Answer for this document type. Where the section in front of you has its own requirements, those are given separately."
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:111:19
+    109|     const { renderOpenDocumentBlock } = await import('../../server/ser…
+    110|     const block = renderOpenDocumentBlock({ document: { registryId: 'I…
+    111|     expect(block).toMatch(/Front matter: Title Page; Confidentiality S…
+       |                   ^
+    112|     expect(block).toMatch(/4\.1 Nonclinical Pharmacology/);
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the M4E clinical overview outline > ends with 2.5.7 Literature References
+AssertionError: expected '2.5.6' to be '2.5.7' // Object.is equality
+
+Expected: "2.5.7"
+Received: "2.5.6"
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:119:53
+    117|   it('ends with 2.5.7 Literature References', () => {
+    118|     const co = getDocumentTemplate('clinical_overview')!;
+    119|     expect(co.sections.map((s) => s.number).at(-1)).toBe('2.5.7');
+       |                                                     ^
+    120|   });
+    121| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 7 passed (12)
+   Start at  21:54:05
+   Duration  11.27s (transform 6.19s, setup 169ms, import 2.76s, tests 7.48s, environment 0ms)
+
