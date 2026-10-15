@@ -123,7 +123,7 @@ export interface SimulatorResult {
 /** A request naming something the program's records do not hold. */
 export class ReviewerSimulationInputError extends Error {
   constructor(
-    public code: 'INVALID_DEFENSE_PACKET_ID' | 'DEFENSE_PACKET_NOT_FOUND',
+    public code: 'INVALID_DEFENSE_PACKET_ID' | 'DEFENSE_PACKET_NOT_FOUND' | 'DEFENSE_PACKET_STORE_NOT_AVAILABLE',
     message: string
   ) {
     super(message);
@@ -137,6 +137,14 @@ export class ReviewerSimulationInputError extends Error {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Undefined table / column: the packet store this model reads is not on the database. */
+function isMissingPacketStore(err: unknown): boolean {
+  const e = err as { code?: unknown; cause?: { code?: unknown } } | null;
+  // drizzle wraps the driver's error; its SQLSTATE is on `cause`.
+  const code = e?.code ?? e?.cause?.code;
+  return code === '42P01' || code === '42703';
+}
+
 /** The packet facts of the program's defense packet on record; refuses one it does not hold. */
 async function loadRecordedPacket(
   organizationId: number,
@@ -149,6 +157,9 @@ async function loadRecordedPacket(
       `defensePacketId "${defensePacketId}" is not a defense packet id.`
     );
   }
+  // 2026-10-15: on a deployed database the read failed (no migration creates the
+  // table this model reads — only predicate.defense_packets, without
+  // organization_id — and nothing writes packets), and the run answered 500.
   const [row] = await db
     .select({
       defenseReadinessScore: defensePackets.defenseReadinessScore,
@@ -165,7 +176,15 @@ async function loadRecordedPacket(
         eq(defensePackets.programId, programId)
       )
     )
-    .limit(1);
+    .limit(1)
+    .catch((err: unknown) => {
+      if (!isMissingPacketStore(err)) throw err;
+      throw new ReviewerSimulationInputError(
+        'DEFENSE_PACKET_STORE_NOT_AVAILABLE',
+        `No defense packet store exists on this database, so defense packet ${defensePacketId} cannot be read. ` +
+          'Run the simulation without defensePacketId; the packet checks are then reported as not run.'
+      );
+    });
   if (!row) {
     throw new ReviewerSimulationInputError(
       'DEFENSE_PACKET_NOT_FOUND',

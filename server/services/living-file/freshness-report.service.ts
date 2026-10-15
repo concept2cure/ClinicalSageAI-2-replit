@@ -38,7 +38,15 @@ import { targetKind } from '../living-record/object-model';
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type FreshnessState = 'fresh' | 'stale' | 'needs_evidence' | 'superseded' | 'expired' | 'no_data';
+export type FreshnessState =
+  | 'fresh'
+  | 'stale'
+  | 'needs_evidence'
+  | 'superseded'
+  | 'expired'
+  | 'no_data'
+  /** An assessment exists but no check in it read the program's records (`reason` says what). */
+  | 'not_assessed';
 
 export interface ArtifactFreshness {
   artifact:
@@ -252,6 +260,25 @@ async function pccpPlanFreshness(
   }));
 }
 
+/**
+ * The fact groups a run read from the program's records, as the simulator
+ * recorded them (summary.inputsSource); null when the run did not record its
+ * sources — before 2026-10-15 its packet and intel came from the request.
+ */
+function recordsRead(summary: unknown): { read: string[]; notRead: string[] } | null {
+  const src = (summary as { inputsSource?: Record<string, unknown> } | null)?.inputsSource;
+  if (!src) return null;
+  const groups: Array<[string, boolean]> = [
+    ['defense packet', src.packet === 'defense_packets'],
+    ['claim-health figures', src.claimHealth != null && src.claimHealth !== 'not_available'],
+    ['nonclinical studies', src.nonclinical === 'ctd_nonclinical_studies'],
+  ];
+  return {
+    read: groups.filter(([, wasRead]) => wasRead).map(([name]) => name),
+    notRead: groups.filter(([, wasRead]) => !wasRead).map(([name]) => name),
+  };
+}
+
 async function reviewerSimFreshness(
   organizationId: number,
   programId: string
@@ -262,6 +289,8 @@ async function reviewerSimFreshness(
       id: reviewerSimulationRuns.id,
       createdAt: reviewerSimulationRuns.createdAt,
       criticalCount: reviewerSimulationRuns.criticalCount,
+      personaScope: reviewerSimulationRuns.personaScope,
+      summary: reviewerSimulationRuns.summary,
     })
     .from(reviewerSimulationRuns)
     .where(
@@ -273,15 +302,35 @@ async function reviewerSimFreshness(
     .orderBy(desc(reviewerSimulationRuns.createdAt))
     .limit(1);
   if (!latest) return [];
+  // 2026-10-15: criticalCount 0 was 'fresh' even when no check that reads the
+  // program's records ran — the run then holds only static checklist prompts,
+  // so nothing could raise a critical question. Fresh now needs a record read.
+  const records = recordsRead(latest.summary);
+  let state: FreshnessState;
+  let reason: string | undefined;
+  if (latest.criticalCount > 0) {
+    state = 'stale';
+    reason = `${latest.criticalCount} critical reviewer questions outstanding`;
+  } else if (!Array.isArray(latest.personaScope) || latest.personaScope.length === 0) {
+    state = 'not_assessed';
+    reason = 'no reviewer persona was in scope for the run';
+  } else if (!records) {
+    state = 'not_assessed';
+    reason =
+      'the run did not record where its facts came from (before 2026-10-15 its packet and intel were supplied with the request)';
+  } else if (records.read.length === 0) {
+    state = 'not_assessed';
+    reason = `no check read the program's records (not read: ${records.notRead.join(', ')})`;
+  } else {
+    state = 'fresh';
+    reason = records.notRead.length ? `not assessed: ${records.notRead.join(', ')}` : undefined;
+  }
   return [
     {
       artifact: 'reviewer_simulation_run',
       artifactId: latest.id,
-      state: latest.criticalCount === 0 ? 'fresh' : 'stale',
-      reason:
-        latest.criticalCount === 0
-          ? undefined
-          : `${latest.criticalCount} critical reviewer questions outstanding`,
+      state,
+      reason,
       updatedAt: latest.createdAt,
     },
   ];
@@ -395,6 +444,7 @@ export async function programFreshnessReport(
         superseded: 0,
         expired: 0,
         no_data: 0,
+        not_assessed: 0,
       };
     }
     counts[a.artifact][a.state] += 1;

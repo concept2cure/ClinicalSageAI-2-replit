@@ -428,6 +428,17 @@ router.post(
       ? (body.personas as ReviewerPersonaCode[])
       : undefined;
 
+    // The ctd_programs id whose nonclinical studies the preclinical personas read.
+    // 2026-10-15: never passed, so over HTTP they could only report "not loaded".
+    const rawCtdProgramId: unknown = body.ctdProgramId;
+    const ctdProgramId =
+      typeof rawCtdProgramId === 'number' || (typeof rawCtdProgramId === 'string' && /^\d+$/.test(rawCtdProgramId))
+        ? Number(rawCtdProgramId)
+        : undefined;
+    if (rawCtdProgramId != null && !(ctdProgramId !== undefined && Number.isInteger(ctdProgramId) && ctdProgramId > 0)) {
+      return res.status(422).json({ error: 'ctdProgramId must be a positive integer (the ctd_programs id)' });
+    }
+
     try {
       const result = await runReviewerSimulation({
         organizationId: orgId,
@@ -438,6 +449,7 @@ router.post(
         reports: body.reports,
         personas,
         defensePacketId: body.defensePacketId,
+        ctdProgramId,
         trigger: typeof body.trigger === 'string' ? body.trigger : 'manual',
         triggeredBy,
         dryRun: body.dryRun === true,

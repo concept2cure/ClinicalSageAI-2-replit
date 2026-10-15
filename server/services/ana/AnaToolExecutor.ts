@@ -4083,7 +4083,11 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
         surfaceUsage: getToolSurfaceUsage(),
       },
       guidance:
-        'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
+        // 2026-10-15: did not say configured is not working; "configured" read as live.
+        'Only offer or attempt tools whose integration is configured. Reachability is \'unchecked\' for ' +
+        'every integration: configured means it can be tried, not that it works — never call one live or ' +
+        'connected; integrationSummary.live counts only ones a call has proved reachable. ' +
+        'For configured:false entries, ' +
         'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
         'is needed to resolve — ask the user to open a project. Treat tools in execution.unhealthy ' +
         'as currently unreliable (warn + prefer alternatives until they recover). Tools in ' +
