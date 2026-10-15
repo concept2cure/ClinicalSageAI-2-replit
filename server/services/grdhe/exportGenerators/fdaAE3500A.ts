@@ -28,6 +28,11 @@ import {
   doseNumber,
   meddraCode,
   qualificationCode,
+  casePartyProblems,
+  meddraVersionCheck,
+  recordedDate,
+  caseDateFields,
+  isRecorded,
 } from '../types';
 
 // Type assertion helper for flexible data access from canonical model
@@ -120,42 +125,40 @@ const FDA_CAUSALITY_CODES: Record<string, string> = {
 // =============================================================================
 
 /**
- * Format date for FDA submission
+ * A code left out: a null flavour, with the element's meaning in words.
+ * 2026-10-15: the patient's age, weight and medical history were filed under
+ * LOINC 3137-7, 3141-9 and 29762-2, and the action taken under C53254 in
+ * 2.16.840.1.113883.3.26.1.1. The LOINC codes this repository vendors are SPL
+ * document and section codes, none of these, and
+ * db/migrations/057_gcc_product_master.sql names that OID as ISO 11238 substance
+ * identifiers. unverifiedCodeWarnings names each code left out.
  */
-function formatFDADate(date: Date | string | undefined, includeTime: boolean = false): string {
-  if (!date) return '';
+const uncoded = (meaning: string): string => `<code nullFlavor="NI"><originalText>${escapeXml(meaning)}</originalText></code>`;
 
+/**
+ * A recorded date as an HL7 TS to its recorded precision (CCYY, CCYYMM or
+ * CCYYMMDD, read by recordedDate without a time-zone conversion), or '' when no
+ * readable date is recorded; with includeTime, a UTC timestamp CCYYMMDDHHMMSS.
+ * 2026-10-15: a Date was read through local getters, so west of UTC the
+ * receive date the service builds at UTC midnight was filed a day early; a
+ * month ('2026-03') went through new Date() to 20260228 there; and a month or a
+ * year was filed as a day.
+ */
+function formatFDADate(date: Date | string | undefined, includeTime: boolean = false, precision?: unknown): string {
+  if (!date) return '';
   if (includeTime) {
-    // Datetime (e.g. message creation time): emit as UTC CCYYMMDDHHMMSS, matching
-    // the sibling EMA generator's formatE2BDateTime.
     return new Date(date)
       .toISOString()
       .replace(/[-:T]/g, '')
       .replace(/\.\d{3}Z/, '');
   }
+  return recordedDate(date, precision)?.digits ?? '';
+}
 
-  // Date-only output (CCYYMMDD). Do NOT round-trip through UTC: toISOString()
-  // renders a non-UTC calendar date as the previous/next day, so a stored
-  // 2026-03-15 could file as 20260314 — a data-integrity defect in a safety
-  // report. The date is formatted timezone-agnostically instead.
-  if (typeof date === 'string') {
-    // Take the calendar date verbatim from the leading ISO date (YYYY-MM-DD),
-    // ignoring any time-of-day or timezone portion. Never constructs a Date, so
-    // the result is identical in every runtime timezone.
-    const isoMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (isoMatch) {
-      return `${isoMatch[1]}${isoMatch[2]}${isoMatch[3]}`;
-    }
-  }
-
-  // Date object (or non-ISO string): use the local calendar parts, which reflect
-  // the date as constructed rather than after a UTC conversion. Mirrors
-  // formatE2BDate in the sibling EMA generator.
-  const d = new Date(date);
-  const year = d.getFullYear().toString().padStart(4, '0');
-  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
-  return `${year}${month}${day}`;
+/** `<{tag} value="TS"/>` for a recorded date, or '' when none is readable (validateForFDA warns, FDA-W008). */
+function tsElement(tag: string, date: unknown, precision?: unknown): string {
+  const ts = formatFDADate(date as Date | string | undefined, false, precision);
+  return ts ? `<${tag} value="${ts}"/>` : '';
 }
 
 /**
@@ -205,6 +208,19 @@ function generateMessageId(): string {
 function mapSexCode(sex: string | undefined): string {
   if (!sex) return 'UN';
   return FDA_SEX_CODES[sex.toLowerCase()] || 'UN';
+}
+
+/**
+ * The ICH outcome code (CODE_SYSTEMS.ICH_OUTCOME) a reaction records: the
+ * outcome named, or the code itself; null otherwise. 2026-10-15: an
+ * unrecorded outcome was filed as 6 with displayName "unknown", and one that
+ * did not map as 0, which is no ICH code.
+ */
+function fdaOutcomeCode(outcome: unknown): string | null {
+  const text = typeof outcome === 'string' ? outcome.trim().toLowerCase() : '';
+  const key = text.replace(/[\s-]+/g, '_');
+  if (key && Object.prototype.hasOwnProperty.call(CODE_SYSTEMS.ICH_OUTCOME, key)) return CODE_SYSTEMS.ICH_OUTCOME[key];
+  return text && Object.values(CODE_SYSTEMS.ICH_OUTCOME).includes(text) ? text : null;
 }
 
 /**
@@ -258,6 +274,47 @@ function caseFactErrors(event: CanonicalAdverseEvent): ValidationError[] {
   return errors;
 }
 
+/** Each code left out because this repository cannot verify it (see uncoded and routeElement); the recorded value stays. */
+function unverifiedCodeWarnings(event: CanonicalAdverseEvent): ValidationWarning[] {
+  const warnings: ValidationWarning[] = [];
+  const warn = (code: string, field: string, message: string) => warnings.push({ code, field, message, severity: 'warning' });
+  const loinc = (field: string, what: string, code: string) =>
+    warn('FDA-W009', field, `${what} is written without a code: LOINC ${code}, which it was filed under, is not among the LOINC codes this repository vendors (SPL document and section codes), so it is not filed under a meaning nothing here verifies`);
+  const patient = (event.patient || {}) as AnyData;
+  if (patient.age && patient.age_unit) loinc('patient.age', "The patient's age at onset", '3137-7');
+  if (patient.weight) loinc('patient.weight', "The patient's weight", '3141-9');
+  if ((event.medicalHistory?.conditions || []).length > 0) loinc('medicalHistory.conditions', 'The medical history', '29762-2');
+  for (const [list, products] of Object.entries({ suspectProducts: event.suspectProducts, concomitantProducts: event.concomitantProducts })) {
+    ((products || []) as AnyData[]).forEach((product, i) => {
+      if (product.route) {
+        const nci = CODE_SYSTEMS.FDA_ROUTE[String(product.route).toLowerCase()];
+        warn('FDA-W010', `${list}[${i}].route`, nci
+          ? `The route "${String(product.route)}" is written as text: its NCI code ${nci} is not filed, because this repository verifies neither that code nor the code system it was filed under (2.16.840.1.113883.5.112)`
+          : `The route "${String(product.route)}" is written as text, without a code`);
+      }
+      if (product.action_taken) {
+        warn('FDA-W011', `${list}[${i}].action_taken`, `The action taken ("${String(product.action_taken)}") is written without a code: C53254 is not filed, because this repository does not verify it, and db/migrations/057_gcc_product_master.sql names the code system it was filed under, 2.16.840.1.113883.3.26.1.1, as ISO 11238 substance identifiers`);
+      }
+    });
+  }
+  return warnings;
+}
+
+/** A recorded date that is not a calendar date is omitted; this names each (2026-10-15: it was parsed by new Date()). */
+const unreadableDateWarnings = (event: CanonicalAdverseEvent): ValidationWarning[] =>
+  caseDateFields(event)
+    .filter(([, value, precision]) => isRecorded(value) && !recordedDate(value, precision))
+    .map(([field, value]) => ({
+      code: 'FDA-W008',
+      field,
+      message: `${field} ("${String(value)}") is not a calendar date (YYYY, YYYY-MM or YYYY-MM-DD); it is omitted`,
+      severity: 'warning' as const,
+    }));
+
+/** The sender is written as recorded or refused, by the rules intake applies (casePartyProblems). */
+const senderErrors = (event: CanonicalAdverseEvent): ValidationError[] =>
+  casePartyProblems('sender', event.sender).map(p => fdaError('FDA-013', p.field, p.message));
+
 /** Every recorded quantity's unit must code; none is assumed. */
 function quantityUnitErrors(event: CanonicalAdverseEvent): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -300,7 +357,7 @@ function codesWithoutSystemWarning(event: CanonicalAdverseEvent): ValidationWarn
   const criteria = event.seriousnessDeath || event.seriousnessLifeThreatening || event.seriousnessHospitalization ||
     event.seriousnessDisability || event.seriousnessCongenitalAnomaly || event.seriousnessOtherMedicallyImportant;
   if (event.isSerious && criteria) lists.push('seriousness criterion');
-  if ((event.reactions || []).length > 0) lists.push('reaction outcome');
+  if ((event.reactions || []).some(r => fdaOutcomeCode(r.outcome))) lists.push('reaction outcome');
   if (qualificationCode(event.reporter)) lists.push('reporter qualification');
   return {
     code: 'FDA-W005',
@@ -321,6 +378,26 @@ function omittedPartyWarnings(event: CanonicalAdverseEvent): ValidationWarning[]
       severity: 'warning',
     });
   }
+  if (!event.sender?.sender_identifier) {
+    warnings.push({
+      code: 'FDA-W006',
+      field: 'sender.sender_identifier',
+      message: "The sender's identifier is not recorded; the sender device id is a null flavour (the tenant id is not one)",
+      severity: 'warning',
+    });
+  }
+  ((event.reactions || []) as AnyData[]).forEach((reaction, i) => {
+    if (!fdaOutcomeCode(reaction.outcome)) {
+      warnings.push({
+        code: 'FDA-W007',
+        field: `reactions[${i}].outcome`,
+        message: reaction.outcome
+          ? `Reaction ${i + 1}'s outcome is recorded as "${String(reaction.outcome)}", which has no ICH code here; its outcome is omitted`
+          : `Reaction ${i + 1}'s outcome is not recorded; its outcome is omitted, not filed as unknown`,
+        severity: 'warning',
+      });
+    }
+  });
   const reporter = event.reporter as AnyData | undefined;
   if (!qualificationCode(reporter)) {
     warnings.push({
@@ -358,11 +435,11 @@ export function validateForFDA(event: CanonicalAdverseEvent): {
     });
   }
 
-  if (!event.receiveDate) {
+  if (!event.receiveDate || !recordedDate(event.receiveDate)) {
     errors.push({
       code: 'FDA-002',
       field: 'receiveDate',
-      message: 'Receive date is required for FDA submission',
+      message: 'Receive date is required for FDA submission, as a calendar date',
       severity: 'error',
     });
   }
@@ -467,9 +544,35 @@ export function validateForFDA(event: CanonicalAdverseEvent): {
     }
   }
 
-  errors.push(...caseFactErrors(event), ...quantityUnitErrors(event));
-  warnings.push(...omittedPartyWarnings(event), codesWithoutSystemWarning(event));
+  errors.push(...caseFactErrors(event), ...quantityUnitErrors(event), ...senderErrors(event));
+  warnings.push(
+    ...omittedPartyWarnings(event),
+    codesWithoutSystemWarning(event),
+    ...unreadableDateWarnings(event),
+    ...unverifiedCodeWarnings(event)
+  );
   return { errors, warnings };
+}
+
+/**
+ * A reaction coded in another MedDRA version than the job's lock is refused;
+ * one that records no version is filed under the lock, and the export says so.
+ */
+function meddraVersionFindings(event: CanonicalAdverseEvent, locked: string): { errors: ValidationError[]; warnings: ValidationWarning[] } {
+  const { conflicts, unrecorded } = meddraVersionCheck(event.reactions, locked);
+  return {
+    errors: conflicts.map(c => fdaError(
+      'FDA-MEDDRA-VERSION-MISMATCH',
+      `reactions[${c.index}].term_version`,
+      `Reaction ${c.index + 1} (${c.term}) is coded in MedDRA ${c.recorded}, and this export job locks MedDRA ${locked}; a code is not filed under a version it was not coded in`
+    )),
+    warnings: unrecorded.map(u => ({
+      code: 'FDA-W-MEDDRA-VERSION',
+      field: `reactions[${u.index}].term_version`,
+      message: `Reaction ${u.index + 1} (${u.term}) records no MedDRA version; its code is filed under the job's lock, MedDRA ${locked}, unchecked against it`,
+      severity: 'warning' as const,
+    })),
+  };
 }
 
 // =============================================================================
@@ -494,6 +597,10 @@ export function generateFDA3500AXML(
       'terminologyVersions.MEDDRA',
       'No MedDRA version is locked on this export job; every MedDRA code is versioned from that lock, and none is assumed'
     ));
+  } else {
+    const versions = meddraVersionFindings(event, meddraVersion);
+    validation.errors.push(...versions.errors);
+    validation.warnings.push(...versions.warnings);
   }
   if (!meddraVersion || validation.errors.length > 0) {
     return {
@@ -509,6 +616,11 @@ export function generateFDA3500AXML(
   const senderName = event.sender?.sender_organization
     ? `\n      <name>${escapeXml(event.sender.sender_organization)}</name>`
     : '';
+  // The recorded sender identifier, or a null flavour (FDA-W006). 2026-10-15:
+  // it was the tenant id, under a root (2.16.840.1.113883.3.0) nothing here verifies.
+  const senderDeviceId = event.sender?.sender_identifier
+    ? `<id extension="${escapeXml(String(event.sender.sender_identifier))}"/>`
+    : '<id nullFlavor="NI"/>';
 
   // Build XML document
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -534,7 +646,7 @@ export function generateFDA3500AXML(
   <!-- Sender -->
   <sender typeCode="SND">
     <device classCode="DEV" determinerCode="INSTANCE">
-      <id root="2.16.840.1.113883.3.0" extension="${event.tenantId}"/>${senderName}
+      ${senderDeviceId}${senderName}
     </device>
   </sender>
 
@@ -688,15 +800,17 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
     ageSection = `
             <component1 typeCode="COMP">
               <observationEvent classCode="OBS" moodCode="EVN">
-                <code code="3137-7" codeSystem="2.16.840.1.113883.6.1" displayName="Age at onset"/>
+                ${uncoded('Age at onset')}
                 <value xsi:type="PQ" value="${patient.age}" unit="${ucumTimeUnit(patient.age_unit) ?? ''}"/>
               </observationEvent>
             </component1>`;
   }
-  // Written beside a recorded age too (2026-10-15: an age dropped the birth date).
-  if (patient.date_of_birth) {
+  // Written beside a recorded age too (2026-10-15: an age dropped the birth date),
+  // to its recorded precision.
+  const birthTime = tsElement('birthTime', patient.date_of_birth, patient.date_of_birth_precision);
+  if (birthTime) {
     ageSection += `
-            <birthTime value="${formatFDADate(patient.date_of_birth)}"/>`;
+            ${birthTime}`;
   }
 
   let weightSection = '';
@@ -706,7 +820,7 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
     weightSection = `
             <component1 typeCode="COMP">
               <observationEvent classCode="OBS" moodCode="EVN">
-                <code code="3141-9" codeSystem="2.16.840.1.113883.6.1" displayName="Body weight"/>
+                ${uncoded('Body weight')}
                 <value xsi:type="PQ" value="${patient.weight}" unit="${weightUnit}"/>
               </observationEvent>
             </component1>`;
@@ -730,7 +844,7 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
             <!-- Medical History -->
             <component2 typeCode="COMP">
               <organizer classCode="CLUSTER" moodCode="EVN">
-                <code code="29762-2" codeSystem="2.16.840.1.113883.6.1" displayName="Medical history"/>
+                ${uncoded('Medical history')}
                 ${conditions}
               </organizer>
             </component2>`;
@@ -770,10 +884,9 @@ function historyConditionCode(condition: AnyData, meddraVersion: string): string
  * read, and an unrecorded `ongoing` was filed as completed.
  */
 function conditionPeriod(condition: AnyData): string {
-  if (!condition.start_date && !condition.end_date) return '';
-  const low = condition.start_date ? `<low value="${formatFDADate(condition.start_date)}"/>` : '';
-  const high = condition.end_date ? `<high value="${formatFDADate(condition.end_date)}"/>` : '';
-  return `<effectiveTime>${low}${high}</effectiveTime>`;
+  const low = tsElement('low', condition.start_date, condition.start_date_precision);
+  const high = tsElement('high', condition.end_date, condition.end_date_precision);
+  return low || high ? `<effectiveTime>${low}${high}</effectiveTime>` : '';
 }
 
 /**
@@ -785,7 +898,8 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
   const reactionComponents = reactions
     .map((reaction: AnyData, index: number) => {
       // Written without a codeSystem: see codesWithoutSystemWarning (2026-10-15: MedDRA's OID).
-      const outcomeCode = CODE_SYSTEMS.ICH_OUTCOME[reaction.outcome || 'unknown'] || '0';
+      // As recorded, or omitted (FDA-W007).
+      const outcomeCode = fdaOutcomeCode(reaction.outcome);
 
       return `
           <!-- Reaction ${index + 1} -->
@@ -793,8 +907,8 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
             <adverseEffectAssessment classCode="OBS" moodCode="EVN">
               <code code="PROBLEM" codeSystem="2.16.840.1.113883.5.4"/>
               <effectiveTime>
-                ${reaction.onset_date ? `<low value="${formatFDADate(reaction.onset_date)}"/>` : ''}
-                ${reaction.end_date ? `<high value="${formatFDADate(reaction.end_date)}"/>` : ''}
+                ${tsElement('low', reaction.onset_date, reaction.onset_date_precision)}
+                ${tsElement('high', reaction.end_date, reaction.end_date_precision)}
               </effectiveTime>
 
               <!-- MedDRA Term (validated: term_code is MedDRA's) -->
@@ -827,14 +941,18 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
                   : ''
               }
 
-              <!-- Outcome -->
+              ${
+                outcomeCode
+                  ? `<!-- Outcome -->
               <entryRelationship typeCode="OUTC">
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="OUTCOME" codeSystem="2.16.840.1.113883.5.4"/>
                   <value xsi:type="CD" code="${outcomeCode}"
-                    displayName="${reaction.outcome || 'unknown'}"/>
+                    displayName="${escapeXml(String(reaction.outcome))}"/>
                 </observation>
-              </entryRelationship>
+              </entryRelationship>`
+                  : ''
+              }
             </adverseEffectAssessment>
           </component>`;
     })
@@ -881,6 +999,7 @@ function generateProductComponent(
   // No codeSystem on the role code: see codesWithoutSystemWarning (2026-10-15: MedDRA's OID).
   const roleCode = role === 'suspect' ? '1' : '2';
   const rechallenge = rechallengeText(product.rechallenge);
+  const period = tsElement('low', product.start_date, product.start_date_precision) + tsElement('high', product.end_date, product.end_date_precision);
 
   return `
           <!-- ${role === 'suspect' ? 'Suspect' : 'Concomitant'} Product ${index + 1} -->
@@ -899,12 +1018,9 @@ function generateProductComponent(
 
               <!-- Dates -->
               ${
-                product.start_date || product.end_date
+                period
                   ? `
-              <effectiveTime xsi:type="IVL_TS">
-                ${product.start_date ? `<low value="${formatFDADate(product.start_date)}"/>` : ''}
-                ${product.end_date ? `<high value="${formatFDADate(product.end_date)}"/>` : ''}
-              </effectiveTime>`
+              <effectiveTime xsi:type="IVL_TS">${period}</effectiveTime>`
                   : ''
               }
 
@@ -944,7 +1060,7 @@ function generateProductComponent(
                   ? `
               <entryRelationship typeCode="COMP">
                 <observation classCode="OBS" moodCode="EVN">
-                  <code code="C53254" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="Action Taken"/>
+                  ${uncoded('Action taken')}
                   <value xsi:type="ST">${escapeXml(product.action_taken)}</value>
                 </observation>
               </entryRelationship>`
@@ -968,16 +1084,16 @@ function generateProductComponent(
 }
 
 /**
- * The route, only when recorded. 2026-10-15: an unrecorded route was coded
- * "unknown". An unmapped recorded route is written as recorded, escaped, since
- * a quote in it broke the attribute (that note used to be an XML comment
- * emitted into every document).
+ * The route, only when recorded, as text under a null-flavoured code (FDA-W010
+ * names the code left out). 2026-10-15: an unrecorded route was coded
+ * "unknown"; a recorded one was filed as FDA_ROUTE's NCI C-code under
+ * 2.16.840.1.113883.5.112 (HL7 RouteOfAdministration), and one with no C-code
+ * as its own text in the code attribute. This repository verifies neither.
  */
 function routeElement(product: AnyData): string {
   if (!product.route) return '';
-  const routeCode = CODE_SYSTEMS.FDA_ROUTE[String(product.route).toLowerCase()] || product.route;
   return `
-              <routeCode code="${escapeXml(routeCode)}" codeSystem="2.16.840.1.113883.5.112" displayName="${escapeXml(product.route)}"/>`;
+              <routeCode nullFlavor="NI"><originalText>${escapeXml(String(product.route))}</originalText></routeCode>`;
 }
 
 /** The dose in its recorded unit (validated, FDA-011). 2026-10-15: an unrecorded unit was filed as mg. */
