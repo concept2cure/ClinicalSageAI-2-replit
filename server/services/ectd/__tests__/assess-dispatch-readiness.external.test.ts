@@ -15,7 +15,9 @@ vi.mock('../../../db', () => ({
       then: (resolve: (value: unknown[]) => unknown) => Promise.resolve(rows).then(resolve),
     };
     return query;
-  } },
+  },
+  // The waiver and finding-disposition reads (text SQL): this suite has no Shadow Review records.
+  execute: async () => ({ rows: [] }) },
 }));
 vi.mock('../leaf-document-resolver', () => ({ resolveLeafDocuments: async () => [] }));
 vi.mock('../dispatch-readiness', () => ({
@@ -47,7 +49,9 @@ beforeEach(() => {
   vi.stubEnv('NODE_ENV', 'production');
   fixture.rows = [
     [{ id: 12, organizationId: 7, submissionId: 4, region: 'fda', type: 'amendment', sequenceNumber: '0001', status: 'assembling', validationStatus: null }],
-    [{ applicationType: 'other' }], [], [{ value: 0 }], [{ value: 1 }],
+    // sequence, application type, leaves, completed Shadow Review runs. The
+    // critical count is a text-SQL read now (criticalsStandingOpen): execute above.
+    [{ applicationType: 'other' }], [], [{ value: 1 }],
   ];
   fixture.adapter.name = 'FDA-internal-subset';
   fixture.adapter.kind = 'internal_subset';

@@ -168,6 +168,51 @@ describe('the scope list itself', () => {
   });
 });
 
+describe('Submission Center carries the IND lifecycle tools — decision P-32', () => {
+  it('the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15', () => {
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.surfaces).toContain('ind-checklist');
+    expect(isLaunchSurface('ind-checklist')).toBe(true);
+    /* It was refused to every organisation before this entry, entitled or
+       not; a subscribed verdict now survives. */
+    const [out] = applyLaunchScope([v('ind-checklist', { source: 'subscribed' })]);
+    expect(out.entitled).toBe(true);
+    expect(out.source).toBe('subscribed');
+  });
+  it('agency questions stay locked until approval is a signed act', () => {
+    /* Coordinator decision on P-32 (2026-10-15): the approve route records a
+       status with no Part 11 signature, reason or role check, and the FDA
+       response package is assembled from those approvals. A bought row is
+       still not in this release. */
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.surfaces).not.toContain('haq-manager');
+    expect(LAUNCH_SURFACE_IDS.has('haq-manager')).toBe(false);
+    const [out] = applyLaunchScope([v('haq-manager', { source: 'subscribed' })]);
+    expect(out.entitled).toBe(false);
+    expect(out.source).toBe('launch-scope');
+  });
+  it('P-32 grants NO module: the Submission Center modules are still its three, and the standard tier still decides', () => {
+    /* As in P-28: provisionLaunchModules writes an explicit grant for every
+       module listed, and a grant outranks tier permanently. The surface is
+       listed; its module is not. */
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.modules).toEqual(['submission-center', 'ectd-compile', 'gateway-transmittals']);
+    expect(LAUNCH_MODULE_IDS).not.toContain('ind-checklist');
+    expect(LAUNCH_MODULE_IDS).not.toContain('haq-manager');
+    const [out] = applyLaunchScope([v('ind-checklist', { entitled: false, source: 'tier', requiredTier: 'standard' })]);
+    expect(out.entitled).toBe(false);
+    expect(out.source).toBe('tier');
+    expect(out.requiredTier).toBe('standard');
+  });
+  it('pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32)', () => {
+    for (const id of ['pharmacovigilance', 'pv-cockpit', 'safety-narrative']) {
+      expect(isLaunchSurface(id), id).toBe(false);
+      const [out] = applyLaunchScope([v(id, { source: 'subscribed' })]);
+      expect(out.source, id).toBe('launch-scope');
+    }
+  });
+});
+
 describe('applyLaunchScope', () => {
   it('leaves a launch surface verdict untouched, whatever it said', () => {
     const locked = v('vault', { entitled: false, source: 'tier', requiredTier: 'standard' });

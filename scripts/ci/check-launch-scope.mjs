@@ -115,9 +115,10 @@ for (const id of launchSurfaces) {
 // nor registered renders in production with enforcement on, and nothing else
 // notices. The deep link resolves DEEP_LINK_ALIASES first (routing.ts
 // surfaceIdFromLocation), so an alias is judged by its target: 'task-board'
-// renders as the in-scope 'tasks', 'ind-lifecycle' as the locked
-// 'ind-checklist'. Checked 2026-09-23 on all 122 routable ids with enforcement
-// on: none leaks today; this keeps it that way.
+// renders as the in-scope 'tasks', 'ind-lifecycle' as 'ind-checklist' (locked
+// until decision P-32, 2026-10-15, made it a Submission Center feature).
+// Checked 2026-09-23 on all 122 routable ids with enforcement on: none leaks
+// today; this keeps it that way.
 const aliasSrc = read(ALIASES);
 const aliasBlock = aliasSrc.match(/export const DEEP_LINK_ALIASES[^=]*=\s*\{([^]*?)\n\};/);
 if (!aliasBlock) {

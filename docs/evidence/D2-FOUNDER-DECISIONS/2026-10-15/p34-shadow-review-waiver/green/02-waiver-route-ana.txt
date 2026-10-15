@@ -1,0 +1,34 @@
+# npx vitest run <waiver integration> <waive route> <AnA guard> — after the change, 2026-10-15
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > only after the newest run failed for a provider outage, within 24 hours 29ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as invalid_ai_response 7ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as policy_blocked 5ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as placement_refused 5ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as rate_limited 5ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as no_provider_configured 5ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as model_not_qualified 4ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as null 6ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not when the outage is more than 24 hours old, a newer run exists, or a review completed 13ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not once the sequence is frozen 3ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > the precheck answers from the same rule, before anyone signs 13ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > records a waived row and a chained SHADOW_REVIEW_WAIVED row, and clears the presence gate as not assessed 55ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > is used once: the same signature cannot waive again 44ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > lapses when the leaves change, and blocks with its own sentence 30ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > a revoked waiver blocks with its own sentence 29ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void 54ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver naming a failed run other than the newest is refused 19ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties) 23ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused 16ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch 35ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > a freeze or dispatch signature cannot waive 17ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > a completed review clears it whatever the waiver; no waiver blocks with the existing sentence 0ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > an undetermined waiver is never active 0ms
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > never waives an unacknowledged critical finding: it answers only "no review has run" 1ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > refuses a body without the signature or the failed run, and waives nothing 61ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > hands the signature and the failed run to the service, with the session context, and answers the record 7ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > a missing or wrong-intent signature is 403 GOVERNED_REQUIRED 5ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the waive door > a sequence with no waiver on offer is 409 SHADOW_WAIVER_NOT_ELIGIBLE, with the reason 4ms
+ ✓ server/routes/__tests__/submissions-shadow-review-waive.test.ts > the precheck asks the waiver rule before anyone signs > accepts the 'shadow-waiver' step and answers 200 either way 7ms
+ ✓ server/services/ana/__tests__/ana-cannot-waive-shadow-review.test.ts > no AnA tool can waive Shadow Review > no tool is declared for a waiver 2ms
+ ✓ server/services/ana/__tests__/ana-cannot-waive-shadow-review.test.ts > no AnA tool can waive Shadow Review > no AnA or MCP source reaches the waiver act 54ms
+ Test Files  3 passed (3)
+      Tests  31 passed (31)

@@ -1,0 +1,13 @@
+# ESLint per changed file, errors/warnings: HEAD = git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>; NOW = npx eslint <file>
+server/services/vault/document-catalog-document.ts HEAD=0e/0w NOW=0e/0w
+server/services/vault/document-catalog-actor-reads.ts HEAD=0e/0w NOW=0e/0w
+server/services/vault/document-catalog-eligibility.ts HEAD=0e/0w NOW=0e/0w
+server/services/vault/document-catalog-governance.service.ts HEAD=0e/0w NOW=0e/0w
+server/services/ana/document-placement-tools.ts HEAD=0e/0w NOW=0e/0w
+server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts HEAD=0e/0w NOW=0e/0w
+
+# npm run ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1068 baselined interpolation(s) in 228 file(s); the baseline may only shrink.
+
+# npm run typecheck:fast — 9 errors, all in one file outside this change (concurrent dispatch-readiness work); none in a changed file
+      9 server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts

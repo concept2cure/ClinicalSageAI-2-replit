@@ -104,7 +104,29 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // created in the product never write, so it is always empty; Project home's
     // dossier readiness is computed from the program's own sections. The
     // publishing center is a reference page that publishes nothing.
-    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals'],
+    //
+    // Decision P-32, 2026-10-15 (founder's delegation): the IND lifecycle and
+    // forms screen is a feature of this app. An amendment on a US commercial
+    // IND needs its 1571, its cover letter and often a Letter of
+    // Authorization, and the engines that build them sat behind a locked
+    // surface. The surface id is listed and the module list is NOT changed,
+    // as in P-28: listing a surface lifts the launch-scope lock, listing a
+    // module would write a grant for every new organisation and outrank the
+    // standard tier the product owner set
+    // (db/migrations/20260823_module_catalog_commercial_packaging.sql). The
+    // API claim is an allow-list of the paths that screen calls, in the
+    // surface registry. IND safety reporting (21 CFR 312.32) and ICSR
+    // transmission stay shut: their routes are claimed by the out-of-scope
+    // pharmacovigilance surface, and the IND screen hides the safety-report
+    // card (docs/LAUNCH_DEFINITION_OF_DONE.md, P-32).
+    //
+    // The agency-questions screen is NOT listed (coordinator decision on P-32,
+    // 2026-10-15). Its approve records a plain status change, with no Part 11
+    // signature, reason or role check, and the response package sent to FDA
+    // is assembled from those approvals; answers to FDA letters are also third
+    // in the beta's job order (docs/design/WORKFLOW_DECISION_2026-10-08.md §1).
+    // Agency questions open once approval is a signed act.
+    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals', 'ind-checklist'],
     modules: ['submission-center', 'ectd-compile', 'gateway-transmittals'],
   },
   {

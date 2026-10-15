@@ -559,13 +559,42 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'clipboardList',
     group: 'submission',
     uiKit: 'pdev',
-    apiPrefixes: ['/api/ind-lifecycle', '/api/ind-forms', '/api/ind-master-data'],
+    // Decision P-32, 2026-10-15: this surface is a feature of the Submission
+    // Center launch app, and claims only the paths its screens call
+    // (IndLifecycle.tsx and the IndFormsPanel.tsx it embeds). Attribution is
+    // by longest prefix at a segment boundary, so the bare /api/ind-lifecycle
+    // it claimed until then would have put every route under it in the
+    // release: the 312.32 safety report, the E2B(R3) ICSR and the ICSR
+    // transmit among them. Those are claimed by `pharmacovigilance`, outside
+    // the release; the sequence, portfolio and /submission/:id register routes
+    // stay unclaimed (a prefix cannot admit the registers without the safety
+    // registers beside them). /api/ind-master-data has no screen caller.
+    // /api/ind-lifecycle/clock is the server's evaluateRegulatoryClock, which
+    // the screen calls in place of the client copy it carried until 2026-10-15;
+    // /readiness is not claimed — the screen's readiness verdict comes with the
+    // checklist read.
+    // Pinned by server/services/entitlements/__tests__/ind-launch-claim.test.ts.
+    apiPrefixes: [
+      '/api/ind-checklist',
+      '/api/ind-forms',
+      '/api/ind-lifecycle/clock',
+      '/api/ind-lifecycle/cover-letter',
+      '/api/ind-lifecycle/briefing-book',
+      '/api/ind-lifecycle/loa',
+      '/api/ind-lifecycle/right-of-reference',
+      '/api/ind-lifecycle/annual-report',
+      '/api/ind-lifecycle/amendment-plan',
+      '/api/ind-lifecycle/amendment',
+    ],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'IND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports.',
+    notes:
+      'IND checklist and Module 1 forms (1571, 1572, 3674); cover letter, briefing book, Letter of ' +
+      'Authorization and right of reference; annual reports and amendments placed into the IND eCTD sequence. ' +
+      'IND safety reports are not part of this release.',
   },
   {
     id: 'pdev',

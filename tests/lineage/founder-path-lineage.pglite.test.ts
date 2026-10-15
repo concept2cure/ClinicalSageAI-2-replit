@@ -254,6 +254,11 @@ const MIGRATIONS = [
   'migrations/20260926_ana_turn_records.sql',
   // Submission Center: the governed sign, the dispatch gate's review store, the transmittal ledger.
   'migrations/20260604_shadow_review.sql',
+  'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
+  'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+  // P-33: the one dispatch verdict reads the IND LOA and safety-report registers.
+  'migrations/20260614_ind_safety_reports.sql',
+  'migrations/20260614_ind_cross_references.sql',
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
   'db/migrations/20260725_esig_gate_columns_port.sql',
   'migrations/20260813d_esignature_governed_unification.sql',

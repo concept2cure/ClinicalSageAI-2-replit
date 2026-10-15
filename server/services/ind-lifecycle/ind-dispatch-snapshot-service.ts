@@ -6,6 +6,12 @@
  * from the caller's organizationId (never request input); creation is audited —
  * mirroring server/services/ind-master-data/ind-master-data-service.ts.
  *
+ * Since P-33 (2026-10-15) the verdict is the one verdict,
+ * assessSequenceDispatchReadiness, and every row records the gate that
+ * produced it in `verdict.source`. Rows written before then carry no source:
+ * the deleted IND gate wrote them, and ind-cockpit reports them as recorded
+ * under the previous gate rather than comparing them for drift.
+ *
  * @module server/services/ind-lifecycle/ind-dispatch-snapshot-service
  */
 
@@ -17,17 +23,25 @@ import {
 } from '../../../shared/schema/ind-dispatch-snapshots';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
-import type { DispatchGateVerdict } from './ind-dispatch-gate';
+import { DISPATCH_VERDICT_SOURCE } from './ind-cockpit';
 
 const logger = createScopedLogger('ind-dispatch-snapshot-service');
 
 export type SnapshotCtx = { organizationId: number; userId: number };
 
+/** The verdict a snapshot records: the one verdict, tagged with the gate that produced it. */
+export interface DispatchSnapshotVerdict {
+  canDispatch: boolean;
+  blockers: ReadonlyArray<{ code: string; message: string }>;
+  warnings: ReadonlyArray<{ code: string; message: string }>;
+  source: typeof DISPATCH_VERDICT_SOURCE;
+}
+
 export interface CreateSnapshotInput {
   submissionId: number;
   sequenceId: number;
   sequenceNumber: string;
-  verdict: DispatchGateVerdict;
+  verdict: DispatchSnapshotVerdict;
 }
 
 /** Persist a dispatch-gate verdict as an audited, point-in-time snapshot. */
@@ -45,7 +59,7 @@ export async function createDispatchSnapshot(
       canDispatch: input.verdict.canDispatch,
       blockerCount: input.verdict.blockers.length,
       warningCount: input.verdict.warnings.length,
-      blockerCodes: input.verdict.blockers.map((b) => b.code),
+      blockerCodes: [...new Set(input.verdict.blockers.map((b) => b.code))],
       verdict: input.verdict as unknown as Record<string, unknown>,
       createdBy: ctx.userId,
     })
@@ -57,7 +71,7 @@ export async function createDispatchSnapshot(
     action: 'IND_DISPATCH_SNAPSHOT_CREATED',
     resourceType: 'ind_dispatch_snapshot',
     resourceId: row.id,
-    details: { sequenceId: input.sequenceId, canDispatch: input.verdict.canDispatch },
+    details: { sequenceId: input.sequenceId, canDispatch: input.verdict.canDispatch, source: input.verdict.source },
   });
 
   logger.info('Recorded IND dispatch snapshot', {

@@ -1,0 +1,88 @@
+# P-34 wiring: the dispatch verdict reads the waiver — 7dbb2c44d, 2026-10-15T06:17:39Z
+
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > only after the newest run failed for a provider outage, within 24 hours
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as invalid_ai_response
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as policy_blocked
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as placement_refused
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as rate_limited
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as no_provider_configured
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as model_not_qualified
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > never for a run that failed as null
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not when the outage is more than 24 hours old, a newer run exists, or a review completed
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > not once the sequence is frozen
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > when a waiver is offered (shadowReviewWaivable) > the precheck answers from the same rule, before anyone signs
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > records a waived row and a chained SHADOW_REVIEW_WAIVED row, and clears the presence gate as not assessed
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > is used once: the same signature cannot waive again
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > lapses when the leaves change, and blocks with its own sentence
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the waiver act > a revoked waiver blocks with its own sentence
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver citing a run that was not an outage is refused 409, and its signature is void
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver naming a failed run other than the newest is refused
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > the sequence's creator cannot waive its review (separation of duties)
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a refused waive > a waiver signed as review, not responsibility or approval, is refused
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > is not a release signature, and cannot freeze or dispatch
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > a waiver signature is its own act > a freeze or dispatch signature cannot waive
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > a completed review clears it whatever the waiver; no waiver blocks with the existing sentence
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > an undetermined waiver is never active
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the presence gate with a waiver (evaluateShadowPresenceWithWaiver) > never waives an unacknowledged critical finding: it answers only "no review has run"
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a lapsed waiver blocks the verdict with its own sentence, and no note says it was waived
+ ✓ server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts > the dispatch verdict reads the waiver (assessSequenceDispatchReadiness) > a completed review needs no waiver: none is offered, and the gate clears without a note
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied"
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory failed validation without converting clearance into a pass
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows advisory invalid validation without converting clearance into a pass
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > publishes an invalid zero placeholder with its status and engine provenance to AnA
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > shows a raw executed subset as not externally assessed
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call a legacy advisory report clean when its observed error count is positive
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > a Shadow Review waived by signature (P-34) > the presence card says "Not assessed" with the server’s sentence, never "Satisfied"
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > a Shadow Review waived by signature (P-34) > the cleared verdict does not call it proven clear or count zero criticals found
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > a Shadow Review waived by signature (P-34) > AnA is told which gate cleared without assessing, in the server’s words
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict)
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the Shadow Review presence gate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed and no waiver was recorded
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the Shadow Review presence gate — never-reviewed is not clean > clears once at least one completed run exists, whatever the waiver says
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > the presence gate view says who waived it, under which signature, for which failed run
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > an open critical finding still blocks: the waiver never reaches the structural gate
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > a lapsed waiver blocks with its own sentence
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > a revoked waiver blocks with its own sentence
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > a undetermined waiver blocks with its own sentence
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a structural error blocks all three — signing never clears a content defect
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a missing Shadow Review blocks dispatch-on-signing
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an external-validator failure blocks dispatch-on-signing
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an invalid signature blocks all three, including freeze — tamper evidence is never signed over
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an undetermined lookup blocks dispatch-now and dispatch-on-signing
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a signature already on record: all three clear, and nothing is "resolved by signing"
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a type that requires no signature: all three clear on an otherwise-clear sequence
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > says why the external gate cleared without a report
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > carries the sentence on the external gate view only when it cleared
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > a gate that blocks keeps its blockers and no not-assessed note
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's Module 1 list (no "1.20 missing" on an amendment)
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is held to 1.1 (Form FDA 1571), 1.2 and its type's content, as errors (P-33)
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing NDA, BLA or ANDA sequence is held to its 1.1 form (Form FDA 356h), as an error, and to nothing else
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing sequence outside the US marketing and IND kinds is still not held to a Module 1 list
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a region or kind the record does not model keeps the profile list as warnings, never errors
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > reads the headings from the IND profile, with their ICH M4 titles — not a second list
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > asks a US IND only: not an NDA, not an IND outside FDA, not an unknown type
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > sequence 0000 is the original; another number only when typed original and first
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > Module 1 alone: both headings are blocking errors
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a leaf at or under the heading clears it, in any spelling; a numerically adjacent code does not
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a delete leaf places nothing
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a cross-reference clears only with its LOA on file and the heading named (or a heading that contains it)
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a register that could not be read is not an empty register: still blocking, with the reason
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > asks nothing when no requirement is given (an amendment, another application)
+ ✓ server/mcp/__tests__/readiness-not-assessed.test.ts > notAssessedOf > carries every cleared gate’s note verbatim, in gate order
+ ✓ server/mcp/__tests__/readiness-not-assessed.test.ts > notAssessedOf > a blocked gate is reported by its blockers, never as not assessed; an empty note is no note
+ Test Files  4 passed (4)
+      Tests  84 passed (84)

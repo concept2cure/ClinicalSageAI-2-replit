@@ -169,32 +169,41 @@ describe('NDA cockpit over a FAILED read', () => {
 
 /**
  * The IND Lifecycle surface — the lane's DEFAULT surface — held the same defect
- * in latent form: `indlReadiness` derived `ready: blockers.length === 0` and
- * `overallPercentage: totalItems === 0 ? 100 : …`, which is literally
- * "empty set ⇒ 100% READY TO FILE". Reachable the moment the checklist
- * assembler returns empty forms/sections arrays (which it documents it does
- * when nothing is authored yet). Pinned here at both altitudes: the derivation
- * and the rendered surface.
+ * in latent form: its client readiness evaluator derived `ready:
+ * blockers.length === 0` and `overallPercentage: totalItems === 0 ? 100 : …`,
+ * which is literally "empty set ⇒ 100% READY TO FILE". Reachable the moment the
+ * checklist assembler returns empty forms/sections arrays (which it documents
+ * it does when nothing is authored yet). Pinned here at both altitudes: the
+ * derivation and the rendered surface.
+ *
+ * 2026-10-15 (P-32 follow-up): that client evaluator was a copy of the
+ * server's evaluateIndReadiness, and it is deleted — the screen shows the
+ * verdict the checklist read returns, and "not assessed" when it returns none.
+ * The two derivation cases below were re-pointed at the engine the verdict
+ * now comes from, so the rule they pin still holds where it is computed.
  */
-describe('indlReadiness — an empty checklist is not a fileable one', () => {
-  it('derives not-assessed, not clearance, from zero items', async () => {
-    const { indlReadiness } = await import('../fixtures/ind-lifecycle-data');
-    const r = indlReadiness([], []);
-    expect(r.assessed).toBe(false);
+describe('evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one', () => {
+  it('derives no clearance from zero items: not ready, never 100%', async () => {
+    const { evaluateIndReadiness } = await import('../../../../../server/services/ind-lifecycle/ind-readiness-service');
+    const r = evaluateIndReadiness({ filingType: 'initial', sectionStatus: {} });
     expect(r.ready).toBe(false);
-    // The old branch returned 100 here.
-    expect(r.overallPercentage).toBe(0);
+    // The old client branch returned 100 here.
+    expect(r.overallPercentage).not.toBe(100);
+    expect(r.blockers.length).toBeGreaterThan(0);
   });
 
-  it('is still clearance-capable when items exist and all pass', async () => {
-    const { indlReadiness } = await import('../fixtures/ind-lifecycle-data');
-    const r = indlReadiness(
-      [{ code: '1.1', title: 'Forms', status: 'approved', required: true } as never],
-      [{ id: '1571', name: 'FDA 1571', done: true } as never],
-    );
-    expect(r.assessed).toBe(true);
+  it('is still clearance-capable when every required item passes', async () => {
+    const { evaluateIndReadiness, REQUIRED_FORMS_INITIAL } = await import('../../../../../server/services/ind-lifecycle/ind-readiness-service');
+    const { getAllINDSections } = await import('../../../../../services/regulatory/ind-ectd-sections');
+    const sectionStatus = Object.fromEntries(getAllINDSections().filter((x) => x.required).map((x) => [x.code, 'signed'])) as Record<string, 'signed'>;
+    const r = evaluateIndReadiness({ filingType: 'initial', sectionStatus, completedForms: [...REQUIRED_FORMS_INITIAL] });
     expect(r.blockers.length).toBe(0);
     expect(r.ready).toBe(true);
+  });
+
+  it('the screen carries no copy of it', async () => {
+    const fixtures = await import('../fixtures/ind-lifecycle-data');
+    expect(Object.keys(fixtures)).not.toContain('indlReadiness');
   });
 });
 
