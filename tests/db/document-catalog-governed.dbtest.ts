@@ -24,6 +24,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
+import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
 import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
 
@@ -50,7 +51,8 @@ async function setMembership(role: string): Promise<void> {
 
 /** A document of the project with its text fully read, ready to be described. */
 async function readDocument(tag: string): Promise<string> {
-  const hash = `${RUN}${tag}`.padEnd(64, '0').slice(0, 64);
+  // A real SHA-256 (hex), unique per document: the source identity check requires one.
+  const hash = createHash('sha256').update(`${RUN}:${tag}:${TEXT}`).digest('hex');
   const doc = await owner.query(
     `INSERT INTO vault.documents
        (program_id, organization_id, document_code, document_title, document_type,
