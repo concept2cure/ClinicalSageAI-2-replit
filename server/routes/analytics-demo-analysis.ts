@@ -49,7 +49,7 @@ const router = Router();
  * `exports/`, and spent a model call, for a route no client calls.
  *
  * 404 rather than 403, and the same body as the precedent in
- * server/routes/seed-demo.ts ("SECURITY: Block demo seeding in production"): a
+ * the demo seeder (seed-demo.ts, since deleted: "SECURITY: Block demo seeding in production"): a
  * route that should not exist in production should not advertise that it does.
  *
  * Applied to this ONE route, not via `router.use`, because the rest of this file

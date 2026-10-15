@@ -9,7 +9,6 @@ interface TrainingCoverageProps {
   failed: boolean;
   error: string | null;
   refresh: () => void;
-  showingSample: boolean;
   canOpen: (documentId: number) => boolean;
   onOpen: (documentId: number) => void;
 }
@@ -26,15 +25,15 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
       {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} testId="sop-training-failed" />}
       {props.unread && !props.failed && <div className="qms-empty" role="status">Loading training records…</div>}
       {!props.unread && props.rows.length === 0 && <div className="qms-empty">No training-controlled documents yet.</div>}
-      {props.rows.map((row) => <CoverageRow key={row.documentId ?? row.doc} row={row} showingSample={props.showingSample} canOpen={props.canOpen} onOpen={props.onOpen} />)}
+      {props.rows.map((row) => <CoverageRow key={row.documentId ?? row.doc} row={row} canOpen={props.canOpen} onOpen={props.onOpen} />)}
     </div>
   </section>;
 }
 
-function CoverageRow({ row, showingSample, canOpen, onOpen }: Pick<TrainingCoverageProps, 'showingSample' | 'canOpen' | 'onOpen'> & { row: TrainingRow }) {
+function CoverageRow({ row, canOpen, onOpen }: Pick<TrainingCoverageProps, 'canOpen' | 'onOpen'> & { row: TrainingRow }) {
   const pct = row.of > 0 ? Math.round((row.current / row.of) * 100) : 0;
   const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
-  const disabled = showingSample || !row.documentId || !canOpen(row.documentId);
+  const disabled = !row.documentId || !canOpen(row.documentId);
   return <div className="qms-train-row">
     <span className="qms-train-doc" title={row.doc}>{row.doc}{row.documentVersion ? ` · v${row.documentVersion}` : ''}</span>
     {row.eligible === false ? <span className="qms-train-unavailable">Unavailable</span> : <>
@@ -47,10 +46,10 @@ function CoverageRow({ row, showingSample, canOpen, onOpen }: Pick<TrainingCover
   </div>;
 }
 
-export function DocumentReadButton({ doc, showingSample, disabled, onOpen }: {
-  doc: QmsDoc; showingSample: boolean; disabled: boolean; onOpen: (documentId: number) => void;
+export function DocumentReadButton({ doc, disabled, onOpen }: {
+  doc: QmsDoc; disabled: boolean; onOpen: (documentId: number) => void;
 }) {
   return <button className="qms-chip" disabled={disabled}
-    title={showingSample ? 'Sample documents cannot be acknowledged' : 'Read this controlled revision and check your personal acknowledgement'}
+    title="Read this controlled revision and check your personal acknowledgement"
     onClick={() => onOpen(doc.id)}>{I.bookOpen} {doc.status === 'effective' ? 'Read and acknowledge' : 'Open document'}</button>;
 }

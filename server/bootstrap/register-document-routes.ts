@@ -53,7 +53,6 @@ export interface DocumentBootstrapContext {
   pool: Pool;
   isStaticDataEnabled: (flag: string) => boolean;
   mountStaticBusinessDataGuard: (path: string, routeName: string, requiredFlag: string) => void;
-  DEMO_ROUTES_ENABLED: boolean;
   EXPERIMENTAL_ROUTES_ENABLED: boolean;
 }
 
@@ -62,7 +61,6 @@ export async function registerDocumentRoutes({
   pool,
   isStaticDataEnabled,
   mountStaticBusinessDataGuard,
-  DEMO_ROUTES_ENABLED,
   EXPERIMENTAL_ROUTES_ENABLED,
 }: DocumentBootstrapContext) {
   // ── GCC Platform (eCTD, Vault, Signing, Site Intel, Labeling) ──
@@ -304,16 +302,14 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount programs gateway routes:', error);
   }
 
-  // ── Demo Seed routes ──
-  if (DEMO_ROUTES_ENABLED) {
-    try {
-      const seedDemoModule = await import('../routes/seed-demo.js');
-      app.use('/api/demo', seedDemoModule.default);
-      console.log('✅ Demo seeding API routes mounted successfully');
-    } catch (error) {
-      console.error('❌ Failed to mount Demo seed routes:', error);
-    }
-  }
+  // ── Demo Seed routes: REMOVED 2026-10-14 ──
+  // POST /api/demo/seed (server/routes/seed-demo.ts) wrote invented projects,
+  // workflow stages, tasks, medical devices and SharePoint file records — with
+  // random file sizes — into hard-coded organization 6 / workspace 26 whenever
+  // ENABLE_DEMO_ROUTES was set outside production. Demo and staging
+  // deployments are ones people sign into; no example record belongs in one
+  // (the owner's rule: no fake data anywhere). No client called it. The route,
+  // its test and the flag that mounted it are deleted.
 
   // Collaboration Center: removed. `GET /api/collaboration/team` and
   // `/activities` selected `.from(users).limit(N)` with NO organization filter,

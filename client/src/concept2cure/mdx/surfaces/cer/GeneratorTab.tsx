@@ -22,7 +22,6 @@ import { I } from '../../icons';
 import { EmptyState } from '../../../v2/dataConnect';
 import { AskAnaChip } from '../AskAnaChip';
 import { AnaDraftBanner } from '../../components/AnaDraftBanner';
-import { CER_EXPORT } from '../../data/cer';
 import type { EstarRow } from '../../data/k510';
 import type { Program } from '../../data/programs';
 import type { DeviceProfileView } from '../../hooks/useDeviceProfile';
@@ -34,9 +33,6 @@ import {
   type CerStructureAssessment,
 } from '../../hooks/useCerStructure';
 import { readEquivalentDevices } from './EquivalenceTab';
-import { SampleDataBanner } from '../../components/SampleDataBanner';
-import { useSampleMode } from '../../components/DataGate';
-import { useSampleRows } from '../../lib/useSampleRows';
 import type { EditorSectionRef } from '../../../v2/editorTarget';
 import { downloadCsv } from '../../../v2/download';
 
@@ -81,7 +77,6 @@ export function GeneratorTab({
   onAskAna,
   onOpenEditor,
 }: GeneratorTabProps) {
-  const sampleOn = useSampleMode();
   const structure = useCerStructure();
   const { busy: exportBusy, outcome: exportOutcome, exportCer } = useCerExport();
 
@@ -92,11 +87,7 @@ export function GeneratorTab({
   const [assessment, setAssessment] = React.useState<CerStructureAssessment | null>(null);
   const [assessError, setAssessError] = React.useState<string | null>(null);
 
-  const sourceSections = useSampleRows(
-    sections,
-    CER_EXPORT.map((s, i) => ({ id: i + 1, label: s.label, status: s.status as never, blocker: false })),
-  );
-  const usingSampleSections = sampleOn && (sections === null || sections.length === 0) && sourceSections.length > 0;
+  const sourceSections = sections ?? [];
 
   /* Default the equivalence claim to what the program record actually says. */
   const equivDefault = readEquivalentDevices(profile).length > 0;
@@ -164,7 +155,6 @@ export function GeneratorTab({
 
   return (
     <>
-      <SampleDataBanner show={usingSampleSections} loading={sectionsLoading} label="CER sections" />
       <div className="col2">
         <div>
           {/* ── Structure check ── */}
@@ -344,7 +334,7 @@ export function GeneratorTab({
                 </button>
               </div>
             </div>
-            {sections !== null && sections.length === 0 && !usingSampleSections ? (
+            {sections !== null && sections.length === 0 ? (
               /* No CTA and nothing to press. The panel named the thing that
                  would fix it — scaffolding the document — and left the reader
                  to find it. `refreshSections` is already a prop on this

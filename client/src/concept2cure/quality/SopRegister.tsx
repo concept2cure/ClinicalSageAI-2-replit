@@ -36,9 +36,6 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import {
-  SOP_TEMPLATES,
-  FIXTURE_DOCS,
-  FIXTURE_TRAINING,
   deriveReviewDue,
   DOC_TYPE_LABEL,
   STATUS_LABEL,
@@ -51,11 +48,6 @@ import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval, sendQmsDocumentForReview } from './qmsApproval';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsDoc } from './data';
-/* The canonical sample-mode guard and its marker, shared with the MDX lane —
-   one definition of "may a fixture reach the screen", so two lanes cannot
-   answer it differently. */
-import { useSampleRows, useShowingSample } from '../mdx/lib/useSampleRows';
-import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 import { ErrorState } from '../v2/dataConnect';
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
@@ -105,6 +97,11 @@ function Kpi({
     </div>
   );
 }
+/* Stable identities for an unread read, so memo deps do not churn. */
+const NO_DOCS: QmsDoc[] = [];
+const NO_TEMPLATES: NonNullable<ReturnType<typeof useSopTemplates>['templates']> = [];
+const NO_TRAINING: NonNullable<ReturnType<typeof useTrainingCompliance>['rows']> = [];
+
 export function SopRegister(props: SopRegisterProps) {
   const user = useAuthUser();
   return <SopRegisterSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
@@ -124,17 +121,16 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
      `deriveReviewDue(docs)` stays a derivation rather than a fixture: it is
      computed from whatever `docs` resolved to, so it inherits that decision
      instead of making a second one. */
-  const docs = useSampleRows(reg.docs, FIXTURE_DOCS);
-  const templates = useSampleRows(tpl.templates, SOP_TEMPLATES);
+  /* The tenant's rows or none. The fallbacks above were first gated behind
+     sample mode (2026-09-25) and then removed with it (2026-10-14), along with
+     FIXTURE_DOCS, FIXTURE_TRAINING and SOP_TEMPLATES. */
+  const docs = reg.docs ?? NO_DOCS;
+  const templates = tpl.templates ?? NO_TEMPLATES;
   const reviewDue = rev.rows ?? deriveReviewDue(docs);
   /* Live read-and-understood compliance (numerator = distinct current
      acknowledgments, denominator = org roster). */
   const trainComp = useTrainingCompliance();
-  const training = useSampleRows(trainComp.rows, FIXTURE_TRAINING);
-  /* One predicate for the whole surface: the document register is what the
-     rest is derived from, so if that is sample then so is the view. */
-  const showingSample = useShowingSample(reg.docs);
-  const showingSampleTraining = useShowingSample(trainComp.rows);
+  const training = trainComp.rows ?? NO_TRAINING;
   const user = useAuthUser(); // server resolves every signer and acknowledging actor
   const readerScope = `${user?.organizationId ?? ''}:${user?.id ?? ''}`;
   const [reading, setReading] = React.useState<{ documentId: number; scope: string } | null>(null);
@@ -172,14 +168,14 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const trainingPct = trainedRows.length
     ? Math.round((trainedRows.reduce((s, t) => s + t.current / t.of, 0) / trainedRows.length) * 100)
     : 0;
-  /* A read that has not answered is not an empty register. Outside sample mode
-     `useSampleRows(null, …)` is `[]`, so until 2026-09-25 a 401, a 500 or a
+  /* A read that has not answered is not an empty register. An unread register
+     resolves to `[]` above, so until 2026-09-25 a 401, a 500 or a
      dropped connection rendered "Effective documents 0" and "Review overdue 0 —
      All current" in the ok tone, over "No documents due for review." The hooks
      computed the error; nothing here read it (HS-1,
      docs/evidence/reviews/2026-09-24/lenses.md). "Unread" is in flight or failed;
      neither may render a count. A resolved list that is non-empty came from
-     live rows or from explicit sample mode, which the banner above marks. */
+     live rows. */
   const regUnread = reg.docs == null && docs.length === 0;
   const regFailed = regUnread && reg.error != null;
   /* Review dates come from their own read, or are derived from the register;
@@ -200,9 +196,6 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
 
   return (
     <>
-      {/* This register showed effective SOPs and training-completion counts
-          with no marker of any kind. */}
-      <SampleDataBanner show={showingSample} loading={reg.loading} label="SOPs and training records" />
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -415,16 +408,12 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   )}
                 </div>
                 <div className="qms-cell qms-rowacts">
-                  <DocumentReadButton doc={d} showingSample={showingSample} disabled={showingSample || !personalTrainingScope(user, d.id)} onOpen={openReader} />
+                  <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
                   {d.status === 'draft' && (
                     <button
                       className="qms-chip"
-                      disabled={showingSample || routing === d.id}
-                      title={
-                        showingSample
-                          ? 'Sample rows cannot be sent for review'
-                          : 'Send this draft for review. Only a document under review can be approved.'
-                      }
+                      disabled={routing === d.id}
+                      title="Send this draft for review. Only a document under review can be approved."
                       onClick={() => void sendForReview(d)}
                     >
                       {I.arrowRight} {routing === d.id ? 'Sending…' : 'Send for review'}
@@ -433,12 +422,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   {d.status === 'in_review' && (
                     <button
                       className="qms-chip"
-                      disabled={showingSample}
-                      title={
-                        showingSample
-                          ? 'Sample rows cannot be approved'
-                          : 'Approve with your electronic signature (password and second factor). The author cannot approve their own document.'
-                      }
+                      title="Approve with your electronic signature (password and second factor). The author cannot approve their own document."
                       onClick={() => setApproving(d)}
                     >
                       {I.check} Approve
@@ -540,7 +524,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
         </section>
 
         <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
-          refresh={trainComp.refresh} showingSample={showingSample || showingSampleTraining}
+          refresh={trainComp.refresh}
           canOpen={(id) => personalTrainingScope(user, id) !== null} onOpen={openReader} />
       </div>
       {reading && reading.scope === readerScope && (

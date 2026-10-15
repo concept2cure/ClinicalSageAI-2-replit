@@ -1,5 +1,5 @@
 {
-  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs behind useSampleRows + SampleDataBanner or nowhere. Reviewed 2026-09-20 against each export's definition.",
+  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs nowhere (the sample mode that once held such rows was removed 2026-10-14). Reviewed 2026-09-20 against each export's definition.",
   "symbols": {
     "admin-data.ARTIFACT_FMT": "ARTIFACT_FMT: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
     "admin-data.AUDIT_KINDS": "AUDIT_KINDS: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
@@ -20,9 +20,7 @@
     "filings-catalog-data.FILING_LOOP_ARCHETYPE": "FILING_LOOP_ARCHETYPE: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
     "filings-catalog-data.FILING_WF_LABEL": "FILING_WF_LABEL: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
     "filings-catalog-data.FILING_WF_SURFACE": "FILING_WF_SURFACE: the filing-type taxonomy derived from filingCatalogTree() and loop/workflow label maps \u2014 reference data, not an organisation's filings",
-    "governed-intelligence-data.GI_META": "GI_META: GI authority/promotion metadata and pure overlay/gate functions \u2014 reference configuration",
-    "governed-intelligence-data.giApplyOverlay": "giApplyOverlay: GI authority/promotion metadata and pure overlay/gate functions \u2014 reference configuration",
-    "governed-intelligence-data.giPromotionGate": "giPromotionGate: GI authority/promotion metadata and pure overlay/gate functions \u2014 reference configuration",
+    "governed-intelligence-data.GI_META": "GI_META: display labels and tones for the enums the contradiction engine records \u2014 reference configuration; the gate and every authority come from the board (the overlay/gate functions were removed 2026-10-15)",
     "licensing.LIC_ARCHETYPES": "LIC_ARCHETYPES: tier, role, archetype and price tables \u2014 reference configuration mirrored from server billing, not records",
     "licensing.LIC_DTC": "LIC_DTC: tier, role, archetype and price tables \u2014 reference configuration mirrored from server billing, not records",
     "licensing.LIC_PRICING": "LIC_PRICING: tier, role, archetype and price tables \u2014 reference configuration mirrored from server billing, not records",
