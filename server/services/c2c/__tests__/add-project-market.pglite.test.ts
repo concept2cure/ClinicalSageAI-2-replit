@@ -148,6 +148,12 @@ describe('add a market (F22)', () => {
     await expect(add(NDA, 'FDA', 'nda')).rejects.toMatchObject({ status: 409, code: 'MARKET_EXISTS' });
   });
 
+  it('a project with no filing of its own is refused, so the market never becomes its only document', async () => {
+    // The IND project has no home document in this fixture.
+    await expect(add(IND, 'EMA', 'cta')).rejects.toMatchObject({ status: 409, code: 'NO_HOME_FILING' });
+    expect(await count(`SELECT count(*) AS n FROM c2c_documents WHERE project_id = $1`, [IND])).toBe(0);
+  });
+
   it('a repeat is refused (409), and nothing more is written', async () => {
     await add(NDA, 'EMA', 'maa');
     await expect(add(NDA, 'EMA', 'maa')).rejects.toMatchObject({ status: 409, code: 'MARKET_EXISTS' });

@@ -31,6 +31,8 @@ interface ProjectFiling {
   program_type?: string | null;
   primary_agency?: string | null;
   product_type?: string | null;
+  /** Whether this caller may change the project (GET /api/c2c/projects/:id); absent on an older server. */
+  canChange?: boolean;
 }
 
 /** The submission region an agency names, when the form offers it; '' otherwise. */
@@ -146,7 +148,8 @@ function submissionFields(
       // Full width: the option carries the market's statement (F19). Its last
       // clause still clips at 375px, so the chosen region's full statement is
       // in the live description (design review item 7, 2026-10-15).
-      default: defaults.primaryRegion, required: true,
+      // A region the server does not offer for the type is never preselected.
+      default: market.offeredFor(defaults.primaryRegion) === false ? '' : defaults.primaryRegion, required: true,
       desc: (defaults.primaryRegion ? "From this project's record. " : withheldNote(defaults)) + regionDesc,
       descLive: true,
     },
@@ -175,8 +178,8 @@ function submissionFields(
        modules, the market on the project's record and the submission, for a
        stated reason recorded with them (FILING_SPINE F22). */
     ...(openProjectName
-      ? [{ key: 'reason', label: 'Reason', type: 'textarea' as const, required: true, rows: 2,
-          desc: "Recorded with the market on this project's record." }]
+      ? [{ key: 'reason', label: 'Reason for adding this market', type: 'textarea' as const, required: true, rows: 2,
+          desc: "Adding the market writes its Module 1 and 3.2.R to the project, adds it to the project's markets and creates its submission. Your reason is recorded with them." }]
       : []),
   ];
 }
@@ -192,7 +195,7 @@ function useProjectFiling(
   const settled = !openProgramId || !project.loading;
   const unread = !!openProgramId && settled && (!!project.error || !project.data);
   const defaults = newSubmissionDefaults(openProgramId && !unread ? project.data : null, workspace, projectSubmissions, submissionsUnread);
-  return { settled, unread, defaults };
+  return { settled, unread, defaults, cannotChange: !!openProgramId && project.data?.canChange === false };
 }
 
 /** Each region's statement for the application type chosen (F19), and what the field says about them. */
@@ -253,7 +256,9 @@ export function NewSubmissionForm({
   const settledOnce = React.useRef(false);
   if (filing.settled && (!openProgramId || submissionsSettled)) settledOnce.current = true;
   const busy = settledOnce.current ? undefined : "Loading the project's filing…";
-  const notice = busy ? undefined : noticeFor(filing.unread, submissionsUnread);
+  const notice = busy ? undefined : filing.cannotChange
+    ? "Only this project's lead or an organization manager can add a market to it, so this form will be refused for you."
+    : noticeFor(filing.unread, submissionsUnread);
 
   const fields = submissionFields(filing.defaults, { summaryFor, offeredFor }, regionDesc + statementFor(chosenRegion ?? filing.defaults.primaryRegion), openProjectName, programmes);
 

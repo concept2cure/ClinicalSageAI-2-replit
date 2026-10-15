@@ -152,6 +152,8 @@ describe('Submission Center — with a project open', () => {
       url: `/api/c2c/projects/${PID}/markets`, title: 'ONC-221 — EU MAA', applicationType: 'maa', agency: 'eu',
       clientType: 'biotech', reason: 'The EU filing starts this quarter',
     });
+    // What was recorded is said back, with the reason (Part 11 review, 2026-10-15).
+    expect(await screen.findByText(/Recorded on the project with your reason: "The EU filing starts this quarter"/)).toBeTruthy();
   });
 });
 

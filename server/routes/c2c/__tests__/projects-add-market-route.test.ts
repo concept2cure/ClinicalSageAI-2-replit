@@ -99,4 +99,23 @@ describe('POST /:id/markets', () => {
     expect(sql()).toContain('ROLLBACK');
     expect(sql()).not.toContain('COMMIT');
   });
+
+  it('an archived project takes no market, and nothing is attempted', async () => {
+    query.mockImplementation(async (text: string) =>
+      /lead_user_id/.test(String(text)) ? { rows: [{ lead_user_id: LEAD, status: 'archived' }] } : { rows: [] });
+    const res = await post(LEAD, 'member', BODY);
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('PROJECT_ARCHIVED');
+    expect(addProjectMarket).not.toHaveBeenCalled();
+  });
+});
+
+/* The detail read says whether the caller may change the project, by the
+   decision the add takes, so the page can say so before the form (2026-10-15). */
+describe('GET /:id says whether the caller may change the project', () => {
+  it.each([[LEAD, true], [OTHER, false]])('user %i: canChange %s', async (userId, expected) => {
+    const res = await request(appAs(userId, 'member')).get(`/api/c2c/projects/${ID}`);
+    expect(res.status).toBe(200);
+    expect(res.body.canChange).toBe(expected);
+  });
 });

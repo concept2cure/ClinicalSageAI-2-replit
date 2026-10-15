@@ -38,7 +38,7 @@ import { DEVICE_FAMILY_PRODUCT_TYPES } from '../../../shared/constants/domain/pr
 
 export type AddMarketRefusalCode =
   | 'PROJECT_NOT_FOUND' | 'DEVICE_PROGRAM' | 'MARKET_NOT_OFFERED' | 'UNMAPPED_PROGRAM_TYPE'
-  | 'NO_RULE_PACK' | 'MARKET_EXISTS';
+  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING';
 
 export class AddMarketRefusal extends Error {
   constructor(readonly status: 404 | 409 | 422, readonly code: AddMarketRefusalCode, message: string) {
@@ -153,6 +153,18 @@ async function existingDocument(client: PoolClient, input: AddMarketInput, klass
     [input.programId, input.orgId, klass.docType, klass.agency],
   );
   const found = doc.rows[0] as { id: string; filing_scope: string } | undefined;
+  /* A market is added to a project that has a filing of its own (2026-10-15,
+     security review): on one with none, the market's document would be the
+     project's only one, and the home scaffold, which skips a project holding
+     any document, would never write the filing. */
+  const home = await client.query(
+    `SELECT 1 FROM c2c_documents WHERE project_id = $1 AND org_id = $2 AND filing_scope = 'home' LIMIT 1`,
+    [input.programId, input.orgId],
+  );
+  if (home.rows.length === 0) {
+    throw new AddMarketRefusal(409, 'NO_HOME_FILING',
+      'This project has no filing of its own yet, so no market can be added to it. Nothing was added.');
+  }
   if (sub.rows.length > 0 || found?.filing_scope === 'market') {
     throw new AddMarketRefusal(409, 'MARKET_EXISTS',
       `This project already files ${input.applicationType.toUpperCase()} with ${input.agency}. Nothing was added.`);
