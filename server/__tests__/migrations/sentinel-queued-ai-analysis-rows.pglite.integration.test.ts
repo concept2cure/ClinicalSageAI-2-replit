@@ -23,7 +23,11 @@ const TABLE = `
     resolved_by_id integer, ai_request_id text, metadata json,
     created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now())`;
 
-async function row(pg: PGlite, id: string, analyzer: string, title: string, metadata: object | null, aiRequestId: string | null = null) {
+async function row(
+  pg: PGlite,
+  r: { id: string; analyzer: string; title: string; metadata: object | null; aiRequestId?: string },
+) {
+  const { id, analyzer, title, metadata, aiRequestId = null } = r;
   await pg.query(
     `INSERT INTO sentinel_findings (finding_id, organization_id, project_id, analyzer_type, title, summary, ai_request_id, metadata)
      VALUES ($1, 3, 12, $2, $3, 's', $4, $5::json)`,
@@ -37,15 +41,15 @@ describe('the queued-AI-analysis sentinel rows', () => {
     try {
       await pg.exec(TABLE);
       // What TriggerAIAnalysisHandler wrote.
-      await row(pg, 'fake-1', 'quality_drift', 'AI Analysis Requested: risk_assessment',
-        { ruleId: 'r-1', priority: 'high', queued: true });
+      await row(pg, { id: 'fake-1', analyzer: 'quality_drift', title: 'AI Analysis Requested: risk_assessment',
+        metadata: { ruleId: 'r-1', priority: 'high', queued: true } });
       // A real quality-drift finding, and a real AI analysis.
-      await row(pg, 'real-1', 'quality_drift', 'Section 2.7.3 diverged from its approved baseline',
-        { ruleId: 'r-9', queued: true });
-      await row(pg, 'real-2', 'quality_drift', 'AI Analysis Requested: summary',
-        { ruleId: 'r-2', queued: true }, 'air_123');
-      await row(pg, 'real-3', 'deadline_risk', 'AI Analysis Requested: risk_assessment',
-        { ruleId: 'r-3', queued: true });
+      await row(pg, { id: 'real-1', analyzer: 'quality_drift', title: 'Section 2.7.3 diverged from its approved baseline',
+        metadata: { ruleId: 'r-9', queued: true } });
+      await row(pg, { id: 'real-2', analyzer: 'quality_drift', title: 'AI Analysis Requested: summary',
+        metadata: { ruleId: 'r-2', queued: true }, aiRequestId: 'air_123' });
+      await row(pg, { id: 'real-3', analyzer: 'deadline_risk', title: 'AI Analysis Requested: risk_assessment',
+        metadata: { ruleId: 'r-3', queued: true } });
 
       for (let deploy = 0; deploy < 2; deploy++) {
         await pg.exec(CORRECTION);
