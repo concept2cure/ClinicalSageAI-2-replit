@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T02:34:31.357Z",
+  "generatedAt": "2026-10-15T02:38:35.235Z",
   "git": {
-    "sha": "d7a972c66c50556e030fa708554b2e1cf3c4d82c",
+    "sha": "33f8382b4dff368f193e047357b11222b94fe874",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2381,7 +2381,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 104883
+        "bytes": 106683
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2587,7 +2587,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2221
+        "lines": 2254
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
