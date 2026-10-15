@@ -214,8 +214,7 @@ beforeAll(async () => {
     'projects',
     'audit_logs',
     'electronic_signatures',
-    // The review store's parent (20260314_phase12_multi_user_review.sql).
-    'concept2cure_artifacts',
+    'concept2cure_artifacts', // the review store's parent (20260314_phase12)
   ]);
 
   jdb = await createJourneyDb({
@@ -226,11 +225,8 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
-      // Current parent admission reads the canonical sharing and review
-      // stores: since 2026-10-14 every submission read admits the caller
-      // through the project's current access (current-program-access.ts).
-      // Without them the leaf list answered 503 PROJECT_ACCESS_UNAVAILABLE.
-      // The same pair, in the same order, as the 510(k) and CER journeys.
+      // Every submission read admits the caller through current project access, which reads
+      // the sharing and review stores (else 503); the same pair as the 510(k) and CER journeys.
       'db/migrations/20260401_project_sharing_visibility.sql',
       'db/migrations/20260314_phase12_multi_user_review.sql',
       // users.mfa_enabled and the signing-lockout columns. The governed sign
@@ -376,7 +372,6 @@ afterAll(async () => {
   await assertNoDegradedTenantEnrichment();
   assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('drug-nda-ectd');
-  // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
   await jdb?.close();
 });
