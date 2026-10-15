@@ -22,10 +22,11 @@
  *   - It answers only "no review has run". It never waives a critical finding:
  *     the presence gate is the only gate it touches.
  *
- * The dispatch assessor (assess-dispatch-readiness.ts) is to call
- * resolveShadowReviewWaiver and evaluateShadowPresenceWithWaiver in place of
- * evaluateShadowPresenceGate; NO_SHADOW_REVIEW_BLOCKER is that gate's sentence,
- * kept identical so the switch changes nothing for a sequence with no waiver.
+ * The dispatch assessor (assess-dispatch-readiness.ts) calls
+ * resolveShadowReviewWaiver and evaluateShadowPresenceWithWaiver for its
+ * presence gate; the gate it replaced (evaluateShadowPresenceGate) is deleted,
+ * and NO_SHADOW_REVIEW_BLOCKER is its sentence, word for word, so a sequence
+ * with no waiver reads exactly as it did.
  *
  * @module server/services/ectd/shadow-review-waiver
  */
@@ -325,8 +326,8 @@ export async function resolveShadowReviewWaiver(
 
 // ── The presence gate, with a waiver ─────────────────────────────────────────
 
-/** The presence gate's sentence when no review has run and no waiver stands
- *  (assess-dispatch-readiness evaluateShadowPresenceGate, word for word). */
+/** The presence gate's sentence when no review has run and no waiver stands —
+ *  the one copy of it (the assessor's former evaluateShadowPresenceGate). */
 export const NO_SHADOW_REVIEW_BLOCKER =
   'No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.';
 

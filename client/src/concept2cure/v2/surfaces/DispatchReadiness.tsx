@@ -206,6 +206,12 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
               unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
               shadowReviewRunCount: a.shadowReviewRunCount,
               shadowReviewMissing: a.shadowReviewMissing,
+              // A gate that cleared without assessing what it guards (an advisory
+              // validator, a clinical hold, a Shadow Review waived by signature),
+              // in the server's words, so AnA never narrates it as passed.
+              notAssessed: (Array.isArray(a.gates) ? a.gates : [])
+                .filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim())
+                .map((g) => ({ gate: g.key, note: g.notAssessed })),
               ...externalValidationFacts(a.externalValidation),
               leafCount: a.leafCount,
             }
@@ -320,12 +326,18 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
      rather than a local reconstruction. */
   const gateViews: GateView[] = Array.isArray(a.gates) ? a.gates : [];
 
-  /* AnA answer-first verdict */
+  /* AnA answer-first verdict. A gate that cleared without assessing what it
+     guards is not "proven clear": the lead says how many, and a Shadow Review
+     waived by signature (P-34) is never counted as zero criticals found. */
+  const unassessed = gateViews.filter((g) => g.cleared && typeof g.notAssessed === 'string' && g.notAssessed.trim());
+  const shadowWaived = unassessed.some((g) => g.key === 'shadowPresence');
   const lead = gate.cleared
     ? {
           tone: 'good',
-          h: <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
-          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals, {externalValidationSummary(ev)}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
+          h: unassessed.length
+            ? <>Your sequence is <b>cleared to dispatch</b>. {unassessed.length === 1 ? 'One gate' : `${unassessed.length} gates`} cleared without being assessed; each says why below.</>
+            : <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
+          b: <>0 open validation errors, {shadowWaived ? 'no Shadow Review run (waived by signature)' : '0 unacknowledged Shadow Review criticals'}, {externalValidationSummary(ev)}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
       }
     : {
         tone: 'urgent',

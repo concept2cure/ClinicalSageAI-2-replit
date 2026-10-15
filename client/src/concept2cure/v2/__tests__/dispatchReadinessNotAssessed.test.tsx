@@ -137,3 +137,43 @@ describe('the external validator gate', () => {
     expect(document.body.textContent).toContain('Cleared to dispatch');
   });
 });
+
+describe('a Shadow Review waived by signature (P-34)', () => {
+  const WAIVED =
+    'Shadow Review waived under signature 41 by Dana Reyes because the AI provider was unavailable (run #7); this dossier was not adversarially reviewed.';
+  const waived = () => {
+    const a = assessment({});
+    Object.assign(a, { shadowReviewRunCount: 0, shadowReviewMissing: true });
+    a.gates[2] = { ...a.gates[2], notAssessed: WAIVED } as (typeof a.gates)[number];
+    return a;
+  };
+
+  it('the presence card says "Not assessed" with the server’s sentence, never "Satisfied"', async () => {
+    serve(waived());
+    render(<DispatchReadiness {...props()} />);
+    await screen.findByText('At least one Shadow Review has completed');
+    const card = document.querySelector('[data-gate="shadowPresence"]')!;
+    expect(card.textContent).toContain('Not assessed.');
+    expect(card.textContent).toContain('not adversarially reviewed');
+    expect(card.textContent).not.toContain('Satisfied');
+  });
+
+  it('the cleared verdict does not call it proven clear or count zero criticals found', async () => {
+    serve(waived());
+    render(<DispatchReadiness {...props()} />);
+    await screen.findByText('At least one Shadow Review has completed');
+    expect(document.body.textContent).toContain('cleared to dispatch');
+    expect(document.body.textContent).not.toContain('Every hard gate is proven clear');
+    expect(document.body.textContent).toContain('no Shadow Review run (waived by signature)');
+    expect(document.body.textContent).not.toContain('0 unacknowledged Shadow Review criticals');
+  });
+
+  it('AnA is told which gate cleared without assessing, in the server’s words', async () => {
+    serve(waived());
+    render(<><DispatchReadiness {...props()} /><AnaContextProbe /></>);
+    await screen.findByText('At least one Shadow Review has completed');
+    const wire = JSON.parse(screen.getByTestId('ana-wire-context').textContent!);
+    expect(wire.facts.notAssessed).toEqual([{ gate: 'shadowPresence', note: WAIVED }]);
+    expect(wire.facts.shadowReviewMissing).toBe(true);
+  });
+});

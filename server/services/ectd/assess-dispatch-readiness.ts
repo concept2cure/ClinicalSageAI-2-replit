@@ -37,9 +37,17 @@
 
 import { ruleView, DISPATCH_GATE_RULE_IDS, type RuleView } from './validation-rule-corpus';
 import { and, eq, isNull, lt, sql } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
+// P-34: the presence gate reads the sequence's signed Shadow Review waiver.
+import {
+  evaluateShadowPresenceWithWaiver,
+  resolveShadowReviewWaiver,
+  shadowReviewWaivable,
+  type ShadowReviewWaivability,
+  type ShadowReviewWaiverStatus,
+} from './shadow-review-waiver';
 // P-33: the IND gate's checks, carried into this assessment.
 import { appendReadinessFindings, assessIndProgram, isUsIndApplication, module3CrossReferencesOf, readCrossReferenceRegister, type CrossReferenceRead, type IndProgramView } from './ind-program-findings';
 import {
@@ -369,8 +377,19 @@ export interface DispatchReadinessAssessment {
   unacknowledgedShadowCriticals: number;
   /** Completed Shadow Review runs for this sequence. */
   shadowReviewRunCount: number;
-  /** Gate clear but no Shadow Review has run — dispatch allowed, never reviewed. */
+  /** No completed Shadow Review has run for this sequence. The presence gate
+   *  blocks on it unless an active signed waiver stands in (P-34); either way
+   *  the dossier was not adversarially reviewed, and this stays true. */
   shadowReviewMissing: boolean;
+  /** The sequence's newest signed Shadow Review waiver and whether it stands
+   *  (P-34): 'active' clears the presence gate as not assessed; 'lapsed',
+   *  'revoked' and 'undetermined' block with their own sentence; 'none' when
+   *  no waiver was recorded. */
+  shadowReviewWaiver: ShadowReviewWaiverStatus;
+  /** Whether a waiver may be signed now, and the failed run it would answer.
+   *  Asked only while no completed Shadow Review exists — otherwise there is
+   *  nothing to waive and it is absent. */
+  shadowReviewWaivable?: ShadowReviewWaivability;
   /** External agency-grade (eValidator) gate contribution (P0-4). */
   externalValidation: {
     /** A selected external-engine path is configured; licence/qualification are separate. */
@@ -457,21 +476,6 @@ export function resolveDispatchEnvironment(
 }
 
 /**
- * Gate on Shadow Review having actually run. Zero completed runs is UNASSESSED,
- * not clean — it must block dispatch, never clear it. Pure + exported for test.
- */
-export function evaluateShadowPresenceGate(shadowReviewRunCount: number): DispatchGateResult {
-  return shadowReviewRunCount > 0
-    ? { cleared: true, blockers: [] }
-    : {
-        cleared: false,
-        blockers: [
-          'No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.',
-        ],
-      };
-}
-
-/**
  * Compose every hard gate into the single dispatch verdict.
  *
  * Extracted as a PURE function so the SET of gates is testable without a
@@ -480,7 +484,7 @@ export function evaluateShadowPresenceGate(shadowReviewRunCount: number): Dispat
  * nothing, and a purely-unit-tested gate cannot detect its own absence from
  * the composition. This function is the one place the membership is asserted.
  *
- * Pure + exported for test, same idiom as evaluateShadowPresenceGate.
+ * Pure + exported for test, same idiom as evaluateShadowPresenceWithWaiver.
  */
 export function composeDispatchGates(gates: {
   structural: DispatchGateResult;
@@ -783,6 +787,29 @@ export async function originalModule3Requirement(
  * Assess whether a sequence is clear to dispatch, computing every gate input from
  * server-side truth. Throws if the sequence is not found in the tenant.
  */
+/** The pool, as the waiver module's reads take it. */
+function asWaiverQueryable(): { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> } {
+  return { query: async (text, params) => ({ rows: (await pool.query(text, params as unknown[])).rows }) };
+}
+
+/** Is a waiver offered now? shadowReviewWaivable throws on a failed read; here
+ *  that is "not offered", with the reason, because the client offers a
+ *  signature only on `eligible`. The waive act asks again under its own lock. */
+async function waivabilityOrNotOffered(
+  q: ReturnType<typeof asWaiverQueryable>,
+  sequenceId: number,
+  organizationId: number,
+): Promise<ShadowReviewWaivability> {
+  try {
+    return await shadowReviewWaivable(q, { sequenceId, organizationId });
+  } catch {
+    return {
+      eligible: false,
+      reason: 'Whether a Shadow Review waiver may be offered could not be determined, so none is offered. Try again.',
+    };
+  }
+}
+
 export async function assessSequenceDispatchReadiness(
   params: AssessDispatchReadinessParams
 ): Promise<DispatchReadinessAssessment> {
@@ -874,6 +901,14 @@ export async function assessSequenceDispatchReadiness(
   // 4b. Has this sequence ever been Shadow-Reviewed? See countCompletedShadowRuns.
   const shadowReviewRunCount = await countCompletedShadowRuns(sequenceId, organizationId);
 
+  // 4c. The signed Shadow Review waiver (P-34), and — while no review has
+  //     completed — whether one is offered. A failed read resolves to
+  //     'undetermined' (never 'active'); an unreadable offer is not offered.
+  const waiverReads = asWaiverQueryable();
+  const shadowReviewWaiver = await resolveShadowReviewWaiver(waiverReads, { sequenceId, organizationId });
+  const shadowReviewWaivability =
+    shadowReviewRunCount === 0 ? await waivabilityOrNotOffered(waiverReads, sequenceId, organizationId) : undefined;
+
   // 5. External agency-grade validation gate (P0-4), composed with the structural
   //    + shadow gate. Default-off: behavior is identical to before unless
   //    ECTD_REQUIRE_EVALIDATOR is set in production. The external validator runs
@@ -907,8 +942,12 @@ export async function assessSequenceDispatchReadiness(
   //     Like an undetermined count in the hard gate, that must not clear
   //     dispatch — otherwise a dossier that was never adversarially reviewed is
   //     transmitted to the agency with a `cleared: true` verdict. Block until at
-  //     least one completed Shadow Review run exists.
-  const shadowPresenceGate = evaluateShadowPresenceGate(shadowReviewRunCount);
+  //     least one completed Shadow Review run exists, or (P-34) an ACTIVE signed
+  //     waiver stands in for it — and then the gate clears as not assessed,
+  //     naming the signature. The waiver never reaches open critical findings:
+  //     those are the structural gate's (§6).
+  const shadowPresence = evaluateShadowPresenceWithWaiver(shadowReviewRunCount, shadowReviewWaiver);
+  const shadowPresenceGate: DispatchGateResult = { cleared: shadowPresence.cleared, blockers: shadowPresence.blockers };
 
   // 6c. Release-signature gate (21 CFR Part 11 §11.70). Until this landed, the
   //     entire dispatch path had no signature awareness at all: a sequence
@@ -974,7 +1013,12 @@ export async function assessSequenceDispatchReadiness(
       releaseSignature: releaseSignatureGate,
     },
     // P-33: a US IND sequence's verdict does not cover a clinical hold, and says so.
-    { external: externalNotAssessed(externalGate), ...(indProgram && { structural: indProgram.view.clinicalHold.note }) },
+    // P-34: a presence gate cleared by a waiver says it was not assessed, and by whom.
+    {
+      external: externalNotAssessed(externalGate),
+      ...(indProgram && { structural: indProgram.view.clinicalHold.note }),
+      ...(shadowPresence.notAssessed && { shadowPresence: shadowPresence.notAssessed }),
+    },
     { assessmentStatus: externalGate.assessmentStatus, assessmentNote: externalGate.assessmentNote },
   );
   readiness.findings = withRules(readiness.findings);
@@ -988,10 +1032,11 @@ export async function assessSequenceDispatchReadiness(
     unacknowledgedShadowCriticals,
     shadowReviewRunCount,
     externalValidation: externalValidationView(externalGate),
-    /** True when no completed Shadow Review has run for this sequence. This now
-     *  also blocks the gate (§6b), so it is informational: it reports WHY the
-     *  gate is blocked when that is the only blocker. */
+    /** True when no completed Shadow Review has run for this sequence. It blocks
+     *  the gate (§6b) unless an active waiver stands in; informational here. */
     shadowReviewMissing: shadowReviewRunCount === 0,
+    shadowReviewWaiver,
+    ...(shadowReviewWaivability ? { shadowReviewWaivable: shadowReviewWaivability } : {}),
     /** Release-signature state (§6c). `required` reports whether this
      *  submission type crosses the §11.70 boundary; `verdict` is the resolved
      *  state. Informational on the response — the blocking happens in `gate`. */

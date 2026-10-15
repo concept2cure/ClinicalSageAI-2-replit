@@ -50,6 +50,7 @@ import { resolveSequenceReleaseSignature } from '../sequence-release-signature';
 import { evaluateDispatchGate, mergeDispatchGates } from '../dispatch-gate';
 import { listShadowReviewRuns } from '../../shadow-review/shadow-review-service';
 import { assembleOrgShadowReview } from '../../shadow-review/shadow-review-view-assembler';
+import { assessSequenceDispatchReadiness } from '../assess-dispatch-readiness';
 
 const ORG = 7;
 /** The signer: holds signing authority, did not create the sequences. */
@@ -427,5 +428,69 @@ describe('the presence gate with a waiver (evaluateShadowPresenceWithWaiver)', (
     });
     const structural = evaluateDispatchGate({ validationErrors: 0, unacknowledgedShadowCriticals: 1 });
     expect(mergeDispatchGates(structural, presence).cleared).toBe(false);
+  });
+});
+
+describe('the dispatch verdict reads the waiver (assessSequenceDispatchReadiness)', () => {
+  const assess = (seq: number) => assessSequenceDispatchReadiness({ sequenceId: seq, organizationId: ORG });
+  const presenceOf = (a: Awaited<ReturnType<typeof assess>>) => a.gates.find((g) => g.key === 'shadowPresence');
+
+  it('offers the waiver, then clears the presence gate as not assessed once it is signed — in every verdict', async () => {
+    const seq = await makeSequence();
+    const failed = await run(seq, 'failed', 'provider_unavailable');
+
+    const before = await assess(seq);
+    expect(before.shadowReviewWaiver).toEqual({ state: 'none' });
+    expect(before.shadowReviewWaivable).toMatchObject({ eligible: true, failedRunId: failed, failureCode: 'provider_unavailable' });
+    expect(presenceOf(before)).toMatchObject({ cleared: false, blockers: [NO_SHADOW_REVIEW_BLOCKER] });
+    expect(presenceOf(before)?.notAssessed).toBeUndefined();
+    for (const verdict of [before.gate, before.freezeGate, before.dispatchGateOnSigning]) {
+      expect(verdict.blockers).toContain(NO_SHADOW_REVIEW_BLOCKER);
+    }
+
+    const sig = await sign(seq, 'shadow-waiver');
+    await waiveShadowReview({ sequenceId: seq, signatureActionId: sig, failedRunId: failed }, ctx);
+    const { id: signatureId } = await signatureRow(sig);
+
+    const after = await assess(seq);
+    expect(after.shadowReviewWaiver).toMatchObject({ state: 'active', signatureActionId: sig, signatureId, failedRunId: failed });
+    // Still never reviewed, and nothing further to waive.
+    expect(after.shadowReviewMissing).toBe(true);
+    expect(after.shadowReviewRunCount).toBe(0);
+    expect(after.shadowReviewWaivable).toMatchObject({ eligible: false });
+    expect(presenceOf(after)).toMatchObject({ cleared: true, blockers: [] });
+    expect(presenceOf(after)?.notAssessed).toMatch(new RegExp(`waived under signature ${signatureId} by Dana Reyes`));
+    for (const verdict of [after.gate, after.freezeGate, after.dispatchGateOnSigning]) {
+      expect(verdict.blockers.join(' ')).not.toMatch(/Shadow Review/);
+    }
+    // The gate views' blockers are still exactly the verdict's.
+    expect(after.gates.flatMap((g) => g.blockers)).toEqual(after.gate.blockers);
+  });
+
+  it('a lapsed waiver blocks the verdict with its own sentence, and no note says it was waived', async () => {
+    const seq = await makeSequence();
+    const failed = await run(seq, 'failed', 'provider_overloaded');
+    const sig = await sign(seq, 'shadow-waiver', 'approval');
+    await waiveShadowReview({ sequenceId: seq, signatureActionId: sig, failedRunId: failed }, ctx);
+    await q(
+      `INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, organization_id, created_by)
+       VALUES ($1, 'm2.4', 'Nonclinical Overview', 'new', $2, $3)`,
+      [seq, ORG, AUTHOR],
+    );
+    const a = await assess(seq);
+    expect(a.shadowReviewWaiver.state).toBe('lapsed');
+    expect(presenceOf(a)?.cleared).toBe(false);
+    expect(presenceOf(a)?.notAssessed).toBeUndefined();
+    expect(a.gate.blockers.join(' ')).toMatch(/waiver under signature .* has lapsed/);
+    expect(a.freezeGate.blockers.join(' ')).toMatch(/has lapsed/);
+  });
+
+  it('a completed review needs no waiver: none is offered, and the gate clears without a note', async () => {
+    const seq = await makeSequence();
+    await run(seq, 'complete', null);
+    const a = await assess(seq);
+    expect(a.shadowReviewWaivable).toBeUndefined();
+    expect(presenceOf(a)).toMatchObject({ cleared: true, blockers: [] });
+    expect(presenceOf(a)?.notAssessed).toBeUndefined();
   });
 });

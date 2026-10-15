@@ -3,13 +3,14 @@
  * helpers from the DB-bound assessor:
  *   - resolveDispatchEnvironment: an unset/misspelled NODE_ENV must NOT relax
  *     the production eValidator rule.
- *   - evaluateShadowPresenceGate: a never-Shadow-Reviewed sequence (0 completed
- *     runs) is UNASSESSED, not clean, and must block dispatch.
+ *   - evaluateShadowPresenceWithWaiver: a never-Shadow-Reviewed sequence (0
+ *     completed runs) is UNASSESSED, not clean, and must block dispatch — unless
+ *     an ACTIVE signed waiver stands in (P-34), and then it clears as not
+ *     assessed, never as reviewed, and never over an open critical finding.
  */
 import { describe, it, expect } from 'vitest';
 import {
   resolveDispatchEnvironment,
-  evaluateShadowPresenceGate,
   dispatchGateViews,
   withRules,
   composeDispatchGates,
@@ -24,6 +25,7 @@ import { computeDispatchReadiness, type OriginalModule3Requirement, type Readine
 import { requiredSectionProfileFor } from '../required-sections';
 import { DISPATCH_GATE_RULE_IDS } from '../validation-rule-corpus';
 import { continuingIndCompletenessFindings } from '../ind-program-findings';
+import { evaluateShadowPresenceWithWaiver, NO_SHADOW_REVIEW_BLOCKER } from '../shadow-review-waiver';
 
 describe('resolveDispatchEnvironment — fails toward production', () => {
   it('treats unset / misspelled NODE_ENV as production (strict)', () => {
@@ -40,17 +42,63 @@ describe('resolveDispatchEnvironment — fails toward production', () => {
   });
 });
 
-describe('evaluateShadowPresenceGate — never-reviewed is not clean', () => {
-  it('blocks when zero Shadow Review runs have completed', () => {
-    const gate = evaluateShadowPresenceGate(0);
+describe('the Shadow Review presence gate — never-reviewed is not clean', () => {
+  it('blocks when zero Shadow Review runs have completed and no waiver was recorded', () => {
+    const gate = evaluateShadowPresenceWithWaiver(0, { state: 'none' });
     expect(gate.cleared).toBe(false);
-    expect(gate.blockers.join(' ')).toMatch(/never-reviewed|Shadow Review/i);
+    expect(gate.blockers).toEqual([NO_SHADOW_REVIEW_BLOCKER]);
+    expect(gate.notAssessed).toBeUndefined();
   });
 
-  it('clears once at least one completed run exists', () => {
-    const gate = evaluateShadowPresenceGate(1);
-    expect(gate.cleared).toBe(true);
-    expect(gate.blockers).toHaveLength(0);
+  it('clears once at least one completed run exists, whatever the waiver says', () => {
+    for (const state of ['none', 'active', 'lapsed', 'revoked', 'undetermined'] as const) {
+      const gate = evaluateShadowPresenceWithWaiver(1, { state });
+      expect(gate).toEqual({ cleared: true, blockers: [] });
+    }
+  });
+});
+
+describe('P-34: an active waiver clears the presence gate as not assessed, and nothing else', () => {
+  const active = {
+    state: 'active' as const, signatureId: 41, signerName: 'Dana Reyes', failedRunId: 7, failureCode: 'provider_unavailable' as const,
+  };
+  const presence = evaluateShadowPresenceWithWaiver(0, active);
+
+  it('the presence gate view says who waived it, under which signature, for which failed run', () => {
+    expect(presence.cleared).toBe(true);
+    const views = dispatchGateViews(
+      {
+        structural: { cleared: true, blockers: [] },
+        external: { cleared: true, blockers: [] },
+        shadowPresence: { cleared: presence.cleared, blockers: presence.blockers },
+        releaseSignature: { cleared: true, blockers: [] },
+      },
+      { shadowPresence: presence.notAssessed },
+    );
+    const view = views.find((v) => v.key === 'shadowPresence');
+    expect(view?.cleared).toBe(true);
+    expect(view?.notAssessed).toMatch(/waived under signature 41 by Dana Reyes/);
+    expect(view?.notAssessed).toMatch(/run #7/);
+    expect(view?.notAssessed).toMatch(/not adversarially reviewed/);
+  });
+
+  it('an open critical finding still blocks: the waiver never reaches the structural gate', () => {
+    const verdict = composeDispatchGates({
+      structural: { cleared: false, blockers: ['1 open critical Shadow Review finding.'] },
+      external: { cleared: true, blockers: [] },
+      shadowPresence: { cleared: presence.cleared, blockers: presence.blockers },
+      releaseSignature: { cleared: true, blockers: [] },
+    });
+    expect(verdict.cleared).toBe(false);
+    expect(verdict.blockers).toEqual(['1 open critical Shadow Review finding.']);
+  });
+
+  it.each(['lapsed', 'revoked', 'undetermined'] as const)('a %s waiver blocks with its own sentence', (state) => {
+    const gate = evaluateShadowPresenceWithWaiver(0, { ...active, state });
+    expect(gate.cleared).toBe(false);
+    expect(gate.notAssessed).toBeUndefined();
+    expect(gate.blockers).toHaveLength(1);
+    expect(gate.blockers[0]).not.toBe(NO_SHADOW_REVIEW_BLOCKER);
   });
 });
 
