@@ -217,6 +217,47 @@ function m11TemplateSections(): TemplateSection[] {
   });
 }
 
+/**
+ * The PBRER chat drafting uses: ICH E2C(R2) §1–§19 from the platform's outline
+ * (market-specs 'pbrer'). Until 2026-10-15 this was sixteen headings that
+ * dropped §13–§15 and renumbered the rest. Drafting guidance and word ranges
+ * stay local, keyed by E2C(R2) section number.
+ */
+const PBRER_DRAFTING: Record<string, { guidance: string; targetWords?: [number, number] }> = {
+  '1': { targetWords: [150, 300], guidance: 'Product description, reporting interval, PBRER scope, and structure.' },
+  '2': { targetWords: [200, 400], guidance: 'Table of all approvals, dates, indications, dose forms, and any restrictions.' },
+  '3': { targetWords: [200, 400], guidance: 'All regulatory actions taken globally during the interval (withdrawals, suspensions, modifications, label changes) with rationale.' },
+  '4': { targetWords: [100, 200], guidance: 'Changes to the reference safety information (company core data sheet) during the interval.' },
+  '5': { targetWords: [150, 300], guidance: 'Cumulative and interval exposure estimates by indication, region and dose form, and patterns of use.' },
+  '6': { guidance: 'Reference to cumulative and interval summary tabulations of serious adverse events (MedDRA-coded).' },
+  '7': { targetWords: [300, 600], guidance: 'Significant safety findings from ongoing and completed clinical trials, including long-term extensions and special population studies.' },
+  '8': { targetWords: [150, 300], guidance: 'Signal-relevant data from observational studies, registries and databases.' },
+  '9': { targetWords: [150, 300], guidance: 'Other clinical trial sources and data on abuse, withdrawal, overdose and medication errors.' },
+  '10': { targetWords: [100, 200], guidance: 'New nonclinical findings with clinical safety implications.' },
+  '11': { targetWords: [150, 300], guidance: 'Key publications on safety or benefit-risk that appeared during the interval.' },
+  '16': { targetWords: [400, 800], guidance: 'Evaluation of signals and characterisation of risks: identified and potential risks, and missing information.' },
+  '17': { targetWords: [300, 600], guidance: 'Current evidence for efficacy or effectiveness in the approved indication(s), compared with alternatives and assessed for clinical meaningfulness.' },
+  '18': { targetWords: [400, 800], guidance: 'Structured benefit-risk evaluation weighing all relevant evidence for the approved indications, in context of the intended population. State whether the benefit-risk balance remains favorable.' },
+  '19': { targetWords: [200, 400], guidance: 'Summary conclusions and recommended actions (label update, REMS or RMP modification, additional post-market study, enhanced monitoring).' },
+};
+
+function pbrerOutline() {
+  const outline = getDocumentTemplate('pbrer');
+  if (!outline) throw new Error('The PBRER outline is unavailable.');
+  return outline;
+}
+
+const PBRER_BASIS = pbrerOutline().regulatoryBasis;
+
+function pbrerTemplateSections(): TemplateSection[] {
+  return pbrerOutline().sections.map((s) => ({
+    heading: `${s.number}. ${s.heading}`,
+    required: s.required,
+    guidance: PBRER_DRAFTING[s.number]?.guidance ?? s.purpose,
+    ...(PBRER_DRAFTING[s.number]?.targetWords ? { targetWords: PBRER_DRAFTING[s.number].targetWords } : {}),
+  }));
+}
+
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
 
   // ── CTD Module 2 ───────────────────────────────────────────────────────────
@@ -690,25 +731,8 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
     minConfidence: 0.70,
     draftingInstructions: 'Draft a Periodic Benefit-Risk Evaluation Report (PBRER) per ICH E2C(R2). This report is submitted to health authorities at defined intervals post-approval to evaluate the evolving benefit-risk profile. The benefit-risk conclusion must be evidence-based and clearly communicated.',
-    regulatoryReferences: ['ICH E2C(R2) (PBRER/PSUR)', 'EMA PSUR guidance', 'FDA PADER requirements (21 CFR 314.81(b)(2))'],
-    sections: [
-      { heading: '1. Introduction', required: true, targetWords: [150, 300], guidance: 'Product description, reporting interval, PBRER scope, and structure.' },
-      { heading: '2. Worldwide Marketing Approval Status', required: true, targetWords: [200, 400], guidance: 'Table of all approvals, dates, indications, dose forms, and any restrictions.' },
-      { heading: '3. Actions Taken for Safety Reasons', required: true, targetWords: [200, 400], guidance: 'All regulatory actions taken globally during the interval (withdrawals, suspensions, modifications, label changes) with rationale.' },
-      { heading: '4. Changes to Reference Product Information', required: true, targetWords: [100, 200], guidance: 'Changes to the SmPC/USPI/core data sheet that occurred during the period.' },
-      { heading: '5. Estimated Patient Exposure', required: true, targetWords: [150, 300], guidance: 'Cumulative and interval patient exposure estimates by indication, region, and dose form.' },
-      { heading: '6. Data in Line Listings and Summary Tabulations', required: true, guidance: 'Reference to cumulative and interval line listings. MedDRA-coded SAEs.' },
-      { heading: '7. Summaries of Significant Safety Findings from Clinical Studies', required: true, targetWords: [300, 600], guidance: 'Significant safety findings from ongoing/completed clinical studies, including long-term extensions and special population studies.' },
-      { heading: '8. Findings from Non-Interventional Studies', required: false, targetWords: [150, 300], guidance: 'Signal-relevant data from observational studies, registries, and databases.' },
-      { heading: '9. Information from Other Clinical Trials/Sources', required: false, targetWords: [150, 300], guidance: 'Abuse, withdrawal, overdose data; medication errors; reports from related compounds.' },
-      { heading: '10. Non-Clinical Data', required: true, targetWords: [100, 200], guidance: 'New nonclinical findings with clinical safety implications.' },
-      { heading: '11. Literature', required: true, targetWords: [150, 300], guidance: 'Key publications on safety/benefit-risk that appeared during the interval.' },
-      { heading: '12. Other PBRER Information', required: false, targetWords: [100, 200], guidance: 'Pharmacogenomics, late-breaking information, etc.' },
-      { heading: '13. Characterization of Risks', required: true, targetWords: [400, 800], guidance: 'Summary of the risk profile: identified risks (labeled and unlabeled), risks under investigation, missing information. Apply CIOMS categories.' },
-      { heading: '14. Benefit Evaluation', required: true, targetWords: [300, 600], guidance: 'Current evidence for efficacy/effectiveness in the approved indication(s). Compare to alternatives. Assess clinical meaningfulness.' },
-      { heading: '15. Integrated Benefit-Risk Analysis', required: true, targetWords: [400, 800], guidance: 'Structured benefit-risk evaluation weighing all relevant evidence. Contextualize for the intended patient population. State whether the benefit-risk balance remains favorable.' },
-      { heading: '16. Conclusions and Actions', required: true, targetWords: [200, 400], guidance: 'Summary conclusions. Recommended actions (label update, REMS modification, additional post-market study, enhanced monitoring). Risk management plan updates.' },
-    ],
+    regulatoryReferences: [PBRER_BASIS, 'EMA PSUR guidance', 'FDA PADER requirements (21 CFR 314.81(b)(2))'],
+    sections: pbrerTemplateSections(),
   },
 
   // ── Safety Narrative ──────────────────────────────────────────────────────
