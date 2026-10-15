@@ -45,7 +45,8 @@ export const DESIGN_MONITORING_PLAN: AnaTool = {
     'protocol complexity, endpoint objectivity, site experience) and returns the ' +
     'critical-to-quality factors, a recommended monitoring mix (centralized vs ' +
     'on-site vs remote with source-data-verification/review strategy and sampling ' +
-    'approach), key risk indicators, and on-site visit frequency guidance. Cites ' +
+    'approach), key risk indicators, and on-site visit frequency guidance. A factor ' +
+    'left out is not scored as absent (see notAssessed). Cites ' +
     'ICH E6(R3), ICH E8(R1), and the FDA Risk-Based Monitoring guidance (2013). ' +
     DETERMINISTIC_NOTE,
   input_schema: {
@@ -85,7 +86,8 @@ export const ASSESS_INSPECTION_READINESS: AnaTool = {
     'CAPA posture, data traceability, and computerized-system validation; surfaces ' +
     'the common Form FDA-483 observations for the inspection target with their ' +
     'regulatory citations, and the data-traceability checks to run before the ' +
-    'inspection. Cites 21 CFR 312, the FDA BIMO Compliance Program, and ICH E6(R3). ' +
+    'inspection. An input left out is reported as not assessed, not scored. Cites ' +
+    '21 CFR 312, the FDA BIMO Compliance Program, and ICH E6(R3). ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -119,16 +121,18 @@ export const ASSESS_GCP_COMPLIANCE: AnaTool = {
   description:
     'Evaluate a trial against the ICH E6(R3) Good Clinical Practice principles and ' +
     'return a principle-by-principle conformance assessment with prioritized gaps. ' +
-    'Covers ethics/consent, sponsor and vendor oversight, delegation, personnel ' +
-    'qualification, protocol adherence with change control, IP management, safety ' +
-    'reporting, ALCOA+ data governance, computerized-system validation, audit-trail ' +
-    'review, risk-based quality management, and record retention — classifying each ' +
+    'Covers ethics/consent, independent ethics review, sponsor and vendor oversight, ' +
+    'delegation, personnel qualification, protocol adherence with change control, IP ' +
+    'management, safety reporting, ALCOA+ data governance, computerized-system ' +
+    'validation, audit-trail review, risk-based quality management, proportionate ' +
+    'processes, and record retention — classifying each ' +
     'as conforms / partial / gap / unverified and grouping deficiencies by domain ' +
     'and severity. Cites ICH E6(R3) and ICH E8(R1). ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
       ethicsApprovalCurrent: { type: 'boolean', description: 'Whether IRB/IEC approval is current.' },
+      independentEthicsReviewDocumented: { type: 'boolean', description: 'Whether the IRB/IEC is documented as adequately constituted and independent of the investigator and sponsor (21 CFR 56.107; ICH E6(R3) Principle 3).' },
       informedConsentProcessCompliant: { type: 'boolean', description: 'Whether the informed-consent process is compliant.' },
       sponsorOversightDocumented: { type: 'boolean', description: 'Whether sponsor oversight is documented.' },
       vendorOversightDocumented: { type: 'boolean', description: 'Whether vendor/CRO oversight is documented.' },
@@ -141,6 +145,7 @@ export const ASSESS_GCP_COMPLIANCE: AnaTool = {
       computerizedSystemsValidated: { type: 'boolean', description: 'Whether computerized systems are validated.' },
       auditTrailReviewPerformed: { type: 'boolean', description: 'Whether audit-trail review is performed.' },
       riskBasedQualityManagement: { type: 'boolean', description: 'Whether risk-based quality management is implemented.' },
+      proportionateProcessesDocumented: { type: 'boolean', description: 'Whether trial processes and effort are documented as proportionate to the risks to participants and to result reliability (ICH E6(R3) Principle 7).' },
       recordRetentionCompliant: { type: 'boolean', description: 'Whether record retention is compliant.' },
     },
     required: [],
@@ -201,10 +206,11 @@ export const CLASSIFY_PROTOCOL_DEVIATION: AnaTool = {
     'participant-safety impact (none/potential/actual) and data-integrity impact ' +
     '(none/minor/significant) from the deviation features (category, effect on ' +
     'safety, primary endpoint, critical eligibility, consent validity, recurrence, ' +
-    'number of participants affected, unreported SAE, increased risk) and returns ' +
-    'whether the deviation must be reported to the IRB/IEC, sponsor, and/or FDA, ' +
-    'whether prompt reporting is required, and the recommended CAPA. Cites 21 CFR ' +
-    '312.53/312.66, 21 CFR 56.108, and ICH E6(R3). ' + DETERMINISTIC_NOTE,
+    'participants affected, unreported SAE, increased risk) and returns ' +
+    'whether it is reportable to the IRB/IEC, sponsor, and/or FDA, ' +
+    'whether prompt reporting is required, and recommended CAPA. A fact left out ' +
+    'is not read as false (see notAssessed). Cites 21 CFR ' +
+    '312.60/312.66 and 56.108, and ICH E6(R3). ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
