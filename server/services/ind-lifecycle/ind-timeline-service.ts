@@ -2,7 +2,8 @@
  * IND regulatory timeline / milestone derivation.
  *
  * Projects the key regulatory dates for an IND from its anchor dates: the
- * 30-calendar-day safe-to-proceed date (21 CFR 312.40) and the annual-report
+ * 30-calendar-day safe-to-proceed date (21 CFR 312.40; from FDA's recorded
+ * receipt only — `receiptRecorded`) and the annual-report
  * anniversaries with their 60-day due dates (21 CFR 312.33 — the annual report
  * is due within 60 days of the anniversary on which the IND went into effect).
  *
@@ -25,8 +26,13 @@ export interface TimelineMilestone {
 }
 
 export interface IndTimelineInput {
-  /** ISO date FDA received the original IND (drives the 30-day clock). */
+  /** ISO date the 30-day clock runs from: FDA's receipt of the original IND, or a planned date. */
   receiptDate: string;
+  /**
+   * True only when receiptDate is FDA's RECORDED receipt of the IND. Anything
+   * else (absent, false, a truthy non-boolean): no safe-to-proceed milestone.
+   */
+  receiptRecorded?: boolean;
   /** ISO date the IND went into effect (drives annual-report anniversaries). */
   effectiveDate?: string;
   /** Evaluate as of this ISO date (defaults to now). */
@@ -41,12 +47,25 @@ export interface IndTimeline {
   milestones: TimelineMilestone[];
   /** The next not-yet-past milestone, or null when none remain in the horizon. */
   next: TimelineMilestone | null;
+  /**
+   * What the 30-day safe-to-proceed milestone rests on. 'receipt_not_recorded':
+   * the date supplied is not FDA's recorded receipt, so no such milestone is
+   * placed and nothing here (`next` included) speaks to the 30-day period.
+   */
+  safeToProceedBasis: 'fda_receipt' | 'receipt_not_recorded';
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function addDays(d: Date, days: number): Date {
   return new Date(d.getTime() + days * DAY_MS);
+}
+
+/** A supplied date, or a VALIDATION refusal naming the field (the routes answer 400). */
+function dateOf(value: string, field: string): Date {
+  const d = new Date(value);
+  if (!value || Number.isNaN(d.getTime())) throw new Error(`VALIDATION: ${field} must be a valid date.`);
+  return d;
 }
 
 function statusFor(date: Date, asOf: Date, dueSoonDays: number): { status: MilestoneStatus; daysFromNow: number } {
@@ -61,16 +80,20 @@ function statusFor(date: Date, asOf: Date, dueSoonDays: number): { status: Miles
  * order; `next` is the earliest milestone that is not yet past.
  */
 export function buildIndTimeline(input: IndTimelineInput): IndTimeline {
-  const asOf = input.asOf ? new Date(input.asOf) : new Date();
+  const asOf = input.asOf ? dateOf(input.asOf, 'asOf') : new Date();
   const dueSoonDays = input.dueSoonDays ?? 30;
   const horizonDays = input.horizonDays ?? 730;
   const horizonEnd = addDays(asOf, horizonDays);
+  const receiptRecorded = input.receiptRecorded === true;
 
   const milestones: TimelineMilestone[] = [];
 
-  // 30-day safe-to-proceed (312.40(b)).
-  {
-    const date = addDays(new Date(input.receiptDate), 30);
+  // 30-day safe-to-proceed (312.40(b)), from FDA's RECORDED receipt only.
+  // 2026-10-15: it was placed from any receiptDate, so a planned target date
+  // gave a "safe-to-proceed date" that read past (cleared) or due — a date the
+  // clock engine already refused as a projection.
+  if (receiptRecorded) {
+    const date = addDays(dateOf(input.receiptDate, 'receiptDate'), 30);
     const { status, daysFromNow } = statusFor(date, asOf, dueSoonDays);
     milestones.push({
       key: 'safe_to_proceed',
@@ -82,13 +105,15 @@ export function buildIndTimeline(input: IndTimelineInput): IndTimeline {
     });
   }
 
-  // Annual report anniversaries + 60-day due dates (312.33), projected to the horizon.
-  // Calendar years via the annual-report service's helper (2026-10-15: this was
-  // effective + 365×n days, a day early per leap day passed, and disagreed with
-  // the annual-report due date).
+  // Annual report anniversaries + 60-day due dates (312.33): every one from the
+  // first up to the horizon. Calendar years via the annual-report service's
+  // helper (2026-10-15: this was effective + 365×n days, a day early per leap
+  // day passed; and it stopped ceil(horizon / 365) + 1 years after the effective
+  // date, so an IND older than that had no upcoming report and `next` null).
   if (input.effectiveDate) {
-    const effective = new Date(input.effectiveDate);
-    for (let year = 1; year <= Math.ceil(horizonDays / 365) + 1; year += 1) {
+    const effective = dateOf(input.effectiveDate, 'effectiveDate');
+    const lastYear = horizonEnd.getUTCFullYear() - effective.getUTCFullYear() + 1;
+    for (let year = 1; year <= lastYear; year += 1) {
       const anniversary = indAnniversary(effective, year);
       const due = annualReportDueAfter(anniversary);
       // Stop once both the anniversary and its due date are beyond the horizon.
@@ -108,5 +133,5 @@ export function buildIndTimeline(input: IndTimelineInput): IndTimeline {
   milestones.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const next = milestones.find((m) => m.status !== 'past') ?? null;
 
-  return { milestones, next };
+  return { milestones, next, safeToProceedBasis: receiptRecorded ? 'fda_receipt' : 'receipt_not_recorded' };
 }

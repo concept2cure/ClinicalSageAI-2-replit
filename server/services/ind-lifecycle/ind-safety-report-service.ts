@@ -134,9 +134,13 @@ export interface IndSafetyClassification {
  * makes an event serious. The intake model always carries one criterion; a
  * non-serious AE is conveyed via eventType === 'AE' (it has no serious flag),
  * so we treat eventType 'AE' as non-serious and SAE/SUSAR/AESI as serious.
+ * Null — undetermined, neither — when the event type is missing or not one of
+ * those (2026-10-15: anything but 'AE' read as serious, so an event with no
+ * recorded type was listed and counted as a serious case).
  */
-export function isSerious(event: Pick<AdverseEvent, 'eventType'>): boolean {
-  return event.eventType !== 'AE';
+export function isSerious(event: Pick<AdverseEvent, 'eventType'>): boolean | null {
+  if (event.eventType === 'AE') return false;
+  return (EVENT_TYPE_VALUES as readonly string[]).includes(event.eventType) ? true : null;
 }
 
 /**
@@ -305,6 +309,9 @@ export function classifyIndSafetyReport(
 ): IndSafetyClassification {
   assertStated(event);
   const serious = isSerious(event);
+  // assertStated refused a missing or unknown event type; undetermined
+  // seriousness is never classified either way.
+  if (serious === null) throw new IndSafetyReportIncompleteError(['event type']);
   const suspected = isSuspected(event.causality);
   const expectedness = expectednessDetermination(event.expectedness);
   const expectednessRecorded = expectedness !== 'not_assessed';

@@ -109,6 +109,63 @@ export interface IndAnnualReportInput {
 }
 
 // ---------------------------------------------------------------------------
+// Boundary parsing (dates arrive as JSON strings over HTTP)
+// ---------------------------------------------------------------------------
+
+/** A supplied value that is not a date, or a list that is not a list. Code VALIDATION: the routes answer 400. */
+export class IndAnnualReportInputError extends Error {
+  readonly code = 'VALIDATION';
+  constructor(public readonly field: string, problem: string) {
+    super(`${field} ${problem}.`);
+    this.name = 'IndAnnualReportInputError';
+  }
+}
+
+function dateField(value: unknown, field: string): Date {
+  const date = value instanceof Date ? value : typeof value === 'string' && value.trim() !== '' ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) throw new IndAnnualReportInputError(field, 'must be a valid date');
+  return date;
+}
+
+function listField(value: unknown, field: string): Array<Record<string, unknown>> | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) throw new IndAnnualReportInputError(field, 'must be a list');
+  value.forEach((entry, i) => {
+    if (!entry || typeof entry !== 'object') throw new IndAnnualReportInputError(`${field}[${i}]`, 'must be an object');
+  });
+  return value as Array<Record<string, unknown>>;
+}
+
+/**
+ * The 312.33 input as a request carries it, parsed once at the boundary: the
+ * reporting period and every listed date a Date, every list a list — or a
+ * refusal naming the field. The one parser for the preview, PDF, filing and
+ * draft paths. 2026-10-15: the preview and PDF routes passed the body straight
+ * through, so a listed safety report or IB revision (a JSON date string) threw
+ * from toISOString and answered 500.
+ */
+export function parseAnnualReportInput(raw: unknown): IndAnnualReportInput {
+  const b = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const studies = listField(b.studyStatuses, 'studyStatuses');
+  const safety = listField(b.safetyReportsInPeriod, 'safetyReportsInPeriod');
+  const ib = listField(b.ibChanges, 'ibChanges');
+  return {
+    ...(b as unknown as IndAnnualReportInput),
+    reportingPeriodStart: dateField(b.reportingPeriodStart, 'reportingPeriodStart'),
+    reportingPeriodEnd: dateField(b.reportingPeriodEnd, 'reportingPeriodEnd'),
+    studyStatuses: (studies ?? []) as unknown as StudyStatusEntry[],
+    safetyReportsInPeriod: safety?.map((r, i) => ({
+      ...(r as unknown as PeriodSafetyReportEntry),
+      submittedAt: dateField(r.submittedAt, `safetyReportsInPeriod[${i}].submittedAt`),
+    })),
+    ibChanges: ib?.map((c, i) => ({
+      ...(c as unknown as IbChangeEntry),
+      effectiveDate: dateField(c.effectiveDate, `ibChanges[${i}].effectiveDate`),
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Output section model
 // ---------------------------------------------------------------------------
 
