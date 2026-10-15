@@ -96,7 +96,6 @@ const upload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: [],
     mimeTypes: UPLOAD_ALLOWED_MIME_TYPES,
-    allowMimePrefixes: [],
   }),
 });
 

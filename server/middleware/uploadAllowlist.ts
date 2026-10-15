@@ -25,8 +25,6 @@ export interface UploadAllowlistOptions {
   extensions?: string[];
   /** Additional exact MIME types to allow. */
   mimeTypes?: string[];
-  /** MIME prefixes to allow (e.g. 'image/'). */
-  allowMimePrefixes?: string[];
 }
 
 /** Default allowlist: documents, spreadsheets, structured data, and images. */
@@ -36,8 +34,6 @@ export const DEFAULT_ALLOWED_EXTENSIONS = [
   // Clinical datasets (2026-10-15): SAS transport v5 and Dataset-JSON's NDJSON form.
   'xpt', 'ndjson',
 ];
-
-const DEFAULT_ALLOWED_MIME_PREFIXES = ['image/'];
 
 /** Always rejected, even if added to an allowlist by mistake. */
 export const BLOCKED_EXTENSIONS = [
@@ -62,10 +58,12 @@ export function isAllowedUpload(
   const extensions = opts.extensions ?? DEFAULT_ALLOWED_EXTENSIONS;
   if (extensions.includes(ext)) return true;
 
-  if (opts.mimeTypes?.includes(mimetype)) return true;
-
-  const prefixes = opts.allowMimePrefixes ?? DEFAULT_ALLOWED_MIME_PREFIXES;
-  return prefixes.some(p => mimetype.startsWith(p));
+  // A declared type is the client's claim. It used to admit any extension
+  // whose type began image/, so an archive or SVG sent as image/png with PNG
+  // magic in front was stored under its own name; every route that named its
+  // own list had already turned that off. Every image type the signature check
+  // can verify is on the default list by extension (security review 2026-10-15).
+  return opts.mimeTypes?.includes(mimetype) ?? false;
 }
 
 type MulterFile = { originalname: string; mimetype: string };
