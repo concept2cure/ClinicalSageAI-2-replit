@@ -59,7 +59,7 @@ beforeAll(async () => {
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
-    ALTER TABLE vault.documents ADD COLUMN document_code text, ADD COLUMN document_type text,
+    ALTER TABLE vault.documents ADD COLUMN document_type text,
       ADD COLUMN file_name text, ADD COLUMN mime_type text, ADD COLUMN folder_id text,
       ADD COLUMN evidence_kind text, ADD COLUMN ctd_section text,
       -- As migrations/20260823_vault_document_placement.sql declares it: the
