@@ -425,3 +425,32 @@ describe('the chain verdict the ledger readers state (SECURITY-8)', () => {
     expect(meta.chain).toMatchObject({ store: 'audit_logs', ok: null, rowsChecked: 0, reason: expect.stringMatching(/no chain to verify/) });
   });
 });
+
+/* Filing-spine design review, open item 3 (2026-10-15). A submission's history
+   is its own rows and every leaf placed in it: two record kinds, read as one
+   history in the one query, so the order and the window are the ledger's. */
+describe("a record's history across record kinds", () => {
+  const walkOk = async () => ({ ok: true, rowsChecked: 3, tenants: 1, legacyRows: 0, sequencedRows: 3 }) as never;
+  async function write(action: string, resourceType: string, resourceId: string) {
+    await pglite.transaction(async (tx) => {
+      await writeChainedAuditRow(tx, { tenantId: ORG, userId: 11, action, resourceType, resourceId, details: {} });
+    });
+  }
+
+  it('reads the submission and its leaves, newest first, and nothing else', async () => {
+    await pglite.exec('DELETE FROM audit_logs');
+    await write('SUBMISSION_CREATED', 'submission', '5');
+    await write('LEAF_CREATED', 'submission_leaf', '70');
+    await write('LEAF_CREATED', 'submission_leaf', '99'); // another sequence's leaf
+    await write('LEAF_CREATED', 'other_record', '70'); // another kind with the same id
+    await write('LEAF_REMOVED', 'submission_leaf', '70');
+    const { data } = await readRecordAuditHistory(pgliteClient(), ORG, {
+      tableName: 'submission', recordId: '5', also: [{ tableName: 'submission_leaf', recordId: ['70'] }],
+    }, walkOk);
+    expect(data.map((e) => [e.event, e.target])).toEqual([
+      ['Leaf Removed', 'submission_leaf:70'],
+      ['Leaf Created', 'submission_leaf:70'],
+      ['Submission Created', 'submission:5'],
+    ]);
+  });
+});

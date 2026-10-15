@@ -14,18 +14,39 @@ const { editVaultDocumentMetadata } = vi.hoisted(() => ({ editVaultDocumentMetad
 vi.mock('../../../services/vault/vault-metadata-edit.service.js', () => ({ editVaultDocumentMetadata }));
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn(async () => ({ rows: [] })), connect: vi.fn() } }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization and, for a write, on
+   that membership's role (GOVERNED_WRITE_ROLES); every /:documentId on the
+   document being this organization's. Its program reads are answered from seats
+   (support/current-member.ts); an unseated caller is refused as the real gate
+   refuses. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../project-vault';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DOC = '22222222-2222-4222-8222-222222222222';
 const url = `/api/c2c/project-vault/${PROGRAM}/documents/${DOC}/details`;
 
+/** The request's own connection: the document is this organization's. */
+const requestQuery = vi.fn(async (sql: string) =>
+  /SELECT organization_id FROM vault\.documents/.test(sql) ? { rows: [{ organization_id: 7 }] } : { rows: [] });
+
+/** The caller's current membership carries the role their session does. */
 function app(role: string) {
+  clearSeats();
+  seatProgram(7, PROGRAM);
+  seatMember(7, 3, role);
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3, role };
     (req as unknown as { userRole: string }).userRole = role;
+    (req as unknown as { dbClient: unknown }).dbClient = { query: requestQuery };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());

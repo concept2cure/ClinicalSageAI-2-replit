@@ -299,9 +299,14 @@ describe('Honest states', () => {
     expect(failed.textContent).toContain('The authoring store is unavailable right now.');
     // The way back is on screen while the read has failed.
     expect(within(region).getByTestId('dc-documents').textContent).toContain('Documents (2)');
+    /* Counted at the click: the retry is exactly one more read of the record.
+       Once it lands the workbench mounts and makes its own provenance/access
+       read of the same URL (DocumentWorkbench, GET /docs/:docId) — counting
+       after the wait raced that read, and lost it from 2df2adde8 on. */
+    expect(docReads).toBe(1);
     fireEvent.click(within(failed).getByRole('button', { name: /Try again/ }));
-    await waitFor(() => expect(within(region).queryByTestId('dc-error')).toBeNull());
     expect(docReads).toBe(2);
+    await waitFor(() => expect(within(region).queryByTestId('dc-error')).toBeNull());
   });
 
   it('empty is said in words, and the column stays closed until asked', async () => {

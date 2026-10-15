@@ -17,6 +17,9 @@ beforeAll(async () => {
   await harness.pg.exec(`
     ALTER TABLE organizations ADD COLUMN uuid uuid NOT NULL DEFAULT gen_random_uuid();
     ALTER TABLE vault.documents ADD COLUMN file_name text;
+    -- The supersession test (supersededSql) matches a successor by document_code,
+    -- the column production's vault.documents declares; the shared harness lacks it.
+    ALTER TABLE vault.documents ADD COLUMN IF NOT EXISTS document_code text;
     ALTER TABLE lumen_data_atoms ADD COLUMN title text;
     ALTER TABLE rag_documents ADD COLUMN title text;
     ALTER TABLE rag_documents ALTER COLUMN organization_id DROP NOT NULL;

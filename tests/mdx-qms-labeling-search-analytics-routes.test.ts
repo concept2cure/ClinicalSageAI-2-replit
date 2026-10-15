@@ -10,8 +10,8 @@ import request from 'supertest';
 const queryFn = vi.fn();
 
 /* QMS approve is a Part 11 electronic signature (VSR-001 F-3): it re-verifies
-   the signer and runs the approval on a transaction client from
-   pool.connect(). These stand in for the credential check, the signer's org
+   the signer and runs the approval on the request-owned connection
+   (req.dbClient, since fa39bd5d8). These stand in for the credential check, the signer's org
    role and the two in-transaction ledger/signature writes, so the approve
    cases below exercise the route's state transition itself. The signature
    semantics (refusals, digest binding, rollback) are pinned in
@@ -68,13 +68,16 @@ import labelingRouter from '../server/routes/mdx-labeling';
 import searchRouter from '../server/routes/mdx-search';
 import analyticsRouter from '../server/routes/mdx-analytics';
 
-function makeApp(opts: { withAuth?: boolean; requestDb?: boolean } = { withAuth: true }) {
+function makeApp(opts: { withAuth?: boolean; requestDb?: boolean; signingTx?: boolean } = { withAuth: true }) {
   const app = express();
   app.use(express.json());
   if (opts.withAuth) {
     app.use((req, _res, next) => {
       (req as any).user = { id: 777, organizationId: 99 };
       if (opts.requestDb) (req as any).dbClient = { query: (...args: unknown[]) => queryFn(...args) };
+      // Since fa39bd5d8 the approval runs on the request-owned connection (no
+      // pooled fallback), so the scripted transaction is that connection.
+      if (opts.signingTx) (req as any).dbClient = { query: (...args: unknown[]) => S.txQuery(...args) };
       next();
     });
   }
@@ -183,7 +186,7 @@ describe('QMS routes', () => {
      same two transitions. */
   it('approve flips in_review → effective', async () => {
     scriptApprovalTx({ ...QMS_DOC, status: 'in_review' });
-    const res = await request(makeApp())
+    const res = await request(makeApp({ withAuth: true, signingTx: true }))
       .post('/api/mdx/qms/documents/1/approve')
       .send(SIGNED_APPROVAL);
     expect(res.status).toBe(200);
@@ -193,7 +196,7 @@ describe('QMS routes', () => {
 
   it('approve 409 when not in_review', async () => {
     scriptApprovalTx({ ...QMS_DOC, status: 'retired' });
-    const res = await request(makeApp())
+    const res = await request(makeApp({ withAuth: true, signingTx: true }))
       .post('/api/mdx/qms/documents/1/approve')
       .send(SIGNED_APPROVAL);
     expect(res.status).toBe(409);

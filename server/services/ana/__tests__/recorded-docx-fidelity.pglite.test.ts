@@ -27,7 +27,7 @@ beforeAll(async () => {
   await harness.pg.exec(fs.readFileSync(path.join(ROOT, '20260921_audit_logs_chain_seq.sql'), 'utf8'));
   await harness.pg.exec(fs.readFileSync(path.join(ROOT, '20260926_ana_turn_records.sql'), 'utf8'));
   await harness.pg.exec(`ALTER TABLE concept2cure_artifacts ADD COLUMN version integer;
-    ALTER TABLE projects ADD COLUMN client_workspace_id integer;
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_workspace_id integer; -- the shared harness has it since 14362ef00
     CREATE TABLE concept2cure_artifact_versions (id serial PRIMARY KEY, artifact_id integer NOT NULL,
       organization_id integer NOT NULL, version integer NOT NULL, content text, content_hash text);`);
 });

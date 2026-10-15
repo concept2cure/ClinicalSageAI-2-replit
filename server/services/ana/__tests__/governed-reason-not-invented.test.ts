@@ -387,18 +387,18 @@ function each(node: ts.Node, fn: (n: ts.Node) => void) {
 
 /**
  * A registration's handler: inline, a local function by name, or the last
- * argument of a wrapper (withCaughtErrors) that is one — an options object
- * after it (`{ safeOutcome: true }`) is not the handler.
+ * argument of a wrapper (withCaughtErrors) that is not its options bag.
+ * withCaughtErrors(name, handler, { safeOutcome }) has taken a trailing options
+ * object since 9c266724f; the handler is the argument before it.
  */
 function resolveHandler(m: Module, n: ts.Node | undefined): Fn | null {
   if (!n) return null;
   if (ts.isFunctionLike(n) && 'body' in n && n.body) return n as Fn;
   if (ts.isIdentifier(n)) return m.local.get(n.text) ?? null;
   if (ts.isCallExpression(n)) {
-    for (let i = n.arguments.length - 1; i >= 0; i--) {
-      if (ts.isObjectLiteralExpression(n.arguments[i])) continue;
-      return resolveHandler(m, n.arguments[i]);
-    }
+    const args = [...n.arguments];
+    while (args.length > 1 && ts.isObjectLiteralExpression(args[args.length - 1])) args.pop();
+    return resolveHandler(m, args[args.length - 1]);
   }
   return null;
 }

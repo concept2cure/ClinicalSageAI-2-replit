@@ -68,8 +68,12 @@ function fail(status: number, body: unknown = {}) {
   return { ok: false, status, json: async () => body } as Response;
 }
 function sourcePage(sources: Array<{ id: number; title: string; extractionStatus: string }>) {
+  // The fields GET /:id/sources answers (shapeSource). Citing requires
+  // textAvailable to be positively true (sourceHasGroundingText, 9c266724f);
+  // an absent one is unknown, and unknown never grounds.
   return { projectId: PID, sources: sources.map(source => ({ ...source,
-    isCurrent: true, dataEligible: true, originalFileAvailable: true })),
+    isCurrent: true, dataEligible: true, originalFileAvailable: true, disposition: null,
+    textAvailable: source.extractionStatus === 'extracted' })),
     total: sources.length, currentTotal: sources.length,
     page: { limit: 200, offset: 0 }, window: { shown: sources.length, truncated: false } };
 }
