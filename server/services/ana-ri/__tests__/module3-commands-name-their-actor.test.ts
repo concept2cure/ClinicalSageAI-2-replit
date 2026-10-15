@@ -24,7 +24,11 @@ const H = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../db', () => {
-  const client = { query: async () => ({ rows: [] }), release: () => undefined };
+  // Classification reads the program's recorded type (2026-10-15): an IND here.
+  const client = {
+    query: async (sql: string) => ({ rows: /FROM regulatory_programs/.test(sql) ? [{ program_type: 'IND' }] : [] }),
+    release: () => undefined,
+  };
   return { getPool: () => ({ connect: async () => client, query: client.query }), pool: {}, db: {} };
 });
 vi.mock('../../module3-convergence-service', () => ({
@@ -46,6 +50,8 @@ import {
 
 const ORG = 7;
 const PROJECT = 'proj-cmc-1';
+/** A program of ORG's, as classification requires one that records its type. */
+const PROGRAM = '0b6a3c1e-1111-4a2b-9c3d-0000000000aa';
 const withUser = { organizationId: ORG, userId: 42 } as CommandContext;
 const withoutUser = { organizationId: ORG } as unknown as CommandContext;
 
@@ -68,16 +74,16 @@ beforeEach(() => {
 describe('module3_classify_source', () => {
   it('maps the artifact under the user who ran the command', async () => {
     const res = await module3ClassifySource(withUser, {
-      projectId: PROJECT,
+      projectId: PROGRAM,
       artifactId: 'art-1',
       sourceType: 'specification',
     });
     expect(res.success).toBe(true);
     expect(H.classify).toHaveBeenCalledWith(
       ORG,
-      PROJECT,
+      PROGRAM,
       'art-1',
-      expect.objectContaining({ sourceType: 'specification' }),
+      expect.objectContaining({ sourceType: 'specification', submissionTrack: 'IND' }),
       { actorUserId: 42 },
     );
   });

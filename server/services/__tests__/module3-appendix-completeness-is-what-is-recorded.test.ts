@@ -61,19 +61,23 @@ describe('§3.2.A.1 — completeness is derived from the facts the section repor
 });
 
 describe('§3.2.A.3 — a novel excipient with no recorded safety study', () => {
+  /* The fields the excipient register writes (mapMaterialSpecPayload). This
+     fixture used `novel` / `function` / `concentration` / `safetyStudies`,
+     which no mapper writes (corrected 2026-10-15). The origin is recorded
+     because every excipient, novel or not, now has its origin scanned. */
   const novel = (over: Record<string, unknown> = {}) =>
     src('ex-1', 'excipient', {
       materialName: 'Novel Polymer Z',
-      novel: true,
-      function: 'Modified release agent',
-      concentration: '5% w/w',
+      novelExcipient: true,
+      functionInFormulation: 'Modified release agent',
+      origin: 'synthetic',
       ...over,
     });
 
   it('prints "not recorded", not a pointer to Module 4, and is not a complete section', () => {
     const section = appendix('3.2.A.3', [novel()]);
     const table = section.tables.find((t) => t.title.startsWith('Novel Excipients'))!;
-    expect(table.rows[0][3]).toBe('not recorded');
+    expect(table.rows[0][2]).toBe('not recorded');
     expect(JSON.stringify(section.tables)).not.toContain('See M4');
     expect(section.narrativeDraft).not.toContain('is provided below');
     expect(section.narrativeDraft).toMatch(/NOT ESTABLISHED/);
@@ -83,10 +87,10 @@ describe('§3.2.A.3 — a novel excipient with no recorded safety study', () => 
 
   it('reports the recorded safety study and is complete when every novel excipient has one', () => {
     const section = appendix('3.2.A.3', [
-      novel({ safetyStudies: '13-week rat oral toxicity study, report TX-0042' }),
+      novel({ novelExcipientJustification: '13-week rat oral toxicity study, report TX-0042' }),
     ]);
     const table = section.tables.find((t) => t.title.startsWith('Novel Excipients'))!;
-    expect(table.rows[0][3]).toBe('13-week rat oral toxicity study, report TX-0042');
+    expect(table.rows[0][2]).toBe('13-week rat oral toxicity study, report TX-0042');
     expect(section.completeness).toBe(100);
     expect(section.missingInputs).toEqual([]);
   });

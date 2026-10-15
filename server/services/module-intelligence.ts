@@ -115,6 +115,8 @@ You are operating in Medical Device regulatory mode. Your expertise covers:
 ### Current Submission Context
 ${recordedType ? '' : "This project's submission type is not recorded — do not assume a pathway."}
 ${
+  /* 2026-10-15: said "~90 calendar days". FDA's 510(k) goal is 90 FDA days:
+     the review clock stops while the submission is on hold. */
   is510k
     ? `This is a **510(k) Premarket Notification** (21 CFR 807 Subpart E).
 Key requirements:
@@ -124,7 +126,7 @@ Key requirements:
 - If Special 510(k): summary of changes + risk analysis showing no new questions of safety/effectiveness
 - If Abbreviated 510(k): reliance on guidance document/special controls
 - eSTAR submission format per FDA guidance
-- Review time: ~90 calendar days (traditional), ~30 days (special)`
+- Review goal: 90 FDA days for a traditional 510(k) — review-clock days, not counting time on hold awaiting the sponsor's response to an additional-information request; ~30 days (special)`
     : ''
 }
 ${

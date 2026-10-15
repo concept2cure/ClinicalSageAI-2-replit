@@ -324,7 +324,7 @@ async function loadUserContext(
   // role lives on organization_users, not users
   const result = await pool.query(
     `SELECT u.name,
-            COALESCE(ou.role, 'member') as role
+            ou.role
      FROM users u
      LEFT JOIN organization_users ou ON ou.user_id = u.id
        ${organizationId ? 'AND ou.organization_id = $2' : ''}
@@ -334,7 +334,11 @@ async function loadUserContext(
   );
   if (result.rows.length === 0) return { role: null, name: null };
   return {
-    role: result.rows[0].role || null,
+    /* 2026-10-15: COALESCE(ou.role, 'member') reported a user with no
+       membership row as a member, and with no organization the join returned
+       whichever membership came first. A role is recorded per organization,
+       so none is reported without one. */
+    role: organizationId ? result.rows[0].role || null : null,
     name: result.rows[0].name || null,
   };
 }
@@ -555,17 +559,20 @@ export async function assembleSystemPrompt(
   // ── Deep User Identity ───────────────────────────────────────────────────
   if (intel?.identity) {
     const u = intel.identity;
-    const style = u.communicationStyle || 'professional';
-    const expertise = u.expertiseLevel || 'intermediate';
+    // 2026-10-15: unrecorded values arrived as 'member' / 'intermediate' /
+    // 'professional' (and were defaulted again here), so AnA was told the user
+    // "understand[s] regulatory basics" on the strength of nothing.
+    const style = u.communicationStyle;
+    const expertise = u.expertiseLevel;
     parts.push(`
 ## User Identity — You Know This Person
 - **Name**: ${u.greetingName} (${u.name})
 - **Email**: ${u.email}${u.title ? `\n- **Title**: ${u.title}` : ''}${
       u.department ? `\n- **Department**: ${u.department}` : ''
     }
-- **Role**: ${u.role}
-- **Expertise Level**: ${expertise}
-- **Communication Preference**: ${style}${
+- **Role**: ${u.role ?? 'not recorded'}
+- **Expertise Level**: ${expertise ?? 'not recorded'}
+- **Communication Preference**: ${style ?? 'not recorded'}${
       u.focusAreas.length ? `\n- **Focus Areas**: ${u.focusAreas.join(', ')}` : ''
     }
 
@@ -576,19 +583,23 @@ export async function assembleSystemPrompt(
         ? 'Skip basic explanations — they know regulatory science deeply. Focus on nuanced analysis and strategic implications.'
         : expertise === 'novice'
         ? 'Provide clear explanations of regulatory concepts. Define technical terms on first use. Use examples.'
-        : 'Balance depth with clarity. They understand regulatory basics but may need context for specialized topics.'
+        : expertise
+        ? 'Balance depth with clarity. They understand regulatory basics but may need context for specialized topics.'
+        : 'Their expertise level is not recorded; do not assume one. Take the depth they need from how they ask.'
     }
 - ${
       style === 'concise'
         ? 'Keep responses focused and brief. Skip preambles.'
         : style === 'academic'
         ? 'Be thorough and cite sources. Use formal regulatory language. Include guideline references in-line.'
-        : 'Use a professional yet approachable tone.'
+        : style
+        ? 'Use a professional yet approachable tone.'
+        : 'No communication preference is recorded; use a professional yet approachable tone.'
     }`);
   } else if (context.userName || context.userRole) {
     parts.push(`
 ## User Context
-- **User**: ${context.userName || 'Unknown'}${context.userRole ? ` (${context.userRole})` : ''}${
+- **User**: ${context.userName || 'Unknown'} (${context.userRole || 'role not recorded'})${
       context.organizationName ? `\n- **Organization**: ${context.organizationName}` : ''
     }`);
   }

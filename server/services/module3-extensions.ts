@@ -535,44 +535,51 @@ const APPENDIX_RULES: AppendixRule[] = [
         String(c?.origin || c?.source || c?.registerOrigin || '').trim()
       ).length;
       const excipientSources = m.filter(s => s.sourceType === 'excipient');
-      const novelExcipients = excipientSources.filter(e => e.sourcePayload?.novel === true);
+      /* 2026-10-15: novel excipients were selected by `novel === true` and
+         printed `function`, `concentration` and `safetyStudies` — fields no
+         mapper writes. The register (mapMaterialSpecPayload) writes the three
+         read here, so a register novel excipient never reached this table; and
+         the branch returned before the TSE/BSE scan below, which every
+         excipient now gets. */
+      const novelExcipients = excipientSources.filter(e => e.sourcePayload?.novelExcipient === true);
 
       // ── Novel excipients (FDA novel-excipient safety qualification) ──
-      // Detected via dedicated `excipient` sources flagged novel:true.
-      if (novelExcipients.length > 0) {
-        /* 2026-10-15: an excipient with no recorded safety study was listed as
-           'See M4' — a pointer to Module 4 studies nobody recorded — under a
-           sentence saying the qualification data "is provided below", with no
-           NOT ESTABLISHED marker, so the section scored 100%. It also cited
-           ICH Q3C, which is the residual-solvents guideline. */
-        const safetyStudiesOf = (e: CanonicalSource) => String(e.sourcePayload?.safetyStudies ?? '').trim();
-        const withoutStudies = novelExcipients.filter(e => !safetyStudiesOf(e)).length;
-        return {
-          narrative:
-            `Per ICH M4Q, Section 3.2.A.3 (Excipients) addresses excipients requiring additional safety ` +
-            `qualification. ${novelExcipients.length} novel excipient(s) are used in the drug product formulation` +
+      // Reported beside the scan: the table leads whichever branch below
+      // answers, and the paragraph closes its narrative.
+      /* 2026-10-15: an excipient with no recorded safety study was listed as
+         'See M4' — a pointer to Module 4 studies nobody recorded — under a
+         sentence saying the qualification data "is provided below", with no
+         NOT ESTABLISHED marker, so the section scored 100%. It also cited
+         ICH Q3C, which is the residual-solvents guideline. */
+      const justificationOf = (e: CanonicalSource) =>
+        String(e.sourcePayload?.novelExcipientJustification ?? '').trim();
+      const unjustified = novelExcipients.filter(e => !justificationOf(e)).length;
+      const novelParagraph =
+        novelExcipients.length === 0
+          ? ''
+          : `\n\n${novelExcipients.length} novel excipient(s) are used in the drug product formulation` +
             (formulationName ? ` (${formulationName})` : '') +
-            `. ` +
-            (withoutStudies === 0
-              ? `The safety studies recorded for each, per FDA Guidance for Industry — Nonclinical Studies for the ` +
-                `Safety Evaluation of Pharmaceutical Excipients, are reported below.`
-              : `No safety study is recorded for ${withoutStudies} of the ${novelExcipients.length} novel ` +
+            ` and require additional safety qualification. ` +
+            (unjustified === 0
+              ? `The safety justification recorded for each, per FDA Guidance for Industry — Nonclinical Studies ` +
+                `for the Safety Evaluation of Pharmaceutical Excipients, is reported below.`
+              : `No safety justification is recorded for ${unjustified} of the ${novelExcipients.length} novel ` +
                 `excipient(s), so their safety qualification per FDA Guidance for Industry — Nonclinical Studies for ` +
-                `the Safety Evaluation of Pharmaceutical Excipients is NOT ESTABLISHED by this section.`),
-          tables: [
-            {
-              title: 'Novel Excipients — Safety Qualification',
-              headers: ['Excipient', 'Function', 'Concentration', 'Safety Studies'],
-              rows: novelExcipients.map(e => [
-                String(e.sourcePayload?.materialName || 'Unknown'),
-                String(e.sourcePayload?.function || '—'),
-                String(e.sourcePayload?.concentration || '—'),
-                safetyStudiesOf(e) || 'not recorded',
-              ]),
-            },
-          ],
-        };
-      }
+                `the Safety Evaluation of Pharmaceutical Excipients is NOT ESTABLISHED by this section.`);
+      const novelTables: GeneratedTable[] =
+        novelExcipients.length === 0
+          ? []
+          : [
+              {
+                title: 'Novel Excipients — Safety Qualification',
+                headers: ['Excipient', 'Function', 'Safety Justification'],
+                rows: novelExcipients.map(e => [
+                  String(e.sourcePayload?.materialName ?? '').trim() || 'not recorded',
+                  String(e.sourcePayload?.functionInFormulation ?? '').trim() || 'not recorded',
+                  justificationOf(e) || 'not recorded',
+                ]),
+              },
+            ];
 
       // ── Excipients of human or animal origin (TSE/BSE) ──
       // Detect human/animal-origin excipients from structured formulation
@@ -651,7 +658,7 @@ const APPENDIX_RULES: AppendixRule[] = [
           ? 'potential'
           : 'none';
 
-      const tables: GeneratedTable[] = [];
+      const tables: GeneratedTable[] = [...novelTables];
 
       /* Nothing recorded is not the same as nothing found. Fail closed: the
          section reports that the question is unanswered rather than clearing
@@ -684,7 +691,8 @@ const APPENDIX_RULES: AppendixRule[] = [
                 `human or animal origin is NOT ESTABLISHED by this section. `) +
             `This is not a statement that none is used: ` +
             `it is a statement that the question has not been answered. Record the formulation and the excipient ` +
-            `specifications, each with its origin, before this section is relied upon.`,
+            `specifications, each with its origin, before this section is relied upon.` +
+            novelParagraph,
           tables,
         };
       }
@@ -750,7 +758,8 @@ const APPENDIX_RULES: AppendixRule[] = [
                   components.length - originRecorded
                 } ` +
                 `of ${components.length} have none recorded. Record the origin of each, per EMA EMEA/410/01 rev. 3, ` +
-                `before this section is relied on.`),
+                `before this section is relied on.`) +
+            novelParagraph,
           tables,
         };
       }
@@ -850,7 +859,8 @@ const APPENDIX_RULES: AppendixRule[] = [
              records either; 3.2.P.4 holds each excipient's specification,
              procedure and supplier name. */
           `\n\nThe specification, analytical procedure and supplier recorded for each excipient are reported in ` +
-          `3.2.P.4 (Control of Excipients).`,
+          `3.2.P.4 (Control of Excipients).` +
+          novelParagraph,
         tables,
       };
     },

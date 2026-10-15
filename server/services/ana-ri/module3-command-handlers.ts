@@ -12,7 +12,13 @@ import { getPool } from '../../db';
 import { type ComposedSection } from '../module3Composer';
 import { composeProjectModule3, persistComposedSection } from '../cmc/module3-compile';
 import { anaCompositionRefusal, refusedByCompositionScope } from '../cmc/composition-scope';
-import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
+import {
+  bridgeCompileToArtifact,
+  classifyAndMapArtifactToSource,
+  getModule3BuildStatus,
+  type DossierUploadClassification,
+} from '../module3-convergence-service';
+import { resolveToRegistryId } from '../../../shared/regulatory/submission-type-bridge';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
 import { readContradictionRegisters } from '../cmc/contradiction-registers';
 import { NO_CANONICAL_SOURCES_REMEDY } from '../cmc/link-to-module3';
@@ -504,6 +510,55 @@ export async function cmcStatus(ctx: CommandContext, params: Record<string, unkn
 
 // ── module3_classify_source ───────────────────────────────────────────────────
 
+const PROGRAM_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The classification's tracks, by the registry id a recorded type resolves to. */
+const TRACK_BY_REGISTRY_ID: Partial<Record<string, DossierUploadClassification['submissionTrack']>> = {
+  US_IND: 'IND',
+  US_NDA: 'NDA',
+  US_BLA: 'BLA',
+  US_510K: '510K',
+  US_PMA: 'PMA',
+  EU_CER: 'CER',
+};
+
+/**
+ * The submission type the project records: a program's own `program_type` (by
+ * its uuid, or through a legacy projects.id anchored to one), else a legacy
+ * project's `metadata.submissionType`. `found: false` when the id is no program
+ * or project of this organization.
+ */
+async function recordedSubmissionType(
+  orgId: number,
+  projectId: string,
+): Promise<{ found: boolean; type: string | null }> {
+  const pool = getPool();
+  if (PROGRAM_ID_RE.test(projectId)) {
+    const { rows } = await pool.query(
+      `SELECT program_type FROM regulatory_programs
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [projectId, orgId],
+    );
+    if (rows.length === 0) return { found: false, type: null };
+    return { found: true, type: String(rows[0].program_type ?? '').trim() || null };
+  }
+  const id = /^\d+$/.test(projectId) ? Number(projectId) : NaN;
+  if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) return { found: false, type: null };
+  const { rows } = await pool.query(
+    `SELECT rp.program_type, p.metadata
+       FROM projects p
+       LEFT JOIN regulatory_programs rp
+         ON rp.id = p.regulatory_program_id AND rp.organization_id = p.organization_id
+        AND rp.deleted_at IS NULL
+      WHERE p.id = $1 AND p.organization_id = $2`,
+    [id, orgId],
+  );
+  if (rows.length === 0) return { found: false, type: null };
+  const meta = (rows[0].metadata ?? {}) as Record<string, unknown>;
+  const type = rows[0].program_type || meta.submissionType || meta.submission_type;
+  return { found: true, type: String(type ?? '').trim() || null };
+}
+
 export async function module3ClassifySource(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
   const orgId = ctx.organizationId;
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
@@ -516,8 +571,34 @@ export async function module3ClassifySource(ctx: CommandContext, params: Record<
   const actorId = commandActor(ctx);
   if (actorId === null) return refusedWithoutActor('module3_classify_source');
 
+  /* 2026-10-15: every source was classified under submissionTrack 'IND',
+     whatever the program files, and that track was written into the source
+     payload and its provenance event. It is the recorded one, or the command
+     is refused. */
+  const recorded = await recordedSubmissionType(orgId, String(projectId).trim());
+  if (!recorded.found) {
+    return {
+      success: false,
+      action: 'module3_classify_source',
+      message: `${projectId} is not a program or project of this organization, so its submission track is not established; nothing was classified.`,
+    };
+  }
+  const registryId = recorded.type ? resolveToRegistryId(recorded.type) : null;
+  const submissionTrack = registryId ? TRACK_BY_REGISTRY_ID[registryId] : undefined;
+  if (!submissionTrack) {
+    return {
+      success: false,
+      action: 'module3_classify_source',
+      message: recorded.type
+        ? `This program records its application as "${recorded.type}", which the Module 3 source classification ` +
+          'has no track for (it carries IND, NDA, BLA, 510(k), PMA and CER); nothing was classified.'
+        : 'This project records no submission type, so the track to classify the source under is not established; ' +
+          'nothing was classified. Record its submission type, then classify again.',
+    };
+  }
+
   const result = await classifyAndMapArtifactToSource(orgId, projectId, artifactId, {
-    submissionTrack: 'IND',
+    submissionTrack,
     dossierModule: '3',
     ctdSection,
     sourceType: sourceType as any,

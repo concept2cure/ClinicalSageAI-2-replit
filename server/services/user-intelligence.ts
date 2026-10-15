@@ -38,9 +38,10 @@ export interface UserIdentity {
   bio: string | null;
   avatar: string | null;
   greetingName: string; // How AnA addresses them (from prefs or parsed name)
-  role: string; // admin, manager, member, viewer
-  expertiseLevel: string; // novice, intermediate, expert
-  communicationStyle: string; // concise, detailed, academic
+  /** organization_users.role in this organization; null when no membership row records one. */
+  role: string | null; // admin, manager, member, viewer
+  expertiseLevel: string | null; // novice, intermediate, expert; null when not recorded
+  communicationStyle: string | null; // concise, detailed, academic; null when not recorded
   focusAreas: string[]; // ["CMC", "nonclinical", "clinical"]
   lastLogin: string | null;
 }
@@ -153,7 +154,7 @@ async function loadUserIdentity(
     const result = await pool.query(
       `SELECT u.id, u.name, u.email, u.title, u.department, u.bio, u.avatar,
               u.last_login, u.preferences,
-              COALESCE(ou.role, 'member') as org_role
+              ou.role as org_role
        FROM users u
        LEFT JOIN organization_users ou ON ou.user_id = u.id AND ou.organization_id = $2
        WHERE u.id = $1
@@ -180,9 +181,11 @@ async function loadUserIdentity(
       bio: u.bio,
       avatar: u.avatar,
       greetingName,
-      role: u.org_role || 'member',
-      expertiseLevel: prefs.expertise_level || 'intermediate',
-      communicationStyle: prefs.communication_style || 'professional',
+      // 2026-10-15: a user with no membership row read 'member', and unrecorded
+      // preferences read 'intermediate' / 'professional'. Unrecorded is null.
+      role: u.org_role || null,
+      expertiseLevel: prefs.expertise_level || null,
+      communicationStyle: prefs.communication_style || null,
       focusAreas: prefs.focus_areas || [],
       lastLogin: u.last_login?.toISOString() || null,
     };
@@ -284,7 +287,9 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
 async function loadCurrentSession(userId: number, organizationId: number): Promise<WorkSession | null> {
   try {
     // Project-name resolution is org-scoped so a session row can never
-    // surface another org's project name.
+    // surface another org's project name. 2026-10-15: the session rows were
+    // not, so a user in two organizations had the other one's open work
+    // (title, reference, project id) as this one's current session.
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
@@ -292,7 +297,7 @@ async function loadCurrentSession(userId: number, organizationId: number): Promi
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
        LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
-       WHERE uws.user_id = $1 AND uws.session_type = 'active'
+       WHERE uws.user_id = $1 AND uws.organization_id = $2 AND uws.session_type = 'active'
        ORDER BY uws.last_activity_at DESC
        LIMIT 1`,
       [userId, organizationId]
@@ -324,8 +329,8 @@ async function loadCurrentSession(userId: number, organizationId: number): Promi
  */
 async function loadRecentSessions(userId: number, organizationId: number): Promise<WorkSession[]> {
   try {
-    // Project-name resolution is org-scoped so a session row can never
-    // surface another org's project name.
+    // Project-name resolution and the session rows are both org-scoped
+    // (the rows since 2026-10-15; see loadCurrentSession).
     const result = await pool.query(
       `SELECT uws.context_type, uws.context_reference, uws.context_title,
               uws.project_id, p.name as project_name,
@@ -333,7 +338,7 @@ async function loadRecentSessions(userId: number, organizationId: number): Promi
               uws.messages_sent, uws.artifacts_created
        FROM user_work_sessions uws
        LEFT JOIN projects p ON p.id = uws.project_id AND p.organization_id = $2
-       WHERE uws.user_id = $1 AND uws.session_type = 'completed'
+       WHERE uws.user_id = $1 AND uws.organization_id = $2 AND uws.session_type = 'completed'
        ORDER BY uws.last_activity_at DESC
        LIMIT 5`,
       [userId, organizationId]
@@ -362,13 +367,16 @@ async function loadRecentSessions(userId: number, organizationId: number): Promi
  */
 async function loadWorkQueue(userId: number, organizationId: number): Promise<WorkQueueItem[]> {
   try {
+    // 2026-10-15: the project join was unscoped. POST /work-queue/add stores the
+    // body's projectId as given, so an item naming another organization's
+    // project id came back with that project's name.
     const result = await pool.query(
       `SELECT uwq.id, uwq.task_type, uwq.task_title, uwq.task_description,
               uwq.priority, uwq.reference_type, uwq.reference_id,
               uwq.project_id, p.name as project_name,
               uwq.due_date, uwq.estimated_minutes, uwq.source, uwq.ai_reasoning
        FROM user_work_queue uwq
-       LEFT JOIN projects p ON p.id = uwq.project_id
+       LEFT JOIN projects p ON p.id = uwq.project_id AND p.organization_id = $2
        WHERE uwq.user_id = $1 AND uwq.organization_id = $2
          AND uwq.status = 'pending'
        ORDER BY uwq.priority ASC, uwq.due_date ASC NULLS LAST
@@ -405,12 +413,14 @@ async function loadRecentActivity(
   organizationId: number
 ): Promise<RecentActivity[]> {
   try {
+    // 2026-10-15: the project join was unscoped, so an activity row naming
+    // another organization's project id came back with that project's name.
     const result = await pool.query(
       `SELECT af.action, af.entity_type, af.entity_name, af.description,
               af.created_at,
               p.name as project_name
        FROM activity_feed af
-       LEFT JOIN projects p ON p.id = CASE
+       LEFT JOIN projects p ON p.organization_id = $2 AND p.id = CASE
          WHEN af.entity_type = $3 THEN CAST(af.entity_id AS INTEGER)
          ELSE NULL
        END
@@ -587,12 +597,14 @@ export async function touchWorkSession(params: {
   const { userId, organizationId, projectId, contextType, contextReference, contextTitle } = params;
 
   try {
-    // Try to find an active session for this user
+    // The user's active session in THIS organization. 2026-10-15: it was found
+    // across organizations, so a turn in one closed or bumped (and could retitle)
+    // the session open in another.
     const existingResult = await pool.query(
       `SELECT id, project_id, context_type FROM user_work_sessions
-       WHERE user_id = $1 AND session_type = 'active'
+       WHERE user_id = $1 AND organization_id = $2 AND session_type = 'active'
        ORDER BY last_activity_at DESC LIMIT 1`,
-      [userId]
+      [userId, organizationId]
     );
 
     if (existingResult.rows.length > 0) {
