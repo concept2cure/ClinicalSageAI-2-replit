@@ -186,6 +186,22 @@ function sendBadProjectRef(res: Response): Response {
   });
 }
 
+/**
+ * The section counts /status and /device-status answer with. 2026-10-15: they
+ * answered `completedSections`, every section whose status was not
+ * 'not_started', so a draft counted as completed. A section with an artifact
+ * is drafted; only an approved or locked one counts toward the required total.
+ */
+function sectionCounts(sections: Array<{ required: boolean; status: string }>) {
+  const approved = (s: { status: string }) => s.status === 'approved' || s.status === 'locked';
+  return {
+    draftedSections: sections.filter(s => s.status !== 'not_started').length,
+    approvedSections: sections.filter(approved).length,
+    requiredSections: sections.filter(s => s.required).length,
+    requiredApprovedSections: sections.filter(s => s.required && approved(s)).length,
+  };
+}
+
 // ─── GET /api/ind/structure ───────────────────────────────────────────────────
 
 router.get('/structure', (_req: Request, res: Response) => {
@@ -307,7 +323,7 @@ router.get('/device-status/:type/:projectId', async (req: Request, res: Response
 
     const sections = deviceRegistry.getDeviceSections(deviceType);
     if (!sections || sections.length === 0) {
-      return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
+      return res.json({ success: true, data: { sections: [], totalSections: 0, ...sectionCounts([]) } });
     }
 
     const read = await readProjectArtifacts(req, projectRef);
@@ -331,8 +347,7 @@ router.get('/device-status/:type/:projectId', async (req: Request, res: Response
       data: {
         sections: sectionStatus,
         totalSections: sections.length,
-        completedSections: sectionStatus.filter(s => s.status !== 'not_started').length,
-        approvedSections: sectionStatus.filter(s => s.status === 'approved' || s.status === 'locked').length,
+        ...sectionCounts(sectionStatus),
       },
     });
   } catch (error) {
@@ -376,8 +391,7 @@ router.get('/status/:projectId', async (req: Request, res: Response) => {
         sections: sectionStatus,
         modules: moduleStatus,
         totalSections: IND_SECTIONS.length,
-        completedSections: sectionStatus.filter(s => s.status !== 'not_started').length,
-        approvedSections: sectionStatus.filter(s => s.status === 'approved' || s.status === 'locked').length,
+        ...sectionCounts(sectionStatus),
       },
     });
   } catch (error) {

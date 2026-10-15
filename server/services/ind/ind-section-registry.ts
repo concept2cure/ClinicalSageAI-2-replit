@@ -329,28 +329,54 @@ export function getRequiredSections(): INDSection[] {
   return IND_SECTIONS.filter(s => s.required);
 }
 
-/** Get module completion status */
-export function getModuleStatus(artifacts: Array<{ ctdSection?: string; status?: string }>): Record<string, { total: number; drafted: number; approved: number; completion: number }> {
-  const modules: Record<string, { total: number; drafted: number; approved: number; completion: number }> = {};
+/** One module's section counts, from the project's artifacts. */
+export interface ModuleSectionStatus {
+  /** Sections in the module, required and optional. */
+  total: number;
+  /** Sections this registry marks required for an IND. */
+  required: number;
+  /** Sections with an artifact at any status, a draft included. */
+  drafted: number;
+  /** Sections whose artifact is approved or locked. */
+  approved: number;
+  /** Required sections whose artifact is approved or locked. */
+  requiredApproved: number;
+  /** requiredApproved / required as a rounded percentage; null for a module with no required section. */
+  completion: number | null;
+}
+
+/**
+ * Get module completion status.
+ *
+ * 2026-10-15: `completion` was drafted / total — the share of ALL the module's
+ * sections, optional ones included, with an artifact at ANY status — so a
+ * module of unapproved drafts read 100 complete. It is now the share of the
+ * required sections whose artifact is approved or locked.
+ */
+export function getModuleStatus(artifacts: Array<{ ctdSection?: string; status?: string }>): Record<string, ModuleSectionStatus> {
+  const modules: Record<string, ModuleSectionStatus> = {};
 
   for (const section of IND_SECTIONS) {
     const modKey = `Module ${section.module}`;
     if (!modules[modKey]) {
-      modules[modKey] = { total: 0, drafted: 0, approved: 0, completion: 0 };
+      modules[modKey] = { total: 0, required: 0, drafted: 0, approved: 0, requiredApproved: 0, completion: null };
     }
-    modules[modKey].total++;
+    const mod = modules[modKey];
+    mod.total++;
+    if (section.required) mod.required++;
 
     const artifact = artifacts.find(a => a.ctdSection === section.code);
     if (artifact) {
-      modules[modKey].drafted++;
+      mod.drafted++;
       if (artifact.status === 'approved' || artifact.status === 'locked') {
-        modules[modKey].approved++;
+        mod.approved++;
+        if (section.required) mod.requiredApproved++;
       }
     }
   }
 
   for (const mod of Object.values(modules)) {
-    mod.completion = mod.total > 0 ? Math.round((mod.drafted / mod.total) * 100) : 0;
+    mod.completion = mod.required > 0 ? Math.round((mod.requiredApproved / mod.required) * 100) : null;
   }
 
   return modules;
