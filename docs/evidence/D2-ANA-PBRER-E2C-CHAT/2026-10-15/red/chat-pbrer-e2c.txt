@@ -1,0 +1,77 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/chat-pbrer-e2c.test.ts > the PBRER AnA drafts in chat follows ICH E2C(R2) > has the nineteen E2C(R2) headings, in order 10ms
+   → expected [ '1. Introduction', …(15) ] to deeply equal [ '1. Introduction', …(18) ]
+ × tests/regulatory/chat-pbrer-e2c.test.ts > the PBRER AnA drafts in chat follows ICH E2C(R2) > keeps its drafting guidance on the sections it belongs to 1ms
+   → Cannot read properties of undefined (reading 'guidance')
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/chat-pbrer-e2c.test.ts > the PBRER AnA drafts in chat follows ICH E2C(R2) > has the nineteen E2C(R2) headings, in order
+AssertionError: expected [ '1. Introduction', …(15) ] to deeply equal [ '1. Introduction', …(18) ]
+
+- Expected
++ Received
+
+  [
+    "1. Introduction",
+-   "2. Worldwide Marketing Authorisation Status",
++   "2. Worldwide Marketing Approval Status",
+    "3. Actions Taken for Safety Reasons",
+-   "4. Changes to Reference Safety Information",
+-   "5. Estimated Exposure and Use Patterns",
+-   "6. Data in Summary Tabulations",
+-   "7. Summaries of Significant Findings from Clinical Trials",
++   "4. Changes to Reference Product Information",
++   "5. Estimated Patient Exposure",
++   "6. Data in Line Listings and Summary Tabulations",
++   "7. Summaries of Significant Safety Findings from Clinical Studies",
+    "8. Findings from Non-Interventional Studies",
+-   "9. Information from Other Clinical Trials and Sources",
++   "9. Information from Other Clinical Trials/Sources",
+    "10. Non-Clinical Data",
+    "11. Literature",
+-   "12. Other Periodic Reports",
+-   "13. Lack of Efficacy in Controlled Clinical Trials",
+-   "14. Late-Breaking Information",
+-   "15. Overview of Signals: New, Ongoing, or Closed",
+-   "16. Signal and Risk Evaluation",
+-   "17. Benefit Evaluation",
+-   "18. Integrated Benefit-Risk Analysis for Approved Indications",
+-   "19. Conclusions and Actions",
++   "12. Other PBRER Information",
++   "13. Characterization of Risks",
++   "14. Benefit Evaluation",
++   "15. Integrated Benefit-Risk Analysis",
++   "16. Conclusions and Actions",
+  ]
+
+ ❯ tests/regulatory/chat-pbrer-e2c.test.ts:22:49
+     20|   const chat = DOCUMENT_TEMPLATES.psur_pbrer;
+     21|   it('has the nineteen E2C(R2) headings, in order', () => {
+     22|     expect(chat.sections.map((s) => s.heading)).toEqual(lib.sections.m…
+       |                                                 ^
+     23|     expect(chat.sections.map((s) => s.heading)).toContain('13. Lack of…
+     24|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/regulatory/chat-pbrer-e2c.test.ts > the PBRER AnA drafts in chat follows ICH E2C(R2) > keeps its drafting guidance on the sections it belongs to
+TypeError: Cannot read properties of undefined (reading 'guidance')
+ ❯ tests/regulatory/chat-pbrer-e2c.test.ts:27:15
+     25|   it('keeps its drafting guidance on the sections it belongs to', () =…
+     26|     const ba = chat.sections.find((s) => s.heading.startsWith('18. '))…
+     27|     expect(ba.guidance).toMatch(/benefit-risk balance/i);
+       |               ^
+     28|   });
+     29| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  06:04:31
+   Duration  1.47s (transform 933ms, setup 117ms, import 981ms, tests 15ms, environment 0ms)
+
