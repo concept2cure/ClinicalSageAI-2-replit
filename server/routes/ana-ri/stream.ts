@@ -1320,6 +1320,7 @@ export function mountStreamRoute(router: Router): void {
         _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
         _sessionBriefingBlock: prefetchedStreamContext.sessionBriefingBlock,
         _contradictionWatchBlock: prefetchedStreamContext.contradictionWatchBlock,
+        _openDocumentBlock: prefetchedStreamContext.openDocumentBlock,
       });
       orchestration.systemPrompt += prefetchedStreamContext.contextAvailabilityBlock ?? '';
       if (prefetchedStreamContext.unavailableSources?.length) {
@@ -2081,7 +2082,8 @@ export function mountStreamRoute(router: Router): void {
           ],
           context: {
             projectType: asStr(submission_type),
-            documentType: asStr(document_context),
+            // The open document's type as the route resolved it; document_context is an object.
+            documentType: prefetchedStreamContext.openDocumentLabel ?? undefined,
             surface: asStr(intent_lens) ?? asStr(authoring_context),
             // The invoked app's id, label and words, so its tools survive the
             // relevance cap (shared/navigation/callable-apps).

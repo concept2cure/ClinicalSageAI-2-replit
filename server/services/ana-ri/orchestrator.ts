@@ -46,6 +46,7 @@ import {
 } from '../intelligence/index.js';
 import { getGateway } from '../ai-gateway/index.js';
 import { sectionIdentityLine } from '../ind/ctd/index.js';
+import { registryIdForStatedType } from './open-document.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The open CTD section, named from the canonical overlay
@@ -282,6 +283,12 @@ export interface OrchestratorInput {
    * with the briefing/deadline pair.
    */
   _contradictionWatchBlock?: string | null;
+  /**
+   * Pre-rendered OPEN DOCUMENT block (open-document.ts, via the route prefetch):
+   * the type of the document open in front of the person and its outline, from
+   * the saved record or a registry-validated surface type.
+   */
+  _openDocumentBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -332,6 +339,20 @@ export interface OrchestratorOutput {
  * The core orchestrator — assembles the complete AnA RI system prompt
  * by analyzing the user's message, context, and role.
  */
+/**
+ * The document context the persona prompt may print. It is client-supplied and
+ * lands in the cached system prefix, so the type is printed only as a registry
+ * id and the section and module only as a code — never free text.
+ */
+function promptDocumentContext(doc: OrchestratorInput['documentContext']): AnaRIPromptOptions['documentContext'] {
+  if (!doc) return undefined;
+  const code = (v: unknown) => (typeof v === 'string' && /^[A-Za-z0-9 ._()-]{1,40}$/.test(v.trim()) ? v.trim() : undefined);
+  const documentType = registryIdForStatedType(doc.documentType) ?? undefined;
+  const section = code(doc.section);
+  const module = code(doc.module);
+  return documentType || section || module ? { documentType, section, module } : undefined;
+}
+
 export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   // 1. Detect intent
   const detectedIntent =
@@ -369,7 +390,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     intentLens: detectedIntent.lens,
     language: input.language,
     projectContext: input.projectContext,
-    documentContext: input.documentContext,
+    documentContext: promptDocumentContext(input.documentContext),
   };
 
   const activeWorkstream = detectWorkstream(input, detectedIntent.lens, detectedSubmissionType);
@@ -423,6 +444,12 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       systemPrompt += '\n\n' + profileBlock;
       projectIntelligenceInjected = true;
     }
+  }
+
+  // 4b'. The document open in front of the person, resolved by the route from
+  //      the saved record — ahead of anything guessed from the message.
+  if (input._openDocumentBlock && input._openDocumentBlock.trim()) {
+    systemPrompt += '\n\n' + input._openDocumentBlock.trim();
   }
 
   // 4c. Detect specific regulatory document type and inject its template structure.
