@@ -64,11 +64,36 @@ function computeHash(content: string): string {
 }
 
 /**
- * Get current user ID from session context or default to 'system'
+ * A GRDHE write that names no actor. 2026-10-15: every writer took its actor
+ * from process.env.CURRENT_USER_ID, which nothing sets, falling back to
+ * 'system', so created_by, completed_by and every audit user_id named no one
+ * (ledger L204). The actor is the authenticated principal the route passes in.
  */
-function getCurrentUserId(): string {
-  // In production, this would be extracted from the request context
-  return process.env.CURRENT_USER_ID || 'system';
+export class GrdheActorRequiredError extends Error {
+  readonly status = 401;
+  readonly code = 'ACTOR_REQUIRED';
+  constructor() {
+    super('A GRDHE write is recorded against the authenticated user, and none was given');
+    this.name = 'GrdheActorRequiredError';
+  }
+}
+
+function requireActor(actor: string): string {
+  if (typeof actor !== 'string' || actor.trim() === '') throw new GrdheActorRequiredError();
+  return actor;
+}
+
+/**
+ * What a completed export job records about its output. The XML is returned in
+ * the HTTP response and stored nowhere, so the job has no output path.
+ */
+export const EXPORT_OUTPUT_NOT_RETAINED = 'Output returned inline, not retained';
+
+/** A recorded DECIMAL confidence, or null when none was recorded (a curated 0 is recorded). */
+function recordedConfidence(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = typeof value === 'number' ? value : parseFloat(String(value));
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
@@ -288,9 +313,12 @@ export class GRDHEService {
   /**
    * Create or update data residency configuration
    */
-  async setDataResidencyConfig(config: Partial<DataResidencyConfig> & { tenantId: string }): Promise<DataResidencyConfig> {
-    const userId = getCurrentUserId();
-    
+  async setDataResidencyConfig(
+    config: Partial<DataResidencyConfig> & { tenantId: string },
+    actor: string
+  ): Promise<DataResidencyConfig> {
+    const by = requireActor(actor);
+
     const result = await db.execute(sql`
       INSERT INTO regulatory_harmonization.tenant_data_residency (
         tenant_id, primary_region, allowed_processing_regions, backup_region,
@@ -321,7 +349,7 @@ export class GRDHEService {
         ${config.postMarketRetentionDays ?? 2555},
         ${config.auditLogRetentionDays ?? 2555},
         ${config.adverseEventRetentionDays ?? 3650},
-        ${userId}
+        ${by}
       )
       ON CONFLICT (tenant_id) DO UPDATE SET
         primary_region = EXCLUDED.primary_region,
@@ -343,18 +371,21 @@ export class GRDHEService {
         audit_log_retention_days = EXCLUDED.audit_log_retention_days,
         adverse_event_retention_days = EXCLUDED.adverse_event_retention_days,
         updated_at = NOW(),
-        updated_by = ${userId}
+        updated_by = ${by}
       RETURNING id
     `);
 
     // Log the change
     await this.logAudit(
-      'tenant_data_residency',
-      (result.rows[0] as any).id,
-      'UPDATE',
-      null,
-      config as any,
-      'Data residency configuration updated'
+      {
+        tableName: 'tenant_data_residency',
+        recordId: (result.rows[0] as any).id,
+        action: 'UPDATE',
+        oldData: null,
+        newData: config as any,
+        reason: 'Data residency configuration updated',
+      },
+      by
     );
 
     return this.getDataResidencyConfig(config.tenantId) as Promise<DataResidencyConfig>;
@@ -470,12 +501,16 @@ export class GRDHEService {
 
     if (exactMapping.rows.length > 0) {
       const row = exactMapping.rows[0] as any;
+      // 2026-10-15: this read `parseFloat(confidence_score) || 1.0`, so a
+      // mapping nobody scored (the column is nullable, no default), or one
+      // curated at 0, was reported as confidence 1.0 and not needing review.
+      const confidenceScore = recordedConfidence(row.confidence_score);
       return {
         targetCode: row.target_code,
         targetDisplay: row.target_display,
         mappingType: row.mapping_type,
-        confidenceScore: parseFloat(row.confidence_score) || 1.0,
-        requiresReview: row.requires_review,
+        confidenceScore,
+        requiresReview: confidenceScore === null || row.requires_review,
         fallbackUsed: false,
         sourceVersion: sourceVersion.versionCode,
         targetVersion: targetVersion.versionCode
@@ -490,17 +525,21 @@ export class GRDHEService {
         AND target_system = ${targetSystem}::regulatory_harmonization.terminology_system
         AND mapping_type IN ('broader', 'related')
         AND NOT is_deleted
-      ORDER BY confidence_score DESC
+      ORDER BY confidence_score DESC NULLS LAST
       LIMIT 1
     `);
 
     if (broaderMapping.rows.length > 0) {
       const row = broaderMapping.rows[0] as any;
+      // 2026-10-15: this reported `(confidence_score || 0.8) * 0.8` and the
+      // type 'broader' for every row: 0.64 for a mapping nobody scored, each
+      // recorded score cut by an invented 0.8, a 'related' mapping mislabelled.
+      // (DESC alone also ranked an unscored row first.)
       return {
         targetCode: row.target_code,
         targetDisplay: row.target_display,
-        mappingType: 'broader',
-        confidenceScore: (parseFloat(row.confidence_score) || 0.8) * 0.8,
+        mappingType: row.mapping_type,
+        confidenceScore: recordedConfidence(row.confidence_score),
         requiresReview: true,
         fallbackUsed: true,
         sourceVersion: sourceVersion.versionCode,
@@ -524,8 +563,8 @@ export class GRDHEService {
   /**
    * Add terminology mapping
    */
-  async addTerminologyMapping(mapping: Omit<TerminologyMapping, 'id' | 'createdAt'>): Promise<string> {
-    const userId = getCurrentUserId();
+  async addTerminologyMapping(mapping: Omit<TerminologyMapping, 'id' | 'createdAt'>, actor: string): Promise<string> {
+    const by = requireActor(actor);
 
     const result = await db.execute(sql`
       INSERT INTO regulatory_harmonization.terminology_mappings (
@@ -550,7 +589,7 @@ export class GRDHEService {
         ${mapping.reviewNotes || null},
         ${mapping.mappingSource},
         ${mapping.mappingAlgorithm || null},
-        ${userId}
+        ${by}
       )
       RETURNING id
     `);
@@ -558,12 +597,15 @@ export class GRDHEService {
     const mappingId = (result.rows[0] as any).id;
 
     await this.logAudit(
-      'terminology_mappings',
-      mappingId,
-      'INSERT',
-      null,
-      mapping as any,
-      'Terminology mapping created'
+      {
+        tableName: 'terminology_mappings',
+        recordId: mappingId,
+        action: 'INSERT',
+        oldData: null,
+        newData: mapping as any,
+        reason: 'Terminology mapping created',
+      },
+      by
     );
 
     return mappingId;
@@ -903,8 +945,8 @@ export class GRDHEService {
   /**
    * Create export job
    */
-  async createExportJob(request: CreateExportJobRequest): Promise<ExportJob> {
-    const userId = getCurrentUserId();
+  async createExportJob(request: CreateExportJobRequest, actor: string): Promise<ExportJob> {
+    const by = requireActor(actor);
 
     // Validate data residency
     const region = this.getRegionForJurisdiction(request.targetJurisdiction);
@@ -941,7 +983,7 @@ export class GRDHEService {
         ${sql`${request.sourceEntityIds}::uuid[]`},
         ${request.targetFormat}::regulatory_harmonization.regulatory_format,
         ${request.targetJurisdiction},
-        ${userId}
+        ${by}
       ) as job_id
     `);
 
@@ -1008,9 +1050,10 @@ export class GRDHEService {
       currentStep?: string;
       errorMessage?: string;
       errorDetails?: Record<string, any>;
-    } = {}
+    },
+    actor: string
   ): Promise<void> {
-    const userId = getCurrentUserId();
+    const by = requireActor(actor);
 
     const updated = await db.execute(sql`
       UPDATE regulatory_harmonization.export_jobs
@@ -1033,40 +1076,54 @@ export class GRDHEService {
     if (updated.rows.length === 0) throw new ExportJobNotFoundError(jobId);
 
     // Log the status change
-    await this.logExportJobAudit(jobId, 'status_change', 'status_change', `Status changed to ${status}`, {
-      new_status: status,
-      progress: options.progressPercent,
-      step: options.currentStep,
-      error: options.errorMessage
-    });
+    await this.logExportJobAudit(
+      jobId,
+      {
+        action: 'status_change',
+        category: 'status_change',
+        message: `Status changed to ${status}`,
+        details: {
+          new_status: status,
+          progress: options.progressPercent,
+          step: options.currentStep,
+          error: options.errorMessage
+        }
+      },
+      by
+    );
   }
 
   /**
-   * Complete export job with output file
+   * Complete an export job whose output was returned in the HTTP response.
+   *
+   * 2026-10-15: this recorded output_file_path `/exports/<tenant>/<file>` for a
+   * file nothing writes (there is no store, mount or download route),
+   * completed_by 'system', and a completion_signature_hash over
+   * path|'system'|clock: signature-shaped and nobody's. The path is now NULL and
+   * the job says the output was not retained; the hash and size are those of
+   * the content returned. A signature is made through POST /api/esignature/sign.
    */
   async completeExportJob(
     jobId: string,
-    outputFilePath: string,
-    outputContent: string,
-    mimeType: string = 'application/xml'
+    output: { fileName: string; content: string; mimeType?: string },
+    actor: string
   ): Promise<void> {
-    const userId = getCurrentUserId();
-    const outputHash = computeHash(outputContent);
-    const outputSize = Buffer.byteLength(outputContent, 'utf8');
+    const by = requireActor(actor);
+    const outputHash = computeHash(output.content);
+    const outputSize = Buffer.byteLength(output.content, 'utf8');
 
     const completed = await db.execute(sql`
       UPDATE regulatory_harmonization.export_jobs
-      SET 
-        status = 'completed'::regulatory_harmonization.export_status,
+      SET status = 'completed'::regulatory_harmonization.export_status,
         progress_percent = 100,
-        output_file_path = ${outputFilePath},
-        output_file_name = ${outputFilePath.split('/').pop()},
+        current_step = ${EXPORT_OUTPUT_NOT_RETAINED},
+        output_file_path = NULL,
+        output_file_name = ${output.fileName},
         output_file_hash = ${outputHash},
         output_file_size_bytes = ${outputSize},
-        output_mime_type = ${mimeType},
+        output_mime_type = ${output.mimeType ?? 'application/xml'},
         completed_at = NOW(),
-        completed_by = ${userId},
-        completion_signature_hash = ${computeHash(outputFilePath + '|' + userId + '|' + new Date().toISOString())},
+        completed_by = ${by},
         updated_at = NOW()
       WHERE id = ${jobId}::uuid
       RETURNING id
@@ -1074,11 +1131,22 @@ export class GRDHEService {
     // As in updateExportJobStatus: no audit row for a job this session did not update.
     if (completed.rows.length === 0) throw new ExportJobNotFoundError(jobId);
 
-    await this.logExportJobAudit(jobId, 'job_completed', 'status_change', 'Export job completed successfully', {
-      output_file: outputFilePath,
-      output_hash: outputHash,
-      output_size: outputSize
-    });
+    await this.logExportJobAudit(
+      jobId,
+      {
+        action: 'job_completed',
+        category: 'status_change',
+        message: `Export job completed. ${EXPORT_OUTPUT_NOT_RETAINED}.`,
+        details: {
+          output_file_path: null,
+          output_retention: EXPORT_OUTPUT_NOT_RETAINED,
+          output_file_name: output.fileName,
+          output_hash: outputHash,
+          output_size: outputSize
+        }
+      },
+      by
+    );
   }
 
   /**
@@ -1086,23 +1154,19 @@ export class GRDHEService {
    */
   private async logExportJobAudit(
     jobId: string,
-    action: string,
-    category: string,
-    message: string,
-    details?: Record<string, any>
+    entry: { action: string; category: string; message: string; details?: Record<string, any> },
+    actor: string
   ): Promise<void> {
-    const userId = getCurrentUserId();
-
     await db.execute(sql`
       INSERT INTO regulatory_harmonization.export_job_audit_log (
         job_id, action, action_category, message, details, user_id
       ) VALUES (
         ${jobId}::uuid,
-        ${action},
-        ${category},
-        ${message},
-        ${details ? JSON.stringify(details) : null}::jsonb,
-        ${userId}
+        ${entry.action},
+        ${entry.category},
+        ${entry.message},
+        ${entry.details ? JSON.stringify(entry.details) : null}::jsonb,
+        ${requireActor(actor)}
       )
     `);
   }
@@ -1165,8 +1229,9 @@ export class GRDHEService {
       updatedAt: new Date(row.updated_at),
       createdBy: row.created_by,
       completedBy: row.completed_by,
-      completionSignatureId: row.completion_signature_id,
-      completionSignatureHash: row.completion_signature_hash
+      // completion_signature_hash is not served (2026-10-15): the only value
+      // ever written was a hash over path|'system'|clock, nobody's signature.
+      completionSignatureId: row.completion_signature_id
     };
   }
 
@@ -1177,8 +1242,8 @@ export class GRDHEService {
   /**
    * Create canonical adverse event
    */
-  async createCanonicalAdverseEvent(request: CreateAdverseEventRequest): Promise<CanonicalAdverseEvent> {
-    const userId = getCurrentUserId();
+  async createCanonicalAdverseEvent(request: CreateAdverseEventRequest, actor: string): Promise<CanonicalAdverseEvent> {
+    const by = requireActor(actor);
 
     const result = await db.execute(sql`
       INSERT INTO regulatory_harmonization.canonical_adverse_events (
@@ -1194,12 +1259,12 @@ export class GRDHEService {
         ${request.tenantId}::uuid,
         ${request.organizationId || null}::uuid,
         ${request.caseNumber},
-        ${request.caseType || 'spontaneous'},
-        ${request.reportType || 'initial'},
+        ${request.caseType},
+        ${request.reportType},
         ${request.eventDate}::date,
         ${request.eventDatePrecision || 'day'},
         ${request.receiveDate}::date,
-        ${request.isSerious ?? false},
+        ${request.isSerious},
         ${request.seriousnessCriteria?.death ?? false},
         ${request.seriousnessCriteria?.life_threatening ?? false},
         ${request.seriousnessCriteria?.hospitalization ?? false},
@@ -1215,7 +1280,7 @@ export class GRDHEService {
         ${JSON.stringify(request.reporter)}::jsonb,
         ${request.caseNarrative || null},
         ${request.status || 'draft'},
-        ${userId}
+        ${by}
       )
       RETURNING id
     `);
@@ -1223,12 +1288,15 @@ export class GRDHEService {
     const eventId = (result.rows[0] as any).id;
 
     await this.logAudit(
-      'canonical_adverse_events',
-      eventId,
-      'INSERT',
-      null,
-      request as any,
-      'Adverse event created'
+      {
+        tableName: 'canonical_adverse_events',
+        recordId: eventId,
+        action: 'INSERT',
+        oldData: null,
+        newData: request as any,
+        reason: 'Adverse event created',
+      },
+      by
     );
 
     return this.getCanonicalAdverseEvent(request.tenantId, request.caseNumber);
@@ -1388,25 +1456,34 @@ export class GRDHEService {
    * Log audit entry
    */
   async logAudit(
-    tableName: string,
-    recordId: string,
-    action: string,
-    oldData: Record<string, any> | null,
-    newData: Record<string, any> | null,
-    reason?: string
+    entry: {
+      tableName: string;
+      recordId: string;
+      action: string;
+      oldData: Record<string, any> | null;
+      newData: Record<string, any> | null;
+      reason?: string;
+    },
+    actor: string
   ): Promise<void> {
-    const userId = getCurrentUserId();
+    const by = requireActor(actor);
 
-    await db.execute(sql`
-      SELECT regulatory_harmonization.log_audit(
-        ${tableName},
-        ${recordId}::uuid,
-        ${action},
-        ${oldData ? JSON.stringify(oldData) : null}::jsonb,
-        ${newData ? JSON.stringify(newData) : null}::jsonb,
-        ${reason || null}
-      )
-    `);
+    // log_audit() takes no actor: audit_log.user_id defaults to
+    // app.current_user_id, which nothing set, so every row read 'system'
+    // (2026-10-15). It is set for this transaction only.
+    await db.transaction(async tx => {
+      await tx.execute(sql`SELECT set_config('app.current_user_id', ${by}, true)`);
+      await tx.execute(sql`
+        SELECT regulatory_harmonization.log_audit(
+          ${entry.tableName},
+          ${entry.recordId}::uuid,
+          ${entry.action},
+          ${entry.oldData ? JSON.stringify(entry.oldData) : null}::jsonb,
+          ${entry.newData ? JSON.stringify(entry.newData) : null}::jsonb,
+          ${entry.reason || null}
+        )
+      `);
+    });
   }
 
   /**
