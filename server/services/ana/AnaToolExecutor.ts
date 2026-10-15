@@ -13304,12 +13304,15 @@ registerToolHandler('review_ha_interaction', async (input, ctx) => {
   const client = await getPool().connect();
   try {
     const r = await getInteractionReadinessInput(client, ctx.organizationId, interactionId);
-    const { ready, findings } = evaluateMeetingReadiness(r as any);
+    const { ready, findings, note } = evaluateMeetingReadiness(r as any);
+    const gaps = findings.filter((f) => f.severity !== 'minor');
     return JSON.stringify({
-      ok: true, ready, findings,
-      message: ready
-        ? `Interaction ${interactionId} is meeting-ready.`
-        : `Interaction ${interactionId} is NOT ready — ${findings.filter((f) => f.severity === 'critical').length} critical gap(s): ${findings.map((f) => f.message).join('; ')}`,
+      ok: true, ready, findings, note,
+      message: ready === null
+        ? `Interaction ${interactionId}: readiness not assessed — ${note}`
+        : ready
+          ? `Interaction ${interactionId} is meeting-ready.`
+          : `Interaction ${interactionId} is NOT ready — ${gaps.length} gap(s): ${gaps.map((f) => f.message).join('; ')}`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_ha_interaction failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13326,11 +13329,13 @@ registerToolHandler('prepare_meeting_package', async (input, ctx) => {
   try {
     const p = await prepareMeetingPackage(ctx.organizationId, interactionId);
     return JSON.stringify({
-      ok: true, interactionId, ready: p.ready, findings: p.findings,
+      ok: true, interactionId, ready: p.ready, readinessNote: p.readinessNote, findings: p.findings,
       questionCount: p.questionCount, openQuestions: p.openQuestions, outstandingCommitments: p.outstandingCommitments, overdueCommitments: p.overdueCommitments, actions: p.actions,
-      message: p.ready
-        ? `${p.interactionType} meeting is ready — ${p.questionCount} question(s), ${p.outstandingCommitments} open commitment(s).`
-        : `${p.interactionType} meeting is NOT ready — ${p.actions.length} action(s): ${p.actions.slice(0, 4).join('; ')}${p.actions.length > 4 ? '…' : ''}`,
+      message: p.ready === null
+        ? `${p.interactionType} meeting readiness not assessed — ${p.readinessNote}`
+        : p.ready
+          ? `${p.interactionType} meeting is ready — ${p.questionCount} question(s), ${p.outstandingCommitments} open commitment(s).`
+          : `${p.interactionType} meeting is NOT ready — ${p.actions.length} action(s): ${p.actions.slice(0, 4).join('; ')}${p.actions.length > 4 ? '…' : ''}`,
     });
   } catch (err) {
     return JSON.stringify({ error: `prepare_meeting_package failed: ${err instanceof Error ? err.message : String(err)}` });
