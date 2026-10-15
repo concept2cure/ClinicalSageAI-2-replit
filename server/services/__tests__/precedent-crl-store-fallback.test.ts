@@ -68,7 +68,9 @@ describe('every family falls back rather than ever reporting no risk', () => {
         : { rows: [] });
     const result = await precedentEngine.analyzeAdvisoryCommitteeRisk(INPUT);
     expect(result.totalTriggers).toBeGreaterThan(0);
-    expect(result.overallAdcomRisk).not.toBe('low');
+    // No overall risk is computed from uncited probabilities any more
+    // (precedent-checklists-no-uncited-figures.test.ts).
+    expect(result).not.toHaveProperty('overallAdcomRisk');
     expect(result.triggers.every((t) => t.evidenceBasis === 'curated')).toBe(true);
     expect(query.mock.calls.some((c) => String(c[0]).includes('advisory_committee_patterns'))).toBe(false);
   });

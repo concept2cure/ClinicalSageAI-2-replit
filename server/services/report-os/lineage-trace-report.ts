@@ -364,7 +364,9 @@ export function dossierToRenderedReport(
           dossier.provenanceEvents.map((e) => [
             e.eventType,
             e.eventAction,
-            e.actorName ?? 'system',
+            // An actor the event did not record is not "system" — this sealed
+            // report named one for every such event (2026-10-15).
+            e.actorName ?? 'not recorded',
             e.createdAt,
           ]),
           eventAtoms,

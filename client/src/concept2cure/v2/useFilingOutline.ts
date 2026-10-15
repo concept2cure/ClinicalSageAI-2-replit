@@ -166,13 +166,13 @@ export interface FilingOutlineState {
  */
 export function useFilingOutline(projectId: string | null): FilingOutlineState {
   const docs = useLiveData<DocumentsResponse>(
-    projectId ? `/api/c2c/documents?projectId=${encodeURIComponent(projectId)}` : null,
+    projectId ? `/api/c2c/documents?projectId=${encodeURIComponent(projectId)}&scope=home` : null,
     [projectId],
   );
 
-  // The project's governed document. More than one is possible in principle;
-  // the newest by the server's own `updated_at DESC` ordering is the one the
-  // editor should open.
+  // The project's governed document: its home filing (scope=home). An added
+  // market's regional modules are their own document (F22) and are not this
+  // outline; the newest home document by `updated_at DESC` is the one opened.
   const documentId = docs.data?.documents?.[0]?.id ?? null;
 
   const outline = useLiveData<OutlineResponse>(

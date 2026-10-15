@@ -35,7 +35,7 @@
  */
 
 import type { PoolClient, Pool } from 'pg';
-import { resolveDocumentClass, describeUnmappedClass } from './document-class.js';
+import { AGENCY_FALLBACKS, resolveDocumentClass, describeUnmappedClass } from './document-class.js';
 
 /** Minimal shape shared by Pool and PoolClient — this module needs only query. */
 type Queryable = Pick<Pool | PoolClient, 'query'>;
@@ -97,14 +97,17 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
 
   // The project's governed document of this class. Newest first so a project
   // that has been re-scaffolded binds to the current filing rather than a
-  // superseded one.
+  // superseded one. Only its home agency or a harmonised fallback (2026-10-15,
+  // FILING_SPINE F22): an added market's document of the same class carries
+  // the market's agency and holds only its regional modules, so it is never
+  // the home filing.
   const doc = await db.query<{ id: string }>(
     `SELECT id
        FROM c2c_documents
-      WHERE project_id = $1 AND org_id = $2 AND doc_type = $3
+      WHERE project_id = $1 AND org_id = $2 AND doc_type = $3 AND agency = ANY($4::text[])
       ORDER BY created_at DESC
       LIMIT 1`,
-    [projectId, orgId, klass.docType],
+    [projectId, orgId, klass.docType, [klass.agency, ...AGENCY_FALLBACKS]],
   );
   if (doc.rows.length === 0) {
     return {

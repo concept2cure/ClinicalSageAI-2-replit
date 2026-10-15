@@ -176,7 +176,10 @@ async function persistDecision(decision: FormalDecisionRecord): Promise<boolean>
       recommendationType: 'regulatory_strategy',
       recommendationSummary: decision.summary,
       recommendationRationale: decision.rationale,
-      confidenceLevel: decision.sourceSignals.length > 2 ? 'high' : 'moderate',
+      // A formal decision records no confidence. This wrote 'high' for more
+      // than two source signals and 'moderate' otherwise — a count, recorded
+      // as a confidence (2026-10-15).
+      confidenceLevel: null,
       decidedBy: decision.createdById || decision.createdByType || 'system',
       notes: JSON.stringify({
         kind: decision.kind,

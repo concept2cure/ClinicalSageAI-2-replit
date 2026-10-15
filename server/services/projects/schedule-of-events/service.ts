@@ -150,14 +150,6 @@ function toColumnStatus(s: ScheduleStatus): string {
   }
 }
 
-function isMissingTable(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    (err as { code?: string }).code === '42P01'
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Loaders
@@ -332,26 +324,25 @@ async function recordRevision(params: {
 // Public read
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * A schedule store that cannot be read is an error, not a project with no
+ * schedule. A missing table (42P01) answered `plan: null` with no milestones,
+ * which the surface and AnA read as "no schedule has been generated" — on a
+ * database the drizzle schema should have provisioned (2026-10-15).
+ */
 export async function getScheduleOfEvents(
   orgId: number,
   projectId: number,
 ): Promise<ScheduleOfEventsView> {
   const now = new Date();
-  try {
-    const [plan, milestoneRows, goals, revisions] = await Promise.all([
-      loadPlan(orgId, projectId),
-      loadMilestoneRows(orgId, projectId),
-      loadGoals(orgId, projectId),
-      loadRevisions(orgId, projectId),
-    ]);
-    const milestones = milestoneRows.map((r) => milestoneFromRow(r, now));
-    return { plan, milestones, goals, revisions, health: healthFromMilestones(milestones, now) };
-  } catch (err) {
-    if (isMissingTable(err)) {
-      return { plan: null, milestones: [], goals: [], revisions: [], health: healthFromMilestones([], now) };
-    }
-    throw err;
-  }
+  const [plan, milestoneRows, goals, revisions] = await Promise.all([
+    loadPlan(orgId, projectId),
+    loadMilestoneRows(orgId, projectId),
+    loadGoals(orgId, projectId),
+    loadRevisions(orgId, projectId),
+  ]);
+  const milestones = milestoneRows.map((r) => milestoneFromRow(r, now));
+  return { plan, milestones, goals, revisions, health: healthFromMilestones(milestones, now) };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
