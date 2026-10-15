@@ -45,6 +45,11 @@ export interface FeeEstimateInput {
   requiresClinicalData?: boolean;
   /** Orphan designation — exempts the marketing-application fee in FDA/EMA (and others). */
   orphan?: boolean;
+  /**
+   * The orphan screen is met but no designation is recorded: the lines an orphan
+   * designation would waive are charged in full and labelled so. Ignored when `orphan` is true.
+   */
+  orphanScreenMet?: boolean;
   /** Small-business / SME status — FDA small-business waiver; EMA SME fee reductions. */
   smallBusiness?: boolean;
   /** Number of years of the annual program/maintenance fee to include (default 1). */
@@ -84,13 +89,17 @@ export function estimateFees(input: FeeEstimateInput): FeeEstimate {
   const appFeeAmount = input.requiresClinicalData === false ? sched.applicationNoClinicalData : sched.applicationWithClinicalData;
 
   // The marketing-application fee is waived for an orphan product (FDA/EMA) or a
-  // qualifying small business (FDA first application).
+  // qualifying small business (FDA first application). A met orphan screen is not
+  // a designation: those lines stay charged and say what would waive them.
+  const ifDesignatedNote = !input.orphan && input.orphanScreenMet
+    ? 'Would be waived if orphan-designated: the orphan screen is met, but no designation is recorded, so it is charged here.'
+    : undefined;
   const appWaived = Boolean(input.orphan) || Boolean(input.smallBusiness);
   const appNote = input.orphan
     ? 'Waived — orphan-designated product (application fee exemption).'
     : input.smallBusiness
       ? 'Waived — small-business / SME waiver.'
-      : undefined;
+      : ifDesignatedNote;
 
   const lineItems: FeeLineItem[] = [
     {
@@ -107,7 +116,7 @@ export function estimateFees(input: FeeEstimateInput): FeeEstimate {
       amount: sched.annualProgramFee * programYears,
       // Orphan products are exempt from the FDA program fee; small business is not.
       waived: Boolean(input.orphan),
-      note: input.orphan ? 'Waived — orphan exemption from the program fee.' : undefined,
+      note: input.orphan ? 'Waived — orphan exemption from the program fee.' : ifDesignatedNote,
     });
   }
 

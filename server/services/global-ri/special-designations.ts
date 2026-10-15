@@ -12,8 +12,8 @@
  * Markets: FDA (US), EMA (EU centralised), PMDA (JP). The criteria capture the
  * core statutory thresholds; sponsor regulatory affairs and the agency remain
  * the authority for edge cases (this is a readiness aid, honest-by-construction).
- * Where the inputs needed to judge a market's orphan threshold are not supplied,
- * the assessor declines to guess and reports "prevalence not supplied".
+ * Where a fact a market's orphan screen needs is not supplied, the assessor
+ * declines to guess: the screen is 'not_assessed' and names the missing facts.
  *
  * Pure / deterministic — no DB, no IO.
  *
@@ -107,9 +107,16 @@ export interface DesignationInput {
 }
 
 export interface OrphanAssessment {
-  eligible: boolean;
+  /**
+   * The orphan screen on the stated facts (not a designation, which only the
+   * agency grants): true when met, false when a stated fact fails it,
+   * 'not_assessed' when a fact it needs was not stated (see `missing`).
+   */
+  eligible: boolean | 'not_assessed';
   program: string;
   rationale: string;
+  /** The inputs the screen needed that were not stated. Empty when none. */
+  missing: (keyof DesignationInput)[];
 }
 
 export interface PediatricAssessment {
@@ -131,10 +138,11 @@ export interface DesignationResult {
 /**
  * Assess orphan + pediatric designation eligibility for a market.
  *
- * Orphan eligibility applies the market's statutory threshold. When the
- * prevalence input required to judge that market is not supplied, orphan is
- * reported as not eligible with rationale "prevalence not supplied" rather than
- * guessing. Pediatric assessment is produced when pediatricDevelopment is true.
+ * Orphan eligibility applies the market's statutory threshold. A criterion fails
+ * only when a stated fact fails it; when a fact the screen needs is not supplied
+ * (and none fails), orphan is 'not_assessed' with the missing inputs named,
+ * rather than guessed. Pediatric assessment is produced when pediatricDevelopment
+ * is true.
  *
  * Pure / deterministic. Designations and notes are sorted for stable output.
  */
@@ -144,7 +152,7 @@ export function assessDesignationEligibility(input: DesignationInput): Designati
   const designations: string[] = [];
 
   const orphan = assessOrphan(input, ref, notes);
-  if (orphan.eligible) {
+  if (orphan.eligible === true) {
     designations.push(orphan.program);
   }
 
@@ -176,15 +184,20 @@ function assessOrphan(
 ): OrphanAssessment {
   const program = ref.orphanProgram;
 
+  // 2026-10-15: a missing prevalence returned eligible:false (a "no" for a screen
+  // that was never run), and the EMA criteria were read with `=== true`, so an
+  // unstated fact was reported as unmet ("not life-threatening/seriously
+  // debilitating"). A criterion is now unmet only when a stated fact fails it.
   if (input.market === 'FDA') {
     if (input.usPrevalence == null) {
-      return { eligible: false, program, rationale: 'US prevalence not supplied; orphan eligibility cannot be assessed.' };
+      return { eligible: 'not_assessed', program, rationale: 'US prevalence not supplied; orphan eligibility cannot be assessed.', missing: ['usPrevalence'] };
     }
     if (input.usPrevalence < 200000) {
       return {
         eligible: true,
         program,
         rationale: `US prevalence ${input.usPrevalence} is fewer than 200,000 — meets the FDA Orphan Drug Designation threshold.`,
+        missing: [],
       };
     }
     notes.push('FDA orphan status may still be possible via the cost-recovery prong if US sales cannot recover development/marketing costs.');
@@ -192,37 +205,15 @@ function assessOrphan(
       eligible: false,
       program,
       rationale: `US prevalence ${input.usPrevalence} is not fewer than 200,000 — does not meet the FDA Orphan Drug Designation prevalence threshold.`,
+      missing: [],
     };
   }
 
-  if (input.market === 'EMA') {
-    if (input.euPrevalencePer10k == null) {
-      return { eligible: false, program, rationale: 'EU prevalence (per 10,000) not supplied; orphan eligibility cannot be assessed.' };
-    }
-    const meetsPrevalence = input.euPrevalencePer10k <= 5;
-    const serious = input.seriousOrLifeThreatening === true;
-    const benefitOrNeed = input.noSatisfactoryTreatment === true || input.significantBenefit === true;
-    if (meetsPrevalence && serious && benefitOrNeed) {
-      return {
-        eligible: true,
-        program,
-        rationale: `EU prevalence ${input.euPrevalencePer10k} per 10,000 (≤ 5), condition is life-threatening/seriously debilitating, and (no satisfactory method or significant benefit) — meets EMA orphan criteria.`,
-      };
-    }
-    const unmet: string[] = [];
-    if (!meetsPrevalence) unmet.push(`prevalence ${input.euPrevalencePer10k} per 10,000 exceeds 5`);
-    if (!serious) unmet.push('not life-threatening/seriously debilitating');
-    if (!benefitOrNeed) unmet.push('neither "no satisfactory method" nor "significant benefit" is established');
-    return {
-      eligible: false,
-      program,
-      rationale: `Does not meet EMA orphan criteria: ${unmet.join('; ')}.`,
-    };
-  }
+  if (input.market === 'EMA') return assessEmaOrphan(input, program);
 
   // PMDA
   if (input.jpPrevalence == null) {
-    return { eligible: false, program, rationale: 'Japan prevalence not supplied; orphan eligibility cannot be assessed.' };
+    return { eligible: 'not_assessed', program, rationale: 'Japan prevalence not supplied; orphan eligibility cannot be assessed.', missing: ['jpPrevalence'] };
   }
   if (input.jpPrevalence < 50000) {
     notes.push('PMDA orphan designation also requires high medical need (severe disease, no satisfactory alternative) — confirm qualitatively.');
@@ -230,12 +221,50 @@ function assessOrphan(
       eligible: true,
       program,
       rationale: `Japan prevalence ${input.jpPrevalence} is fewer than 50,000 — meets the PMDA orphan prevalence threshold (high medical need also required).`,
+      missing: [],
     };
   }
   return {
     eligible: false,
     program,
     rationale: `Japan prevalence ${input.jpPrevalence} is not fewer than 50,000 — does not meet the PMDA orphan prevalence threshold.`,
+    missing: [],
+  };
+}
+
+/** EMA orphan screen: prevalence ≤ 5 in 10,000 AND serious AND (no satisfactory method OR significant benefit). */
+function assessEmaOrphan(input: DesignationInput, program: string): OrphanAssessment {
+  const unmet: string[] = [];
+  const missing: (keyof DesignationInput)[] = [];
+  if (input.euPrevalencePer10k == null) missing.push('euPrevalencePer10k');
+  else if (input.euPrevalencePer10k > 5) unmet.push(`prevalence ${input.euPrevalencePer10k} per 10,000 exceeds 5`);
+  if (input.seriousOrLifeThreatening === false) unmet.push('not life-threatening/seriously debilitating');
+  else if (input.seriousOrLifeThreatening !== true) missing.push('seriousOrLifeThreatening');
+  // Either prong satisfies the benefit/need criterion; it fails only when both are stated false.
+  if (input.noSatisfactoryTreatment !== true && input.significantBenefit !== true) {
+    if (input.noSatisfactoryTreatment === false && input.significantBenefit === false) {
+      unmet.push('neither "no satisfactory method" nor "significant benefit" is established');
+    } else {
+      if (typeof input.noSatisfactoryTreatment !== 'boolean') missing.push('noSatisfactoryTreatment');
+      if (typeof input.significantBenefit !== 'boolean') missing.push('significantBenefit');
+    }
+  }
+  if (unmet.length > 0) {
+    return { eligible: false, program, rationale: `Does not meet EMA orphan criteria: ${unmet.join('; ')}.`, missing };
+  }
+  if (missing.length > 0) {
+    return {
+      eligible: 'not_assessed',
+      program,
+      rationale: `EMA orphan criteria cannot be assessed; not supplied: ${missing.join(', ')}.`,
+      missing,
+    };
+  }
+  return {
+    eligible: true,
+    program,
+    rationale: `EU prevalence ${input.euPrevalencePer10k} per 10,000 (≤ 5), condition is life-threatening/seriously debilitating, and (no satisfactory method or significant benefit) — meets EMA orphan criteria.`,
+    missing: [],
   };
 }
 

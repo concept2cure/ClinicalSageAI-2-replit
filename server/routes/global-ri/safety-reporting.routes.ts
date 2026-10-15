@@ -24,6 +24,7 @@ router.get('/safety-reporting/timelines/:region', limiter, requireRole(AUTHOR), 
 /**
  * Classify an adverse event for expedited reportability + timeline.
  * Body: { region, serious?, unexpected?, suspectedCausality?, fatalOrLifeThreatening? }.
+ * An unstated criterion comes back in `missing` with reportable 'not_assessed', never as failed.
  */
 router.post('/safety-reporting/classify', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
   const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;

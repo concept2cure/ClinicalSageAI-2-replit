@@ -16,13 +16,20 @@
 
 import { recommendPathway, type ProductType, type Market } from './regulatory-pathway-advisor';
 import { assessDesignationEligibility, type DesignationResult } from './special-designations';
-import { matchExpeditedPrograms, type Region as ExpeditedRegion } from './expedited-programs';
+import { matchExpeditedPrograms, type MatchFact, type Region as ExpeditedRegion } from './expedited-programs';
 import { recommendMeetings, type DevelopmentMilestone, type MeetingType } from './ha-meetings';
 import { getRegionalModule1Requirements, type Module1Component, type RegulatoryMarket } from './regional-module1-requirements';
 import { getCtaRequirements, type CtaComponent, type CtaMarket } from './clinical-trial-application-requirements';
 import { getLabelingRequirements, type LabelingSection, type LabelMarket } from './labeling-requirements';
 import { estimateFees, type FeeEstimate, type FeeMarket } from './regulatory-fee-estimator';
-import { computeExclusivity, type ExclusivityResult, type ExclusivityMarket, type ProductClass } from './exclusivity-periods';
+import {
+  computeExclusivity,
+  type ExclusivityComponent,
+  type ExclusivityInput,
+  type ExclusivityResult,
+  type ExclusivityMarket,
+  type ProductClass,
+} from './exclusivity-periods';
 import { assessPediatricPlan, type PediatricMarket, type PediatricPlanAssessment } from './pediatric-requirements';
 import { getPvObligations, type PvMarket, type PvObligations } from './pharmacovigilance-obligations';
 
@@ -77,18 +84,28 @@ export interface StrategyBriefInput {
   pediatricDevelopment?: boolean;
 }
 
+/** An exclusivity component the program could add, with what it waits on. Never counted in bindingMonths. */
+export interface PotentialExclusivityComponent extends ExclusivityComponent {
+  condition: string;
+}
+
 export interface MarketStrategy {
   market: Market;
   agency: string;
   pathway: { clinicalTrialPathway: string; marketingApplication: string; agency: string; notes?: string };
   designations: DesignationResult | null;
-  expeditedPrograms: { eligible: { name: string }[]; count: number } | null;
+  /** Programs screened eligible on the stated facts, and those not assessed because a fact they need was not stated. */
+  expeditedPrograms: { eligible: { name: string }[]; count: number; notAssessed: { name: string; missing: MatchFact[] }[] } | null;
   recommendedMeetings: MeetingType[];
   module1Checklist: Module1Component[];
   ctaRequirements: CtaComponent[];
   labelingRequirements: LabelingSection[];
+  /** Indicative fees with no designation recorded: charged in full; lines an orphan designation would waive say so. */
   feeEstimate: FeeEstimate | null;
+  /** The statutory exclusivity for the product class on approval; no orphan designation or pediatric extension counted. */
   exclusivity: ExclusivityResult | null;
+  /** Orphan exclusivity / pediatric extension the program could add, each with its condition. Null where exclusivity is not modeled. */
+  potentialExclusivity: PotentialExclusivityComponent[] | null;
   pediatricRequirements: PediatricPlanAssessment | null;
   pharmacovigilance: PvObligations | null;
 }
@@ -99,12 +116,56 @@ export interface RegulatoryStrategyBrief {
   markets: MarketStrategy[];
   summary: {
     marketCount: number;
+    /** Agencies whose orphan screen is met on the stated facts (a screen, not a designation). */
     orphanEligibleMarkets: string[];
-    totalExpeditedPrograms: number;
-    /** The longest binding exclusivity across markets (months), or 0 if none modeled. */
-    maxExclusivityMonths: number;
+    /** Agencies whose orphan screen was not assessed: a fact it needs was not stated. */
+    orphanNotAssessedMarkets: string[];
+    /** Expedited programs screened eligible on the stated facts, or null when no target market models them. */
+    totalExpeditedPrograms: number | null;
+    /** Expedited programs not assessed because a fact they need was not stated, or null when no target market models them. */
+    expeditedProgramsNotAssessed: number | null;
+    /**
+     * The longest statutory exclusivity across the markets that model it (months;
+     * potential extensions excluded), or null when no target market models it.
+     */
+    maxExclusivityMonths: number | null;
   };
   generalNotes: string[];
+}
+
+const ORPHAN_EXCLUSIVITY_CONDITION =
+  'If orphan designation is granted and still holds at approval: the orphan screen is met on the stated facts, but no designation is recorded.';
+const PEDIATRIC_EXTENSION_CONDITION =
+  'If the pediatric studies are completed and the extension is granted: pediatric development is declared, but no extension is earned.';
+
+/**
+ * The orphan exclusivity and pediatric extension a program could add on top of
+ * the statutory base, each with the condition it waits on. The exclusivity
+ * engine decides whether a market's extension applies; the components it adds
+ * are listed here and kept out of the base result's bindingMonths.
+ */
+function listPotentialExclusivity(
+  base: Pick<ExclusivityInput, 'market' | 'productClass'>,
+  baseResult: ExclusivityResult,
+  orphanScreenMet: boolean,
+  pediatricDeclared: boolean,
+): PotentialExclusivityComponent[] {
+  const added = (from: ExclusivityResult, to: ExclusivityResult): ExclusivityComponent[] => {
+    const had = new Set(from.components.map((c) => c.type));
+    return to.components.filter((c) => !had.has(c.type));
+  };
+  const potential: PotentialExclusivityComponent[] = [];
+  let reached = baseResult;
+  if (orphanScreenMet) {
+    const withOrphan = computeExclusivity({ ...base, orphan: true });
+    potential.push(...added(reached, withOrphan).map((c) => ({ ...c, condition: ORPHAN_EXCLUSIVITY_CONDITION })));
+    reached = withOrphan;
+  }
+  if (pediatricDeclared) {
+    const withPediatric = computeExclusivity({ ...base, orphan: orphanScreenMet, pediatricExtension: true });
+    potential.push(...added(reached, withPediatric).map((c) => ({ ...c, condition: PEDIATRIC_EXTENSION_CONDITION })));
+  }
+  return potential;
 }
 
 /**
@@ -139,6 +200,8 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
         pediatricDevelopment: input.pediatricDevelopment,
       });
     }
+    // A met screen only: nothing in the brief records a granted designation.
+    const orphanScreenMet = designations?.orphan.eligible === true;
 
     // Expedited programs (FDA/EMA/PMDA).
     let expeditedPrograms: MarketStrategy['expeditedPrograms'] = null;
@@ -150,7 +213,8 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
         substantialImprovementOverExisting: disease.significantBenefit,
       });
       const list = match.eligible.map((e) => ({ name: e.name }));
-      expeditedPrograms = { eligible: list, count: list.length };
+      const notAssessed = match.notAssessed.map((p) => ({ name: p.name, missing: p.missing }));
+      expeditedPrograms = { eligible: list, count: list.length, notAssessed };
     }
 
     // HA meetings for the next milestone.
@@ -166,21 +230,25 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
     // CTA/IND requirements, labeling sections, and an indicative fee estimate.
     const ctaRequirements = CTA_MARKETS.has(agency) ? getCtaRequirements(agency as CtaMarket) : [];
     const labelingRequirements = LABELING_MARKETS.has(agency) ? getLabelingRequirements(agency as LabelMarket) : [];
+    // 2026-10-15: fees and exclusivity were given `orphan: designations.orphan.eligible`
+    // and `pediatricExtension: input.pediatricDevelopment`, so a met prevalence screen
+    // was costed as a held designation (fees "Waived — orphan-designated product",
+    // total 0) and a declared intent as an earned extension (EU 144 months). Nothing
+    // here records a designation or completed pediatric studies: fees are charged in
+    // full, and orphan exclusivity / the pediatric extension are listed as potential.
     const feeEstimate = FEE_MARKETS.has(agency)
-      ? estimateFees({ market: agency as FeeMarket, orphan: designations?.orphan.eligible })
+      ? estimateFees({ market: agency as FeeMarket, orphanScreenMet })
       : null;
 
-    // Regulatory exclusivity + projected LOE (FDA/EMA/PMDA). Orphan status flows
-    // from the per-market designation result; pediatric extension follows the
-    // declared pediatric-development intent.
-    const exclusivity = EXCLUSIVITY_MARKETS.has(agency)
-      ? computeExclusivity({
-          market: agency as ExclusivityMarket,
-          productClass: PRODUCT_CLASS_BY_TYPE[input.productType],
-          orphan: designations?.orphan.eligible,
-          pediatricExtension: input.pediatricDevelopment,
-        })
-      : null;
+    // Regulatory exclusivity (FDA/EMA/PMDA): the statutory base for the product
+    // class, with what the program could add listed separately.
+    let exclusivity: ExclusivityResult | null = null;
+    let potentialExclusivity: PotentialExclusivityComponent[] | null = null;
+    if (EXCLUSIVITY_MARKETS.has(agency)) {
+      const exclusivityBase = { market: agency as ExclusivityMarket, productClass: PRODUCT_CLASS_BY_TYPE[input.productType] };
+      exclusivity = computeExclusivity(exclusivityBase);
+      potentialExclusivity = listPotentialExclusivity(exclusivityBase, exclusivity, orphanScreenMet, input.pediatricDevelopment === true);
+    }
 
     // Pediatric study-plan obligation (PREA iPSP / EMA PIP) when pediatric
     // development is declared — surfaces the plan requirement, timing, and status.
@@ -207,25 +275,36 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
       labelingRequirements,
       feeEstimate,
       exclusivity,
+      potentialExclusivity,
       pediatricRequirements,
       pharmacovigilance,
     };
   });
 
-  const orphanEligibleMarkets = markets.filter((m) => m.designations?.orphan.eligible).map((m) => m.agency);
-  const totalExpeditedPrograms = markets.reduce((n, m) => n + (m.expeditedPrograms?.count ?? 0), 0);
-  const maxExclusivityMonths = markets.reduce((n, m) => Math.max(n, m.exclusivity?.bindingMonths ?? 0), 0);
-
   return {
     productType: input.productType,
     targetMarkets: input.targetMarkets,
     markets,
-    summary: {
-      marketCount: markets.length,
-      orphanEligibleMarkets,
-      totalExpeditedPrograms,
-      maxExclusivityMonths,
-    },
+    summary: summarizeMarkets(markets),
     generalNotes: pathway.generalNotes ?? [],
+  };
+}
+
+/** The cross-market summary of the per-market sections. */
+function summarizeMarkets(markets: MarketStrategy[]): RegulatoryStrategyBrief['summary'] {
+  // 2026-10-15: unassessed orphan screens and expedited programs were folded into
+  // "none" (orphanEligibleMarkets [], totalExpeditedPrograms 0), and the totals
+  // were 0 when no target market models them.
+  const expedited = markets.flatMap((m) => (m.expeditedPrograms ? [m.expeditedPrograms] : []));
+  const modeledExclusivity = markets.flatMap((m) => (m.exclusivity ? [m.exclusivity.bindingMonths] : []));
+  return {
+    marketCount: markets.length,
+    orphanEligibleMarkets: markets.filter((m) => m.designations?.orphan.eligible === true).map((m) => m.agency),
+    orphanNotAssessedMarkets: markets
+      .filter((m) => m.designations?.orphan.eligible === 'not_assessed')
+      .map((m) => m.agency),
+    totalExpeditedPrograms: expedited.length > 0 ? expedited.reduce((n, e) => n + e.count, 0) : null,
+    expeditedProgramsNotAssessed: expedited.length > 0 ? expedited.reduce((n, e) => n + e.notAssessed.length, 0) : null,
+    maxExclusivityMonths: modeledExclusivity.length > 0 ? Math.max(...modeledExclusivity) : null,
   };
 }
