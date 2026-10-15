@@ -2927,6 +2927,16 @@ export const C2C_MIGRATION_FILES = [
   // was missing. Replayed twice on PGlite: 0 of 5 tables before, 5 of 5 after.
   // (report_subscriptions, the sixth 20260615 file, is created by the report-os
   // push.)
+  // 2026-10-15 (P-33): the two IND registers the one dispatch verdict now reads
+  // for every US IND sequence — the Letter of Authorization register (a missing
+  // LOA blocks, and an unreadable register blocks) and the safety-report
+  // register (an overdue report warns) — had the same gap: created only by
+  // their 20260614 files, which deploy-migrate never applied and drizzle-kit
+  // does not push. On a database without them every US IND sequence would read
+  // "register unreadable" and be blocked. CREATE TABLE/INDEX IF NOT EXISTS only,
+  // public, organization_id INTEGER NOT NULL, no later ALTER anywhere.
+  'migrations/20260614_ind_safety_reports.sql',
+  'migrations/20260614_ind_cross_references.sql',
   'migrations/20260615_ind_amendments.sql',
   'migrations/20260615_ind_annual_reports.sql',
   'migrations/20260615_ind_icsr_transmissions.sql',
