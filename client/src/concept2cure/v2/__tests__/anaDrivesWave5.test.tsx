@@ -17,7 +17,10 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+/* Partial: SubmissionCenter's reads key on the real authService session
+   (submissionScopedRead.ts, 1bd3af0bc), so only the hooks are stubbed. */
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
   useAuthUser: () => ({ id: 7, firstName: 'Ada' }),
 }));
