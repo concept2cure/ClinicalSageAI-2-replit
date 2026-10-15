@@ -126,6 +126,10 @@ export function createFeatureStore(category: string) {
           subcategory,
           title: title.slice(0, 500),
           content: JSON.stringify(data),
+          // Stated, not left to the column (2026-10-15): databases provisioned
+          // earlier still default it to 0.8, so every stored record claimed an
+          // 80% confidence nobody assessed.
+          confidenceScore: null,
           extractedBy: 'system',
           status: 'active',
         } as any)

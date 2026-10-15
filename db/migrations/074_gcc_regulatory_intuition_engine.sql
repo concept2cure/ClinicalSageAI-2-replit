@@ -18,6 +18,10 @@
 -- 'human_expert', with no expert, source or date recorded; removed, and the
 -- rows an earlier install wrote are withdrawn by
 -- migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql (deploy set).
+-- Also 2026-10-15: cortex.record_prediction_outcome stored 0.25 as the
+-- prediction error of any outcome other than approval, CRL or RTF, and scored
+-- predictions no model made (SECURITY DEFINER, no callers). It now refuses the
+-- same way; 20261015i replaces it on earlier installs too.
 
 BEGIN;
 
@@ -659,72 +663,19 @@ CREATE OR REPLACE FUNCTION cortex.record_prediction_outcome(
 )
 RETURNS VOID
 LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = cortex, pg_catalog
+SECURITY INVOKER
 AS $$
-DECLARE
-    v_predicted_outcome TEXT;
-    v_approval_prob NUMERIC;
-    v_crl_prob NUMERIC;
-    v_rtf_prob NUMERIC;
-    v_brier_score NUMERIC;
 BEGIN
-    -- Get prediction
-    SELECT
-        CASE
-            WHEN approval_probability >= crl_probability AND approval_probability >= rtf_probability THEN 'approval'
-            WHEN crl_probability >= approval_probability AND crl_probability >= rtf_probability THEN 'crl'
-            ELSE 'rtf'
-        END,
-        approval_probability, crl_probability, rtf_probability
-    INTO v_predicted_outcome, v_approval_prob, v_crl_prob, v_rtf_prob
-    FROM cortex.intuition_predictions
-    WHERE id = p_prediction_id;
-
-    -- Calculate Brier score component
-    v_brier_score := CASE p_actual_outcome
-        WHEN 'approval' THEN POWER(1 - v_approval_prob, 2)
-        WHEN 'crl' THEN POWER(1 - v_crl_prob, 2)
-        WHEN 'rtf' THEN POWER(1 - v_rtf_prob, 2)
-        ELSE 0.25 -- Unknown outcome
-    END;
-
-    -- Update prediction record
-    UPDATE cortex.intuition_predictions
-    SET actual_outcome = p_actual_outcome,
-        actual_action_date = p_actual_date,
-        outcome_recorded_at = NOW(),
-        prediction_error = v_brier_score
-    WHERE id = p_prediction_id;
-
-    -- Update pattern statistics
-    UPDATE cortex.rejection_patterns rp
-    SET
-        true_positive_count = CASE
-            WHEN rp.predicted_outcome = p_actual_outcome THEN true_positive_count + 1
-            ELSE true_positive_count
-        END,
-        false_positive_count = CASE
-            WHEN rp.predicted_outcome != p_actual_outcome THEN false_positive_count + 1
-            ELSE false_positive_count
-        END,
-        last_observed = NOW(),
-        precision_score = CASE
-            WHEN (true_positive_count + false_positive_count) > 0
-            THEN true_positive_count::NUMERIC / (true_positive_count + false_positive_count)
-            ELSE NULL
-        END
-    WHERE rp.id = ANY(
-        SELECT unnest(matched_pattern_ids)
-        FROM cortex.intuition_predictions
-        WHERE id = p_prediction_id
-    );
+    -- Amended in place 2026-10-15: see the note at the top of this file.
+    RAISE EXCEPTION 'cortex.record_prediction_outcome scores no prediction: no prediction model exists'
+        USING ERRCODE = 'feature_not_supported';
 END;
 $$;
 
 COMMENT ON FUNCTION cortex.record_prediction_outcome IS
-'Record the actual outcome of a prediction for model learning and pattern refinement.
-Updates pattern statistics and calculates prediction error.';
+'Refuses (feature_not_supported): no prediction model exists, so there is no prediction
+to score. It used to store 0.25 as the prediction error of any outcome other than
+approval, CRL or RTF, and counted pattern hits against predictions no model made.';
 
 -- ============================================================================
 -- SECTION 9: AUDIT TRIGGERS

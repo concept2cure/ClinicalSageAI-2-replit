@@ -9,6 +9,9 @@
 -- ============================================================================
 -- AMENDED 2026-10-15: section H (four invented organisations and a CRO
 -- contract between them) removed — see the note at H.
+-- business_model nullable: the C-48 bridge mirrors orgs whose model nobody
+-- recorded. It was NOT NULL; db/migrations/20260919_c48_stage1_identity_org_
+-- bridge.sql (deploy set) drops that NOT NULL where an earlier install made it.
 -- ============================================================================
 
 BEGIN;
@@ -74,8 +77,8 @@ CREATE TABLE IF NOT EXISTS identity.organizations (
     -- Basic Info
     legal_name TEXT NOT NULL,
     display_name TEXT,
-    business_model identity.org_business_model NOT NULL,
-    
+    business_model identity.org_business_model, -- NULL = not recorded (2026-10-15, see header)
+
     -- Contact
     headquarters_country TEXT,               -- ISO 3166-1 alpha-2
     headquarters_address JSONB,              -- Structured address

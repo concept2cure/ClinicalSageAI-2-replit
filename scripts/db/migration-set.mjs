@@ -3282,9 +3282,10 @@ export const C2C_MIGRATION_FILES = [
   // created them. Conditional on the table and the live shape; creates nothing.
   'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
 
-  // Four cortex engine functions stored fixed priors and random jitter as
-  // model output, or "no signals" for an extraction nothing ran (2026-10-15).
-  // Their creators, db/migrations/074_ and 076_gcc_*, are amended in place but
+  // Seven cortex engine functions stored fixed priors and random jitter as
+  // model output, "no signals" for an extraction nothing ran, an invented
+  // prediction error, a 0.5 similarity or fixed risk bands (2026-10-15).
+  // Their creators, db/migrations/074_, 076_ and 078_gcc_*, are amended in place but
   // run on install-fresh only; this replaces the functions on databases
   // installed earlier. Conditional on each function existing; creates nothing.
   'migrations/20261015i_cortex_engine_functions_refuse.sql',
@@ -3305,6 +3306,14 @@ export const C2C_MIGRATION_FILES = [
   // earlier. Conditional on the table and the live column shape; keeps stored
   // scores; creates nothing, drops nothing.
   'migrations/20261015k_canonical_facts_confidence_unscored.sql',
+
+  // client_memory_entries / project_memory_entries.confidence_score defaulted
+  // to 0.8, so a memory entry whose writer stated no confidence claimed 80%
+  // (2026-10-15). The creator, shared/schema.ts, dropped the default, but it is
+  // pushed by install-fresh only; this drops it on databases provisioned
+  // earlier. Conditional on each table and the live default; keeps stored
+  // scores; nothing in the set re-creates the default; creates nothing.
+  'migrations/20261015l_memory_confidence_no_default.sql',
 
   // evidence_claims.confidence was NOT NULL DEFAULT 0.50, so an unscored claim
   // (and the governed fact established from it) read back at 0.5; and

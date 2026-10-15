@@ -24,6 +24,11 @@
 -- DO NOTHING, two conditional UPDATEs below correct the rows it wrote on earlier
 -- deploys: the count wherever it differs from the steps, the duration only where
 -- it is still the seeded text. A replay matches nothing.
+-- Also 2026-10-15: the method-validation template's description cited ICH
+-- Q2(R1), which Q2(R2) replaced at Step 4 on 2023-11-01; the citation label now
+-- names Q2(R2). The templates carry no version (one row per slug at
+-- organization_id 0), so a third conditional UPDATE rewrites the row an earlier
+-- deploy seeded, only where it still holds the exact seeded text.
 --
 -- CMC Playbook schema — the five tables /api/cmc/blueprint/playbook/* queries.
 --
@@ -201,7 +206,7 @@ INSERT INTO cmc_workflows (id, organization_id, name, description, category, tot
 ('ind-cmc-template', 0, 'IND CMC Package', 'Complete Chemistry, Manufacturing, and Controls package for IND submission', 'submission', 6, 'high', '{"steps": ["Drug Substance Characterization", "Manufacturing Process", "Container Closure", "Stability Protocol", "Analytical Methods", "Quality Specifications"]}'),
 ('nda-cmc-template', 0, 'NDA/BLA CMC Module 3', 'Comprehensive Module 3 Quality section for NDA/BLA submission', 'submission', 4, 'critical', '{"steps": ["3.2.S Drug Substance", "3.2.P Drug Product", "3.2.A Appendices", "Regional Requirements"]}'),
 ('annual-product-review-template', 0, 'Annual Product Review (APR)', 'EU Annual Product Review for marketing authorization maintenance', 'post-market', 5, 'high', '{"steps": ["Quality Review", "Non-clinical Review", "Clinical Review", "Risk Assessment", "Benefit-Risk Analysis"]}'),
-('method-validation-template', 0, 'Analytical Method Validation', 'ICH Q2(R1) compliant analytical method validation protocol', 'analytical', 8, 'high', '{"steps": ["Specificity", "Linearity", "Accuracy", "Precision", "Detection Limit", "Quantitation Limit", "Robustness", "System Suitability"]}'),
+('method-validation-template', 0, 'Analytical Method Validation', 'ICH Q2(R2) compliant analytical method validation protocol', 'analytical', 8, 'high', '{"steps": ["Specificity", "Linearity", "Accuracy", "Precision", "Detection Limit", "Quantitation Limit", "Robustness", "System Suitability"]}'),
 ('qbd-development-template', 0, 'Quality by Design Development', 'ICH Q8/Q9/Q10 QbD approach for pharmaceutical development', 'development', 6, 'high', '{"steps": ["QTPP Definition", "CQA Identification", "Risk Assessment", "DOE Studies", "Control Strategy", "Lifecycle Management"]}'),
 ('change-control-template', 0, 'Post-Approval Change Control', 'ICH Q12 compliant change control and variation management', 'change-control', 6, 'high', '{"steps": ["Change Classification", "Risk Assessment", "Impact Analysis", "Validation Studies", "Regulatory Filing", "Implementation"]}'),
 ('tech-transfer-template', 0, 'Technology Transfer', 'Manufacturing site technology transfer and qualification', 'manufacturing', 6, 'critical', '{"steps": ["Transfer Protocol", "Process Qualification", "Method Transfer", "Validation Studies", "Site Assessment", "Documentation"]}'),
@@ -245,6 +250,14 @@ UPDATE cmc_workflows w
  WHERE w.organization_id = 0
    AND w.id = s.id
    AND w.estimated_time = s.seeded_time;
+
+-- The superseded Q2(R1) citation (see the note at the top), only where the row
+-- still holds the exact text the seed wrote.
+UPDATE cmc_workflows
+   SET description = 'ICH Q2(R2) compliant analytical method validation protocol', updated_at = NOW()
+ WHERE organization_id = 0
+   AND id = 'method-validation-template'
+   AND description = 'ICH Q2(R1) compliant analytical method validation protocol';
 
 -- Row-count assertion (RULE 1). The seed above must land all twelve templates.
 -- A truncated INSERT list — a row lost to a bad merge or a hand edit — would

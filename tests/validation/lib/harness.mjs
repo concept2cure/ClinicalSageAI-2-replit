@@ -53,7 +53,19 @@ export const RUN_DATE = resolveRunDate();
 export const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 export const CHROMIUM_PATH =
   process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
-export const TEST_USER_EMAIL = process.env.VALIDATION_USER_EMAIL || 'jonmichaelpsmith@gmail.com';
+// The run identity (2026-10-15): it defaulted to a real person's personal
+// address, so a run nobody configured signed in, and recorded every step, as
+// them. '' when not named; the sign-in paths below refuse it.
+export const TEST_USER_EMAIL = (process.env.VALIDATION_USER_EMAIL || '').trim();
+
+function requireRunIdentity() {
+  if (!TEST_USER_EMAIL) {
+    throw new Error(
+      'name the run identity with VALIDATION_USER_EMAIL (the account this run signs in as); no identity is built in',
+    );
+  }
+  return TEST_USER_EMAIL;
+}
 export const EVIDENCE_ROOT =
   process.env.VALIDATION_EVIDENCE_ROOT || path.join(REPO_ROOT, 'docs', 'evidence', 'W3', RUN_DATE);
 
@@ -116,7 +128,7 @@ export function readGitHead() {
   }
 }
 
-export async function devLogin(baseUrl = BASE_URL, email = TEST_USER_EMAIL) {
+export async function devLogin(baseUrl = BASE_URL, email = requireRunIdentity()) {
   const res = await fetch(`${baseUrl}/api/auth/dev-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: baseUrl },
@@ -243,7 +255,7 @@ export async function sharedSession(role, baseUrl = BASE_URL) {
 export function runCredential() {
   const password = process.env.VALIDATION_USER_PASSWORD || '';
   if (!password) return null;
-  return { email: TEST_USER_EMAIL, password, totpSecret: process.env.VALIDATION_USER_TOTP_SECRET || '' };
+  return { email: requireRunIdentity(), password, totpSecret: process.env.VALIDATION_USER_TOTP_SECRET || '' };
 }
 
 async function validatedSession(baseUrl, body, method) {

@@ -233,11 +233,13 @@ async function insertEntry(client, ids, org, subcategory, title, payload) {
     [org.id, CATEGORY, subcategory, title],
   );
   if (found.rows[0]) return 0;
+  // confidence_score is stated NULL (2026-10-15): a database provisioned
+  // earlier still defaults it to 0.8, so each record claimed an 80% confidence.
   await client.query(
     `INSERT INTO project_memory_entries (
        project_profile_id, project_id, organization_id, category, subcategory,
-       title, content, extracted_by, status
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'system', 'active')`,
+       title, content, confidence_score, extracted_by, status
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, 'system', 'active')`,
     [ids.profileId, ids.projectId, org.id, CATEGORY, subcategory, title.slice(0, 500), JSON.stringify(payload)],
   );
   return 1;
