@@ -1,15 +1,13 @@
 /**
  * Software-as-a-Medical-Device (SaMD) classification.
  *
- * Two deterministic, standards-grounded classifiers a device/IVD software
- * submission needs and that the platform did not previously provide:
+ * IMDRF SaMD risk categorization (IMDRF/SaMD WG/N12): the 4×3 matrix of
+ * {state of healthcare situation} × {significance of information provided by
+ * the SaMD} → risk category I–IV.
  *
- *   - IMDRF SaMD risk categorization (IMDRF/SaMD WG/N12): the 4×3 matrix of
- *     {state of healthcare situation} × {significance of information provided by
- *     the SaMD} → risk category I–IV.
- *   - IEC 62304 software safety classification: Class A/B/C from the software's
- *     ability to contribute to a hazardous situation and the severity of the
- *     resulting harm after non-software risk controls.
+ * IEC 62304 software safety classification is not here: it is classifySoftware
+ * in market-specs/software-lifecycle.ts. 2026-10-15: classifyIec62304, a third
+ * IEC 62304 classifier, lived in this file (zero-duplication rule).
  *
  * Pure and deterministic; the IMDRF matrix is reproduced verbatim from N12.
  */
@@ -74,68 +72,4 @@ export function categorizeSamd(input: SamdCategorizationInput): SamdCategorizati
     ].toLowerCase()} → IMDRF category ${category}.`,
     framework: 'IMDRF SaMD N12',
   };
-}
-
-// ── IEC 62304 software safety classification ─────────────────────────────────
-
-export type SoftwareSafetyClass = 'A' | 'B' | 'C';
-export type HarmSeverity = 'none' | 'non-serious' | 'serious-or-death';
-
-export interface Iec62304Input {
-  /**
-   * Whether the software system can contribute to a hazardous situation (failure
-   * or unintended behaviour leading to a hazard). If false → Class A.
-   */
-  canContributeToHazard: boolean;
-  /**
-   * Severity of the possible resulting harm AFTER any hardware / non-software
-   * risk controls external to the software have been applied.
-   */
-  harmSeverityAfterExternalControls: HarmSeverity;
-}
-
-export interface Iec62304Result {
-  softwareSafetyClass: SoftwareSafetyClass;
-  rationale: string;
-  framework: 'IEC 62304';
-}
-
-/**
- * IEC 62304 software safety classification (incl. the 2015 Amendment decision):
- * Class A if no injury is possible (or software cannot contribute to a hazard);
- * Class B if non-serious injury is possible; Class C if death or serious injury
- * is possible — judged on the harm remaining after non-software risk controls.
- */
-export function classifyIec62304(input: Iec62304Input): Iec62304Result {
-  if (!input.canContributeToHazard) {
-    return {
-      softwareSafetyClass: 'A',
-      rationale:
-        'Software cannot contribute to a hazardous situation → Class A (no injury possible).',
-      framework: 'IEC 62304',
-    };
-  }
-  switch (input.harmSeverityAfterExternalControls) {
-    case 'none':
-      return {
-        softwareSafetyClass: 'A',
-        rationale:
-          'A hazardous situation is possible but external risk controls reduce the residual harm to none → Class A.',
-        framework: 'IEC 62304',
-      };
-    case 'non-serious':
-      return {
-        softwareSafetyClass: 'B',
-        rationale: 'Non-serious injury is possible → Class B.',
-        framework: 'IEC 62304',
-      };
-    case 'serious-or-death':
-      return {
-        softwareSafetyClass: 'C',
-        rationale: 'Death or serious injury is possible → Class C.',
-        framework: 'IEC 62304',
-      };
-    default:
-      throw new Error(`Unknown harm severity: ${input.harmSeverityAfterExternalControls}`);
-  }
 }

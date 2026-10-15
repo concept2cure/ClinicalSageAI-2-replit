@@ -43,7 +43,7 @@ import {
   classifySoftware, deliverablesForClass, assessSoftwareDeliverables, assessSoupItems, SOFTWARE_DELIVERABLES,
   type SoftwareSafetyClass, type SoupItem,
 } from '../services/market-specs/software-lifecycle';
-import { assess524bReadiness, CYBER_524B_ARTIFACTS, type Cyber524bArtifact } from '../services/regulatory/cybersecurity-524b';
+import { assess524bArtifacts, CYBER_524B_ARTIFACTS } from '../services/regulatory/cybersecurity-524b';
 import { assessFdaChange, assessEuSignificantChange } from '../services/regulatory/change-assessment';
 import {
   assessProcessValidation, computeProcessCapability, evaluateLotRelease,
@@ -499,10 +499,15 @@ router.post('/software/sbom', calc((b: { components?: unknown } | undefined) => 
   }
   return assessSoupItems(components as SoupItem[]);
 }));
-router.post('/software/cybersecurity', calcK((b: { present?: unknown } | undefined) => {
-  const artifacts: Partial<Record<Cyber524bArtifact, boolean>> = {};
-  for (const a of idList(b?.present, 'present', CYBER_524B_ARTIFACTS)) artifacts[a] = true;
-  return assess524bReadiness(artifacts);
+// 2026-10-15: this scored any device's artifacts as `readinessScore`/`ready`, without
+// asking whether it is a cyber device. §524B now applies to a cyber device only
+// (omitted: undetermined), and the answer is presence, not readiness.
+router.post('/software/cybersecurity', calcK((b: { cyberDevice?: unknown; present?: unknown } | undefined) => {
+  const cyberDevice = b?.cyberDevice;
+  if (cyberDevice !== undefined && typeof cyberDevice !== 'boolean') {
+    throw new Error('cyberDevice must be true or false (omit it when the cyber-device status is not known).');
+  }
+  return assess524bArtifacts({ cyberDevice }, idList(b?.present, 'present', CYBER_524B_ARTIFACTS));
 }, 'software.cybersecurity'));
 
 // ── Change management ───────────────────────────────────────────────────────

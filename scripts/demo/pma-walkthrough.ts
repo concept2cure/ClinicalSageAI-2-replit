@@ -9,7 +9,7 @@
  */
 
 import { computeDiagnosticAccuracy, computeRoc } from '../../server/services/stats/clinical-performance';
-import { assess524bReadiness } from '../../server/services/regulatory/cybersecurity-524b';
+import { assess524bArtifacts } from '../../server/services/regulatory/cybersecurity-524b';
 import { assessHfeCompleteness } from '../../server/services/regulatory/human-factors';
 import { validateGs1DeviceIdentifier } from '../../server/services/regulatory/udi-gudid';
 import { assessSplCompleteness } from '../../server/services/regulatory/spl-fhir';
@@ -30,12 +30,12 @@ const roc = computeRoc([
 console.log(`AUC=${r3(roc.auc)} (DeLong CI ${r3(roc.aucCi.lower)}–${r3(roc.aucCi.upper)})`);
 
 h('§524B cybersecurity (connected device)');
-const cyber = assess524bReadiness({
-  sbom: true, threatModel: true, vulnerabilityManagementPlan: true, securityTesting: true,
-  secureByDesign: true, coordinatedDisclosurePolicy: true, patchabilityPlan: true,
-  securityRiskAssessment: true,
-});
-console.log(`§524B readiness: ${(cyber.readinessScore * 100).toFixed(0)}% (${cyber.ready ? 'ready' : 'gaps: ' + cyber.gaps.join(', ')})`);
+// The connected app makes this a cyber device in the scenario, so §524B applies.
+const cyber = assess524bArtifacts({ cyberDevice: true }, [
+  'sbom', 'threat_model', 'cybersecurity_risk_assessment', 'cybersecurity_testing', 'cybersecurity_management_plan',
+]);
+if (cyber.status !== 'required') throw new Error(`§524B not assessed: ${cyber.rationale}`);
+console.log(`§524B artifacts recorded present: ${(cyber.completeness * 100).toFixed(0)}% (${cyber.allPresent ? 'all present' : 'missing: ' + cyber.gaps.join(', ')})`);
 
 h('Human factors & UDI & labeling');
 const hfe = assessHfeCompleteness({
@@ -60,7 +60,7 @@ const readiness = assessSubmissionReadiness({
   pathway: 'pma',
   domainScores: {
     clinicalPerformance: 1,
-    cybersecurity: cyber.readinessScore,
+    cybersecurity: cyber.completeness,
     humanFactors: hfe.completenessScore,
     udiGudid: di.valid ? 1 : 0,
     labelingSpl: spl.completenessScore,

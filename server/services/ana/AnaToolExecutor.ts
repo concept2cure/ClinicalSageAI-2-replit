@@ -10388,6 +10388,36 @@ registerToolHandler('get_biocompatibility_endpoints', async (input) => {
   }
 });
 
+/**
+ * The electrical and sterilization facts build_device_blueprint relays, as POST
+ * /device/blueprint relays them. 2026-10-15: the handler did not pass them on, so a
+ * powered or sterile device read "not applicable" for both modules. A stated fact
+ * that cannot be read is refused, naming it.
+ */
+function blueprintDeviceFacts(
+  input: Record<string, unknown>,
+  sterilizationMethodIds: readonly string[],
+): { electrical?: Record<string, unknown>; sterilization?: Record<string, unknown> } {
+  const group = (v: unknown, name: string): Record<string, unknown> | undefined => {
+    if (v === undefined || v === null) return undefined;
+    if (typeof v !== 'object' || Array.isArray(v)) throw new Error(`${name} must be an object of facts.`);
+    return v as Record<string, unknown>;
+  };
+  const electrical = group(input.electrical, 'electrical');
+  const sterilization = group(input.sterilization, 'sterilization');
+  const unreadable = Object.entries(electrical ?? {})
+    .filter(([, v]) => typeof v !== 'boolean')
+    .map(([k]) => `electrical.${k} must be true or false`);
+  if (sterilization && 'sterile' in sterilization && typeof sterilization.sterile !== 'boolean') {
+    unreadable.push('sterilization.sterile must be true or false');
+  }
+  if (sterilization && 'method' in sterilization && !sterilizationMethodIds.includes(String(sterilization.method))) {
+    unreadable.push(`sterilization.method '${String(sterilization.method)}' is not one of: ${sterilizationMethodIds.join(', ')}`);
+  }
+  if (unreadable.length > 0) throw new Error(`${unreadable.join('; ')}.`);
+  return { electrical, sterilization };
+}
+
 registerToolHandler('build_device_blueprint', async (input) => {
   // Orchestration of pure modules — no tenant context required.
   const TYPES = ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'];
@@ -10397,11 +10427,15 @@ registerToolHandler('build_device_blueprint', async (input) => {
   try {
     const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
     const { scorecardFromBlueprint } = await import('../market-specs/device-readiness-scorecard.js');
+    const { STERILIZATION_METHODS } = await import('../market-specs/sterilization.js');
+    const { electrical, sterilization } = blueprintDeviceFacts(input, [...STERILIZATION_METHODS.map((m) => m.id), 'unknown']);
     const blueprint = buildDeviceBlueprint({
       submissionType: input.submission_type as never,
       classification: (input.classification ?? undefined) as never,
       contact: (input.contact ?? undefined) as never,
       software: (input.software ?? undefined) as never,
+      electrical: electrical as never,
+      sterilization: sterilization as never,
       present: (input.present ?? undefined) as never,
       // 2026-10-15: `=== true` read an omitted claim as "not claimed", so a CER with no
       // Equivalence section came back ready. Unstated stays unstated; the engine names it.

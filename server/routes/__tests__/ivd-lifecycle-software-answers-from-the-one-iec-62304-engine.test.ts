@@ -133,18 +133,21 @@ describe('POST /software/sbom', () => {
   });
 });
 
+// 2026-10-15: these posted the §524B engine's own camelCase ids ('threatModel') with
+// no cyber-device status and pinned `ready: false`, and refused CYBER_ITEMS'
+// 'threat_model' as unknown. The ids are CYBER_ITEMS' now, and §524B needs a cyber device.
 describe('POST /software/cybersecurity', () => {
-  it('reports the §524B artifacts present and missing', async () => {
-    const res = await post('/software/cybersecurity', { present: ['sbom', 'threatModel'] });
+  it('reports the §524B artifacts present and missing for a cyber device', async () => {
+    const res = await post('/software/cybersecurity', { cyberDevice: true, present: ['sbom', 'threat_model'] });
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ present: ['sbom', 'threatModel'], ready: false });
+    expect(res.body).toMatchObject({ status: 'required', present: ['sbom', 'threat_model'], allPresent: false });
     expect(res.body.gaps).toHaveLength(CYBER_524B_ARTIFACTS.length - 2);
   });
 
   it('refuses an artifact id the engine does not know, naming it', async () => {
-    const res = await post('/software/cybersecurity', { present: ['threat_model'] });
+    const res = await post('/software/cybersecurity', { cyberDevice: true, present: ['threatModel'] });
     expect(res.status).toBe(422);
-    expect(res.body.error).toMatch(/threat_model/);
+    expect(res.body.error).toMatch(/threatModel/);
   });
 });
 
