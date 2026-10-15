@@ -41,3 +41,42 @@ describe('the legacy IND IB template', () => {
     expect(t.ctdSection).toBe('1.14.4.1');
   });
 });
+
+/*
+ * Second slice, 2026-10-15 (measured at 3d8e30a41): the IB builder titled
+ * section 3 its own way; the Authoring "Start from" seed used sentence-case
+ * copies; the Projects blueprint stamped module 5 on an IB (the registry files
+ * a US IB at M1) and called itself "ICH E6 §7" (superseded R2 numbering); the
+ * medical-writing advisor and the IND question flow listed the IB without an
+ * Introduction or with headings of their own.
+ */
+describe('every IB tree a client reaches carries the canonical body headings', () => {
+  const byNumber = new Map(canonical.sections.map((s) => [s.number, s.heading]));
+
+  it('the IB builder (Investigator’s Brochure surface)', async () => {
+    const { IB_STRUCTURE } = await import('../../server/services/authoring/ib-builder');
+    for (const s of IB_STRUCTURE.filter((x) => byNumber.has(x.number))) expect(s.title).toBe(byNumber.get(s.number));
+  });
+
+  it('the Authoring "Start from" seed', async () => {
+    const { SEED_TEMPLATES } = await import('../../server/services/intelligence/template-seeds');
+    const ib = SEED_TEMPLATES.find((t) => t.templateCode === 'crossagency_ib')!;
+    expect(ib.sections.map((s) => [s.sectionCode, s.sectionTitle])).toEqual(canonical.sections.map((s) => [s.number, s.heading]));
+    expect(ib.sourceReference).toMatch(/recall/);
+  });
+
+  it('the Projects blueprint is not module 5 and does not cite E6 §7', async () => {
+    const { SECTION_BLUEPRINTS } = await import('../../shared/regulatory/project-bootstrap');
+    const bp = SECTION_BLUEPRINTS.ich_ib_sections;
+    expect(bp.name).not.toMatch(/E6 §7/);
+    expect(bp.sections.every((s) => s.module !== 5)).toBe(true);
+  });
+
+  it('the medical-writing advisor and the IND question flow list the canonical headings', async () => {
+    const { getDocumentTypeStandard } = await import('../../server/services/ana/medical-writing');
+    const ib = getDocumentTypeStandard('ib')!;
+    for (const h of canonical.sections.map((s) => s.heading)) expect(ib.structure).toContain(h);
+    const src = (await import('node:fs')).readFileSync(require('node:path').resolve(__dirname, '../../server/services/ana/intelligence-questions/flows/ind-submission.ts'), 'utf8');
+    expect(src).toMatch(/investigators_brochure/);
+  });
+});

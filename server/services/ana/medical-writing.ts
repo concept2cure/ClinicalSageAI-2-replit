@@ -19,6 +19,9 @@
  */
 
 import { e3TopLevel } from '../ind/ctd/index.js';
+import { getDocumentTemplate } from '../market-specs/document-template-library.js';
+
+const IB_HEADINGS: string[] = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => sec.heading);
 
 export interface DocumentTypeStandard {
   id: string;
@@ -135,7 +138,8 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     governingStandards: ['ICH E6(R3) Appendix A'],
     purpose: 'Give investigators the clinical and nonclinical data relevant to safe study conduct and benefit–risk.',
     defaultAudience: 'clinician',
-    structure: ['Summary', 'Physical/chemical/pharmaceutical properties', 'Nonclinical studies (PK/tox/pharmacology)', 'Effects in humans (PK, safety, efficacy)', 'Summary of data & guidance for the investigator', 'Reference safety information (RSI)'],
+    // The body headings of the platform's one IB outline (market-specs 'investigators_brochure').
+    structure: IB_HEADINGS,
     keyRequirements: ['Include a clearly identified Reference Safety Information section for expectedness assessment of SAEs.', 'Update at least annually and on material new safety information.'],
     commonPitfalls: ['Outdated RSI', 'Guidance-for-investigator section missing actionable risk management'],
     aliases: ["investigators brochure", 'investigator brochure'],
