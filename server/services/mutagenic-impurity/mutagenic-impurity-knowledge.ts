@@ -8,6 +8,8 @@
  * EMA 2023 Nitrosamine Guidance, and Teasdale (2019) purge factor methodology.
  *
  * NO LLM calls, NO network requests, NO database queries — PURE DETERMINISTIC.
+ * The one import is ComputationRefusal, thrown when a required input is missing
+ * or unusable, so that AnA relays it as needs_parameters rather than a verdict.
  *
  * Covered domains:
  *   1. ICH M7(R2) 5-class classification (classifyMutagenicImpurity)
@@ -19,6 +21,8 @@
  *
  * @module server/services/mutagenic-impurity/mutagenic-impurity-knowledge
  */
+
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Types
@@ -34,7 +38,8 @@ export type CohortOfConcern = 'not_coc' | 'CoC_aflatoxin_like' | 'CoC_nitrosamin
 export type SyntheticStep = 'early' | 'intermediate' | 'late' | 'final';
 export type DevelopmentPhase = 'clinical_phase1' | 'clinical_phase2' | 'clinical_phase3' | 'commercial';
 export type MutagenicImpurityClass = 1 | 2 | 3 | 4 | 5;
-export type NitrosamineRiskLevel = 'high' | 'medium' | 'low' | 'no_risk';
+/** 'not_assessed': an input that could change the level was not stated. */
+export type NitrosamineRiskLevel = 'high' | 'medium' | 'low' | 'no_risk' | 'not_assessed';
 
 export interface Citation {
   guideline: string;
@@ -49,6 +54,124 @@ export interface DecisionStep {
   question: string;
   evaluation: string;
   outcome: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Input checks
+//
+// 2026-10-15: the functions below used to read a missing or unknown input as
+// its most favourable value — no Ames result fell through to "Class 4 … no
+// mutagenic impurity controls required", no amine input gave 'no_risk', no
+// cohort-of-concern input gave the 1.5 μg/day TTC. AnA's dispatcher only
+// records a missing required input and reports the output verbatim as
+// deterministic, so the engine refuses on its own; AnA relays a
+// ComputationRefusal as needs_parameters.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AMES_RESULTS: readonly AmesMutagenicity[] = ['positive', 'negative', 'not_tested'];
+const ALERT_PRESENCE: readonly StructuralAlertPresence[] = ['yes', 'no', 'unknown'];
+const CARCINOGENICITY_RESULTS: readonly CarcinogenicityData[] = ['positive', 'negative', 'not_tested'];
+const IMPURITY_RELATIONSHIPS: readonly ImpurityRelationship[] = [
+  'process_related', 'degradation', 'starting_material', 'reagent', 'byproduct', 'solvent', 'catalyst',
+];
+const TREATMENT_DURATIONS: readonly TreatmentDuration[] = ['single_dose', 'up_to_1_month', '1_to_12_months', '1_to_10_years', 'lifetime'];
+const ROUTES: readonly AdministrationRoute[] = ['oral', 'parenteral', 'dermal', 'inhalation'];
+const COMPOUND_CLASSES: readonly CohortOfConcern[] = ['not_coc', 'CoC_aflatoxin_like', 'CoC_nitrosamine', 'CoC_alkyl_azoxy'];
+const SYNTHETIC_STEPS: readonly SyntheticStep[] = ['early', 'intermediate', 'late', 'final'];
+const DEVELOPMENT_PHASES: readonly DevelopmentPhase[] = ['clinical_phase1', 'clinical_phase2', 'clinical_phase3', 'commercial'];
+const IMPURITY_CLASSES: readonly MutagenicImpurityClass[] = [1, 2, 3, 4, 5];
+const AMINE_TYPES = ['primary', 'secondary', 'tertiary', 'none'] as const;
+
+/** A required input that is missing or outside its vocabulary. */
+interface InputProblem {
+  field: string;
+  missing: boolean;
+  text: string;
+}
+
+function shown(value: unknown): string {
+  return typeof value === 'number' ? String(value) : JSON.stringify(value);
+}
+
+function isUnstated(value: unknown): value is undefined | null {
+  return value === undefined || value === null;
+}
+
+/** A required input from a closed vocabulary. */
+function oneOf(field: string, value: unknown, allowed: readonly (string | number | boolean)[]): InputProblem | null {
+  if (allowed.includes(value as string | number | boolean)) return null;
+  const list = allowed.join(', ');
+  return isUnstated(value)
+    ? { field, missing: true, text: `${field} is required (one of ${list})` }
+    : { field, missing: false, text: `${field} must be one of ${list} (got ${shown(value)})` };
+}
+
+/** A required positive number. */
+function positiveNumber(field: string, value: unknown, unit: string): InputProblem | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return null;
+  return isUnstated(value)
+    ? { field, missing: true, text: `${field} is required (a positive number of ${unit})` }
+    : { field, missing: false, text: `${field} must be a positive number of ${unit} (got ${shown(value)})` };
+}
+
+/** A required, non-empty text input. */
+function nonEmptyText(field: string, value: unknown): InputProblem | null {
+  if (typeof value === 'string' && value.trim() !== '') return null;
+  return isUnstated(value)
+    ? { field, missing: true, text: `${field} is required` }
+    : { field, missing: false, text: `${field} must be a non-empty string (got ${shown(value)})` };
+}
+
+/** A list of strings. A required list may be empty: [] states "none". */
+function textList(field: string, value: unknown, required: boolean): InputProblem | null {
+  if (isUnstated(value)) {
+    return required ? { field, missing: true, text: `${field} is required (a list of strings; [] for none)` } : null;
+  }
+  if (Array.isArray(value) && value.every((v) => typeof v === 'string')) return null;
+  return { field, missing: false, text: `${field} must be a list of strings (got ${shown(value)})` };
+}
+
+/** Refuse with every problem at once, so the user is asked once. */
+function refuseIfAny(...checks: (InputProblem | null)[]): void {
+  const problems = checks.filter((p): p is InputProblem => p !== null);
+  if (problems.length === 0) return;
+  throw new ComputationRefusal(
+    problems[0].missing ? 'missing_input' : 'invalid_input',
+    `${problems.map((p) => p.text).join('; ')}.`,
+    problems[0].field,
+  );
+}
+
+/** An optional boolean: undefined when it was not stated. Absent is not false. */
+function statedBoolean(field: string, value: unknown): boolean | undefined {
+  if (isUnstated(value)) return undefined;
+  if (typeof value === 'boolean') return value;
+  throw new ComputationRefusal('invalid_input', `${field} must be true or false (got ${shown(value)}). Leave it out if it is not known.`, field);
+}
+
+/** An optional number that satisfies `ok`: undefined when it was not stated. */
+function statedNumber(field: string, value: unknown, ok: (n: number) => boolean, rule: string): number | undefined {
+  if (isUnstated(value)) return undefined;
+  if (typeof value === 'number' && Number.isFinite(value) && ok(value)) return value;
+  throw new ComputationRefusal('invalid_input', `${field} must be ${rule} (got ${shown(value)}).`, field);
+}
+
+/** An optional input from a closed vocabulary: undefined when it was not stated. */
+function statedOneOf<T extends string>(field: string, value: unknown, allowed: readonly T[]): T | undefined {
+  if (isUnstated(value)) return undefined;
+  if (typeof value === 'string' && (allowed as readonly string[]).includes(value)) return value as T;
+  throw new ComputationRefusal('invalid_input', `${field} must be one of ${allowed.join(', ')} (got ${shown(value)}). Leave it out if it is not known.`, field);
+}
+
+/** Per-step purge factors someone measured or predicted, or undefined when none were supplied. */
+function statedPurgeFactors(value: unknown): number[] | undefined {
+  if (isUnstated(value)) return undefined;
+  if (Array.isArray(value) && value.every((f) => typeof f === 'number' && Number.isFinite(f) && f > 0)) return value as number[];
+  throw new ComputationRefusal(
+    'invalid_input',
+    `downstreamStepPurgeFactors must be a list with one positive number per downstream step (got ${shown(value)}).`,
+    'downstreamStepPurgeFactors',
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -454,7 +577,8 @@ export interface ClassifyInput {
   structuralAlertsPresent: StructuralAlertPresence;
   carcinogenicityData: CarcinogenicityData;
   impurityRelationship: ImpurityRelationship;
-  cohortOfConcernStructure?: boolean;
+  /** Required: an unstated cohort-of-concern status is refused, not read as false. */
+  cohortOfConcernStructure: boolean;
   specificStructuralAlerts?: string[];
 }
 
@@ -487,12 +611,20 @@ export interface ClassificationResult {
  *   5. No structural alerts, no Ames data? → Class 5
  */
 export function classifyMutagenicImpurity(params: ClassifyInput): ClassificationResult {
+  refuseIfAny(
+    oneOf('amesMutagenicity', params.amesMutagenicity, AMES_RESULTS),
+    oneOf('structuralAlertsPresent', params.structuralAlertsPresent, ALERT_PRESENCE),
+    oneOf('carcinogenicityData', params.carcinogenicityData, CARCINOGENICITY_RESULTS),
+    oneOf('impurityRelationship', params.impurityRelationship, IMPURITY_RELATIONSHIPS),
+    oneOf('cohortOfConcernStructure', params.cohortOfConcernStructure, [true, false]),
+    textList('specificStructuralAlerts', params.specificStructuralAlerts, false),
+  );
   const {
     amesMutagenicity,
     structuralAlertsPresent,
     carcinogenicityData,
     impurityRelationship,
-    cohortOfConcernStructure = false,
+    cohortOfConcernStructure,
     specificStructuralAlerts = [],
   } = params;
 
@@ -589,8 +721,9 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
             'Positive Ames result → reclassify to Class 2 (known mutagen, TTC applies)',
             '(Q)SAR assessment showing both complementary systems predict "negative" with adequate coverage may be used in lieu of Ames test per ICH M7(R2), subject to expert review and regulatory agreement',
           );
-        } else {
-          // amesMutagenicity === 'negative' and structuralAlertsPresent === 'yes'
+        } else if (amesMutagenicity === 'negative') {
+          // Stated Ames-negative, alert present or unknown. 2026-10-15: this was a
+          // bare else, so an Ames result nobody stated was classed as negative.
           impurityClass = 4;
           className = 'Class 4: Alerting structure, but Ames-negative (non-mutagenic)';
           classDescription = 'Compound has structural alerts for mutagenicity but tested negative in a compliant Ames assay (OECD TG 471). Treated as non-mutagenic. No TTC-based limits apply. Control as an ordinary impurity per ICH Q3A(R2)/Q3B(R2).';
@@ -601,6 +734,9 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
             'If the compound is an isomer or closely related structural analogue of a known mutagenic carcinogen, additional chromosomal aberration or micronucleus testing may be warranted',
             'If the negative Ames test is questioned (e.g., due to cytotoxicity masking, inadequate metabolic activation, or insufficient test conditions), repeat under optimized conditions',
           );
+        } else {
+          // Unreachable: Ames-positive is Class 1 or 2 above, and the vocabulary is checked on entry.
+          throw new ComputationRefusal('invalid_input', `amesMutagenicity must be one of ${AMES_RESULTS.join(', ')} (got ${shown(amesMutagenicity)}).`, 'amesMutagenicity');
         }
       }
     }
@@ -805,12 +941,21 @@ interface CalculationStepTTC {
  *   - Concentration limit (ppm) = AI (µg/day) / MDD (g/day)
  */
 export function calculateTTC(params: TTCInput): TTCResult {
+  // 2026-10-15: an unstated compoundClass fell through to the standard 1.5 μg/day
+  // TTC with "NOT in a Cohort of Concern", and an unstated route to "Oral route".
+  refuseIfAny(
+    oneOf('treatmentDuration', params.treatmentDuration, TREATMENT_DURATIONS),
+    oneOf('route', params.route, ROUTES),
+    oneOf('compoundClass', params.compoundClass, COMPOUND_CLASSES),
+  );
+  const numberOfMutagenicImpurities = statedNumber(
+    'numberOfMutagenicImpurities', params.numberOfMutagenicImpurities, (n) => Number.isInteger(n) && n >= 1, 'a whole number of 1 or more',
+  );
   const {
     treatmentDuration,
     route,
     compoundClass,
     maxDailyDoseG,
-    numberOfMutagenicImpurities = 1,
     isOncologyIndication = false,
     nitrosamineIdentity,
   } = params;
@@ -957,7 +1102,10 @@ export function calculateTTC(params: TTCInput): TTCResult {
 
   // Step 4: Multiple impurity consideration
   let multipleImpurityConsideration: string;
-  if (numberOfMutagenicImpurities > 1) {
+  if (numberOfMutagenicImpurities === undefined) {
+    // 2026-10-15: an unstated count defaulted to 1, "full TTC allocation applies to this impurity".
+    multipleImpurityConsideration = 'Number of mutagenic impurities not stated: the acceptable intake above is for this impurity alone, and whether a limit on the combined intake of several Class 2/3 impurities applies was not assessed. State numberOfMutagenicImpurities.';
+  } else if (numberOfMutagenicImpurities > 1) {
     multipleImpurityConsideration = `Multiple mutagenic impurities (${numberOfMutagenicImpurities} identified): ` +
       `ICH M7(R2) Section 7.3 states that "the total daily intake of all Class 2 and Class 3 mutagenic impurities should not exceed the TTC." ` +
       `Approach 1 (conservative): Divide the TTC equally among all mutagenic impurities — each impurity limited to ${Math.round((acceptableIntakeUgPerDay / numberOfMutagenicImpurities) * 1000) / 1000} μg/day. ` +
@@ -1080,6 +1228,10 @@ export interface StructuralAlertResult {
  *   - Documentation of negative predictions with adequate justification
  */
 export function assessStructuralAlerts(params: StructuralAlertInput): StructuralAlertResult {
+  refuseIfAny(
+    textList('functionalGroupsPresent', params.functionalGroupsPresent, true),
+    textList('knownStructuralAlerts', params.knownStructuralAlerts, false),
+  );
   const {
     functionalGroupsPresent,
     knownStructuralAlerts = [],
@@ -1140,8 +1292,13 @@ export function assessStructuralAlerts(params: StructuralAlertInput): Structural
     overallAssessment = 'inconclusive';
     assessmentDescription = 'No functional groups or structural alerts provided for assessment. A proper (Q)SAR evaluation requires the compound structure or at minimum the functional groups present. Provide the structure or functional group information for a complete assessment.';
   } else {
-    overallAssessment = 'negative';
-    assessmentDescription = `Structural alert assessment: NEGATIVE. None of the provided functional groups (${functionalGroupsPresent.join(', ')}) match known ICH M7 alerting structures. ` +
+    // 2026-10-15: this reported NEGATIVE ("None of the provided functional groups
+    // match known ICH M7 alerting structures") whenever no term matched the keyword
+    // list above, which holds plural category names, so "epoxide" and "aldehyde",
+    // both ICH M7 alerts, came back NEGATIVE. A keyword miss rules nothing out.
+    overallAssessment = 'inconclusive';
+    assessmentDescription = `Structural alert assessment: INCONCLUSIVE. None of the provided terms (${[...functionalGroupsPresent, ...knownStructuralAlerts].join(', ')}) matched this tool's keyword list of ICH M7 alert categories. ` +
+      `A keyword match is not a (Q)SAR prediction and cannot rule out an alerting structure. ` +
       `Per ICH M7(R2), if both complementary (Q)SAR systems predict the compound as non-mutagenic (negative) with adequate coverage of the chemical space, the compound may be classified as Class 5 without the need for an Ames test. ` +
       `Documentation of the (Q)SAR predictions, model applicability domain, and expert review is required.`;
   }
@@ -1257,6 +1414,8 @@ export interface PurgeStudyInput {
   solvent?: string;
   workupType?: string;
   numberOfDownstreamSteps?: number;
+  /** Measured or predicted purge factor of each downstream step; the only source of downstream credit. */
+  downstreamStepPurgeFactors?: number[];
   apiBoilingPointC?: number;
   apiSolubility?: string;
   apiPKa?: number;
@@ -1271,7 +1430,10 @@ export interface PurgeStudyResult {
     scoreJustification: string;
     applicability: string;
   }[];
+  /** Single-step estimate × the supplied downstream factors; an unquantified step gets no credit. */
   overallPurgeFactorEstimate: number;
+  /** Downstream steps with no supplied purge factor. */
+  unquantifiedDownstreamSteps: number;
   overallPurgeFactorInterpretation: string;
   scoringSystemDescription: string;
   scoringGuide: typeof PURGE_SCORING_GUIDE;
@@ -1298,6 +1460,16 @@ export interface PurgeStudyResult {
  *   - Overall purge = product of individual mechanism scores per step
  */
 export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
+  refuseIfAny(oneOf('syntheticStep', params.syntheticStep, SYNTHETIC_STEPS));
+  const statedSteps = statedNumber('numberOfDownstreamSteps', params.numberOfDownstreamSteps, (n) => Number.isInteger(n) && n >= 0, 'a whole number of 0 or more');
+  const suppliedFactors = statedPurgeFactors(params.downstreamStepPurgeFactors) ?? [];
+  if (statedSteps !== undefined && suppliedFactors.length > statedSteps) {
+    throw new ComputationRefusal('invalid_input', `downstreamStepPurgeFactors must have at most numberOfDownstreamSteps (${statedSteps}) entries (got ${suppliedFactors.length}).`, 'downstreamStepPurgeFactors');
+  }
+  const numberOfDownstreamSteps = statedSteps ?? suppliedFactors.length;
+  if (params.syntheticStep === 'final' && numberOfDownstreamSteps > 0) {
+    throw new ComputationRefusal('invalid_input', 'numberOfDownstreamSteps must be 0 when syntheticStep is final: a final-step impurity has no downstream purification.', 'numberOfDownstreamSteps');
+  }
   const {
     impurityBoilingPointC,
     impuritySolubility,
@@ -1309,7 +1481,6 @@ export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
     pH,
     solvent,
     workupType,
-    numberOfDownstreamSteps = 0,
     apiBoilingPointC,
     apiSolubility,
     apiPKa,
@@ -1470,15 +1641,19 @@ export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
   // Calculate overall purge factor for a single step
   const singleStepPurge = reactivityScore * solubilityScore * volatilityScore * ionizabilityScore;
 
-  // Estimate cumulative purge considering downstream steps
-  let overallPurgeFactorEstimate: number;
-  if (numberOfDownstreamSteps > 0) {
-    // Conservative estimate: each additional downstream step provides at minimum a 3× purge
-    const downstreamPurgeEstimate = Math.pow(3, numberOfDownstreamSteps);
-    overallPurgeFactorEstimate = singleStepPurge * downstreamPurgeEstimate;
-  } else {
-    overallPurgeFactorEstimate = singleStepPurge;
-  }
+  // Cumulative purge: downstream credit only from per-step factors someone supplied.
+  // 2026-10-15: every downstream step used to be credited an uncited 3× purge, so
+  // nine steps with no purge data read 19,683× and "may justify control at the
+  // step of introduction". A step with no supplied factor now gets no credit.
+  const unquantifiedDownstreamSteps = numberOfDownstreamSteps - suppliedFactors.length;
+  const overallPurgeFactorEstimate = suppliedFactors.reduce((product, factor) => product * factor, singleStepPurge);
+  const purgeLabel = unquantifiedDownstreamSteps > 0 ? 'quantified' : 'cumulative';
+  const purgeBasis = unquantifiedDownstreamSteps > 0 ? 'On the quantified purge alone, the purge factor' : 'Purge factor';
+  const downstreamNote =
+    (suppliedFactors.length > 0 ? ` × supplied downstream factor(s) ${suppliedFactors.join(' × ')}` : '') +
+    (unquantifiedDownstreamSteps > 0
+      ? `; ${unquantifiedDownstreamSteps} of ${numberOfDownstreamSteps} downstream step(s) unquantified — no purge factor was supplied for them, so no credit is taken`
+      : '');
 
   // Step position multiplier concept
   const stepPositionNote: Record<SyntheticStep, string> = {
@@ -1488,14 +1663,14 @@ export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
     final: 'Impurity formed or introduced at the final step — no downstream purification opportunities. Control must rely on final-step process parameters or release testing.',
   };
 
-  const overallPurgeFactorInterpretation = `Estimated cumulative purge factor: ${overallPurgeFactorEstimate.toLocaleString()}× ` +
-    `(single-step purge: ${singleStepPurge}×${numberOfDownstreamSteps > 0 ? `, downstream steps estimate: ${Math.pow(3, numberOfDownstreamSteps)}×` : ''}). ` +
+  const overallPurgeFactorInterpretation = `Estimated ${purgeLabel} purge factor: ${overallPurgeFactorEstimate.toLocaleString()}× ` +
+    `(single-step purge: ${singleStepPurge}×${downstreamNote}). ` +
     `${stepPositionNote[syntheticStep]} ` +
     (overallPurgeFactorEstimate >= 10000
-      ? 'Purge factor is HIGH (≥10,000×) — this level of purge may justify control at the step of introduction rather than final API testing, provided it is supported by spiking study data.'
+      ? `${purgeBasis} is HIGH (≥10,000×) — this level of purge may justify control at the step of introduction rather than final API testing, provided it is supported by spiking study data.`
       : overallPurgeFactorEstimate >= 100
-        ? 'Purge factor is MODERATE (100-9,999×) — additional process controls or confirmation by spiking study may be needed to demonstrate adequate purge.'
-        : 'Purge factor is LOW (<100×) — testing of the API for this impurity is recommended. Process optimization to enhance purge should be considered.');
+        ? `${purgeBasis} is MODERATE (100-9,999×) — additional process controls or confirmation by spiking study may be needed to demonstrate adequate purge.`
+        : `${purgeBasis} is LOW (<100×) — testing of the API for this impurity is recommended. Process optimization to enhance purge should be considered.`);
 
   // Acceptable purge factor guidance
   const acceptablePurgeFactorGuidance = [
@@ -1528,7 +1703,7 @@ export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
     recommended: spikingRecommended || overallPurgeFactorEstimate < 10000,
     rationale: spikingRecommended
       ? `Spiking study RECOMMENDED: ${syntheticStep === 'final' ? 'final-step impurity with no downstream purification' : syntheticStep === 'late' ? 'late-stage impurity with limited downstream steps' : 'estimated purge factor is low (<1,000×)'}. Experimental validation is needed to confirm theoretical purge.`
-      : `Spiking study recommended but may not be strictly necessary: estimated cumulative purge factor (${overallPurgeFactorEstimate.toLocaleString()}×) is relatively high. However, experimental confirmation strengthens the regulatory justification.`,
+      : `Spiking study recommended but may not be strictly necessary: estimated ${purgeLabel} purge factor (${overallPurgeFactorEstimate.toLocaleString()}×) is relatively high. However, experimental confirmation strengthens the regulatory justification.`,
     designGuidelines: [
       'Spike the impurity at a known concentration (typically 10-100× the specification limit) at the step of introduction',
       'Process the spiked material through all downstream steps under representative manufacturing conditions',
@@ -1562,7 +1737,8 @@ export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
   const regulatorySummary = `PURGE FACTOR ASSESSMENT\n` +
     `Synthetic step: ${syntheticStep}\n` +
     `Estimated single-step purge: ${singleStepPurge}×\n` +
-    `Estimated cumulative purge: ${overallPurgeFactorEstimate.toLocaleString()}×\n` +
+    `Estimated ${purgeLabel} purge: ${overallPurgeFactorEstimate.toLocaleString()}×` +
+    `${unquantifiedDownstreamSteps > 0 ? ` (${unquantifiedDownstreamSteps} downstream step(s) unquantified, no credit taken)` : ''}\n` +
     `Spiking study: ${spikingStudyRecommendation.recommended ? 'RECOMMENDED' : 'Optional (high theoretical purge)'}\n` +
     `Individual scores — Reactivity: ${reactivityScore}, Solubility: ${solubilityScore}, Volatility: ${volatilityScore}, Ionizability: ${ionizabilityScore}`;
 
@@ -1574,6 +1750,7 @@ export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
       'Per Teasdale (2019), the purge factor approach provides a semiquantitative framework for demonstrating that process-related mutagenic impurities are adequately controlled by the manufacturing process.',
     purgeMechanisms,
     overallPurgeFactorEstimate,
+    unquantifiedDownstreamSteps,
     overallPurgeFactorInterpretation,
     scoringSystemDescription: 'Scoring system per Teasdale A. et al., Org. Process Res. Dev. 2019, 23, 961-970. ' +
       'Each purge mechanism is scored on a scale: Reactivity (1 = unreactive, 3 = somewhat reactive, 10 = reactive, 100 = highly reactive/completely destroyed); ' +
@@ -1598,14 +1775,16 @@ export function designPurgeStudy(params: PurgeStudyInput): PurgeStudyResult {
 // 5. Nitrosamine Risk Assessment
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** A risk factor left unstated is reported as not assessed, never as absent. */
 export interface NitrosamineRiskInput {
-  drugSubstanceContainsAmines: boolean;
+  drugSubstanceContainsAmines?: boolean;
   amineType?: 'primary' | 'secondary' | 'tertiary' | 'none';
-  nitriteReagentsUsed: boolean;
+  nitriteReagentsUsed?: boolean;
   specificNitriteReagents?: string[];
-  synthesisUsesNitrosatingConditions: boolean;
-  sharedEquipment: boolean;
-  packagingContainsRubber: boolean;
+  synthesisUsesNitrosatingConditions?: boolean;
+  sharedEquipment?: boolean;
+  packagingContainsRubber?: boolean;
+  /** [] states "no excipient concern". */
   excipientsConcern?: string[];
   drugSubstanceDegradationRisk?: boolean;
   apiStructureDescription?: string;
@@ -1614,6 +1793,8 @@ export interface NitrosamineRiskInput {
 
 export interface NitrosamineRiskResult {
   overallRiskLevel: NitrosamineRiskLevel;
+  /** Risk-factor inputs that were not stated, so not assessed. */
+  missingInputs: string[];
   riskAssessmentSteps: {
     step: number;
     title: string;
@@ -1624,7 +1805,8 @@ export interface NitrosamineRiskResult {
   rootCauses: {
     rootCause: string;
     description: string;
-    identified: boolean;
+    /** null: not assessed — the input that decides it was not stated. */
+    identified: boolean | null;
     mitigationStrategy: string;
   }[];
   commonNitrosamines: {
@@ -1650,6 +1832,65 @@ export interface NitrosamineRiskResult {
   citations: Citation[];
 }
 
+type AmineKind = 'primary' | 'secondary' | 'tertiary';
+type StatedNitrosamineRisk = Exclude<NitrosamineRiskLevel, 'not_assessed'>;
+/** The lowest and highest level the unstated inputs allow. */
+type RiskRange = [StatedNitrosamineRisk, StatedNitrosamineRisk];
+
+const AMINE_RISK: Record<AmineKind, StatedNitrosamineRisk> = { primary: 'low', secondary: 'high', tertiary: 'medium' };
+
+/** Amine presence and kind from the two amine inputs; a contradiction between them is refused. */
+function statedAmines(params: NitrosamineRiskInput): { present: boolean | undefined; kind: AmineKind | undefined } {
+  const present = statedBoolean('drugSubstanceContainsAmines', params.drugSubstanceContainsAmines);
+  const type = statedOneOf('amineType', params.amineType, AMINE_TYPES);
+  if (present === true && type === 'none') {
+    throw new ComputationRefusal('invalid_input', 'amineType must be primary, secondary or tertiary when drugSubstanceContainsAmines is true (got "none").', 'amineType');
+  }
+  if (present === false && type !== undefined && type !== 'none') {
+    throw new ComputationRefusal('invalid_input', `drugSubstanceContainsAmines must be true when amineType is ${type}.`, 'drugSubstanceContainsAmines');
+  }
+  if (type === 'none') return { present: false, kind: undefined };
+  return { present: type === undefined ? present : true, kind: type };
+}
+
+function amineLevelRange(present: boolean | undefined, kind: AmineKind | undefined): RiskRange {
+  if (kind) return [AMINE_RISK[kind], AMINE_RISK[kind]];
+  if (present === false) return ['no_risk', 'no_risk'];
+  return [present ? 'low' : 'no_risk', 'high'];
+}
+
+function nitrosatingLevel(nitriteReagents: boolean, nitrosatingConditions: boolean): StatedNitrosamineRisk {
+  if (nitriteReagents) return 'high';
+  return nitrosatingConditions ? 'medium' : 'no_risk';
+}
+
+/* 2026-10-15: a degradation risk used to raise only 'no_risk' to 'medium', so an
+   excipient concern ('low') on top of it LOWERED the result. It now raises
+   anything below 'medium' to 'medium'. */
+function crossContaminationLevel(shared: boolean, rubber: boolean, excipients: boolean, degradation: boolean): StatedNitrosamineRisk {
+  let level: StatedNitrosamineRisk = shared ? 'medium' : 'no_risk';
+  if (rubber) level = level === 'medium' ? 'high' : 'medium';
+  if (excipients && level === 'no_risk') level = 'low';
+  if (degradation && (level === 'no_risk' || level === 'low')) level = 'medium';
+  return level;
+}
+
+/** Overall level from the three step levels; an amine plus a nitrosating source is always high. */
+function overallNitrosamineLevel(amine: StatedNitrosamineRisk, nitrosating: StatedNitrosamineRisk, cross: StatedNitrosamineRisk): StatedNitrosamineRisk {
+  if (amine !== 'no_risk' && nitrosating !== 'no_risk') return 'high';
+  const levels = [amine, nitrosating, cross];
+  const high = levels.filter((l) => l === 'high').length;
+  const medium = levels.filter((l) => l === 'medium').length;
+  if (high > 0) return high + medium >= 2 ? 'high' : 'medium';
+  if (medium >= 2) return 'medium';
+  return medium === 1 || levels.includes('low') ? 'low' : 'no_risk';
+}
+
+/** A level the unstated inputs cannot change, or 'not_assessed'. */
+function settledLevel([lowest, highest]: RiskRange): NitrosamineRiskLevel {
+  return lowest === highest ? lowest : 'not_assessed';
+}
+
 /**
  * Assess nitrosamine impurity risk per FDA 2021 and EMA 2023 guidances.
  *
@@ -1657,27 +1898,56 @@ export interface NitrosamineRiskResult {
  *   Step 1: Identify root cause potential (vulnerable amines, nitrosating agents/conditions)
  *   Step 2: Risk ranking (high/medium/low)
  *   Step 3: Confirmatory testing requirements
+ *
+ * A level is stated only when no unstated input could change it; otherwise it
+ * is 'not_assessed' and missingInputs names what to state.
  */
 export function assessNitrosamineRisk(params: NitrosamineRiskInput): NitrosamineRiskResult {
-  const {
-    drugSubstanceContainsAmines,
-    amineType = 'none',
-    nitriteReagentsUsed,
-    specificNitriteReagents = [],
-    synthesisUsesNitrosatingConditions,
-    sharedEquipment,
-    packagingContainsRubber,
-    excipientsConcern = [],
-    drugSubstanceDegradationRisk = false,
-    maxDailyDoseG,
-  } = params;
+  refuseIfAny(
+    textList('specificNitriteReagents', params.specificNitriteReagents, false),
+    textList('excipientsConcern', params.excipientsConcern, false),
+  );
+  const amines = statedAmines(params);
+  const amineType = amines.kind;
+  const nitriteReagentsUsed = statedBoolean('nitriteReagentsUsed', params.nitriteReagentsUsed);
+  const synthesisUsesNitrosatingConditions = statedBoolean('synthesisUsesNitrosatingConditions', params.synthesisUsesNitrosatingConditions);
+  const sharedEquipment = statedBoolean('sharedEquipment', params.sharedEquipment);
+  const packagingContainsRubber = statedBoolean('packagingContainsRubber', params.packagingContainsRubber);
+  const drugSubstanceDegradationRisk = statedBoolean('drugSubstanceDegradationRisk', params.drugSubstanceDegradationRisk);
+  const maxDailyDoseG = statedNumber('maxDailyDoseG', params.maxDailyDoseG, (n) => n > 0, 'a positive number of grams per day');
+  const { specificNitriteReagents = [], excipientsConcern } = params;
+  const hasExcipientConcern = isUnstated(excipientsConcern) ? undefined : excipientsConcern.length > 0;
+
+  // 2026-10-15: an unstated factor used to default to absent, so
+  // assessNitrosamineRisk({}) concluded 'no_risk' and "no confirmatory testing".
+  const missingInputs: string[] = ([
+    [amines.present === undefined, 'drugSubstanceContainsAmines'],
+    [amines.present === true && amineType === undefined, 'amineType'],
+    [nitriteReagentsUsed === undefined, 'nitriteReagentsUsed'],
+    [synthesisUsesNitrosatingConditions === undefined, 'synthesisUsesNitrosatingConditions'],
+    [sharedEquipment === undefined, 'sharedEquipment'],
+    [packagingContainsRubber === undefined, 'packagingContainsRubber'],
+    [hasExcipientConcern === undefined, 'excipientsConcern'],
+    [drugSubstanceDegradationRisk === undefined, 'drugSubstanceDegradationRisk'],
+  ] as const).filter(([unstated]) => unstated).map(([, name]) => name);
+  const notStated = (...names: string[]): string => names.filter((n) => missingInputs.includes(n)).join(', ');
 
   const riskAssessmentSteps: NitrosamineRiskResult['riskAssessmentSteps'] = [];
 
   // Step 1: Identify vulnerable amines
-  let amineRisk: NitrosamineRiskLevel = 'no_risk';
-  if (drugSubstanceContainsAmines && (amineType === 'secondary' || amineType === 'tertiary')) {
-    amineRisk = amineType === 'secondary' ? 'high' : 'medium';
+  const amineRange = amineLevelRange(amines.present, amineType);
+  const amineRisk = settledLevel(amineRange);
+  if (amineRisk === 'not_assessed') {
+    riskAssessmentSteps.push({
+      step: 1,
+      title: 'Vulnerable Amine Assessment',
+      description: 'Evaluate whether the drug substance or intermediates contain amine functionalities susceptible to nitrosation',
+      finding: amines.present
+        ? 'Not assessed: amines are present, but their type (primary, secondary or tertiary) was not stated, so their susceptibility to nitrosation cannot be ranked.'
+        : 'Not assessed: whether the drug substance or its intermediates contain amine functionalities was not stated. No conclusion about vulnerable amines is drawn.',
+      riskContribution: 'not_assessed',
+    });
+  } else if (amineType === 'secondary' || amineType === 'tertiary') {
     riskAssessmentSteps.push({
       step: 1,
       title: 'Vulnerable Amine Assessment',
@@ -1685,8 +1955,7 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
       finding: `Drug substance contains ${amineType} amine(s). ${amineType === 'secondary' ? 'Secondary amines are the most susceptible to N-nitrosamine formation (reaction with nitrous acid or nitrosating agents yields N-nitrosamines directly).' : 'Tertiary amines can undergo dealkylation to secondary amines under certain conditions, or form N-nitroso compounds via indirect mechanisms.'}`,
       riskContribution: amineRisk,
     });
-  } else if (drugSubstanceContainsAmines && amineType === 'primary') {
-    amineRisk = 'low';
+  } else if (amineType === 'primary') {
     riskAssessmentSteps.push({
       step: 1,
       title: 'Vulnerable Amine Assessment',
@@ -1695,6 +1964,7 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
       riskContribution: 'low',
     });
   } else {
+    // Reached only on an explicit "no amine present" (drugSubstanceContainsAmines false, or amineType 'none').
     riskAssessmentSteps.push({
       step: 1,
       title: 'Vulnerable Amine Assessment',
@@ -1705,9 +1975,20 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
   }
 
   // Step 2: Identify nitrosating agents / conditions
-  let nitrosatingRisk: NitrosamineRiskLevel = 'no_risk';
-  if (nitriteReagentsUsed) {
-    nitrosatingRisk = 'high';
+  const nitrosatingRange: RiskRange = [
+    nitrosatingLevel(nitriteReagentsUsed ?? false, synthesisUsesNitrosatingConditions ?? false),
+    nitrosatingLevel(nitriteReagentsUsed ?? true, synthesisUsesNitrosatingConditions ?? true),
+  ];
+  const nitrosatingRisk = settledLevel(nitrosatingRange);
+  if (nitrosatingRisk === 'not_assessed') {
+    riskAssessmentSteps.push({
+      step: 2,
+      title: 'Nitrosating Agent / Conditions Assessment',
+      description: 'Evaluate the presence of nitrite reagents, nitrosating conditions, or other sources of nitrosating species in the manufacturing process',
+      finding: `Not assessed: ${notStated('nitriteReagentsUsed', 'synthesisUsesNitrosatingConditions')} not stated. No conclusion about nitrite reagents or nitrosating conditions is drawn.`,
+      riskContribution: 'not_assessed',
+    });
+  } else if (nitriteReagentsUsed) {
     riskAssessmentSteps.push({
       step: 2,
       title: 'Nitrosating Agent / Conditions Assessment',
@@ -1716,7 +1997,6 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
       riskContribution: 'high',
     });
   } else if (synthesisUsesNitrosatingConditions) {
-    nitrosatingRisk = 'medium';
     riskAssessmentSteps.push({
       step: 2,
       title: 'Nitrosating Agent / Conditions Assessment',
@@ -1735,27 +2015,34 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
   }
 
   // Step 3: Cross-contamination and packaging risks
-  let crossContaminationRisk: NitrosamineRiskLevel = 'no_risk';
+  const crossRange: RiskRange = [
+    crossContaminationLevel(sharedEquipment ?? false, packagingContainsRubber ?? false, hasExcipientConcern ?? false, drugSubstanceDegradationRisk ?? false),
+    crossContaminationLevel(sharedEquipment ?? true, packagingContainsRubber ?? true, hasExcipientConcern ?? true, drugSubstanceDegradationRisk ?? true),
+  ];
+  const crossContaminationRisk = settledLevel(crossRange);
   const crossContaminationFindings: string[] = [];
 
   if (sharedEquipment) {
-    crossContaminationRisk = 'medium';
     crossContaminationFindings.push('Shared manufacturing equipment: risk of cross-contamination with nitrite-containing processes or N-nitrosamine-containing products manufactured on the same equipment. Dedicated equipment or validated cleaning procedures with nitrosamine-specific limits are required.');
   }
 
   if (packagingContainsRubber) {
-    crossContaminationRisk = crossContaminationRisk === 'medium' ? 'high' : 'medium';
     crossContaminationFindings.push('Rubber components in packaging (gaskets, stoppers, seals): natural and synthetic rubber may contain N-nitrosodimethylamine (NDMA) and other volatile nitrosamines leached from vulcanization accelerators. Evaluate extractables/leachables data for rubber components in contact with the drug product.');
   }
 
-  if (excipientsConcern.length > 0) {
-    crossContaminationRisk = crossContaminationRisk === 'no_risk' ? 'low' : crossContaminationRisk;
-    crossContaminationFindings.push(`Excipient concerns identified (${excipientsConcern.join(', ')}): some excipients may contain trace nitrite (e.g., sodium starch glycolate, povidone, croscarmellose sodium) or amines that could participate in nitrosamine formation during drug product manufacturing or storage.`);
+  if (hasExcipientConcern) {
+    crossContaminationFindings.push(`Excipient concerns identified (${(excipientsConcern ?? []).join(', ')}): some excipients may contain trace nitrite (e.g., sodium starch glycolate, povidone, croscarmellose sodium) or amines that could participate in nitrosamine formation during drug product manufacturing or storage.`);
   }
 
   if (drugSubstanceDegradationRisk) {
-    crossContaminationRisk = crossContaminationRisk === 'no_risk' ? 'medium' : crossContaminationRisk;
     crossContaminationFindings.push('Drug substance degradation risk identified: the drug substance or its degradation products may form nitrosamine-like compounds under stress conditions (heat, light, oxidative stress). Evaluate forced degradation study results for N-nitroso compound formation.');
+  }
+
+  const crossNotStated = notStated('sharedEquipment', 'packagingContainsRubber', 'excipientsConcern', 'drugSubstanceDegradationRisk');
+  if (crossNotStated) {
+    crossContaminationFindings.push(
+      `Not stated: ${crossNotStated}${crossContaminationRisk === 'not_assessed' ? ' — the level depends on them, so it is not assessed.' : ' — they cannot change this level.'}`,
+    );
   }
 
   if (crossContaminationFindings.length > 0) {
@@ -1776,64 +2063,48 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
     });
   }
 
-  // Determine overall risk level
-  const riskLevels: NitrosamineRiskLevel[] = [amineRisk, nitrosatingRisk, crossContaminationRisk];
-  let overallRiskLevel: NitrosamineRiskLevel;
-  if (riskLevels.includes('high') && riskLevels.filter(r => r === 'high' || r === 'medium').length >= 2) {
-    overallRiskLevel = 'high';
-  } else if (riskLevels.includes('high')) {
-    overallRiskLevel = 'medium';
-  } else if (riskLevels.filter(r => r === 'medium').length >= 2) {
-    overallRiskLevel = 'medium';
-  } else if (riskLevels.includes('medium')) {
-    overallRiskLevel = 'low';
-  } else if (riskLevels.includes('low')) {
-    overallRiskLevel = 'low';
-  } else {
-    overallRiskLevel = 'no_risk';
-  }
-
-  // Combine amine + nitrosating agent risk (both needed for formation)
-  if (amineRisk !== 'no_risk' && nitrosatingRisk !== 'no_risk') {
-    overallRiskLevel = 'high';
-  }
+  // Determine overall risk level: only one that no unstated input could change.
+  const overallRiskLevel = settledLevel([
+    overallNitrosamineLevel(amineRange[0], nitrosatingRange[0], crossRange[0]),
+    overallNitrosamineLevel(amineRange[1], nitrosatingRange[1], crossRange[1]),
+  ]);
 
   // Root causes
   const rootCauses: NitrosamineRiskResult['rootCauses'] = [
     {
       rootCause: 'Sodium nitrite or nitrous acid in synthesis',
       description: 'Direct use of sodium nitrite (NaNO2), nitrous acid (HNO2), or other nitrosating reagents (e.g., NOBF4, tert-butyl nitrite) in the API synthesis. This is the most common root cause identified in FDA recalls (valsartan, ranitidine).',
-      identified: nitriteReagentsUsed,
+      identified: nitriteReagentsUsed ?? null,
       mitigationStrategy: 'Substitute alternative reagents when possible. If nitrite must be used, ensure it is consumed completely, add quenching agents (e.g., sulfamic acid, ammonium sulfamate), validate purge across downstream steps, and test for specific nitrosamines in API.',
     },
     {
       rootCause: 'Cross-contamination from shared equipment',
       description: 'N-Nitrosamines or nitrite-containing residues from other products manufactured on shared equipment. Particularly relevant in contract manufacturing facilities.',
-      identified: sharedEquipment,
+      identified: sharedEquipment ?? null,
       mitigationStrategy: 'Implement dedicated equipment lines for products at risk. Validate cleaning procedures with nitrosamine-specific swab limits. Consider campaign manufacturing separation.',
     },
     {
       rootCause: 'Degradation of nitrosamide impurities',
       description: 'Some drug substances or process intermediates contain N-nitroso groups that can generate nitrosamines upon degradation or metabolism.',
-      identified: drugSubstanceDegradationRisk,
+      identified: drugSubstanceDegradationRisk ?? null,
       mitigationStrategy: 'Conduct forced degradation studies under ICH Q1A conditions with specific nitrosamine analysis. If degradation generates nitrosamines, establish shelf-life specifications and storage conditions to minimize formation.',
     },
     {
       rootCause: 'Interaction of nitrite impurity with secondary amines',
       description: 'Trace-level nitrite impurities in reagents, solvents, or water supplies reacting with secondary amine functionalities in the drug substance or intermediates during manufacturing or storage.',
-      identified: drugSubstanceContainsAmines && (amineType === 'secondary'),
+      identified: amineRisk === 'not_assessed' ? null : amineType === 'secondary',
       mitigationStrategy: 'Specify nitrite limits in incoming raw materials (water, solvents, excipients). Avoid acidic conditions that promote nitrosation. Control process pH to minimize nitrosating conditions.',
     },
     {
       rootCause: 'Rubber gaskets, stoppers, and closures',
       description: 'Vulcanization accelerators (e.g., tetramethylthiuram disulfide, morpholine derivatives) in rubber components can release NDMA and other volatile nitrosamines into the drug product during storage.',
-      identified: packagingContainsRubber,
+      identified: packagingContainsRubber ?? null,
       mitigationStrategy: 'Use nitrosamine-free elastomeric components (e.g., synthetic rubber formulations without amine-based vulcanization accelerators). Conduct extractables/leachables studies specific to nitrosamines. Consider fluoropolymer-coated stoppers or glass-only packaging.',
     },
     {
       rootCause: 'Excipient-drug interaction during product storage',
       description: 'Certain excipients (e.g., sodium starch glycolate, carboxymethyl cellulose) may contain trace nitrite that reacts with amine-containing drug substances during drug product shelf life, especially under elevated temperature and humidity.',
-      identified: excipientsConcern.length > 0,
+      identified: hasExcipientConcern ?? null,
       mitigationStrategy: 'Specify nitrite limits in excipient specifications. Evaluate drug-excipient compatibility with nitrosamine-specific endpoints. Consider packaging with desiccant or nitrogen headspace to minimize oxidative formation pathways.',
     },
   ];
@@ -1978,6 +2249,11 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
       'Document the risk assessment conclusion and basis for the low-risk determination',
       'Re-evaluate the risk assessment if any process changes occur',
     );
+  } else if (overallRiskLevel === 'not_assessed') {
+    confirmationTestingRequirements.push(
+      `No testing conclusion is drawn: the risk level is not assessed because ${missingInputs.join(', ')} ${missingInputs.length === 1 ? 'was' : 'were'} not stated.`,
+      'State them and re-run the assessment. An unstated risk factor is not an absent one.',
+    );
   } else {
     confirmationTestingRequirements.push(
       'No confirmatory testing required based on the current risk assessment',
@@ -1994,16 +2270,19 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
     );
   }
 
+  const causesNotAssessed = rootCauses.filter(r => r.identified === null).length;
   const regulatorySummary = `NITROSAMINE RISK ASSESSMENT\n` +
-    `Overall risk level: ${overallRiskLevel.toUpperCase()}\n` +
-    `Amine risk: ${amineRisk}${drugSubstanceContainsAmines ? ` (${amineType} amine)` : ' (no amines)'}\n` +
+    `Overall risk level: ${overallRiskLevel === 'not_assessed' ? `NOT ASSESSED — not stated: ${missingInputs.join(', ')}` : overallRiskLevel.toUpperCase()}\n` +
+    `Amine risk: ${amineRisk}${amines.present === undefined ? ' (amines not stated)' : amines.present ? ` (${amineType ?? 'type not stated'} amine)` : ' (no amines)'}\n` +
     `Nitrosating agent risk: ${nitrosatingRisk}\n` +
     `Cross-contamination/packaging risk: ${crossContaminationRisk}\n` +
-    `Root causes identified: ${rootCauses.filter(r => r.identified).length} of ${rootCauses.length}\n` +
-    `Confirmatory testing: ${overallRiskLevel === 'high' ? 'IMMEDIATELY REQUIRED' : overallRiskLevel === 'medium' ? 'Recommended within 6 months' : overallRiskLevel === 'low' ? 'Recommended' : 'Not required'}`;
+    `Root causes identified: ${rootCauses.filter(r => r.identified).length} of ${rootCauses.length}${causesNotAssessed > 0 ? ` (${causesNotAssessed} not assessed)` : ''}\n` +
+    (overallRiskLevel !== 'not_assessed' && missingInputs.length > 0 ? `Not stated (cannot change the overall level): ${missingInputs.join(', ')}\n` : '') +
+    `Confirmatory testing: ${overallRiskLevel === 'high' ? 'IMMEDIATELY REQUIRED' : overallRiskLevel === 'medium' ? 'Recommended within 6 months' : overallRiskLevel === 'low' ? 'Recommended' : overallRiskLevel === 'no_risk' ? 'Not required' : 'No conclusion — risk not assessed'}`;
 
   return {
     overallRiskLevel,
+    missingInputs,
     riskAssessmentSteps,
     rootCauses,
     commonNitrosamines,
@@ -2028,7 +2307,8 @@ export interface ControlStrategyInput {
   purgeFactorAvailable?: boolean;
   purgeFactorValue?: number;
   numberOfDownstreamSteps?: number;
-  compoundClass?: CohortOfConcern;
+  /** Required: the cohort-of-concern limits are far below the TTC, so 'not_coc' is never assumed. */
+  compoundClass: CohortOfConcern;
   nitrosamineIdentity?: string;
   analyticalMethodValidated?: boolean;
 }
@@ -2078,6 +2358,24 @@ export interface ControlStrategyResult {
  *   Option 5: No controls (Class 4 or 5 — non-mutagenic)
  */
 export function controlMutagenicImpurity(params: ControlStrategyInput): ControlStrategyResult {
+  // 2026-10-15: compoundClass defaulted to 'not_coc' (the 1.5 μg/day TTC for an
+  // unstated cohort), a missing dose gave "NaN ppm", and purge data said to exist
+  // without a factor printed "0×".
+  refuseIfAny(
+    oneOf('impurityClass', params.impurityClass, IMPURITY_CLASSES),
+    nonEmptyText('drugProductType', params.drugProductType),
+    positiveNumber('maxDailyDoseG', params.maxDailyDoseG, 'grams per day'),
+    oneOf('treatmentDuration', params.treatmentDuration, TREATMENT_DURATIONS),
+    oneOf('developmentPhase', params.developmentPhase, DEVELOPMENT_PHASES),
+    oneOf('compoundClass', params.compoundClass, COMPOUND_CLASSES),
+  );
+  if (params.purgeFactorAvailable === true && positiveNumber('purgeFactorValue', params.purgeFactorValue, 'fold') !== null) {
+    throw new ComputationRefusal(
+      'missing_input',
+      'purgeFactorValue must be a positive number (the demonstrated purge factor, e.g. 10000) when purgeFactorAvailable is true.',
+      'purgeFactorValue',
+    );
+  }
   const {
     impurityClass,
     drugProductType,
@@ -2087,7 +2385,7 @@ export function controlMutagenicImpurity(params: ControlStrategyInput): ControlS
     purgeFactorAvailable = false,
     purgeFactorValue = 0,
     numberOfDownstreamSteps = 0,
-    compoundClass = 'not_coc',
+    compoundClass,
     nitrosamineIdentity,
     analyticalMethodValidated = false,
   } = params;
