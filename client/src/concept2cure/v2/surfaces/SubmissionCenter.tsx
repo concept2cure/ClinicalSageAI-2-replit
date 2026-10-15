@@ -87,6 +87,7 @@ import { consumeNavParams } from '../navParams';
 import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
+import { SHADOW_WAIVER_ACTION, SHADOW_WAIVER_MEANINGS, shadowWaiverTargetLine, submitShadowWaiver, type WaiverRequest } from './ShadowReviewWaiver';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -335,10 +336,11 @@ function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
   );
 }
 
-/** A governed step in flight: what is signed, and for a transmit where it goes. */
-type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest };
-const GOVERNED_LABEL: Record<GovernedKind, string> = { freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit' };
-const GOVERNED_PAST: Record<GovernedKind, string> = { freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted' };
+/** A governed step in flight: what is signed, for a transmit where it goes, and
+ *  for a Shadow Review waiver (P-34) the failed run it answers. */
+type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest; waiver?: WaiverRequest };
+const GOVERNED_LABEL: Record<GovernedKind, string> = { freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit', 'shadow-waiver': 'Shadow Review waiver' };
+const GOVERNED_PAST: Record<GovernedKind, string> = { freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted', 'shadow-waiver': 'waived' };
 
 /** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
  *  transmit that sent nothing, whether the signature given for it is now void
@@ -626,6 +628,8 @@ export function SubmissionCenter({
   const [flow, setFlow] = React.useState<GovernedFlow | null>(null);
   // Sequence id with a transition POST in flight (buttons disable, no double-fire).
   const [acting, setActing] = React.useState<number | null>(null);
+  // Re-reads the Dispatch tab's readiness after a waive, which moves no status.
+  const [readinessBump, setReadinessBump] = React.useState(0);
 
   // Changing submission invalidates the sequence selection and any verdict.
   const subId = sub?.id;
@@ -777,7 +781,9 @@ export function SubmissionCenter({
    *  opened the e-signature with no gate shown, the signature was recorded, and
    *  only then did the freeze refuse. A refusal or an unreadable answer is
    *  returned as the sentence to show; null means the gates clear. */
-  const precheckRefusal = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest): Promise<string | null> => {
+  const precheckRefusal = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest): Promise<string | null> => {
+    // A waiver answers one failed run; without it there is nothing to sign (P-34).
+    if (kind === 'shadow-waiver' && !waiver) return 'No failed Shadow Review run is named for this waiver. Nothing was signed.';
     // A transmit's typed number is judged against the program record here,
     // before the signature, by the rule transmit applies (P-23).
     const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
@@ -792,17 +798,17 @@ export function SubmissionCenter({
 
   /** Open the e-signature for a governed step only when its gates clear. The
    *  Sequences row and the Dispatch tab both come here: one path to a signature. */
-  const requestGoverned = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => {
+  const requestGoverned = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest) => {
     if (acting != null || flow != null) return;
     setActing(s.id);
     setNotice(null);
-    const refusal = await precheckRefusal(s, kind, transmit);
+    const refusal = await precheckRefusal(s, kind, transmit, waiver);
     setActing(null);
     if (refusal) {
       setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
       return;
     }
-    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}) });
+    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}) });
   };
 
   /** The governed freeze/dispatch/transmit chain, run from inside the EsignModal AFTER
@@ -820,7 +826,7 @@ export function SubmissionCenter({
     f: GovernedFlow,
     input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
   ) => {
-    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit);
+    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit, f.waiver);
     if (refusal) throw new Error(refusal);
     const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
       'POST',
@@ -839,6 +845,9 @@ export function SubmissionCenter({
     }
     if (f.kind === 'transmit') {
       return runTransmit(f, sign.data.actionId, input, sign.data.sha256Chain);
+    }
+    if (f.kind === 'shadow-waiver') {
+      return runWaiver(f, sign.data.actionId, input, sign.data.sha256Chain);
     }
     const done = await mutateVerbatim<SeqRow>(
       'POST',
@@ -888,6 +897,27 @@ export function SubmissionCenter({
       text: `${transmittedSentence(f.seq, done.data, f.transmit?.environment)}, signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.`,
     });
     return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+  };
+
+  /** The Shadow Review waiver (P-34): POST /sequences/:id/shadow-review/waive
+   *  with the signature and the failed run it answers. A refusal or an
+   *  unconfirmed answer throws (the modal shows it; no success). The Dispatch
+   *  tab is read again whatever the answer: a waive moves no status. */
+  const runWaiver = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    // precheckRefusal refused a waiver flow without its run before anything was signed.
+    if (!f.waiver) throw new Error('No failed Shadow Review run is named for this waiver. Nothing was waived.');
+    try {
+      const done = await submitShadowWaiver(f.seq, signatureActionId, f.waiver);
+      setNotice({ tone: 'ok', text: `${done} — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
   };
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1697,11 +1727,11 @@ export function SubmissionCenter({
               />}
               {ws === 'dispatch' && (
                 <DispatchWorkspace
-                  key={`${seq.id}:${seq.status}`}
+                  key={`${seq.id}:${seq.status}:${readinessBump}`}
                   sub={sub}
                   seq={seq}
                   onNav={onNav}
-                  onGoverned={(s, kind, transmit) => void requestGoverned(s, kind, transmit)}
+                  onGoverned={(s, kind, transmit, waiver) => void requestGoverned(s, kind, transmit, waiver)}
                 />
               )}
             </>
@@ -1847,20 +1877,23 @@ export function SubmissionCenter({
       {flow && sub && (
         <EsignModal
           open
-          action={`${GOVERNED_LABEL[flow.kind]} sequence`}
+          action={flow.kind === 'shadow-waiver' ? SHADOW_WAIVER_ACTION : `${GOVERNED_LABEL[flow.kind]} sequence`}
           target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
           targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
             flow.kind === 'freeze'
               ? 'irreversible content lock'
               : flow.kind === 'dispatch'
                 ? 'records dispatch; the package is sent by a separate, signed transmit'
-                : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
+                : flow.kind === 'shadow-waiver'
+                  ? shadowWaiverTargetLine(flow.waiver)
+                  : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
           }`}
-          defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
+          defaultMeaning={flow.kind === 'freeze' ? 'approval' : flow.kind === 'shadow-waiver' ? 'responsibility' : 'release'}
           // Freeze and dispatch are approval and release acts. "Authorship"
           // is not offered: the sign route skips separation of duties for it,
-          // and the step refuses a signature that declares it (Gate 1).
-          meanings={flow.kind === 'freeze' ? ['approval', 'responsibility'] : ['release', 'approval', 'responsibility']}
+          // and the step refuses a signature that declares it (Gate 1). A
+          // Shadow Review waiver is responsibility or approval (P-34).
+          meanings={flow.kind === 'shadow-waiver' ? SHADOW_WAIVER_MEANINGS : flow.kind === 'freeze' ? ['approval', 'responsibility'] : ['release', 'approval', 'responsibility']}
           signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never

@@ -23,6 +23,7 @@
  *                POST /api/submissions/:id/validation/explain
  *   Shadow       POST/GET /api/submissions/sequences/:seqId/shadow-review
  *                GET /api/submissions/shadow-review/:runId/findings
+ *                POST /api/submissions/sequences/:seqId/shadow-review/waive (P-34; ShadowReviewWaiver.tsx)
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
  *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
  *                GET /api/mdx/gateways/transmittals?program_id=&region=  (the market's transmissions, F13)
@@ -41,6 +42,15 @@ import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
+import {
+  FailedRunNote,
+  ShadowPresenceNote,
+  ShadowWaiverOffer,
+  WaivedGateMark,
+  WaivedRunNote,
+  type WaiverReadiness,
+  type WaiverRequest,
+} from './ShadowReviewWaiver';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -899,7 +909,9 @@ interface ReadinessFinding {
   message: string;
   rule?: { id: string; title: string; regions: string[]; severity: string; enforcementStatement: string } | null;
 }
-interface ReadinessAssessment {
+/** `extends WaiverReadiness`: the P-34 waiver state, eligibility and gate
+ *  views (ShadowReviewWaiver.tsx), each absent on an older server. */
+interface ReadinessAssessment extends WaiverReadiness {
   sequenceId: number;
   region: string;
   sequenceStatus: string;
@@ -1177,11 +1189,13 @@ interface ShadowRunRow {
   sequenceId: number;
   region: string;
   lens: string;
-  status: string; // running|complete|failed
+  status: string; // running|complete|failed|waived (P-34: a waiver recorded in the history, not a review)
   rtfRiskScore: number | null;
   crlRiskScore: number | null;
   summary: string | null;
   createdAt: string | null;
+  /** A failed run's closed failure code (P-34); absent on an older server. */
+  failureCode?: string | null;
 }
 
 // GET /shadow-review/:runId/findings → shadow_review_findings rows.
@@ -1202,6 +1216,7 @@ const RUN_STATUS: Record<string, ToneMap> = {
   running: { l: 'Running', t: 'ai' },
   complete: { l: 'Complete', t: 'ok' },
   failed: { l: 'Failed', t: 'warn' },
+  waived: { l: 'Waived — not reviewed', t: 'idle' },
 };
 
 function runWhen(iso: string | null): string {
@@ -1218,7 +1233,8 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   const [selRun, setSelRun] = React.useState<number | null>(null);
   React.useEffect(() => setSelRun(null), [seq.id]);
   const run = runs.rows.find((r) => r.id === selRun) ?? runs.rows[0] ?? null;
-  const findingsPath = run ? `/api/submissions/shadow-review/${run.id}/findings` : null;
+  // A waived run is not a review: it has no findings to read.
+  const findingsPath = run && run.status !== 'waived' ? `/api/submissions/shadow-review/${run.id}/findings` : null;
   /* Without a guard, a non-array body settled as zero rows and — with the run
      complete — rendered "Run #N recorded no findings.": the false clear the
      comment block below was written to prevent. */
@@ -1384,8 +1400,8 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                     <td>
                       <Chip map={RUN_STATUS} k={r.status} />
                     </td>
-                    <td>{r.rtfRiskScore != null ? r.rtfRiskScore.toFixed(2) : '—'}</td>
-                    <td>{r.crlRiskScore != null ? r.crlRiskScore.toFixed(2) : '—'}</td>
+                    <td>{r.status !== 'waived' && r.rtfRiskScore != null ? r.rtfRiskScore.toFixed(2) : '—'}</td>
+                    <td>{r.status !== 'waived' && r.crlRiskScore != null ? r.crlRiskScore.toFixed(2) : '—'}</td>
                     <td>{runWhen(r.createdAt)}</td>
                   </tr>
                 ))}
@@ -1394,7 +1410,9 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
             {run && (
               <div className="sc-mt">
                 {run.summary ? <div className="scaf-note sc-mb">{run.summary}</div> : null}
-                {findings.loading ? (
+                {run.status === 'waived' ? (
+                  <WaivedRunNote run={run} />
+                ) : findings.loading ? (
                   <div role="status" className="scaf-note">Loading run #{run.id}&#39;s findings…</div>
                 ) : findings.error ? (
                   <div className="sc-verdict tone-err" role="status">
@@ -1441,6 +1459,7 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                     ))}
                   </div>
                 )}
+                {run.status === 'failed' && <FailedRunNote seqId={seq.id} run={run} />}
               </div>
             )}
           </>
@@ -1473,8 +1492,9 @@ interface DispatchQcResult {
   narrativeUnavailable: { code: string; message: string } | null;
 }
 
-/** The governed steps the parent's e-signature chain runs. */
-export type GovernedKind = 'freeze' | 'dispatch' | 'transmit';
+/** The governed steps the parent's e-signature chain runs. 'shadow-waiver' is
+ *  the P-34 Shadow Review waiver (ShadowReviewWaiver.tsx). */
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver';
 /** What a transmit needs beyond its signature (POST /sequences/:id/transmit). */
 export interface TransmitRequest {
   environment: 'staging' | 'production';
@@ -1776,7 +1796,7 @@ export function DispatchWorkspace({
 }: {
   sub: SubLike;
   seq: SeqRow;
-  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => void;
+  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest) => void;
   /** Shell navigation, for the compile screen opened on this sequence (F14). */
   onNav?: (id: string) => void;
 }) {
@@ -1879,7 +1899,7 @@ export function DispatchWorkspace({
             >
               {a.gate.cleared || awaitingOwnSignature ? I.shieldCheck : I.lock}{' '}
               {a.gate.cleared
-                ? 'Dispatch gate clear'
+                ? <>Dispatch gate clear<WaivedGateMark a={a} /></>
                 : awaitingOwnSignature
                   ? 'Dispatch gate clear except for the release signature — the dispatch e-signature applies it'
                   : `Dispatch blocked — ${a.gate.blockers.length} ${
@@ -1910,15 +1930,17 @@ export function DispatchWorkspace({
               {stageLabel({ status: a.sequenceStatus, validationStatus: seq.validationStatus })}
             </div>
             {/* `shadowReviewMissing` is a HARD blocker merged into the gate, so
-                this note only ever rendered directly beneath "Dispatch blocked"
-                — while saying the gate was clear and dispatch permitted. It
-                now says what it is: the reason the gate blocks. */}
-            {a.shadowReviewMissing && (
-              <div className="sc-verdict tone-warn" role="status">
-                No completed Shadow Review has run for this sequence — that is one of the reasons the
-                gate blocks. Dispatch is not permitted until it has been adversarially reviewed.
-              </div>
-            )}
+                this note is the reason the gate blocks, never a permission. By
+                the P-34 waiver's state: active renders the server's notAssessed
+                note; lapsed / revoked / undetermined their own sentences. The
+                waiver is offered only when the server says it is eligible. */}
+            <ShadowPresenceNote a={a} />
+            <ShadowWaiverOffer
+              a={a}
+              seq={seq}
+              canSign={!cannotSign}
+              onWaive={(w) => onGoverned(seq, 'shadow-waiver', undefined, w)}
+            />
             {seq.status !== 'dispatched' && signerState === 'author' && (
               <div className="sc-verdict tone-warn" role="status">
                 You created this sequence, so you cannot sign its freeze or dispatch. Separation of

@@ -1343,6 +1343,35 @@ router.get('/shadow-review/:runId/findings', limiter, requireRole(AUTHOR), async
   }
 });
 
+// ── Shadow Review waiver (P-34, decided 2026-10-15) ─────────────────────────
+// Offered only after the sequence's newest run failed because every AI provider
+// failed or was overloaded (ask POST governed-precheck { step: 'shadow-waiver' }).
+// Sign first: POST /api/c2c/actions/sign, target "ectd-sequence:<seqId>",
+// payload { intent: 'shadow-waiver', meaning: 'responsibility' | 'approval' },
+// with the reason — the signature's reason is the waiver's. Then pass its
+// actionId and the failed run here. 403 GOVERNED_REQUIRED for a missing,
+// spent, void or wrong-intent signature; 409 SHADOW_WAIVER_NOT_ELIGIBLE, with
+// the reason, when no waiver is on offer; a refused waive voids its signature.
+// The act is waiveShadowReview's; no AnA tool reaches this door.
+const shadowWaiveSchema = z.object({
+  signatureActionId: z.string().min(1).max(128),
+  failedRunId: z.number().int().positive(),
+});
+router.post('/sequences/:seqId/shadow-review/waive', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = shadowWaiveSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { waiveShadowReview } = await import('../services/submission-service/submission-service');
+    res.json(await waiveShadowReview({ sequenceId: seqId, ...parsed.data }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Authoring (section-generation, streamed via SSE) ─────────────────────────
 const generateSectionSchema = z.object({
   sectionCode: z.string().min(1).max(64),
@@ -1855,7 +1884,9 @@ const governedTransitionSchema = z.object({ signatureActionId: z.string().min(1)
 // { cleared, refusal } either way — a refusal here is the answer, not an error.
 // It authorizes nothing: the step re-runs every gate itself.
 const governedPrecheckSchema = z.object({
-  step: z.enum(['freeze', 'dispatch', 'transmit']),
+  // 'shadow-waiver' (P-34): whether a Shadow Review waiver is on offer, and
+  // the failed run it would cite, before anyone signs one.
+  step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver']),
   environment: z.enum(['staging', 'production']).optional(),
   // Transmit: the number the person typed, judged against the program record
   // before anyone signs (P-23), by the rule transmit itself applies.

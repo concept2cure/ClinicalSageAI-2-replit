@@ -18,6 +18,12 @@ import { getGateway } from '../ai-gateway';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
+import {
+  classifyShadowReviewFailure,
+  isWaivableShadowReviewFailure,
+  type ClassifiedShadowReviewFailure,
+  type ShadowReviewFailureErrorCode,
+} from './shadow-review-failure';
 
 const logger = createScopedLogger('shadow-review-service');
 
@@ -107,8 +113,15 @@ export function parseShadowReviewOutput(
   };
 }
 
+/**
+ * A run that did not complete. Since 2026-10-15 (P-34) a failure is answered
+ * with the gateway's own classification of it (gateway-error-map.ts) — a
+ * placement or governance refusal is no longer reported as "provider
+ * unavailable" — and INTERNAL for a fault of ours. The run records the closed
+ * failure code either way (shadow-review-failure.ts).
+ */
 export class ShadowReviewError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE', message: string) {
+  constructor(public code: 'NOT_FOUND' | ShadowReviewFailureErrorCode, message: string) {
     super(message);
     this.name = 'ShadowReviewError';
   }
@@ -202,9 +215,8 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
       organizationId,
       createdBy: userId,
     })
-    .returning();
+    .returning({ id: shadowReviewRuns.id });
 
-  const systemPrompt = await loadPrompt();
   const userPayload = JSON.stringify({
     lens,
     region: sequence.region,
@@ -215,6 +227,9 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
   let output: ShadowReviewOutput;
   let model: string | undefined;
   try {
+    // Inside the try (P-34): a prompt that could not be read used to leave the
+    // run 'running' for ever, which also hid it from every "newest run" read.
+    const systemPrompt = await loadPrompt();
     const response = await getGateway().route({
       taskType: 'regulatory_review',
       messages: [
@@ -234,15 +249,13 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
     const parsed = parseShadowReviewOutput(JSON.parse(cleaned));
     if (!parsed.ok) {
-      await db.update(shadowReviewRuns).set({ status: 'failed', updatedAt: new Date() }).where(eq(shadowReviewRuns.id, run.id));
       throw new ShadowReviewError('INVALID_AI_RESPONSE', `Shadow review returned no countable assessment (${parsed.reason}).`);
     }
     output = parsed.output;
   } catch (err) {
-    if (err instanceof ShadowReviewError) throw err;
-    await db.update(shadowReviewRuns).set({ status: 'failed', updatedAt: new Date() }).where(eq(shadowReviewRuns.id, run.id));
-    if (err instanceof SyntaxError) throw new ShadowReviewError('INVALID_AI_RESPONSE', 'Shadow review returned invalid JSON.');
-    throw new ShadowReviewError('PROVIDER_UNAVAILABLE', 'Shadow review could not be completed.');
+    const failure = classifyShadowReviewFailure(err);
+    await recordRunFailure(run.id, failure, { organizationId, userId, lens, sequenceId, model, err });
+    throw new ShadowReviewError(failure.errorCode, failure.message);
   }
 
   const findings = leaves.length === 0 ? [EMPTY_SEQUENCE_FINDING, ...output.findings] : output.findings;
@@ -284,6 +297,52 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
   logger.info('Shadow review complete', { runId: run.id, sequenceId, organizationId, findings: findings.length });
   const summary = output.summary ?? '';
   return { runId: run.id, rtfRiskScore, crlRiskScore, summary, findingCount: findings.length, scoreBasis: 'severity_aggregate', auditTrail };
+}
+
+/**
+ * Mark a run failed with its closed failure code, and write its §11.10(e) row:
+ * AI_GENERATE_FAILED on the run, naming the code and whether it is waivable
+ * (P-34). Before 2026-10-15 a failed run kept no reason and wrote no row, so
+ * the failed run a waiver relies on was not in the audit chain. Neither write
+ * may replace the failure the caller is about to be told, so each is logged
+ * and passed over if it fails.
+ */
+async function recordRunFailure(
+  runId: number,
+  failure: ClassifiedShadowReviewFailure,
+  at: { organizationId: number; userId: number; lens: ReviewLens; sequenceId: number; model?: string; err: unknown },
+): Promise<void> {
+  const { failureCode } = failure;
+  try {
+    await db
+      .update(shadowReviewRuns)
+      .set({ status: 'failed', failureCode, model: at.model ?? null, updatedAt: new Date() })
+      .where(eq(shadowReviewRuns.id, runId));
+  } catch (writeErr) {
+    logger.error('A failed shadow review could not be recorded as failed', {
+      runId, failureCode, err: writeErr instanceof Error ? writeErr.message : String(writeErr),
+    });
+  }
+  await recordAuditRow({
+    organizationId: at.organizationId,
+    userId: at.userId,
+    action: 'AI_GENERATE_FAILED',
+    resourceType: 'shadow_review_run',
+    resourceId: runId,
+    details: {
+      task: 'shadow-review',
+      promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
+      lens: at.lens,
+      sequenceId: at.sequenceId,
+      failureCode,
+      waivable: isWaivableShadowReviewFailure(failureCode),
+    },
+  });
+  // The cause stays in the log; the caller gets the classified sentence.
+  logger.warn('Shadow review failed', {
+    runId, sequenceId: at.sequenceId, organizationId: at.organizationId, failureCode,
+    err: at.err instanceof Error ? at.err.message : String(at.err),
+  });
 }
 
 export default { runShadowReview, aggregateRisk, parseShadowReviewOutput, ShadowReviewError };

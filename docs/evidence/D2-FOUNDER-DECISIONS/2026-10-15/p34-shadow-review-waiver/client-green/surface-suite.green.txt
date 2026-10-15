@@ -1,0 +1,41 @@
+# Every test file that imports SubmissionCenter / SubmissionSeqWorkspaces / ShadowReviewWorkspace / DispatchWorkspace / ShadowReviewWaiver / SequenceAssembleTestPackage
+# grep -rln ... client/src --include=*.test.tsx --include=*.test.ts  (34 files), run together:
+# npx vitest run --config vitest.config.ts <the 34 files>
+
+      5  ✓ client/src/__tests__/concept2cure-communication-center.logic.test.ts
+      6  ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+     15  ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceDispatchGate.test.tsx
+      4  ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceFreezeGate.test.tsx
+      2  ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx
+      5  ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx
+      2  ✓ client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx
+      3  ✓ client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx
+      4  ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchB.test.tsx
+      7  ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+     51  ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx
+      9  ✓ client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx
+     10  ✓ client/src/concept2cure/v2/__tests__/shadowReviewGateScore.test.tsx
+     17  ✓ client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx
+      5  ✓ client/src/concept2cure/v2/__tests__/submissionBuilderDocumentPicker.test.tsx
+      2  ✓ client/src/concept2cure/v2/__tests__/submissionBuilderHistory.test.tsx
+      3  ✓ client/src/concept2cure/v2/__tests__/submissionBuilderSourceDocument.test.tsx
+      3  ✓ client/src/concept2cure/v2/__tests__/submissionCenterAssemblyCaption.test.tsx
+      4  ✓ client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx
+      6  ✓ client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx
+     18  ✓ client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx
+     10  ✓ client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx
+     12  ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx
+     17  ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx
+      8  ✓ client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx
+     10  ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx
+      8  ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx
+      3  ✓ client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx
+     12  ✓ client/src/concept2cure/v2/__tests__/submissionMutationOutcome.test.ts
+      7  ✓ client/src/concept2cure/v2/__tests__/submissionProgramAnchor.test.tsx
+     50  ✓ client/src/concept2cure/v2/__tests__/submissionRequiredDeliverables.test.tsx
+     11  ✓ client/src/concept2cure/v2/__tests__/submissionSelectorScope.test.tsx
+      4  ✓ client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx
+      3  ✓ client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx
+
+ Test Files  34 passed (34)
+      Tests  336 passed (336)

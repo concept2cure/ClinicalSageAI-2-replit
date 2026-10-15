@@ -50,7 +50,24 @@ import {
 } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
 import { canMutateProgram, programInOrganization } from '../c2c/program-access';
-import { requiresIndependence } from '../governance/separation-of-duties';
+import {
+  assertSignerIsNotAuthor,
+  requiresIndependence,
+  SeparationOfDutiesAuthorUnresolvedError,
+  SeparationOfDutiesError,
+} from '../governance/separation-of-duties';
+import {
+  SHADOW_REVIEW_WAIVED_ACTION,
+  SHADOW_WAIVER_INTENT,
+  resolveShadowReviewWaiver,
+  shadowReviewWaivable,
+  shadowWaiverInsert,
+  shadowWaiverMeaningRefusal,
+  shadowWaiverRunRefusal,
+  type ShadowReviewWaivability,
+  type ShadowReviewWaiverRecord,
+} from '../ectd/shadow-review-waiver';
+import { isWaivableShadowReviewFailure } from '../../../shared/constants/shadow-review-failure';
 import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
@@ -81,7 +98,8 @@ export type SubmissionErrorCode =
   | 'UNANCHORED_SUBMISSION'
   | 'APPLICATION_NUMBER_MISMATCH'
   | 'APPLICATION_TYPE_MISMATCH'
-  | 'PACKAGE_IDENTITY_MISSING';
+  | 'PACKAGE_IDENTITY_MISSING'
+  | 'SHADOW_WAIVER_NOT_ELIGIBLE';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -120,6 +138,9 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   // The record names no application number or no applicant (QA j6), as the
   // eCTD export answers it (ectd-export.ts classifyError).
   PACKAGE_IDENTITY_MISSING: 409,
+  // No Shadow Review waiver is on offer for this sequence (P-34): no outage is
+  // recorded on its newest run, or a review already completed, or it is frozen.
+  SHADOW_WAIVER_NOT_ELIGIBLE: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -793,6 +814,24 @@ const STEP_AUDIT_ACTION: Record<GovernedSequenceStep, string> = {
 };
 
 /**
+ * What a sequence signature may declare it authorizes: one of the governed
+ * steps, or the Shadow Review waiver (P-34, ectd/shadow-review-waiver.ts).
+ * Gate 1 verifies, spends and voids them alike. The waiver is not a step:
+ * STEP_AUDIT_ACTION and the release intent (sequence-release-signature.ts)
+ * stay the three steps' alone, so a waiver signature never freezes,
+ * dispatches, transmits or releases anything.
+ */
+export type SequenceSignatureIntent = GovernedSequenceStep | typeof SHADOW_WAIVER_INTENT;
+
+/** How a sentence names the act a signature was given for. */
+const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
+  freeze: 'freeze',
+  dispatch: 'dispatch',
+  transmit: 'transmit',
+  [SHADOW_WAIVER_INTENT]: 'Shadow Review waiver',
+};
+
+/**
  * Why a recorded governed `sign` action does not authorize `step` on `target`
  * for this actor, or null when it does. Four things are checked, and each used
  * to be missing:
@@ -809,7 +848,7 @@ async function governedSignatureRefusal(
   signatureActionId: string,
   target: string,
   ctx: { organizationId: number; userId: number },
-  step: GovernedSequenceStep,
+  step: SequenceSignatureIntent,
 ): Promise<string | null> {
   return (await governedSignatureVerdict(signatureActionId, target, ctx, step)).refusal;
 }
@@ -825,8 +864,11 @@ async function governedSignatureVerdict(
   signatureActionId: string,
   target: string,
   ctx: { organizationId: number; userId: number },
-  step: GovernedSequenceStep,
-): Promise<{ refusal: string; boundDigest: null } | { refusal: null; boundDigest: string }> {
+  step: SequenceSignatureIntent,
+): Promise<
+  | { refusal: string; boundDigest: null }
+  | { refusal: null; boundDigest: string; signatureId: number | null; meaning: unknown }
+> {
   const refuse = (refusal: string) => ({ refusal, boundDigest: null }) as const;
   const action = await db.execute(sql`
     SELECT id, payload FROM c2c_ana_actions
@@ -857,11 +899,15 @@ async function governedSignatureVerdict(
   // Refused at the step itself, so it holds whichever client signed it.
   if (!requiresIndependence('sign', payload?.meaning)) {
     return refuse(
-      `the signature declares the meaning '${String(payload?.meaning)}'; ${step} is an approval or release step, ` +
+      `the signature declares the meaning '${String(payload?.meaning)}'; ${INTENT_LABEL[step]} is an approval or release step, ` +
         'so it must be signed with an approval, responsibility or release meaning by someone other than the ' +
         'sequence\'s creator',
     );
   }
+  // A waiver of Shadow Review is a decision the signer approves or answers for
+  // (P-34): responsibility or approval, never review or release.
+  const waiverMeaning = step === SHADOW_WAIVER_INTENT ? shadowWaiverMeaningRefusal(payload?.meaning) : null;
+  if (waiverMeaning) return refuse(waiverMeaning);
 
   // Spent by a performed step, or void because the step it was given for was
   // refused (P-23, voidRefusedStepSignature). The void is also on the signature
@@ -869,7 +915,7 @@ async function governedSignatureVerdict(
   const spentBy = await signatureSpentBy(signatureActionId, target, ctx.organizationId);
   if (spentBy === SIGNATURE_VOIDED_ACTION) {
     return refuse(
-      `this signature was given for a ${step} the server refused, so it is void; sign again for a new attempt`,
+      `this signature was given for a ${INTENT_LABEL[step]} the server refused, so it is void; sign again for a new attempt`,
     );
   }
   if (spentBy !== null) {
@@ -894,7 +940,7 @@ async function governedSignatureVerdict(
      transmit. (Dispatch was covered, because its Gate 2 release-signature check
      does apply this predicate.) */
   const esig = await db.execute(sql`
-    SELECT bound_payload_digest, binding_basis, superseded_by, is_valid, verification_status
+    SELECT id, bound_payload_digest, binding_basis, superseded_by, is_valid, verification_status
       FROM electronic_signatures
     WHERE organization_id = ${ctx.organizationId}
       AND signed_target = ${target}
@@ -903,6 +949,7 @@ async function governedSignatureVerdict(
   `);
   const sig = ((esig as unknown as {
     rows?: Array<{
+      id: unknown;
       bound_payload_digest: string | null;
       binding_basis: string | null;
       superseded_by: unknown;
@@ -913,7 +960,7 @@ async function governedSignatureVerdict(
   if (!sig) return refuse('no electronic signature record is bound to this sign action');
   if (String(sig.verification_status ?? '') === VOIDED_VERIFICATION_STATUS) {
     return refuse(
-      `this signature was given for a ${step} the server refused, so it is void; sign again for a new attempt`,
+      `this signature was given for a ${INTENT_LABEL[step]} the server refused, so it is void; sign again for a new attempt`,
     );
   }
   if (isSignatureWithdrawn(sig)) {
@@ -930,7 +977,13 @@ async function governedSignatureVerdict(
   if (current.digest !== sig.bound_payload_digest) {
     return refuse('the sequence changed after it was signed (leaf manifest digest differs); re-sign the current content');
   }
-  return { refusal: null, boundDigest: sig.bound_payload_digest };
+  const signatureId = Number(sig.id);
+  return {
+    refusal: null,
+    boundDigest: sig.bound_payload_digest,
+    signatureId: Number.isFinite(signatureId) && signatureId > 0 ? signatureId : null,
+    meaning: payload?.meaning,
+  };
 }
 
 function safeJson(text: string): Record<string, unknown> | null {
@@ -942,8 +995,9 @@ const SIGNATURE_VOIDED_ACTION = 'GOVERNED_SIGNATURE_VOIDED';
 
 /**
  * The audit action that spent this sign action on this sequence — a performed
- * freeze, dispatch or transmit, or the void a refused one recorded — or null
- * when nothing has. Each signature serves one act.
+ * freeze, dispatch or transmit, a recorded Shadow Review waiver (P-34), or the
+ * void a refused one recorded — or null when nothing has. Each signature
+ * serves one act.
  */
 async function signatureSpentBy(signatureActionId: string, target: string, organizationId: number): Promise<string | null> {
   const sequenceId = target.slice(target.indexOf(':') + 1);
@@ -952,7 +1006,7 @@ async function signatureSpentBy(signatureActionId: string, target: string, organ
     WHERE tenant_id = ${organizationId}
       AND table_name = 'ectd_sequence'
       AND record_id = ${sequenceId}
-      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SIGNATURE_VOIDED_ACTION})
+      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SHADOW_REVIEW_WAIVED_ACTION}, ${SIGNATURE_VOIDED_ACTION})
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
     LIMIT 1
   `);
@@ -993,7 +1047,7 @@ async function voidRefusedStepSignature(
   signatureActionId: string,
   sequenceId: number,
   ctx: { organizationId: number; userId: number },
-  step: GovernedSequenceStep,
+  step: SequenceSignatureIntent,
   refusal: string,
 ): Promise<SignatureVoidOutcome> {
   const target = `ectd-sequence:${sequenceId}`;
@@ -1052,10 +1106,10 @@ async function voidRefusedStepSignature(
 }
 
 /** What the signer is told about the signature a refused step was given. */
-function voidedSignatureSentence(outcome: SignatureVoidOutcome, step: GovernedSequenceStep): string {
-  if (outcome === 'voided') return ` The signature given for this ${step} is now void; sign again for a new attempt.`;
+function voidedSignatureSentence(outcome: SignatureVoidOutcome, step: SequenceSignatureIntent): string {
+  if (outcome === 'voided') return ` The signature given for this ${INTENT_LABEL[step]} is now void; sign again for a new attempt.`;
   if (outcome === 'failed') {
-    return ` The signature given for this ${step} could not be marked void right now; do not reuse it, sign again for a new attempt.`;
+    return ` The signature given for this ${INTENT_LABEL[step]} could not be marked void right now; do not reuse it, sign again for a new attempt.`;
   }
   return '';
 }
@@ -1068,7 +1122,7 @@ function voidedSignatureSentence(outcome: SignatureVoidOutcome, step: GovernedSe
  */
 async function voidingSignatureOnRefusal<T>(
   run: () => Promise<T>,
-  sig: { signatureActionId: string; sequenceId: number; ctx: { organizationId: number; userId: number }; step: GovernedSequenceStep },
+  sig: { signatureActionId: string; sequenceId: number; ctx: { organizationId: number; userId: number }; step: SequenceSignatureIntent },
   voidable: (err: unknown) => boolean | Promise<boolean> = () => true,
 ): Promise<T> {
   try {
@@ -1462,11 +1516,13 @@ async function governedContentGates(
 /** What a precheck of a governed step answers. `cleared: false` carries the
  *  server's refusal, in the words the step itself would refuse with. */
 export interface GovernedStepPrecheck {
-  step: GovernedSequenceStep;
+  step: SequenceSignatureIntent;
   cleared: boolean;
   refusal: string | null;
   /** Transmit only: where it would go and whether that gateway can send. */
   transmit?: SequenceTransmitReadiness;
+  /** Shadow Review waiver only (P-34): whether one is offered, and the failed run it would cite. */
+  shadowWaiver?: ShadowReviewWaivability;
 }
 
 /**
@@ -1486,7 +1542,7 @@ export interface GovernedStepPrecheck {
  */
 export async function precheckGovernedStep(
   id: number,
-  step: GovernedSequenceStep,
+  step: SequenceSignatureIntent,
   ctx: { organizationId: number; userId: number },
   opts: { environment?: 'staging' | 'production'; applicationId?: string } = {},
 ): Promise<GovernedStepPrecheck> {
@@ -1495,6 +1551,11 @@ export async function precheckGovernedStep(
     return { step, cleared: transmit.refusal === null, refusal: transmit.refusal, transmit };
   }
   const seq = await getSequence(id, ctx);
+  // The waiver's own rule (P-34), the one waiveShadowReview applies.
+  if (step === SHADOW_WAIVER_INTENT) {
+    const shadowWaiver = await shadowReviewWaivable(asQueryable(pool), { sequenceId: seq.id, organizationId: ctx.organizationId });
+    return { step, cleared: shadowWaiver.eligible, refusal: shadowWaiver.eligible ? null : shadowWaiver.reason, shadowWaiver };
+  }
   const toStatus = step === 'freeze' ? 'frozen' : 'dispatched';
   if (!canTransitionSequence(seq.status, toStatus)) {
     return { step, cleared: false, refusal: `Cannot transition sequence from ${seq.status} to ${toStatus}.` };
@@ -1646,6 +1707,116 @@ export function dispatchSequence(
     () => applyGovernedSequenceTransition(id, 'dispatched', ctx, signatureActionId),
     { signatureActionId, sequenceId: id, ctx, step: 'dispatch' },
   );
+}
+
+// ── The Shadow Review waiver (P-34) ──────────────────────────────────────────
+
+/**
+ * Record a signed Shadow Review waiver (P-34, docs/LAUNCH_DEFINITION_OF_DONE.md,
+ * 2026-10-15): the sequence's newest Shadow Review run failed because every AI
+ * provider failed or was overloaded, and a person with signing authority who
+ * did not author the sequence signs that it may proceed unreviewed. The rules
+ * are ectd/shadow-review-waiver.ts's; this is the act, and its one door is
+ * POST /api/submissions/sequences/:seqId/shadow-review/waive (no AnA tool).
+ *
+ * Gate 1 is the governed steps' own (governedSignatureVerdict with intent
+ * 'shadow-waiver': this actor, this sequence, responsibility or approval,
+ * unspent, bound to the current leaf manifest). Separation of duties is checked
+ * again here, so it holds whichever client signed. Eligibility is re-asked
+ * under the sequence row lock — the lock leaf writes take — with the leaf
+ * manifest the signature binds. The 'waived' row and its chained
+ * SHADOW_REVIEW_WAIVED audit row commit together or not at all, and that audit
+ * row spends the signature. The signature's own reason is the waiver's reason.
+ * A refused waive voids the signature it was given (P-23).
+ */
+export function waiveShadowReview(
+  input: { sequenceId: number; signatureActionId: string; failedRunId: number },
+  ctx: { organizationId: number; userId: number },
+): Promise<ShadowReviewWaiverRecord> {
+  return voidingSignatureOnRefusal(
+    () => applyShadowReviewWaiver(input, ctx),
+    { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: SHADOW_WAIVER_INTENT },
+  );
+}
+
+/** Separation of duties for the waiver, as a refusal: the sequence's creator never waives its review. */
+async function waiverSignerRefusal(
+  target: string,
+  ctx: { organizationId: number; userId: number },
+  meaning: unknown,
+): Promise<SubmissionError | null> {
+  try {
+    await assertSignerIsNotAuthor(target, ctx.organizationId, ctx.userId, { command: 'sign', meaning });
+    return null;
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError) return new SubmissionError('FORBIDDEN', err.message);
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) return new SubmissionError('INVALID_STATE', err.message);
+    throw err;
+  }
+}
+
+async function applyShadowReviewWaiver(
+  input: { sequenceId: number; signatureActionId: string; failedRunId: number },
+  ctx: { organizationId: number; userId: number },
+): Promise<ShadowReviewWaiverRecord> {
+  const { signatureActionId, failedRunId } = input;
+  const seq = await getSequence(input.sequenceId, ctx);
+  const target = `ectd-sequence:${seq.id}`;
+  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, SHADOW_WAIVER_INTENT);
+  if (verdict.refusal !== null) {
+    throw new SubmissionError(
+      'GOVERNED_REQUIRED',
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent '${SHADOW_WAIVER_INTENT}' ` +
+        `and the meaning responsibility or approval, then pass its actionId. Refused: ${verdict.refusal}.`,
+    );
+  }
+  const independence = await waiverSignerRefusal(target, ctx, verdict.meaning);
+  if (independence) throw independence;
+  const offered = await shadowReviewWaivable(asQueryable(pool), { sequenceId: seq.id, organizationId: ctx.organizationId });
+  const notOffered = shadowWaiverRunRefusal(offered, failedRunId);
+  if (notOffered !== null) throw new SubmissionError('SHADOW_WAIVER_NOT_ELIGIBLE', notOffered);
+  const failureCode = offered.failureCode;
+  if (!isWaivableShadowReviewFailure(failureCode)) throw new SubmissionError('SHADOW_WAIVER_NOT_ELIGIBLE', offered.reason);
+
+  const insert = shadowWaiverInsert({
+    sequenceId: seq.id, organizationId: ctx.organizationId, signerId: ctx.userId, signatureActionId, failedRunId, failureCode,
+  });
+  await applySequenceChangeWithAudit(
+    {
+      underLock: async (client) => {
+        await client.query(
+          `SELECT id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+          [seq.id, ctx.organizationId],
+        );
+        const q = asQueryable(client);
+        const still = shadowWaiverRunRefusal(
+          await shadowReviewWaivable(q, { sequenceId: seq.id, organizationId: ctx.organizationId }),
+          failedRunId,
+        );
+        if (still !== null) throw new SubmissionError('SHADOW_WAIVER_NOT_ELIGIBLE', still);
+        if ((await sequenceLeafManifestDigest(q, seq.id, ctx.organizationId)) !== verdict.boundDigest) {
+          throw new SubmissionError(
+            'INVALID_STATE',
+            `Sequence ${seq.id}'s leaves changed while this waiver was being recorded, so the signature no longer binds them. ` +
+              'Nothing was recorded; sign again over the current leaves.',
+          );
+        }
+      },
+      text: insert.text,
+      params: insert.params,
+      noRowsRefusal: `Run #${failedRunId} is no longer a failed run of this sequence, so nothing was waived.`,
+    },
+    {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: SHADOW_REVIEW_WAIVED_ACTION,
+      resourceId: seq.id,
+      details: { signatureActionId, signatureId: verdict.signatureId, failedRunId, failureCode },
+    },
+  );
+  logger.info('Shadow Review waived', { sequenceId: seq.id, failedRunId, failureCode, organizationId: ctx.organizationId });
+  const waiver = await resolveShadowReviewWaiver(asQueryable(pool), { sequenceId: seq.id, organizationId: ctx.organizationId });
+  return { sequenceId: seq.id, failedRunId, failureCode, signatureActionId, signatureId: verdict.signatureId, waiver };
 }
 
 // ── Transmit (the TRANSMIT step — assemble → send to the agency gateway) ──────

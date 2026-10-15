@@ -3218,6 +3218,14 @@ export const C2C_MIGRATION_FILES = [
   // auto-trigger claims. Matches only those exact id formats; creates nothing,
   // so it sits anywhere after its four tables' creators and above the pair.
   'migrations/20261015b_contradiction_consequence_invented_ids.sql',
+  // P-34 (2026-10-15): a failed Shadow Review run records why it failed (a closed
+  // failure code), and a 'waived' row names the signature and the failed run a
+  // signed waiver relies on. Three columns on shadow_review_runs, after its
+  // creator 20260604_shadow_review.sql; the FK is pg_constraint-guarded and the
+  // indexes IF NOT EXISTS, so a replay is a no-op. public + organization_id
+  // INTEGER already, so it creates nothing the sweeps below must reach. Drops
+  // nothing. Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p34-shadow-review-waiver/.
+  'migrations/20261015_shadow_review_waiver.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

@@ -1,0 +1,32 @@
+# Guard mutations: each guard removed in turn from ShadowReviewWaiver.tsx, the new test run, the file restored (cmp-verified).
+# The three "not offered" tests also pass at HEAD, where nothing is offered at all, so these runs are what show they test the guards.
+
+## mutation 1: drop the signer guard (if (!canSign) return null;)
+applied: 1
+ × Dispatch tab — the waiver is offered only when the server says so > eligible but the user created the sequence: not offered
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+## mutation 2: drop the dispatched guard
+applied: 1
+ × Dispatch tab — the waiver is offered only when the server says so > eligible but already dispatched: not offered
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+## mutation 3: offer without eligible === true
+remaining eligible checks: 0
+ × Dispatch tab — the waiver is offered only when the server says so > not eligible: no button, and the server says why
+ × Shadow review tab — waived and failed runs > a failed run the server does not call waivable gets no pointer
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 15 passed (17)
+## mutation 4: an active waiver falls through to the old missing-review note
+applied: 1
+ × Dispatch tab — what a waiver state says > active: the server notAssessed note, "not assessed by Shadow Review", and never "reviewed"
+ × the waiver chain — precheck, sign, waive, read again > runs precheck before the signature, signs intent shadow-waiver on the sequence, then waives that run
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 15 passed (17)
+## mutation 5: a 200 without an active waiver is taken as success
+applied: 1
+ × the waiver chain — precheck, sign, waive, read again > a 409 SHADOW_WAIVER_NOT_ELIGIBLE waive shows the server's words and no success
+ × the waiver chain — precheck, sign, waive, read again > a 403 GOVERNED_REQUIRED waive shows the server's words and no success
+ × the waiver chain — precheck, sign, waive, read again > an unconfirmed waive says so and claims nothing
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 14 passed (17)
