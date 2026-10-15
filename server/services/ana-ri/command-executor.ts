@@ -4237,6 +4237,7 @@ export async function recommendEndpoints(
       return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
     const result = await service.getComprehensiveEndpointRecommendations(
+      ctx.organizationId,
       String(params.indication),
       params.phase as string | undefined,
       (params.count as number) || 10,
@@ -4286,6 +4287,7 @@ export async function evaluateEndpoint(
     }
     const service = getEndpointRecommenderService();
     const evaluation = await service.evaluateEndpoint(
+      ctx.organizationId,
       String(params.endpoint),
       String(params.indication),
       params.phase as string | undefined

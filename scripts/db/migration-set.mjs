@@ -800,6 +800,16 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260331_regulatory_correspondence_os.sql',
   'db/migrations/20260401_submission_center_items.sql',
   'db/migrations/20260508_artifact_citations.sql',
+  // cross_artifact_consistency_alerts (2026-10-15): read and written by the
+  // mounted /api/ana/consistency/* routes, the readiness aggregate and the
+  // authoring plan, and created by no deploy. A database provisioned before
+  // shared/schema.ts declared the table has none (42P01); one pushed after has
+  // it without the unique partial index the scanner's ON CONFLICT names, so
+  // every alert insert fails (42P10). public + organization_id INTEGER NOT NULL,
+  // CREATE … IF NOT EXISTS only, drops nothing; no dependency. Its sibling
+  // 20260508_guidance_alerts.sql is NOT listed: it also creates the unkeyed
+  // global guidance_reference_index (CLAUDE.md RULE 1, last corollary).
+  'db/migrations/20260508_consistency_alerts.sql',
   'db/migrations/20260520_growth_mindset_extensions.sql',
   'db/migrations/20260621_weekly_usage_limits.sql',
 
