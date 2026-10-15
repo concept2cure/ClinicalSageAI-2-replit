@@ -66,7 +66,13 @@ export interface ReadinessDimensions {
  * readiness must say which dimensions it covers.
  */
 export interface ReadinessScoreBasis {
-  readonly source: 'twin_assessment' | 'no_assessment_on_record';
+  /**
+   * 'twin_unreadable': an assessment may be on record, but reading it (or
+   * checking the program is this organization's) failed. Until 2026-10-15
+   * that read as 'no_assessment_on_record', a statement about a record nobody
+   * had read.
+   */
+  readonly source: 'twin_assessment' | 'no_assessment_on_record' | 'twin_unreadable';
   readonly measured: readonly ReadinessDimensionName[];
   readonly notMeasured: readonly ReadinessDimensionName[];
 }
@@ -75,7 +81,11 @@ export interface ModuleScore {
   readonly modulePath: string;
   readonly moduleName: string;
   readonly score: number;
-  readonly gapCount: number;
+  /**
+   * Null: the assessment records a score per module, not a gap list. Until
+   * 2026-10-15 this was invented from the score (3 below 50, 1 below 75).
+   */
+  readonly gapCount: number | null;
   readonly status: 'complete' | 'in_progress' | 'not_started' | 'at_risk';
 }
 
@@ -121,7 +131,7 @@ export interface ReadinessPredictions {
   /** Criteria a twin assessment scored unmet. Null when no assessment exists. */
   readonly estimatedDeficiencies: number | null;
   /** Why the fields are null, for a caller that has to explain itself. */
-  readonly basis: 'twin_assessment' | 'no_assessment_on_record';
+  readonly basis: ReadinessScoreBasis['source'];
 }
 
 export interface ReadinessContext {
@@ -169,7 +179,8 @@ export async function computeReadinessScore(
   // ReadinessScore from a partial set would return a falsely-short gap list and
   // a score presented as authoritative — a manufactured "here are your gaps"
   // that dropped some because a read failed. gatherTwinAssessment stays
-  // best-effort (it already degrades to a neutral score).
+  // best-effort: a failed read leaves its dimensions null and is reported as
+  // scoreBasis 'twin_unreadable'.
   for (const [name, settled] of [
     ['profile', profileSignal],
     ['documents', documentSignal],
@@ -186,6 +197,9 @@ export async function computeReadinessScore(
   const docs = documentSignal.status === 'fulfilled' ? documentSignal.value : null;
   const milestones = milestoneSignal.status === 'fulfilled' ? milestoneSignal.value : null;
   const twin = twinSignal.status === 'fulfilled' ? twinSignal.value : null;
+  const basis: ReadinessScoreBasis['source'] = twin
+    ? 'twin_assessment'
+    : twinSignal.status === 'rejected' ? 'twin_unreadable' : 'no_assessment_on_record';
 
   // ── Compute dimensions ──────────────────────────────────────────────────
 
@@ -204,7 +218,7 @@ export async function computeReadinessScore(
     completeness, quality, consistency, compliance,
   });
   const scoreBasis: ReadinessScoreBasis = {
-    source: twin ? 'twin_assessment' : 'no_assessment_on_record',
+    source: basis,
     measured,
     notMeasured,
   };
@@ -215,7 +229,7 @@ export async function computeReadinessScore(
         modulePath: path,
         moduleName: path.replace(/^module_/, 'Module ').replace(/_/g, '.'),
         score: Math.round(score),
-        gapCount: score < 50 ? 3 : score < 75 ? 1 : 0,
+        gapCount: null,
         status: score >= 90 ? 'complete' as const
           : score >= 50 ? 'in_progress' as const
           : score > 0 ? 'at_risk' as const
@@ -283,7 +297,7 @@ export async function computeReadinessScore(
     approvalProbability: twin?.approvalProbability ?? null,
     estimatedReviewDays: twin?.reviewTimeDays ?? null,
     estimatedDeficiencies: twin?.deficiencyCount ?? null,
-    basis: twin ? 'twin_assessment' : 'no_assessment_on_record',
+    basis,
   };
 
   return {
@@ -315,7 +329,10 @@ export function describeReadiness(score: ReadinessScore): string {
   const names = score.scoreBasis.notMeasured;
   const notAssessed =
     names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names.join('');
-  const tail = notAssessed ? `; ${notAssessed} not assessed` : '';
+  const unreadable = score.scoreBasis.source === 'twin_unreadable'
+    ? "; the program's readiness assessment could not be read"
+    : '';
+  const tail = (notAssessed ? `; ${notAssessed} not assessed` : '') + unreadable;
   const figure = readinessFigure(score);
   return figure === null
     ? `Readiness not assessed — document completeness ${score.dimensions.completeness}% (document status only)${tail}`
@@ -517,7 +534,7 @@ async function gatherTwinAssessment(ctx: ReadinessContext): Promise<TwinSignal |
   // a query string (GET /api/intelligence/projects/:id/readiness). Read an
   // assessment only for this organization's live program; any other id has
   // none on record here (ana-15). A check that cannot run throws, and the
-  // caller treats the twin as absent.
+  // caller reports the twin unreadable (it used to treat it as absent).
   if (!(await programInOrganization(getPool, ctx.programId, ctx.organizationId))) return null;
 
   try {
@@ -563,7 +580,11 @@ async function gatherTwinAssessment(ctx: ReadinessContext): Promise<TwinSignal |
       deficiencyCount: numOrNull(row.predicted_deficiency_count),
       trend: { direction, delta, dataPoints: trendRows.length },
     };
-  } catch {
+  } catch (e) {
+    // A twin table that does not exist holds no assessment. Any other failure
+    // propagates: the caller reports 'twin_unreadable'. It returned null, which
+    // read as "no assessment on record" (2026-10-15).
+    if ((e as { code?: string })?.code !== '42P01') throw e;
     return null;
   }
 }
