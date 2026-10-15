@@ -9,7 +9,7 @@
  *
  * Covered domains:
  *   1. PLR (Physician Labeling Rule) structure assessment (21 CFR 201.56-57)
- *   2. Boxed Warning criteria and formatting (21 CFR 201.57(c)(1))
+ *   2. Boxed Warning criteria (FDA guidance, 2011) and format (21 CFR 201.57(a)(4), (c)(1))
  *   3. REMS (Risk Evaluation and Mitigation Strategies) design (FD&C Act §505-1)
  *   4. Pregnancy and Lactation labeling (PLLR Final Rule, 79 FR 72064)
  *   5. EU SmPC (Summary of Product Characteristics) structure (EMA QRD template)
@@ -20,8 +20,11 @@
 
 import { PLR_FORMAT_RULES } from '../ind/ctd/fda-technical-rules.js';
 import { SMPC_QRD_SECTIONS } from './smpc-qrd-catalog';
-import { ComputationRefusal } from '../ana-biostats/computation-engine';
-import { ETASU_ELEMENTS, EXISTING_REMS_MODELS, type ETASUDetail, type ExistingREMSModel, type REMSElement } from './rems-reference';
+import { refuseUnlessStated, type RequiredInputCheck } from '../ana-biostats/computation-engine';
+import {
+  ETASU_ELEMENTS, EXISTING_REMS_MODELS, FDORA_REMS_CHANGES, REMS_ELEMENT_HIERARCHY, SHARED_REMS_CONSIDERATIONS,
+  type ETASUDetail, type ExistingREMSModel, type REMSElement,
+} from './rems-reference';
 
 export type { ETASUDetail, ExistingREMSModel, REMSElement } from './rems-reference';
 
@@ -29,8 +32,10 @@ export type { ETASUDetail, ExistingREMSModel, REMSElement } from './rems-referen
 // Shared Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ProductType = 'prescription_drug' | 'biological' | 'biosimilar' | 'generic';
-export type ApplicationType = 'NDA' | 'BLA' | 'ANDA' | 'supplement';
+const PRODUCT_TYPES = ['prescription_drug', 'biological', 'biosimilar', 'generic'] as const;
+export type ProductType = (typeof PRODUCT_TYPES)[number];
+const APPLICATION_TYPES = ['NDA', 'BLA', 'ANDA', 'supplement'] as const;
+export type ApplicationType = (typeof APPLICATION_TYPES)[number];
 export const OTC_CATEGORIES = ['analgesic', 'antacid', 'antihistamine', 'antidiarrheal', 'laxative', 'cough_cold', 'topical_antibiotic', 'topical_antifungal', 'sunscreen', 'antiperspirant', 'acne', 'other'] as const;
 export type OTCCategory = (typeof OTC_CATEGORIES)[number];
 export const SAFETY_SIGNAL_TYPES = ['cardiovascular', 'hepatotoxicity', 'suicidality', 'infection', 'malignancy', 'teratogenicity', 'cytokine_release', 'pml', 'anaphylaxis', 'gi_perforation', 'bleeding', 'nephrotoxicity', 'other'] as const;
@@ -46,14 +51,8 @@ export interface Citation {
   title: string;
   year: number;
   url?: string;
-}
-
-/** One input an assessment cannot be made without, and whether it was stated in a readable form. */
-interface RequiredInput {
-  field: string;
-  value: unknown;
-  ok: boolean;
-  expected: string;
+  /** How far the citation was checked, where that limits it. */
+  note?: string;
 }
 
 const isUnstated = (v: unknown): boolean => v === undefined || v === null;
@@ -62,26 +61,17 @@ const isOneOf = (v: unknown, allowed: readonly string[]): boolean => typeof v ==
 /*
  * 2026-10-15: an input that decides an assessment, left unstated, used to be read
  * as its most favourable value (no signal type or severity met no boxed-warning
- * criterion). Such inputs are now refused, all named in one refusal; AnA relays
- * it as needs_parameters and asks for them.
+ * criterion). Such inputs are now refused, all named in one refusal
+ * (refuseUnlessStated, shared with the ADME engine); AnA relays it as
+ * needs_parameters and asks for them.
  */
-function refuseUnlessStated(fn: string, inputs: RequiredInput[]): void {
-  const bad = inputs.filter((i) => !i.ok);
-  if (bad.length === 0) return;
-  const named = bad.map((i) => `${i.field} (${i.expected}${isUnstated(i.value) ? '' : `; got ${JSON.stringify(i.value)}`})`);
-  throw new ComputationRefusal(
-    bad.every((i) => isUnstated(i.value)) ? 'missing_input' : 'invalid_input',
-    `${fn}: required and not stated: ${named.join('; ')}. Nothing is assessed without ${bad.length > 1 ? 'them' : 'it'}.`,
-    bad[0].field,
-  );
-}
 
 /** A required input from a closed vocabulary. */
-const oneOf = (field: string, value: unknown, allowed: readonly string[]): RequiredInput =>
+const oneOf = (field: string, value: unknown, allowed: readonly string[]): RequiredInputCheck =>
   ({ field, value, ok: isOneOf(value, allowed), expected: `one of ${allowed.join(', ')}` });
 
 /** A required true or false; absent is not false. */
-const yesNo = (field: string, value: unknown): RequiredInput =>
+const yesNo = (field: string, value: unknown): RequiredInputCheck =>
   ({ field, value, ok: typeof value === 'boolean', expected: 'true or false' });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,7 +81,8 @@ const yesNo = (field: string, value: unknown): RequiredInput =>
 export interface PLRSectionDescriptor {
   sectionNumber: string;
   sectionTitle: string;
-  required: boolean;
+  /** 'undetermined' when the input that decides it was not stated (contentGuidance names it). */
+  required: boolean | 'undetermined';
   subsections?: string[];
   contentGuidance: string;
   loincCode?: string;
@@ -118,7 +109,7 @@ export interface SPLRequirements {
 export interface AssessPLRStructureInput {
   productType: ProductType;
   applicationType: ApplicationType;
-  therapeuticArea: string;
+  therapeuticArea?: string;
   specialPopulations?: string[];
   hasBoxedWarning?: boolean;
   isNewFormulation?: boolean;
@@ -411,9 +402,18 @@ const LABELING_CITATIONS = {
   },
   CFR_201_57_C1: {
     guideline: '21 CFR 201.57(c)(1)',
-    title: 'Boxed Warning — Criteria for Inclusion',
+    title: 'Boxed Warning — content and format',
     year: 2006,
     url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-201/subpart-B/section-201.57',
+  },
+  // 2026-10-15: the criteria were cited as "21 CFR 201.57(c)(1)(i)-(iii)" (above, as "Criteria for Inclusion");
+  // (c)(1) has no such subparagraphs. Nothing in this repository records this guidance, so title only.
+  BOXED_WARNING_GUIDANCE: {
+    guideline: 'FDA Guidance',
+    section: 'Boxed Warning',
+    title: 'Warnings and Precautions, Contraindications, and Boxed Warning Sections of Labeling for Human Prescription Drug and Biological Products — Content and Format',
+    year: 2011,
+    note: 'Cited by title only, from recall: not checked against the FDA text, so no URL or section is given.',
   },
   REMS_GUIDANCE: {
     guideline: 'FDA Guidance',
@@ -1084,15 +1084,21 @@ const DRUG_FACTS_SECTIONS: DrugFactsSection[] = [
  * submission specifications.
  */
 export function assessPLRStructure(params: AssessPLRStructureInput): AssessPLRStructureResult {
+  // 2026-10-15: unstated, these were structured as a plain NDA prescription drug (no biologic, generic or
+  // supplement considerations). Both shape the result, so without them it refuses.
+  refuseUnlessStated('assessPLRStructure', [
+    oneOf('productType', params.productType, PRODUCT_TYPES),
+    oneOf('applicationType', params.applicationType, APPLICATION_TYPES),
+  ], 'assessed');
   const { productType, applicationType, therapeuticArea, specialPopulations, hasBoxedWarning, isNewFormulation } = params;
   const specialConsiderations: string[] = [];
 
-  // Build Highlights structure
-  const highlightsStructure: PLRSectionDescriptor[] = HIGHLIGHTS_SECTIONS.map(section => {
-    if (section.sectionNumber === 'H.1' && hasBoxedWarning) {
-      return { ...section, required: true };
-    }
-    return { ...section };
+  // Build Highlights structure. 2026-10-15: an unstated hasBoxedWarning gave H.1 required: false, as for a
+  // product stated to have no boxed warning.
+  const highlightsStructure: PLRSectionDescriptor[] = HIGHLIGHTS_SECTIONS.map((section): PLRSectionDescriptor => {
+    if (section.sectionNumber !== 'H.1') return { ...section };
+    if (typeof hasBoxedWarning === 'boolean') return { ...section, required: hasBoxedWarning };
+    return { ...section, required: 'undetermined', contentGuidance: `${section.contentGuidance} Undetermined: whether the product has a boxed warning (hasBoxedWarning) was not stated.` };
   });
 
   // Build FPI structure with product-specific adjustments
@@ -1169,8 +1175,9 @@ export function assessPLRStructure(params: AssessPLRStructureInput): AssessPLRSt
     );
   }
 
-  // Therapeutic area-specific additions
-  const lowerTA = therapeuticArea.toLowerCase();
+  // Therapeutic area-specific additions. 2026-10-15: without the (optional) therapeuticArea this threw a TypeError.
+  const lowerTA = typeof therapeuticArea === 'string' ? therapeuticArea.trim().toLowerCase() : '';
+  if (!lowerTA) specialConsiderations.push('Therapeutic-area considerations: not assessed — therapeuticArea was not stated.');
   if (lowerTA.includes('oncology') || lowerTA.includes('cancer')) {
     specialConsiderations.push(
       'Oncology products: Section 14 should include waterfall plots, Kaplan-Meier curves, or forest plots as appropriate. FDA oncology labeling often includes these visual data displays.',
@@ -1261,6 +1268,9 @@ export function assessPLRStructure(params: AssessPLRStructureInput): AssessPLRSt
 // Function 2: assessBoxedWarning
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Where the three criteria are stated (LABELING_CITATIONS.BOXED_WARNING_GUIDANCE); not 21 CFR 201.57(c)(1). */
+const BW_CRITERIA_SOURCE = 'FDA guidance (2011) on the Warnings and Precautions, Contraindications and Boxed Warning sections';
+
 /**
  * Criterion (iii): a fact about the approval, so met only as stated. 2026-10-15: it was inferred from the
  * signal (met for a life-threatening teratogenicity, PML or cytokine-release signal, otherwise not met).
@@ -1269,7 +1279,7 @@ function restrictedUseCriterion(stated: unknown): BoxedWarningCriterion {
   const met = typeof stated === 'boolean' ? stated : null;
   return {
     criterionNumber: 3,
-    description: '21 CFR 201.57(c)(1)(iii): FDA approved the drug with restrictions to ensure that use of the drug is safe (e.g., restricting distribution to certain facilities, requiring special training/certification, mandating monitoring).',
+    description: `Criterion (iii) — ${BW_CRITERIA_SOURCE}: FDA approved the drug with restrictions to ensure that use of the drug is safe (e.g., restricting distribution to certain facilities, requiring special training/certification, mandating monitoring).`,
     met,
     rationale: met === null
       ? 'Not assessed: whether the drug is approved with restrictions on distribution or use to ensure safe use (approvedWithRestrictions) was not stated — e.g. a REMS with ETASU, or 21 CFR 314.520 / 601.42. The signal type and severity do not decide it.'
@@ -1278,11 +1288,12 @@ function restrictedUseCriterion(stated: unknown): BoxedWarningCriterion {
 }
 
 /**
- * Evaluates whether a safety signal meets the criteria for a Boxed Warning
- * under 21 CFR 201.57(c)(1), provides formatting requirements, and returns
+ * Evaluates whether a safety signal meets the criteria for a Boxed Warning,
+ * provides its formatting requirements (21 CFR 201.57(a)(4), (c)(1)), and returns
  * common boxed warning categories with real drug examples.
  *
- * The three criteria from 21 CFR 201.57(c)(1) are:
+ * The three criteria, as FDA guidance states them (BW_CRITERIA_SOURCE; 21 CFR
+ * 201.57(c)(1) has no subparagraphs (i)-(iii)):
  *   (i)  An adverse reaction so serious that the risk must be weighed against
  *        the potential benefit of the drug
  *   (ii) A serious adverse reaction that can be prevented, reduced in
@@ -1296,14 +1307,14 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   refuseUnlessStated('assessBoxedWarning', [
     oneOf('safetySignalType', params.safetySignalType, SAFETY_SIGNAL_TYPES),
     oneOf('severity', params.severity, BOXED_WARNING_SEVERITIES),
-  ]);
+  ], 'assessed');
   const { safetySignalType, severity, clinicalEvidenceLevel, riskMitigationAvailable, classWide, productSpecific } = params;
 
   // Criterion (i): Serious adverse reaction requiring risk-benefit weighing
   const criterion1Met = severity === 'life_threatening' || severity === 'serious';
   const criterion1: BoxedWarningCriterion = {
     criterionNumber: 1,
-    description: '21 CFR 201.57(c)(1)(i): There is an adverse reaction so serious in proportion to the potential benefit from the drug that it is essential that the adverse reaction be considered in assessing whether to use the drug.',
+    description: `Criterion (i) — ${BW_CRITERIA_SOURCE}: There is an adverse reaction so serious in proportion to the potential benefit from the drug that it is essential that the adverse reaction be considered in assessing whether to use the drug.`,
     met: criterion1Met,
     rationale: criterion1Met
       ? `The safety signal involves a ${severity} adverse reaction (type: ${safetySignalType}). This level of severity meets the threshold for weighing risk against potential benefit.`
@@ -1318,7 +1329,7 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   const criterion2Met: boolean | null = !seriousReaction ? false : mitigationUnstated ? null : riskMitigationAvailable;
   const criterion2: BoxedWarningCriterion = {
     criterionNumber: 2,
-    description: '21 CFR 201.57(c)(1)(ii): There is a serious adverse reaction that can be prevented or reduced in frequency or severity by appropriate use of the drug (e.g., monitoring, patient selection, avoiding certain concomitant therapy).',
+    description: `Criterion (ii) — ${BW_CRITERIA_SOURCE}: There is a serious adverse reaction that can be prevented or reduced in frequency or severity by appropriate use of the drug (e.g., monitoring, patient selection, avoiding certain concomitant therapy).`,
     met: criterion2Met,
     rationale: criterion2Met === true
       ? `Risk mitigation measures are available for this ${severity} safety signal. A boxed warning can communicate necessary steps to prevent or reduce the frequency/severity of the adverse reaction.`
@@ -1389,6 +1400,7 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   }
 
   const citations: Citation[] = [
+    LABELING_CITATIONS.BOXED_WARNING_GUIDANCE,
     LABELING_CITATIONS.CFR_201_57_C1,
     LABELING_CITATIONS.CFR_201_57,
     LABELING_CITATIONS.PLR_GUIDANCE,
@@ -1439,18 +1451,13 @@ export function designREMS(params: DesignREMSInput): DesignREMSResult {
   refuseUnlessStated('designREMS', [
     oneOf('safetySignalType', params.safetySignalType, SAFETY_SIGNAL_TYPES),
     oneOf('riskSeverity', params.riskSeverity, REMS_RISK_SEVERITIES),
-  ]);
+  ], 'assessed');
   const { safetySignalType, riskSeverity } = params;
   // 2026-10-15: the stated risk was dropped for the signal type ("The identified risk (teratogenicity, ...)").
   const identifiedRisk = typeof params.identifiedRisk === 'string' && params.identifiedRisk.trim() !== '' ? params.identifiedRisk.trim() : null;
 
   // Element hierarchy from least to most restrictive
-  const elementHierarchy: string[] = [
-    'Level 1: Medication Guide and/or Patient Package Insert — provides standardized patient information. Least restrictive; appropriate when risk can be mitigated through patient education alone.',
-    'Level 2: Communication Plan — targets healthcare providers with educational materials (Dear HCP letters, training, continuing education). Adds provider-facing risk communication.',
-    'Level 3: Elements to Assure Safe Use (ETASU) without restricted distribution — includes prescriber/pharmacy certification, patient enrollment, laboratory monitoring, but drug available through normal distribution channels.',
-    'Level 4: ETASU with restricted distribution — most restrictive. Drug only available through limited/specialty distribution. May require administration in certified healthcare settings. Reserved for highest-risk products.',
-  ];
+  const elementHierarchy: string[] = [...REMS_ELEMENT_HIERARCHY];
 
   // Determine recommended elements based on risk profile
   const recommendedElements: REMSElementDescriptor[] = [];
@@ -1563,26 +1570,10 @@ export function designREMS(params: DesignREMSInput): DesignREMSResult {
   }
 
   // Shared system considerations
-  const sharedSystemConsiderations: string[] = [
-    'FD&C Act Section 505-1(f)(7): FDA shall facilitate development of shared REMS when multiple holders market products requiring similar REMS elements.',
-    'Shared REMS reduce burden on prescribers, pharmacies, and patients who would otherwise navigate multiple systems for the same drug class.',
-    'TIRF REMS Access Program is the model shared REMS — covers all transmucosal immediate-release fentanyl products under a single program.',
-    'Cost-sharing among REMS holders must be addressed per FDORA 2022 provisions.',
-    'FDA maintains a public list of approved REMS at www.fda.gov/drugs/rems.',
-    'Shared REMS require governance agreements among participating applicants for decision-making, costs, and operational responsibilities.',
-  ];
+  const sharedSystemConsiderations: string[] = [...SHARED_REMS_CONSIDERATIONS];
 
   // FDORA 2022 changes
-  const fdoraChanges: string[] = [
-    'FDORA Section 3210: Requires FDA to periodically evaluate whether REMS remain necessary and to release REMS requirements when goals can be met through labeling alone.',
-    'FDORA Section 3211: Enhances transparency by requiring FDA to publish a summary of REMS assessments, including whether REMS goals are being met.',
-    'FDORA Section 3212: Facilitates shared REMS by clarifying cost-sharing responsibilities among multiple holders.',
-    'FDORA Section 3213: Requires FDA to issue or update guidance on the format and content of REMS assessments.',
-    'FDORA Section 3214: Addresses the interaction between REMS and generic/biosimilar access — REMS must not be used to block competition.',
-    'FDORA Section 3215: Requires REMS modifications to be reviewed within a specified timeframe to reduce implementation delays.',
-    'FDORA provisions strengthen the requirement that REMS must use the least burdensome approach necessary to achieve safety goals.',
-    'FDORA codifies the principle that REMS ETASU should not unduly restrict patient access to beneficial medications.',
-  ];
+  const fdoraChanges: string[] = [...FDORA_REMS_CHANGES];
 
   const citations: Citation[] = [
     LABELING_CITATIONS.FDCA_505_1,
@@ -1645,7 +1636,7 @@ export function assessPregnancyLactationLabeling(params: AssessPregnancyLactatio
     oneOf('placentalTransfer', params.placentalTransfer, TRANSFER_STATUSES),
     oneOf('breastMilkExcretion', params.breastMilkExcretion, TRANSFER_STATUSES),
     yesNo('mechanismBasedRisk', params.mechanismBasedRisk),
-  ]);
+  ], 'assessed');
   const { animalReproToxData, humanPregnancyData, placentalTransfer, breastMilkExcretion, mechanismBasedRisk, pregnancyRegistryData } = params;
 
   // ── Section 8.1: Pregnancy ──
@@ -1926,18 +1917,13 @@ export function structureSmPC(params: StructureSmPCInput): StructureSmPCResult {
   refuseUnlessStated('structureSmPC', [
     oneOf('productType', params.productType, SMPC_PRODUCT_TYPES),
     oneOf('procedure', params.procedure, SMPC_PROCEDURES),
-  ]);
+  ], 'assessed');
   const { productType, procedure, specialPopulations } = params;
   const monitoring = additionalMonitoringGuidance(params.hasAdditionalMonitoring);
 
   // Build section structure
   const smpcSections: SmPCSectionDescriptor[] = SMPC_SECTION_STRUCTURE.map(section => {
     const adjusted = { ...section };
-
-    // Additional monitoring: the black-triangle statement, or that it is not determined
-    if (section.sectionNumber === '1' && monitoring) {
-      adjusted.contentGuidance += monitoring;
-    }
 
     // Herbal product modifications
     if (productType === 'herbal' && section.sectionNumber === '2') {
@@ -1957,6 +1943,12 @@ export function structureSmPC(params: StructureSmPCInput): StructureSmPCResult {
     // Homeopathic product modifications
     if (productType === 'homeopathic' && section.sectionNumber === '1') {
       adjusted.contentGuidance = 'For homeopathic medicinal products: name of the product. Note: simplified registration procedures under Article 14 of Directive 2001/83/EC may apply.';
+    }
+
+    // Additional monitoring: the black-triangle statement, or that it is not determined. 2026-10-15: appended
+    // before the homeopathic text above replaced section 1, so a homeopathic product lost it.
+    if (section.sectionNumber === '1' && monitoring) {
+      adjusted.contentGuidance += monitoring;
     }
 
     // Special population additions to Section 4.2
@@ -2139,7 +2131,7 @@ export function assessOTCLabeling(params: AssessOTCLabelingInput): AssessOTCLabe
       ok: typeof params.dosageForm === 'string' && params.dosageForm.trim() !== '', expected: 'the dosage form, e.g. "tablet"',
     },
     oneOf('targetPopulation', params.targetPopulation, OTC_POPULATIONS),
-  ]);
+  ], 'assessed');
   const { otcCategory, activeIngredients, dosageForm, targetPopulation } = params;
 
   // Build Drug Facts panel with category-specific adjustments

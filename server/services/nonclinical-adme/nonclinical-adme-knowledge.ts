@@ -9,10 +9,10 @@
  * reaction phenotyping (CYP / UGT / transporter fraction-metabolized), and
  * plasma protein binding.
  *
- * NO LLM, NO network, NO database. The one import is ComputationRefusal,
- * thrown when an input an engine needs is missing so that AnA relays it as
- * needs_parameters. Every function is closed-form and reproducible: identical
- * input always yields identical output.
+ * NO LLM, NO network, NO database. The one import is ComputationRefusal (and
+ * refuseUnlessStated, which throws it), thrown when an input an engine needs is
+ * missing so that AnA relays it as needs_parameters. Every function is
+ * closed-form and reproducible: identical input always yields identical output.
  *
  * Scope guard: this module is NONCLINICAL and IN-VITRO focused. It deliberately
  * does NOT perform clinical DDI risk classification (that lives elsewhere). It
@@ -37,7 +37,7 @@
  * @module server/services/nonclinical-adme/nonclinical-adme-knowledge
  */
 
-import { ComputationRefusal } from '../ana-biostats/computation-engine';
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 0. Shared types
@@ -109,26 +109,19 @@ interface StatedInput {
   allowed?: readonly string[];
 }
 
-const isAbsent = (v: unknown): boolean => v === undefined || v === null;
-
 /**
  * Refuses, naming every one, the inputs a design forks on that were not stated. 2026-10-15: they were
  * read as defaults (an unknown stage as lead_optimization, no subject as an animal study) or failed
  * with a TypeError; AnA relays this refusal as needs_parameters.
  */
 function refuseUnstated(fn: string, inputs: StatedInput[]): void {
-  const stated = (i: StatedInput) =>
-    typeof i.value === 'string' && (i.allowed ? i.allowed.includes(i.value) : i.value.trim() !== '');
-  const bad = inputs.filter((i) => !stated(i));
-  if (bad.length === 0) return;
-  const named = bad.map(
-    (i) => `${i.field} (${i.allowed ? `one of ${i.allowed.join(', ')}` : 'text'}${isAbsent(i.value) ? '' : `; got ${JSON.stringify(i.value)}`})`,
-  );
-  throw new ComputationRefusal(
-    bad.every((i) => isAbsent(i.value)) ? 'missing_input' : 'invalid_input',
-    `${fn}: required and not stated: ${named.join('; ')}. Nothing is designed without ${bad.length > 1 ? 'them' : 'it'}.`,
-    bad[0].field,
-  );
+  const checks = inputs.map(({ field, value, allowed }) => ({
+    field,
+    value,
+    ok: typeof value === 'string' && (allowed ? allowed.includes(value) : value.trim() !== ''),
+    expected: allowed ? `one of ${allowed.join(', ')}` : 'text',
+  }));
+  refuseUnlessStated(fn, checks, 'designed');
 }
 
 /** A stated true or false; anything else is not stated (null). Absent is not false. */
@@ -169,7 +162,7 @@ export interface DesignADMEProgramParams {
   modality: Modality;
   developmentStage: DevelopmentStage;
   route: Route;
-  /** True if the program is for a small-molecule new chemical entity. Unstated is not assumed either way. */
+  /** True if the program is for a small-molecule new chemical entity. Unstated is not assumed either way; it grades the human mass balance. */
   isNewChemicalEntity?: boolean;
   /** Estimated elimination half-life in hours, if known. */
   halfLife_hours?: number;
@@ -519,11 +512,13 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
         necessity = coreNecessity(entry.studyId, {
           metabolicClearanceExpected,
           ddiPotentialExpected,
+          isNewChemicalEntity,
           chronicDosing,
           route,
         });
       } else if (entryIdx === curIdx + 1) {
-        necessity = 'recommended';
+        // Due at the next stage; the human mass balance is due of an NCE only (coreNecessity).
+        necessity = entry.studyId === 'human_mass_balance' && isNewChemicalEntity !== true ? 'conditional' : 'recommended';
       } else {
         necessity = 'optional';
       }
@@ -534,7 +529,7 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
         domain: entry.domain,
         system: entry.system,
         necessity,
-        ...(necessity === 'conditional' ? { conditionalOn: CONDITIONAL_ON[entry.studyId] } : {}),
+        ...(necessity === 'conditional' ? { conditionalOn: conditionText(entry.studyId, isNewChemicalEntity) } : {}),
         timingRelativeToFIH: entry.timingRelativeToFIH,
         purpose: entry.purpose,
         designNotes: freezeList(entry.designNotes),
@@ -602,7 +597,7 @@ export function designADMEProgram(params: DesignADMEProgramParams): DesignADMEPr
   const conditional = conditionalCount > 0 ? ` and ${conditionalCount} conditional on an input not stated (see conditionalOn)` : '';
 
   const summary = smApplies
-    ? `Nonclinical ADME package for a ${modality} (${route}) at ${developmentStage}: ${requiredCount} required studies${conditional}, of ${studies.length} catalogued; in-vitro metabolism and DDI package precede FIH, human 14C mass balance follows in Phase 1.`
+    ? `Nonclinical ADME package for a ${modality} (${route}) at ${developmentStage}: ${requiredCount} required studies${conditional}, of ${studies.length} catalogued; in-vitro metabolism and DDI package precede FIH, human 14C mass balance${isNewChemicalEntity === true ? '' : ', where needed,'} follows in Phase 1.`
     : `For modality "${modality}", classic small-molecule ADME largely does not apply; disposition characterization follows ICH S6(R1) (catabolism, TMDD, FcRn, immunogenicity).`;
 
   return {
@@ -623,6 +618,8 @@ interface NecessityContext {
   metabolicClearanceExpected: boolean | null;
   /** null: not stated. */
   ddiPotentialExpected: boolean | null;
+  /** null: not stated. */
+  isNewChemicalEntity: boolean | null;
   chronicDosing: boolean;
   route: Route;
 }
@@ -633,7 +630,17 @@ const CONDITIONAL_ON: Record<string, string> = {
     'metabolicClearanceExpected (not stated): required when metabolism is the major clearance route, recommended when it is not',
   transporter_inhibition:
     'ddiPotentialExpected (not stated): required when CYP/transporter DDI potential is expected, recommended when it is not',
+  human_mass_balance:
+    'isNewChemicalEntity (not stated): required for a new chemical entity; for a previously approved active moiety, whether its human mass balance and metabolite profile are already characterized for this route and formulation decides it',
 };
+
+/** The human mass balance of a program stated not to be an NCE: this engine grades it 'required' for an NCE only. */
+const MASS_BALANCE_NOT_NCE =
+  'isNewChemicalEntity is false (stated), and required is the grade for an NCE only: for a previously approved active moiety, whether its human mass balance and metabolite profile are already characterized for this route and formulation decides it (not stated)';
+
+function conditionText(studyId: string, isNCE: boolean | null): string {
+  return studyId === 'human_mass_balance' && isNCE === false ? MASS_BALANCE_NOT_NCE : CONDITIONAL_ON[studyId];
+}
 
 function coreNecessity(studyId: string, ctx: NecessityContext): StudyNecessity {
   // Studies that are essentially always required before FIH for a small molecule.
@@ -655,8 +662,9 @@ function coreNecessity(studyId: string, ctx: NecessityContext): StudyNecessity {
     return 'required';
   }
   if (studyId === 'human_mass_balance') {
-    // Required for an NCE program but performed after FIH.
-    return 'required';
+    // Required for an NCE program but performed after FIH. 2026-10-15: it was 'required' whatever was stated,
+    // so a program stated not to be an NCE, or whose NCE status was not stated, was graded as one.
+    return ctx.isNewChemicalEntity === true ? 'required' : 'conditional';
   }
   if (studyId === 'transporter_inhibition') {
     if (ctx.ddiPotentialExpected === null) return 'conditional';
@@ -696,7 +704,8 @@ function buildFihChecklist(
   for (const s of preFih) {
     out.push(`- ${s.name} (${s.domain}, ${s.system})${s.conditionalOn ? ` — conditional on ${s.conditionalOn}` : ''}`);
   }
-  out.push('After FIH (Phase 1): human radiolabeled (14C) mass-balance / ADME study to finalize the MIST assessment.');
+  const massBalanceCondition = isNCE === true ? '' : ` — conditional on ${conditionText('human_mass_balance', isNCE)}`;
+  out.push(`After FIH (Phase 1): human radiolabeled (14C) mass-balance / ADME study to finalize the MIST assessment${massBalanceCondition}.`);
   if (isNCE === true) {
     out.push('This is a new chemical entity — the full in-vitro metabolism and DDI package is expected before FIH per ICH M3(R2).');
   } else if (isNCE === null) {

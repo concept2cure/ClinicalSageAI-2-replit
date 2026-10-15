@@ -1,6 +1,7 @@
 /**
- * REMS reference data: approved REMS programs used as design models, and the
- * ETASU sub-elements. designREMS in labeling-intelligence-knowledge.ts reads
+ * REMS reference data: approved REMS programs used as design models, the
+ * ETASU sub-elements, the element hierarchy, shared-system considerations and
+ * FDORA 2022 provisions. designREMS in labeling-intelligence-knowledge.ts reads
  * them. Moved out of that file unchanged (2026-10-15) so that it does not grow
  * past its size; pure data, no imports.
  *
@@ -142,4 +143,34 @@ export const ETASU_ELEMENTS: ETASUDetail[] = [
     description: 'Drug may only be dispensed through specific pharmacies, healthcare settings, or distribution channels rather than through all pharmacies.',
     examples: ['Mifepristone — healthcare setting dispensing only', 'Addyi — certified pharmacies only', 'TIRF products — enrolled pharmacies/prescribers only'],
   },
+];
+
+/** REMS elements from least to most restrictive (designREMS elementHierarchy). */
+export const REMS_ELEMENT_HIERARCHY: readonly string[] = [
+  'Level 1: Medication Guide and/or Patient Package Insert — provides standardized patient information. Least restrictive; appropriate when risk can be mitigated through patient education alone.',
+  'Level 2: Communication Plan — targets healthcare providers with educational materials (Dear HCP letters, training, continuing education). Adds provider-facing risk communication.',
+  'Level 3: Elements to Assure Safe Use (ETASU) without restricted distribution — includes prescriber/pharmacy certification, patient enrollment, laboratory monitoring, but drug available through normal distribution channels.',
+  'Level 4: ETASU with restricted distribution — most restrictive. Drug only available through limited/specialty distribution. May require administration in certified healthcare settings. Reserved for highest-risk products.',
+];
+
+/** Shared system REMS considerations (designREMS sharedSystemConsiderations). */
+export const SHARED_REMS_CONSIDERATIONS: readonly string[] = [
+  'FD&C Act Section 505-1(f)(7): FDA shall facilitate development of shared REMS when multiple holders market products requiring similar REMS elements.',
+  'Shared REMS reduce burden on prescribers, pharmacies, and patients who would otherwise navigate multiple systems for the same drug class.',
+  'TIRF REMS Access Program is the model shared REMS — covers all transmucosal immediate-release fentanyl products under a single program.',
+  'Cost-sharing among REMS holders must be addressed per FDORA 2022 provisions.',
+  'FDA maintains a public list of approved REMS at www.fda.gov/drugs/rems.',
+  'Shared REMS require governance agreements among participating applicants for decision-making, costs, and operational responsibilities.',
+];
+
+/** FDORA 2022 REMS provisions (designREMS fdoraChanges). */
+export const FDORA_REMS_CHANGES: readonly string[] = [
+  'FDORA Section 3210: Requires FDA to periodically evaluate whether REMS remain necessary and to release REMS requirements when goals can be met through labeling alone.',
+  'FDORA Section 3211: Enhances transparency by requiring FDA to publish a summary of REMS assessments, including whether REMS goals are being met.',
+  'FDORA Section 3212: Facilitates shared REMS by clarifying cost-sharing responsibilities among multiple holders.',
+  'FDORA Section 3213: Requires FDA to issue or update guidance on the format and content of REMS assessments.',
+  'FDORA Section 3214: Addresses the interaction between REMS and generic/biosimilar access — REMS must not be used to block competition.',
+  'FDORA Section 3215: Requires REMS modifications to be reviewed within a specified timeframe to reduce implementation delays.',
+  'FDORA provisions strengthen the requirement that REMS must use the least burdensome approach necessary to achieve safety goals.',
+  'FDORA codifies the principle that REMS ETASU should not unduly restrict patient access to beneficial medications.',
 ];

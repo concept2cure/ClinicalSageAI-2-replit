@@ -105,7 +105,8 @@ export const DESIGN_ADME_PROGRAM: AnaTool = {
         description:
           'Whether the program is for a new chemical entity (NCE). Not assumed when unstated: the ' +
           'FIH checklist then says NCE status was not stated. NCEs require the full in-vitro ' +
-          'metabolism and DDI package before FIH.',
+          'metabolism and DDI package before FIH. The human mass-balance study is required of an ' +
+          'NCE only: unstated or false, it is graded "conditional" and its conditionalOn says what decides it.',
       },
       halfLife_hours: {
         type: 'number',

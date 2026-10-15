@@ -63,7 +63,7 @@ export const ASSESS_PLR_STRUCTURE: AnaTool = {
       },
       therapeuticArea: {
         type: 'string',
-        description: 'Therapeutic area or indication (e.g., "oncology", "cardiology", "infectious disease"). Influences section content expectations and FDA reviewer focus areas.',
+        description: 'Therapeutic area or indication (e.g., "oncology", "cardiology", "infectious disease"). Influences section content expectations and FDA reviewer focus areas. Optional: unstated, the therapeutic-area considerations are reported as not assessed.',
       },
       specialPopulations: {
         type: 'array',
@@ -72,7 +72,7 @@ export const ASSESS_PLR_STRUCTURE: AnaTool = {
       },
       hasBoxedWarning: {
         type: 'boolean',
-        description: 'Whether the product has or is expected to have a Boxed Warning — triggers Section 5 and Highlights requirements.',
+        description: 'Whether the product has or is expected to have a Boxed Warning — decides whether the Highlights boxed warning (H.1) is required. Unstated, H.1 comes back required: "undetermined" — report it so, not as not required.',
       },
       isNewFormulation: {
         type: 'boolean',
@@ -94,8 +94,10 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
     'return the recommended format, language structure, and regulatory basis. ' +
     'Without safetySignalType and severity it assesses nothing and asks for them; a criterion ' +
     'whose deciding input was not stated comes back met: null — report it as not assessed. ' +
-    'Assesses the signal against the three FDA criteria for boxed warnings per ' +
-    '21 CFR 201.57(c)(1): (i) an adverse reaction so serious that the risk must ' +
+    'Assesses the signal against the three boxed-warning criteria of FDA guidance ' +
+    '(2011) "Warnings and Precautions, Contraindications, and Boxed Warning Sections of ' +
+    'Labeling", cited by title only (21 CFR 201.57(c)(1) sets the box itself, not these ' +
+    'criteria): (i) an adverse reaction so serious that the risk must ' +
     'be weighed against benefit, (ii) a serious adverse reaction that can be ' +
     'prevented or reduced by appropriate use, and (iii) FDA approved the drug with ' +
     'restrictions on distribution or use — taken from approvedWithRestrictions, never ' +
@@ -106,8 +108,8 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
     'whether the warning is class-wide or product-specific, cross-references to ' +
     'Warnings and Precautions (Section 5), Adverse Reactions (Section 6), and ' +
     'Contraindications (Section 4), and precedent analysis from similar class ' +
-    'labeling. Cites 21 CFR 201.57(c)(1), FDA guidance on warnings and ' +
-    'precautions, and relevant safety communication precedents. ' + DETERMINISTIC_NOTE,
+    'labeling. Cites that guidance, 21 CFR 201.57(c)(1) for the box\'s content and ' +
+    'format, and relevant safety communication precedents. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -123,7 +125,7 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
       severity: {
         type: 'string',
         enum: ['life_threatening', 'serious', 'significant'],
-        description: 'Severity classification of the safety signal — life-threatening and serious signals are most likely to meet boxed warning thresholds per 21 CFR 201.57(c)(1).',
+        description: 'Severity classification of the safety signal — life-threatening and serious signals are most likely to meet boxed warning criterion (i) of the FDA guidance.',
       },
       clinicalEvidenceLevel: {
         type: 'string',

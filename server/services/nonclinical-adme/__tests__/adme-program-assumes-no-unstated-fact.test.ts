@@ -69,8 +69,10 @@ describe('designADMEProgram', () => {
   it('lists a conditional pre-FIH study with the input it turns on, and counts it in the summary', () => {
     const r = design(SM);
     expect(r.fihReadinessChecklist.join('\n')).toMatch(/transporter inhibition.*conditional on ddiPotentialExpected/i);
-    expect(r.summary).toMatch(/2 conditional on an input not stated/);
-    const stated = design({ ...SM, metabolicClearanceExpected: true, ddiPotentialExpected: true });
+    // 3 since 2026-10-15: the human mass balance, due next stage, turns on isNewChemicalEntity
+    // (human-mass-balance-graded-from-stated-nce-status.test.ts); it was 'recommended' as for an NCE.
+    expect(r.summary).toMatch(/3 conditional on an input not stated/);
+    const stated = design({ ...SM, metabolicClearanceExpected: true, ddiPotentialExpected: true, isNewChemicalEntity: true });
     expect(stated.studies.some((s) => s.necessity === 'conditional')).toBe(false);
     expect(stated.summary).not.toMatch(/conditional/);
   });
