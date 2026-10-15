@@ -45,7 +45,8 @@ function stores(s: Stores) {
     if (/FROM intelligence\.pattern_warnings/.test(text)) return Promise.resolve({ rows: [] }); // nothing open
     if (/intelligence\.template_validations/.test(text)) {
       return Promise.resolve({
-        rows: s.templateConformance === null ? [] : [{ conformance_score: String(s.templateConformance), template_name: 'FDA NDA' }],
+        // Dated: an undated validation is of unknown age and not counted (2026-10-15).
+        rows: s.templateConformance === null ? [] : [{ conformance_score: String(s.templateConformance), template_name: 'FDA NDA', validated_at: new Date('2026-10-01T00:00:00Z') }],
       });
     }
     return Promise.resolve({ rows: [], rowCount: 0 }); // no model, no prior

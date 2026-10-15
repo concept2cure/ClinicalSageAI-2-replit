@@ -111,7 +111,8 @@ describe('interceptors record no verdict, score or confidence nothing computed',
       model: 'm',
       provider: 'p',
     });
-    const [signal] = querySignals({ organizationId: ORG, projectId, type: 'judgment' });
+    // A check result, not a judgment (2026-10-15: this read type 'judgment').
+    const [signal] = querySignals({ organizationId: ORG, projectId, type: 'claim_check' });
     expect(signal.score).toBe(75);
     expect(signal.confidence).toBeNull();
   });
@@ -127,7 +128,7 @@ describe('interceptors record no verdict, score or confidence nothing computed',
       model: 'm',
       provider: 'p',
     });
-    const recorded = querySignals({ organizationId: ORG, projectId, type: 'judgment' });
+    const recorded = querySignals({ organizationId: ORG, projectId, type: 'claim_check' });
     expect(recorded.map(s => s.score)).toEqual([]);
   });
 });

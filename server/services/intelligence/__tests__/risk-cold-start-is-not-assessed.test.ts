@@ -94,6 +94,6 @@ describe('scoreSubmissionDraft at cold start', () => {
     expect(result.recommendations.some((r) => /RTF and CRL risk not assessed/.test(r))).toBe(true);
     // The rule-based completeness check still ran, and its blockers are still named.
     expect(result.completeness.assessment.status).toBe('assessed');
-    expect(result.blendedReadiness).toBe(result.completeness.rtfRisk.rtfScore);
+    expect(result.refuseToFileScore).toBe(result.completeness.rtfRisk.rtfScore);
   });
 });

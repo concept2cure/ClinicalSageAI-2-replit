@@ -32,7 +32,7 @@ function draftResult(over: Partial<ScoreDraftResult> = {}): ScoreDraftResult {
     rtf: target({ target: 'rtf', probability: 0.3 }),
     crl: target({ target: 'crl', probability: 0.25 }),
     firstCycleApproval: approval({ probability: 0.6 }),
-    blendedReadiness: 72,
+    refuseToFileScore: 72,
     recommendations: [],
     ...over,
   };
@@ -70,10 +70,10 @@ describe('scoreDraftToDeficiencyRiskInput', () => {
     expect(local.usingNetworkPrior).toBe(false);
   });
 
-  it('reports no model confidence: blended readiness is not the model’s confidence', () => {
-    // 2026-10-15: this pinned modelConfidence = blendedReadiness / 100, the
-    // rule-based completeness score relabelled. No confidence is computed.
-    expect(project(draftResult({ blendedReadiness: 72 }))).not.toHaveProperty('modelConfidence');
+  it('reports no model confidence: the refuse-to-file score is not the model’s confidence', () => {
+    // 2026-10-15: this pinned modelConfidence = blendedReadiness / 100 (now
+    // refuseToFileScore), the rule-based score relabelled. None is computed.
+    expect(project(draftResult({ refuseToFileScore: 72 }))).not.toHaveProperty('modelConfidence');
   });
 
   it('always assembles into a partial report with a mandatory disclosure block', () => {

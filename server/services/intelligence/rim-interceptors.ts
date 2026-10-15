@@ -145,11 +145,12 @@ export function interceptChatResponse(input: ChatInterceptInput): void {
     // Pattern scan on the generated text
     integratePatternScan(ctx, assistantMessage, sectionCode ?? 'chat_response');
 
-    // Capture claim quality as a signal
+    // Capture claim quality as a signal: a check result, not a judgment
+    // (2026-10-15: typed 'judgment', it was averaged into judgment trends).
     if (safeClaimCount > 0 && rateMeasured) {
       const qualityScore = Math.round(safeRate * 100);
       integrateSignal(ctx, {
-        type: 'judgment',
+        type: 'claim_check',
         riskLevel: qualityScore >= 70 ? 'none' : qualityScore >= 40 ? 'medium' : 'high',
         reviewerSensitivity: qualityScore >= 70 ? 'unlikely_question' : 'possible_question',
         defensibilityVerdict: qualityScore >= 70 ? 'pass' : qualityScore >= 40 ? 'needs_attention' : 'at_risk',

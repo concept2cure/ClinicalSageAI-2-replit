@@ -125,12 +125,17 @@ const deficiencyRiskSchema = z.object({
   usingNetworkPrior: z.boolean(),
 });
 
+// ReadinessTrajectoryInput exactly. 2026-10-15: this still asked for the retired
+// predictedReviewTimeDays / predictedDeficiencyCount and a non-null approval
+// probability, so the engine's own input was refused and a retired one rendered
+// its review clock and unmet count as undefined.
 const readinessTrajectorySchema = z.object({
   kind: z.literal('readiness_trajectory'),
   overallScore: z.number(),
-  predictedApprovalProbability: z.number(),
-  predictedReviewTimeDays: z.number(),
-  predictedDeficiencyCount: z.number(),
+  predictedApprovalProbability: z.number().nullable(),
+  reviewClockDays: z.number().nullable(),
+  reviewClockBasis: z.string().nullable(),
+  unmetCriteriaCount: z.number().int().nonnegative(),
   trend: z.array(z.object({ asOf: z.string(), score: z.number() })).optional(),
 });
 
@@ -269,7 +274,8 @@ router.post('/predictions', async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    const input = parsed.data.input as PredictionInput;
+    // No cast: the compiler holds each schema to the engine's input type.
+    const input: PredictionInput = parsed.data.input;
     const meta: PredictionReportMeta = {
       reportTypeId: parsed.data.meta.reportTypeId,
       reportTypeLabel: parsed.data.meta.reportTypeLabel ?? parsed.data.meta.reportTypeId,

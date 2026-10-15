@@ -34,7 +34,7 @@ function result(over: Partial<ScoreDraftResult>): ScoreDraftResult {
     rtf: { target: 'rtf', probability: null, score: null, band: null, ...BASIS_COLD },
     crl: { target: 'crl', probability: null, score: null, band: null, ...BASIS_COLD },
     firstCycleApproval: { target: 'first_cycle_approval', probability: null, nonApprovalBand: null, ...BASIS_COLD },
-    blendedReadiness: 9,
+    refuseToFileScore: 9,
     recommendations: [],
     ...over,
   } as ScoreDraftResult;

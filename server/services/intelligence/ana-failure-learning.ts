@@ -489,11 +489,17 @@ export interface AgencyRequirement {
 }
 
 /**
- * Surface agency-specific requirements discovered from interaction patterns.
- * Includes both validated rules (canonical) and unvalidated suggestions
- * (lower confidence) — the UI filters by validation status as needed.
+ * Surface agency-specific requirements discovered from interaction patterns:
+ * validated rules (canonical, every tenant's) and, when asked, the unvalidated
+ * suggestions the caller's own organization wrote.
+ *
+ * 2026-10-15: unvalidated rows were served to every tenant — free text any
+ * member of any organization can write through promotePatternToRequirement. An
+ * unvalidated row is now its writer organization's only; one with no writer
+ * recorded (written before the column existed) is served to no one.
  */
 export async function getAgencyRequirements(query: {
+  organizationId: number;
   agency: string;
   documentType?: string;
   includeUnvalidated?: boolean;
@@ -510,10 +516,10 @@ export async function getAgencyRequirements(query: {
        FROM intelligence.agency_requirements
       WHERE agency = $1
         AND ($2::text IS NULL OR document_type = $2)
-        AND ($3::boolean OR validation_status = 'validated')
-        AND validation_status <> 'rejected'
+        AND (validation_status = 'validated'
+             OR ($3::boolean AND validation_status = 'unvalidated' AND organization_id = $4))
       ORDER BY confidence DESC, occurrence_count DESC`,
-    [agency, documentType, include],
+    [agency, documentType, include, query.organizationId],
   );
 
   return result.rows.map(r => ({
@@ -542,10 +548,13 @@ export async function getAgencyRequirements(query: {
  * curator standing. Otherwise it is 'unvalidated' with no validator.
  * 2026-10-15: the route passed the request body's `validateImmediately` and
  * free-text `validatedBy`, so any member of any tenant could mint a 'validated'
- * rule under any name — and agency_requirements, which has no organization
- * column, serves it to every tenant.
+ * rule under any name, served to every tenant.
+ *
+ * `organizationId` is the writer's organization, from the authenticated
+ * session; an unvalidated requirement is served to that organization only.
  */
 export async function promotePatternToRequirement(params: {
+  organizationId: number;
   patternId: string;
   requirementSummary: string;
   requirementDetail?: string;
@@ -570,9 +579,9 @@ export async function promotePatternToRequirement(params: {
        agency, document_type, submission_type,
        requirement_summary, requirement_detail,
        source_pattern_id, tenant_count, occurrence_count, confidence,
-       validation_status, validated_by, validated_at
+       validation_status, validated_by, validated_at, organization_id
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-               $10, $11, CASE WHEN $10 = 'validated' THEN NOW() ELSE NULL END)
+               $10, $11, CASE WHEN $10 = 'validated' THEN NOW() ELSE NULL END, $12)
      RETURNING id`,
     [
       p.agency,
@@ -586,6 +595,7 @@ export async function promotePatternToRequirement(params: {
       parseFloat(p.confidence),
       validationStatus,
       curatorId === null ? null : String(curatorId),
+      params.organizationId,
     ],
   );
   return { requirementId: result.rows[0].id, validationStatus };

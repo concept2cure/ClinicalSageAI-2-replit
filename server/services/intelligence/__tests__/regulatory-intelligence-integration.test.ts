@@ -89,8 +89,8 @@ describe('scoreSubmissionDraft — cold start', () => {
     expect(result.rtf.probability).toBeNull();
     expect(result.rtf.score).toBeNull();
     expect(result.rtf.band).toBeNull();
-    // Rule-based completeness still drives the blendedReadiness when no model.
-    expect(result.blendedReadiness).toBe(result.completeness.rtfRisk.rtfScore);
+    // With no model the refuse-to-file score is the rule-based RTF score.
+    expect(result.refuseToFileScore).toBe(result.completeness.rtfRisk.rtfScore);
     // Recommendations should call out that the layer is cold.
     expect(result.recommendations.some(r => r.toLowerCase().includes('cold-start') || r.includes('no comparable'))).toBe(true);
   });

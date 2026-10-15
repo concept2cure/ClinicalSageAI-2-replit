@@ -177,11 +177,12 @@ export interface ScoreDraftResult {
   readonly crl: RiskTargetScore;
   readonly firstCycleApproval: ApprovalTargetScore;
   /**
-   * 0..100 — the rule-based RTF score (completeness.rtfRisk.rtfScore), blended
-   * with the predicted RTF score by the trained model's local weight. Purely
-   * rule-based when no trained model contributes.
+   * 0..100, higher = fewer refuse-to-file deductions: the rule-based RTF score
+   * (completeness.rtfRisk.rtfScore), blended with the predicted RTF score by the
+   * trained model's local weight; the rule-based score itself when no trained
+   * model contributes. 2026-10-15: was `blendedReadiness` — it is not readiness.
    */
-  readonly blendedReadiness: number;
+  readonly refuseToFileScore: number;
   readonly recommendations: string[];
 }
 
@@ -247,7 +248,7 @@ function toApprovalTargetScore(prediction: RiskPrediction): ApprovalTargetScore 
 
 /**
  * The single call routes use to score a draft. Returns rule-based completeness
- * + predictive CRL/RTF/first-cycle probabilities + a blended readiness score.
+ * + predictive CRL/RTF/first-cycle probabilities + the refuse-to-file score.
  *
  * Throws CompletenessNotAssessedError (422) when the submission type has no
  * canonical required-section profile: nothing is predicted or persisted.
@@ -310,7 +311,7 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
   // not converged, lean on the rule-based score; once it's trained, weigh the
   // model more.
   const ruleScore = completeness.rtfRisk.rtfScore;
-  const blendedReadiness = rtf.score === null || rtf.localWeight === 0
+  const refuseToFileScore = rtf.score === null || rtf.localWeight === 0
     ? ruleScore
     : Math.round((1 - rtf.localWeight) * ruleScore + rtf.localWeight * rtf.score);
 
@@ -336,7 +337,7 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
           rtf.priorProbability,
           rtf.localWeight,
           ruleScore,
-          blendedReadiness,
+          refuseToFileScore,
         ],
       );
     } catch (err) {
@@ -350,7 +351,7 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
     rtf,
     crl,
     firstCycleApproval: firstCycle,
-    blendedReadiness,
+    refuseToFileScore,
     recommendations: buildRecommendations(completeness, rtf, crl),
   };
 }
@@ -495,8 +496,14 @@ export interface ReadinessSummary {
   /** The components the composite was computed from, and those with no data. */
   readonly componentsAssessed: readonly CompositeComponent[];
   readonly componentsNotAssessed: readonly CompositeComponent[];
+  /** The latest template validation's conformance (0..100), of the date below. */
   readonly templateConformance: number | null;
   readonly templateName: string | null;
+  /**
+   * When that validation ran (ISO 8601). Null when no date is recorded: its age
+   * is unknown, and it is not counted in the composite as current.
+   */
+  readonly templateValidatedAt: string | null;
   /** Open pattern warnings; null when no failure-pattern replay has reached the organization. */
   readonly activeWarnings: number | null;
   readonly highSeverityWarnings: number | null;
@@ -525,6 +532,13 @@ async function patternReplayHasReachedOrg(organizationId: number): Promise<boole
     [organizationId],
   );
   return result.rows[0]?.reached === true;
+}
+
+/** A timestamp as ISO 8601; null when absent or not a date. */
+function isoTimestampOrNull(value: Date | string | null | undefined): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
 /**
@@ -614,14 +628,14 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
           return getCachedSignalReliability(input.projectId!, input.organizationId);
         })()
       : Promise.resolve(null),
-    pool.query<{ conformance_score: string; template_name: string }>(
-      `SELECT tv.conformance_score, dt.template_name
+    pool.query<{ conformance_score: string; template_name: string; validated_at: Date | string | null }>(
+      `SELECT tv.conformance_score, dt.template_name, tv.validated_at
          FROM intelligence.template_validations tv
          JOIN intelligence.document_templates dt ON dt.id = tv.template_id
         WHERE tv.organization_id = $1
           AND ($2::bigint IS NULL OR tv.project_id = $2)
           AND ($3::text IS NULL OR tv.artifact_id = $3)
-        ORDER BY tv.validated_at DESC
+        ORDER BY tv.validated_at DESC NULLS LAST
         LIMIT 1`,
       [input.organizationId, input.projectId ?? null, input.artifactId ?? null],
     ),
@@ -637,6 +651,10 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
       ? Math.round(parseFloat(templateLatest.rows[0].conformance_score) * 100)
       : null;
   const templateName = templateLatest.rows.length > 0 ? templateLatest.rows[0].template_name : null;
+  // 2026-10-15: the latest validation was reported undated, so one of any age
+  // read as current. It is dated now; undated, its age is unknown and it stays
+  // out of the composite.
+  const templateValidatedAt = templateLatest.rows.length > 0 ? isoTimestampOrNull(templateLatest.rows[0].validated_at) : null;
   const reliabilityScore =
     reliability && reliability.reliabilityIndex !== null
       ? Math.round(reliability.reliabilityIndex * 100)
@@ -651,7 +669,7 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
     { name: 'completeness', score: riskScores.completeness.summary.readinessPercentage, weight: 0.30 },
     { name: 'rtf_risk', score: riskScores.rtf.score, weight: 0.30 },
     { name: 'crl_risk', score: riskScores.crl.score, weight: 0.20 },
-    { name: 'template_conformance', score: templateConformance, weight: 0.25 },
+    { name: 'template_conformance', score: templateValidatedAt === null ? null : templateConformance, weight: 0.25 },
     { name: 'pattern_warnings', score: warningsScoreOf(warnings, warningsAssessed), weight: 0.15 },
     { name: 'signal_reliability', score: reliabilityScore, weight: 0.10 },
   ]);
@@ -661,7 +679,11 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
   const band = scoreBand === 'ready' && missingCritical > 0 ? 'caution' : scoreBand;
 
   const recommendations = compositeVerdict(band, scoreBand, composite, missingCritical);
-  if (templateConformance !== null && templateConformance < 70) recommendations.push(`Template conformance is ${templateConformance}%. Check missing sections.`);
+  if (templateConformance !== null && templateValidatedAt === null) {
+    recommendations.push(`Template conformance ${templateConformance}% is from a validation with no recorded date; its age is unknown, so it is not counted as current.`);
+  } else if (templateConformance !== null && templateConformance < 70) {
+    recommendations.push(`Template conformance was ${templateConformance}% at the latest validation (${templateValidatedAt}). Check missing sections.`);
+  }
   if (highSeverityWarnings > 0) recommendations.push(`${highSeverityWarnings} high-severity proactive warning(s) match this draft.`);
   for (const r of riskScores.recommendations.slice(0, 3)) recommendations.push(r);
 
@@ -674,6 +696,7 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
     componentsNotAssessed: composite.notAssessed,
     templateConformance,
     templateName,
+    templateValidatedAt,
     activeWarnings: warningsAssessed ? warnings.length : null,
     highSeverityWarnings: warningsAssessed ? highSeverityWarnings : null,
     signalReliability: reliabilityScore,

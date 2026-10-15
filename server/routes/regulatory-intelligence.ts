@@ -6,8 +6,8 @@
  *
  *   POST   /api/regulatory-intelligence/score
  *          Score an in-flight submission draft. Returns rule-based completeness,
- *          predictive CRL/RTF/first-cycle probabilities, and a blended readiness
- *          score with recommendations.
+ *          predictive CRL/RTF/first-cycle probabilities, and the refuse-to-file
+ *          score (refuseToFileScore) with recommendations.
  *
  *   POST   /api/regulatory-intelligence/outcomes/recorded
  *          Notify the layer that one or more submission outcomes have landed.
@@ -325,7 +325,8 @@ router.get('/agency-requirements', asyncHandler(async (req: Request, res: Respon
   }
   const documentType = typeof req.query.documentType === 'string' ? req.query.documentType : undefined;
   const includeUnvalidated = req.query.includeUnvalidated === 'false' ? false : true;
-  const data = await getAgencyRequirements({ agency, documentType, includeUnvalidated });
+  // Unvalidated rows are this organization's own (2026-10-15: every tenant's).
+  const data = await getAgencyRequirements({ organizationId: guard.orgId, agency, documentType, includeUnvalidated });
   res.json({ success: true, data });
 }));
 
@@ -358,6 +359,7 @@ router.post('/patterns/:id/promote', asyncHandler(async (req: Request, res: Resp
   const wantsValidation = !!body.validateImmediately;
   const curatorId = wantsValidation ? await requirementCuratorId(req) : null;
   const result = await promotePatternToRequirement({
+    organizationId: guard.orgId,
     patternId,
     requirementSummary: body.requirementSummary,
     requirementDetail: typeof body.requirementDetail === 'string' ? body.requirementDetail : undefined,
