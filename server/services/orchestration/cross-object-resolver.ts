@@ -568,7 +568,7 @@ async function resolveRecentActions(
           targetId: nv?.targetId || '',
           status: nv?.success ? 'completed' : 'failed',
           timestamp: log.createdAt?.toISOString() || '',
-          userId: log.userId ?? 0,
+          userId: log.userId,
         };
       });
   } catch (err) {

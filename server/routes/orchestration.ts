@@ -131,6 +131,9 @@ router.post('/execute', async (req: Request, res: Response) => {
     const projectId = projectIdOf(body.projectId);
     if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
+    // The requester's address, for each dispatched action's audit row; the
+    // orchestrator wrote '127.0.0.1' there until 2026-10-15. clientIpKey, as in
+    // recordGateAudit below: the column is NOT NULL, so none reads 'unknown'.
     const execution = await executeWorkflow({
       templateId: body.templateId,
       projectId,
@@ -146,7 +149,7 @@ router.post('/execute', async (req: Request, res: Response) => {
         organizationId: orgId,
       },
       sourceSurface: 'api',
-    });
+    }, { ipAddress: clientIpKey(req) });
 
     res.json(execution);
   } catch (err) {
