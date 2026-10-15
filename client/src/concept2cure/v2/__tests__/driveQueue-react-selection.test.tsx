@@ -9,7 +9,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ id: 7, firstName: 'Ada' }) }));
+/* Partial: SubmissionCenter's reads key on the real authService session
+   (submissionScopedRead.ts, 1bd3af0bc), so only the hook is stubbed. */
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
+  useAuthUser: () => ({ id: 7, firstName: 'Ada' }),
+}));
 vi.mock('@/utils/authToken', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/utils/authToken')>()),
   getAuthHeaders: () => ({ Authorization: 'Bearer test', 'x-organization-id': '1' }),
