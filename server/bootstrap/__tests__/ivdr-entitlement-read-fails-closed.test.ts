@@ -16,17 +16,19 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { ivdrEntitlementReadFailure, registerRegulatoryRoutes } from '../register-regulatory-routes';
 
-async function captureIvdrGate(pool: { query: (...a: unknown[]) => unknown }) {
-  let gate: ((req: any, res: any, next: NextFunction) => unknown) | null = null;
+type Gate = (req: any, res: any, next: NextFunction) => unknown;
+
+async function captureIvdrGate(pool: { query: (...a: unknown[]) => unknown }): Promise<Gate> {
+  const captured: { gate?: Gate } = {};
   const app: any = {
     use: (...args: unknown[]) => {
-      if (args[0] === '/api/ivdr') gate = args[2] as any;
+      if (args[0] === '/api/ivdr') captured.gate = args[2] as Gate;
     },
     get: () => {}, post: () => {}, put: () => {}, patch: () => {}, delete: () => {},
   };
   await registerRegulatoryRoutes({ app, pool: pool as any });
-  if (!gate) throw new Error('no middleware captured at /api/ivdr');
-  return gate;
+  if (!captured.gate) throw new Error('no middleware captured at /api/ivdr');
+  return captured.gate;
 }
 
 afterEach(() => {

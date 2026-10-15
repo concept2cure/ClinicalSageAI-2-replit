@@ -11,9 +11,9 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { buildComplianceCalendar, computeDeadline } from '../lifecycle-obligations';
+import { buildComplianceCalendar, computeDeadline, type ScheduledCommitment } from '../lifecycle-obligations';
 
-const PMR = { id: 'pmr-1', productId: 'prod-1', market: 'fda' as const, type: 'pmr' as const, status: 'in_progress' as const };
+const PMR: ScheduledCommitment = { id: 'pmr-1', productId: 'prod-1', market: 'US', type: 'pmr', status: 'open' };
 
 describe('the next interim report of a commitment that reports on a cadence', () => {
   it('is not computed without the date the cadence counts from, and says so', () => {

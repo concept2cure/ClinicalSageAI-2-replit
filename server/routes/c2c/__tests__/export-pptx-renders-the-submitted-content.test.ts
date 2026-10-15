@@ -41,7 +41,7 @@ vi.mock('../shared', async () => {
 import exportsRouter from '../exports';
 
 const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
-const binary = (res: NodeJS.ReadableStream, cb: (err: Error | null, body: Buffer) => void) => {
+const binary = (res: any, cb: (err: Error | null, body: Buffer) => void) => {
   const chunks: Buffer[] = [];
   res.on('data', (c: Buffer) => chunks.push(c));
   res.on('end', () => cb(null, Buffer.concat(chunks)));
