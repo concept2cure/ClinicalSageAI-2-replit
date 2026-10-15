@@ -10,8 +10,8 @@
       "reason": "Boot, on the OWNER connection: server/startup/services.ts calls ensureCoreTables(process.env.DATABASE_URL), the owner URL in the split-role production posture. Not the runtime role. Safe while the call site passes the owner URL."
     },
     "server/db/pglite-harness.ts": {
-      "count": 27,
-      "reason": "Test infrastructure: the in-process PGlite harness. Imported by no production module (only by tests), so it never reaches a production connection."
+      "count": 29,
+      "reason": "Test infrastructure: the in-process PGlite harness. Imported by no production module (only by tests), so it never reaches a production connection. 27 -> 29 on 2026-10-15: SHADOW_REVIEW_PGLITE_DDL (two CREATE TABLEs) replaced seven hand-written copies in test files, held to the real migrations by server/db/__tests__/shadow-review-pglite-ddl.contract.test.ts."
     },
     "server/db/setupLiterature.ts": {
       "count": 2,

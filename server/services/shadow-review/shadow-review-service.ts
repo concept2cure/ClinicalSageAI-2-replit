@@ -323,7 +323,7 @@ async function recordRunFailure(
       runId, failureCode, err: writeErr instanceof Error ? writeErr.message : String(writeErr),
     });
   }
-  await recordAuditRow({
+  const audit = await recordAuditRow({
     organizationId: at.organizationId,
     userId: at.userId,
     action: 'AI_GENERATE_FAILED',
@@ -338,6 +338,13 @@ async function recordRunFailure(
       waivable: isWaivableShadowReviewFailure(failureCode),
     },
   });
+  // A waiver may later rely on this run (P-34): a failure the chain does not
+  // hold is said, loudly, rather than passed over in silence.
+  if (!audit.persisted) {
+    logger.error('A failed shadow review has no §11.10(e) row: AI_GENERATE_FAILED was not persisted', {
+      runId, sequenceId: at.sequenceId, organizationId: at.organizationId, failureCode, reason: audit.message,
+    });
+  }
   // The cause stays in the log; the caller gets the classified sentence.
   logger.warn('Shadow review failed', {
     runId, sequenceId: at.sequenceId, organizationId: at.organizationId, failureCode,
