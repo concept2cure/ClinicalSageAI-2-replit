@@ -61,7 +61,8 @@
  * Tenant scoping matches each read exactly: organization_id (int) on
  * regulatory_programs / cerv2_510k_sections / concept2cure_artifacts /
  * ivdr_*; org_id (int) on c2c_blockers. Program links use the deterministic
- * UUIDs from scripts/seed-mdx-beta.mjs so every seeder converges.
+ * UUIDs scripts/seed-mdx-beta.mjs used (removed 2026-10-15), so a
+ * database it seeded converges.
  *
  * Conventions: runs inside the orchestrator's open transaction (no
  * BEGIN/COMMIT); every table guarded via to_regclass; every risky part wrapped
@@ -71,8 +72,9 @@
  * case, no emoji.
  */
 
-/* Deterministic program UUIDs — must match scripts/seed-mdx-beta.mjs PROG so
-   this seeder, 10-risk.mjs, and the beta seeder all converge on one row set. */
+/* Deterministic program UUIDs — the ones the removed scripts/seed-mdx-beta.mjs
+   used, so this part, 10-risk.mjs and a database that seed wrote converge on
+   one row set. */
 const PROG = {
   BX_204: '11111111-2222-3333-4444-000000000204', // CGM (device / 510k)
   OR_801: '11111111-2222-3333-4444-000000000801', // pedicle screw (510k)

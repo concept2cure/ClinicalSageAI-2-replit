@@ -34,6 +34,7 @@ import { ensureSubmissionSpine } from '../../routes/c2c/project-intake.js';
 import { resolveDocumentClass, describeUnmappedClass } from './document-class.js';
 import { findActiveRulePack } from './rule-pack-lookup.js';
 import { readMarketSupport, documentAgencyFor } from '../regulatory/market-support.js';
+import { regionalSubtree, type PackSectionLike } from '../../../shared/regulatory/filing-scope.js';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '../../../shared/constants/domain/product-types.js';
 
 export type AddMarketRefusalCode =
@@ -47,27 +48,11 @@ export class AddMarketRefusal extends Error {
   }
 }
 
-interface PackSection { key?: unknown; parent_key?: unknown; label?: unknown; mandatory?: unknown; path_order?: unknown }
+type PackSection = PackSectionLike;
 
-/**
- * The market's own part of a pack: Module 1 ('M1' and its '1.*' keys) and
- * 3.2.R with its descendants, plus every ancestor a kept key names, so the
- * subtree has no dangling parent. Pure; order is the pack's.
- */
+/** The market's own part of a pack (the shared rule, shared/regulatory/filing-scope.ts). */
 export function marketSubtree(sections: unknown): PackSection[] {
-  const all = (Array.isArray(sections) ? sections : []) as PackSection[];
-  const key = (s: PackSection) => (typeof s.key === 'string' ? s.key : '');
-  const regional = (k: string) => k === 'M1' || k.startsWith('1.') || k === '3.2.R' || k.startsWith('3.2.R.');
-  const byKey = new Map(all.map((s) => [key(s), s]));
-  const kept = new Set(all.map(key).filter(regional));
-  for (const k of [...kept]) {
-    let parent = byKey.get(k)?.parent_key;
-    while (typeof parent === 'string' && byKey.has(parent) && !kept.has(parent)) {
-      kept.add(parent);
-      parent = byKey.get(parent)?.parent_key;
-    }
-  }
-  return all.filter((s) => kept.has(key(s)));
+  return regionalSubtree<PackSection>(sections);
 }
 
 export interface AddMarketInput {

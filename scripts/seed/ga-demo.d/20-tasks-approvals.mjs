@@ -440,31 +440,8 @@ export default async function seed(client, { org, admin }) {
   console.log(`   ✓ tasks+approvals: 3 workflow templates + ${stepCount} steps seeded`);
   console.log(`   ✓ tasks+approvals: 5 approval workflows (5 documents, ${approvals.length} step approvals) seeded`);
 
-  // ── Workflow history (audit trail shown on the workflow status view) ─────
-  if (await tableExists(client, 'workflow_history')) {
-    const ensureHistory = async (workflowId, action, performedBy, days, details) => {
-      const found = await client.query(
-        `SELECT id FROM workflow_history WHERE workflow_id = $1 AND action = $2 LIMIT 1`,
-        [workflowId, action],
-      );
-      if (found.rows[0]) return;
-      await client.query(
-        `INSERT INTO workflow_history (workflow_id, action, performed_by, created_at, details)
-           VALUES ($1, $2, $3, $4, $5::json)`,
-        [workflowId, action, performedBy, daysFromNow(days), JSON.stringify(details)],
-      );
-    };
-
-    await ensureHistory(wfSpec, 'workflow_started', uid('sarah'), -4, { templateId: tplCmc, totalSteps: 2 });
-    await ensureHistory(wfOverview, 'workflow_started', uid('emily'), -9, { templateId: tplEctd, totalSteps: 2 });
-    await ensureHistory(wfOverview, 'step_approved', uid('david'), -2, { stepOrder: 1 });
-    await ensureHistory(wfIfu, 'workflow_started', uid('david'), -1, { templateId: tplDevice, totalSteps: 2 });
-    await ensureHistory(wfIb, 'workflow_started', uid('emily'), -30, { templateId: tplEctd, totalSteps: 2 });
-    await ensureHistory(wfIb, 'workflow_completed', adminUid, -21, { totalSteps: 2 });
-    await ensureHistory(wfPip, 'workflow_started', uid('raj'), -14, { templateId: tplEctd, totalSteps: 2 });
-    await ensureHistory(wfPip, 'workflow_rejected', uid('sarah'), -8, { rejectedAtStep: 1 });
-    console.log('   ✓ tasks+approvals: workflow history seeded');
-  } else {
-    console.log('   ⚠ workflow_history not found — skipping');
-  }
+  /* Removed 2026-10-15: eight workflow_history rows — the audit trail the
+     workflow status view shows — recording starts, approvals, a completion
+     and a rejection nobody performed. An audit trail is never demonstration
+     data. */
 }

@@ -327,14 +327,11 @@ async function admitVaultDocument(
   /* `s3_key` carries the PROVIDER's own handle (`vault://{org}/{project}/{file}`)
      rather than a filesystem path, because the bytes are no longer at one.
 
-     It is not left NULL, for two reasons that only show up on a real database:
-       - the column is NOT NULL on a drizzle-push/baseline database
-         (migrations/0000_sweet_joseph.sql:6267), so a NULL here fails every
-         upload;
-       - migrations/20260821_vault_documents_canonical_shape.sql:131 runs
-         `UPDATE vault.documents SET s3_key = id::text WHERE s3_key IS NULL` and,
-         like every file in the set, re-runs on EVERY deploy — so a NULL would
-         be quietly replaced by a path that resolves to nothing on the next one.
+     It is not left NULL: the column is NOT NULL on a drizzle-push/baseline
+     database (migrations/0000_sweet_joseph.sql:6267), so a NULL here fails
+     every upload. (A second reason stood here until 2026-10-15: the canonical-
+     shape migration replaced every NULL s3_key with the row id on each deploy.
+     That backfill is removed; a row with no locator now keeps none.)
 
      Writing the old `uploads/...` path would have been the "record that lies"
      this path refuses above; the provider handle is simply where the bytes are,

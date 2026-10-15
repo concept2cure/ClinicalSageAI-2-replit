@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
+import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
 import { programInOrganization } from '../c2c/program-access';
 import { getBuiltinAuthoringTemplate } from './builtin-authoring-templates';
 import { resolveTemplateSections, refuseBuiltinTemplateStart, builtinTemplateSource, builtinTemplateDocumentFields, builtinTemplateSectionMetadata, templateWorkingBinding, type TemplateSectionSeed } from './authoring-template-sections';
@@ -110,10 +111,11 @@ export async function resolveBinding(
   pool: AuthoringPool,
   tenantId: number,
   clientProgramId: string | null,
+  marketDocumentId: string | null = null,
 ): Promise<Binding> {
   let binding: Binding;
   try {
-    binding = await resolveGovernedDocument({ db: pool, orgId: tenantId, projectId: clientProgramId });
+    binding = await resolveGovernedDocument({ db: pool, orgId: tenantId, projectId: clientProgramId, marketDocumentId });
   } catch (bindErr) {
     logger.warn('Governed-document binding unavailable; creating unbound document', {
       error: bindErr instanceof Error ? bindErr.message : String(bindErr),
@@ -388,6 +390,12 @@ export interface CreateDocumentInput {
   locale?: unknown;
   template_id?: unknown;
   client_program_id?: unknown;
+  /**
+   * Bind to this market's document of the project rather than the home filing
+   * (FILING_SPINE F22b). A market document that cannot be bound is refused,
+   * never created unbound: the person asked for that market's copy.
+   */
+  c2c_document_id?: unknown;
 }
 
 export type CreateDocumentOutcome =
@@ -459,6 +467,39 @@ async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Refu
   return null;
 }
 
+/**
+ * What a create refuses before anything is read: a project the organization
+ * does not own, and a market's copy seeded from a template. A template seeds
+ * the sections it carries, of any code; a market's copy holds only its Module 1
+ * and 3.2.R (security review, 2026-10-15).
+ */
+async function refuseStart(ctx: CreateContext, input: CreateDocumentInput): Promise<Refusal | null> {
+  const programRefusal = await refuseProgramAnchor(ctx, input.client_program_id);
+  if (programRefusal) return programRefusal;
+  if (!input.c2c_document_id || !input.template_id) return null;
+  return {
+    kind: 'refused', status: 400, code: 'MARKET_DOCUMENT_TEMPLATE',
+    error: "A market's document starts without a template: it holds only that market's Module 1 and 3.2.R. Nothing was created.",
+  };
+}
+
+const programIdOf = (v: unknown): string | null => (v ? String(v) : null);
+
+/**
+ * The new document's binding: the project's home filing, or the market's
+ * document the caller named (FILING_SPINE F22b). A named market document that
+ * cannot be bound is a refusal, never an unbound create: the person asked for
+ * that market's copy.
+ */
+async function createBinding(
+  ctx: CreateContext, builtin: Parameters<typeof templateWorkingBinding>[0], clientProgramId: string | null, named: unknown,
+): Promise<Binding | Refusal> {
+  const marketDocumentId = named ? String(named) : null;
+  const binding = await templateWorkingBinding(builtin, () => resolveBinding(ctx.pool, ctx.tenantId, clientProgramId, marketDocumentId));
+  if (!marketDocumentId || binding.documentId === marketDocumentId) return binding;
+  return { kind: 'refused', status: 409, code: 'MARKET_DOCUMENT_NOT_BOUND', error: binding.reason ?? "The market's document could not be bound." };
+}
+
 /** POST /docs. The caller has already resolved the actor (401 without one). */
 export async function createDocument(ctx: CreateContext, input: CreateDocumentInput): Promise<CreateDocumentOutcome> {
   const { title, module = 'M3', product_code, locale = 'en-US', template_id, client_program_id } = input;
@@ -466,8 +507,8 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
 
   if (!title) return { kind: 'refused', status: 400, error: 'Document title is required' };
 
-  const programRefusal = await refuseProgramAnchor(ctx, client_program_id);
-  if (programRefusal) return programRefusal;
+  const startRefusal = await refuseStart(ctx, input);
+  if (startRefusal) return startRefusal;
 
   const builtin = template_id ? await getBuiltinAuthoringTemplate(String(template_id)) : undefined;
   const templateRefusal = await refuseBuiltinTemplateStart(ctx, input, builtin);
@@ -482,8 +523,9 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
     templateSections = resolved;
   }
 
-  const clientProgramId = client_program_id ? String(client_program_id) : null;
-  const resolvedBinding = await templateWorkingBinding(builtin, () => resolveBinding(ctx.pool, ctx.tenantId, clientProgramId));
+  const clientProgramId = programIdOf(client_program_id);
+  const resolvedBinding = await createBinding(ctx, builtin, clientProgramId, input.c2c_document_id);
+  if ('kind' in resolvedBinding) return resolvedBinding;
   const templateSource = builtinTemplateSource(builtin);
 
   const { document, binding } = await insertDocumentTx(
@@ -561,6 +603,46 @@ async function refuseSectionInput(input: CreateSectionInput): Promise<Refusal | 
   return refused.length > 0 ? { kind: 'refused', status: 400, error: describeRefusedFigures(refused) } : null;
 }
 
+/**
+ * A market's document holds only its Module 1 and 3.2.R (FILING_SPINE F22b).
+ * A section of another code in its editing copy would never reach the filing
+ * (commit-section-to-filing.ts refuses it), so it is not created. Read through
+ * to_jsonb, and a store that cannot be read is no market document: the
+ * section is created as before, and the commit still refuses.
+ */
+async function isMarketDocumentCopy(pool: AuthoringPool, tenantId: number, docId: string): Promise<boolean> {
+  try {
+    const r = await pool.query(
+      `SELECT 1 FROM authoring_documents a
+         JOIN c2c_documents d ON d.id = to_jsonb(a)->>'c2c_document_id' AND d.org_id = a.tenant_id
+        WHERE a.id = $1 AND a.tenant_id = $2 AND to_jsonb(d)->>'filing_scope' = 'market'
+        LIMIT 1`,
+      [docId, tenantId],
+    );
+    return (r.rowCount ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * What the parent document refuses: a section added to a FROZEN or APPROVED
+ * document (the same Part 11 lock the save applies, C2C-AUTHOR-001), and a
+ * common section in a market's copy (above).
+ */
+async function refuseSectionParent(
+  pool: AuthoringPool, tenantId: number, parent: { status?: string | null }, docId: string, code: string,
+): Promise<Refusal | null> {
+  if (LOCKED_DOCUMENT_STATUSES.has(String(parent.status ?? '').toUpperCase())) {
+    return { kind: 'refused', status: 403, error: 'Document is FROZEN/APPROVED; cannot add sections' };
+  }
+  if (isRegionalSectionKey(code) || !(await isMarketDocumentCopy(pool, tenantId, docId))) return null;
+  return {
+    kind: 'refused', status: 409, code: 'WRONG_FILING_SCOPE',
+    error: `This document is a market's own part of the filing, its Module 1 and 3.2.R. Section ${code} belongs to the project's home filing; start it there. Nothing was created.`,
+  };
+}
+
 /** POST /sections. The caller has already resolved the actor (401 without one). */
 export async function createSection(ctx: CreateContext, input: CreateSectionInput): Promise<CreateSectionOutcome> {
   const { pool, tenantId, actor } = ctx;
@@ -586,10 +668,8 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     [doc_id, tenantId],
   );
   if ((parentDoc.rowCount ?? 0) === 0) return { kind: 'refused', status: 404, error: 'Document not found' };
-  const parentStatus = String((parentDoc.rows[0] as { status?: string | null }).status ?? '').toUpperCase();
-  if (LOCKED_DOCUMENT_STATUSES.has(parentStatus)) {
-    return { kind: 'refused', status: 403, error: 'Document is FROZEN/APPROVED; cannot add sections' };
-  }
+  const parentRefusal = await refuseSectionParent(pool, tenantId, parentDoc.rows[0] as { status?: string | null }, String(doc_id), String(code));
+  if (parentRefusal) return parentRefusal;
 
   // Create + lineage commit together, exactly like the interactive save gate:
   // a section created WITH authored content records its provenance in the same

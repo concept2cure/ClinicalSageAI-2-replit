@@ -1,16 +1,23 @@
 /**
- * Wave-3 domain seed — governed decision lineage (BX-204 · BLA 761123) into the REAL store.
+ * Wave-3 domain seed — governed decision lineage (BX-204 · BLA 761123).
  *
- * Three governed artifacts, each with its immutable, Part-11 hash-chained decision
- * trail, seeded into the REAL workflow + audit store — unified_documents +
- * workflow_templates/steps + document_workflows + workflow_approvals + workflow_history
- * + document_audit_logs — the exact tables decisionLineageService.getLineageGraph
- * traverses, and that GET /api/decision-lineage now assembles from (see
- * server/services/workflow/decision-lineage-view-assembler.ts). No blob, no ported
- * fixture: this is a real decision trail a governed-workflow tenant would accrue.
- *   · §2.5 Clinical Overview — revision loop then approved-pending-signature
- *   · §1.1 Form FDA 356h    — clean chain, approved & locked (e-signed)
- *   · §3.2.S.4 CMC          — delegation + open (pending) review
+ * Three INVENTED governed artifacts with their workflows and approval steps —
+ * unified_documents + workflow_templates/steps + document_workflows +
+ * workflow_approvals — tables decisionLineageService.getLineageGraph traverses
+ * for GET /api/decision-lineage (server/services/workflow/
+ * decision-lineage-view-assembler.ts). Demonstration data, on a database on
+ * this machine only (scripts/seed/local-only.mjs).
+ *   · §2.5 Clinical Overview — rejected, then pending
+ *   · §1.1 Form FDA 356h    — approved
+ *   · §3.2.S.4 CMC          — pending review
+ *
+ * AMENDED 2026-10-15: this header called it "a real decision trail a
+ * governed-workflow tenant would accrue", "Part-11 hash-chained" and "e-signed".
+ * It also wrote workflow_history and document_audit_logs rows — creations,
+ * evidence links, revisions, a lock "with 21 CFR §11.50 signature
+ * manifestation attached" — that nobody performed. Those are removed: an audit
+ * trail is never demonstration data.
+ *
  * Idempotent (skips when the demo artifacts already exist for the org), org-scoped,
  * to_regclass-guarded, fail-safe per artifact.
  */
@@ -18,12 +25,6 @@
 const ARTIFACTS = [
   {
     title: 'BX-204 · §2.5 Clinical Overview (BLA 761123)', docType: 'ectd', docStatus: 'in_review',
-    audits: [
-      { action: 'created', by: 'J. Chen', details: { status: 'draft', module: 'CTD 2.5', standard: 'ICH M4E(R2)' } },
-      { action: 'linked_evidence', by: 'A. Muller', details: { evidence: 'CSR BX204-201 (locked)', location: 'Module 5.3.5.1', claim: 'ORR 42.1% (95% CI 35.8-48.6)' } },
-      { action: 'revised', by: 'A. Muller', details: { status: 'review', changes: '3 tracked changes accepted; benefit-risk language softened; §2.7.3 cross-ref aligned.' } },
-    ],
-    history: [{ action: 'submitted_for_review', by: 'A. Muller', details: { fromStatus: 'draft', toStatus: 'review', reviewers: ['S. Okafor (Reg Lead)'] } }],
     approvals: [
       { status: 'rejected', by: 'S. Okafor', comments: '§2.5.4 benefit-risk uses "establishes" — soften to match the E9(R1) estimand; reconcile ORR CI wording with §2.7.3.' },
       { status: 'pending', by: 'S. Okafor', comments: 'Approved for lock; awaiting QP electronic signature (§11.50).' },
@@ -31,22 +32,10 @@ const ARTIFACTS = [
   },
   {
     title: 'BX-204 · §1.1 Form FDA 356h (BLA 761123)', docType: 'ectd', docStatus: 'approved',
-    audits: [
-      { action: 'created', by: 'J. Chen', details: { status: 'draft', form: 'FDA 356h', purpose: 'Application to market a biologic — BX-204, accelerated approval.' } },
-      { action: 'locked', by: 'S. Okafor', details: { status: 'locked', version: 'v3.0', esignature: '21 CFR §11.50 signature manifestation attached' } },
-    ],
-    history: [],
     approvals: [{ status: 'approved', by: 'S. Okafor', comments: 'Approved and locked (v3.0).' }],
   },
   {
     title: 'BX-204 · §3.2.S.4 Control of drug substance (CMC)', docType: 'cmc', docStatus: 'in_review',
-    audits: [
-      { action: 'created', by: 'M. Webb', details: { status: 'draft', module: 'CTD 3.2.S.4', scope: 'Specifications: identity, purity, potency, impurities.' } },
-    ],
-    history: [
-      { action: 'delegated_review', by: 'M. Webb', details: { to: 'R. Ivanova (Analytical SME)', reason: 'Comparability acceptance criteria vs 3 post-change lots need analytical adjudication.' } },
-      { action: 'submitted_for_review', by: 'R. Ivanova', details: { fromStatus: 'draft', toStatus: 'review', open: 'Comparability acceptance criteria unreconciled vs 3 post-change lots.' } },
-    ],
     approvals: [{ status: 'pending', by: 'R. Ivanova', comments: 'Comparability adjudication in progress.' }],
   },
 ];
@@ -57,7 +46,7 @@ async function has(client, table) {
 }
 
 export default async function seed(client, { org }) {
-  for (const t of ['unified_documents', 'workflow_templates', 'workflow_steps', 'document_workflows', 'workflow_approvals', 'workflow_history', 'document_audit_logs']) {
+  for (const t of ['unified_documents', 'workflow_templates', 'workflow_steps', 'document_workflows', 'workflow_approvals']) {
     if (!(await has(client, t))) {
       console.log(`   ⚠ ${t} not found — run migrations first, skipping decision-lineage seed`);
       return;
@@ -121,21 +110,9 @@ export default async function seed(client, { org }) {
           ],
         );
       }
-      for (const h of a.history) {
-        await client.query(
-          `INSERT INTO workflow_history (workflow_id, action, performed_by, details) VALUES ($1, $2, $3, $4::jsonb)`,
-          [workflowId, h.action, h.by, JSON.stringify(h.details)],
-        );
-      }
-      for (const au of a.audits) {
-        await client.query(
-          `INSERT INTO document_audit_logs (document_id, action, performed_by, details) VALUES ($1, $2, $3, $4::jsonb)`,
-          [documentId, au.action, au.by, JSON.stringify(au.details)],
-        );
-      }
       count++;
     });
   }
 
-  console.log(`   ✓ decision lineage: ${count} governed artifact trail(s) seeded into the real workflow/audit store`);
+  console.log(`   ✓ decision lineage: ${count} demonstration artifact(s) with workflows and approvals seeded`);
 }
