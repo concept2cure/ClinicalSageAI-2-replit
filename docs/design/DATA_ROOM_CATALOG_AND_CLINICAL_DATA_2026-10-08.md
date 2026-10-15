@@ -113,6 +113,40 @@ The following need the launch catalog extended (D2) and change what row D7 prove
 - **Standardized datasets in the submission.** This means SAS XPORT v5 reading and writing, Dataset-JSON, and `m5/datasets` leaf placement with define.xml and reviewer's guides, to meet FDA technical rejection criteria 1734 and 1736. Today the packager admits PDF leaves only (`server/services/ectd/leaf-source-resolver.ts`), and `server/services/ind/ctd/fda-technical-rules.ts` states the gap.
 - **`.zip` intake** of dataset bundles.
 
-**2026-10-15: decided ("Do it all").** Intake is done: `.xpt` v5 and Dataset-JSON are read for structure and profiled (`docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-15-clinical-dataset-intake/`). `m5/datasets` packaging and `.zip` intake follow.
+**2026-10-15: decided ("Do it all").** Intake is done: `.xpt` v5 and Dataset-JSON are read for structure and profiled (`docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-15-clinical-dataset-intake/`). `.zip` intake is done: each file inside is its own upload (`docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-15-zip-intake/`). `m5/datasets` packaging is assessed below and not built.
 
 Recommendation: decide this before the first NDA, BLA or PMA customer. An IND (row D7) can be filed without standardized datasets in many cases. A marketing application cannot.
+
+### 6.1 Assessment: `m5/datasets` packaging against D7 (2026-10-15)
+
+Asked for in the same decision. This is an assessment, not a build: packaging changes what row D7 proves, and D7 is not yet green.
+
+**What exists now:**
+
+- The Data Room and Vault hold `.xpt`, Dataset-JSON and define.xml, and read their structure (`docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-15-clinical-dataset-intake/`).
+- The STF generator already tags datasets and define.xml with the file-tags FDA validation 1735 requires (`server/services/ectd/stf-generator.ts`).
+- The packager writes an md5 checksum for every leaf.
+
+**What blocks a dataset leaf, in order:**
+
+1. **Leaf admission.** `server/services/ectd/leaf-source-resolver.ts` stages only PDF leaves; a non-PDF upload stays unresolved, failing closed. A dataset leaf needs its own admission:
+   - an `.xpt` that `readXptStructure` reads as v5, with one dataset per file, named as the dataset;
+   - a define.xml that parses;
+   - each placed under `m5/datasets/<study>/tabulations|analysis/...`.
+   It must never be rendered to PDF.
+2. **Rejection criteria as deterministic checks against the package**, not the upload:
+   - 1734: a TS dataset with the study start date, for each study with data;
+   - 1736: DM, ADSL and define.xml.
+   The reader already gives the dataset names. These would be rows in `fda-technical-rules.ts`, moving from `not-checked` to `checked`.
+3. **Reviewer's guides** (cSDRG, ADRG) are PDFs and already pass leaf admission. Their presence is a check, not a feature.
+
+**Out of scope even then.** CDISC conformance validation of the data itself (a Pinnacle 21-class rule engine) is a separate product. The platform would check the package's shape, not the data's conformance, and would say so.
+
+**Against D7.** FDA requires standardized study data:
+
+- for NDAs, BLAs and ANDAs, for studies that started after 17 December 2016;
+- for commercial INDs, for studies that started after 17 December 2017.
+
+D7's sequence is an IND. An initial IND for a first-in-human study carries no completed-study datasets, so D7 can be proven without dataset leaves. The first sequence that needs them is a later IND amendment carrying study data, or a marketing application.
+
+**Recommendation:** keep D7 PDF-only. Build steps 1 and 2 as one slice once D7 is green, before the first customer whose program has completed studies under a commercial IND.
