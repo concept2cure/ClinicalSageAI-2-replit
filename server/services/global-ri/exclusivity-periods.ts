@@ -218,6 +218,23 @@ function addMonthsIso(iso: string, months: number): string {
 }
 
 /**
+ * The orphan exclusivity an orphan claim adds. 2026-10-15: it was added for any
+ * class, so a generic/biosimilar claimed orphan came back 84/120 months, against
+ * its own class rule (no new exclusivity); that rule now stands, and the note says why.
+ */
+function orphanExclusivity(
+  input: ExclusivityInput,
+  base: ExclusivityRule,
+): { components: ExclusivityComponent[]; notes: string[] } {
+  if (!input.orphan) return { components: [], notes: [] };
+  if (input.productClass === 'generic_or_biosimilar') {
+    return { components: [], notes: [`Orphan exclusivity not added: ${base.description}`] };
+  }
+  const o = ORPHAN_RULE[input.market];
+  return { components: [{ type: o.type, months: o.baseMonths, description: o.description, citation: o.citation }], notes: [] };
+}
+
+/**
  * Compute regulatory exclusivity for a product in a market and project the LOE
  * date. The binding exclusivity is the longest applicable component. Orphan
  * exclusivity, where applicable, is considered alongside (not added to) the base
@@ -238,11 +255,11 @@ export function computeExclusivity(input: ExclusivityInput): ExclusivityResult {
   // but still report it as the base).
   components.push({ type: base.type, months: base.baseMonths, description: base.description, citation: base.citation });
 
-  // Orphan exclusivity, where claimed.
-  if (input.orphan) {
-    const orphan = ORPHAN_RULE[input.market];
-    components.push({ type: orphan.type, months: orphan.baseMonths, description: orphan.description, citation: orphan.citation });
-  }
+  // Orphan exclusivity, where claimed and the class earns it.
+  const orphan = orphanExclusivity(input, base);
+  components.push(...orphan.components);
+  notes.push(...orphan.notes);
+  const orphanApplies = orphan.components.length > 0;
 
   // The binding base/orphan exclusivity is the longest of the components so far.
   const binding = components.reduce((a, b) => (b.months > a.months ? b : a));
@@ -257,7 +274,7 @@ export function computeExclusivity(input: ExclusivityInput): ExclusivityResult {
     // (it ties with the base under reduce() but should still count as orphan for
     // the purpose of the orphan-only pediatric/PIP extension, e.g. EU Art 37).
     const orphanBinding =
-      !!input.orphan && ORPHAN_RULE[input.market].baseMonths >= bindingMonths;
+      orphanApplies && ORPHAN_RULE[input.market].baseMonths >= bindingMonths;
     const applies =
       ped.appliesTo === 'both' ||
       (ped.appliesTo === 'orphan' && orphanBinding) ||
@@ -282,7 +299,7 @@ export function computeExclusivity(input: ExclusivityInput): ExclusivityResult {
     lossOfExclusivityDate = bindingMonths > 0 ? addMonthsIso(input.approvalDate, bindingMonths) : input.approvalDate;
   }
 
-  if (base.baseMonths === 0 && !input.orphan) {
+  if (base.baseMonths === 0 && !orphanApplies) {
     notes.push('This product class does not earn originator exclusivity; LOE is governed by the reference product and any first-filer competitive exclusivity.');
   }
   notes.push('Indicative statutory durations only — the real LOE may be set by patents/SPCs and case-specific agency determinations not modeled here.');

@@ -70,7 +70,10 @@ export interface DiseaseProfile {
   jpPrevalence?: number;
   seriousOrLifeThreatening?: boolean;
   noSatisfactoryTreatment?: boolean;
+  /** Significant benefit over existing methods: the EU orphan criterion (Reg (EC) No 141/2000 Art 3(1)(b)). */
   significantBenefit?: boolean;
+  /** Substantial improvement over existing therapy: the expedited-program criterion, a different fact. */
+  substantialImprovementOverExisting?: boolean;
   unmetMedicalNeed?: boolean;
 }
 
@@ -100,7 +103,10 @@ export interface MarketStrategy {
   module1Checklist: Module1Component[];
   ctaRequirements: CtaComponent[];
   labelingRequirements: LabelingSection[];
-  /** Indicative fees with no designation recorded: charged in full; lines an orphan designation would waive say so. */
+  /**
+   * Indicative fees with no designation recorded: charged in full; lines an orphan
+   * designation would waive say so, and where its fee effect is not modelled that is said.
+   */
   feeEstimate: FeeEstimate | null;
   /** The statutory exclusivity for the product class on approval; no orphan designation or pediatric extension counted. */
   exclusivity: ExclusivityResult | null;
@@ -206,11 +212,14 @@ export function buildStrategyBrief(input: StrategyBriefInput): RegulatoryStrateg
     // Expedited programs (FDA/EMA/PMDA).
     let expeditedPrograms: MarketStrategy['expeditedPrograms'] = null;
     if (EXPEDITED_REGIONS.has(agency)) {
+      // 2026-10-15: substantialImprovementOverExisting was fed disease.significantBenefit
+      // (the EU orphan criterion), so an orphan "significant benefit" alone screened FDA
+      // Priority Review eligible. They are different criteria, stated separately.
       const match = matchExpeditedPrograms({
         region: agency as ExpeditedRegion,
         seriousOrLifeThreatening: disease.seriousOrLifeThreatening,
         unmetMedicalNeed: disease.unmetMedicalNeed,
-        substantialImprovementOverExisting: disease.significantBenefit,
+        substantialImprovementOverExisting: disease.substantialImprovementOverExisting,
       });
       const list = match.eligible.map((e) => ({ name: e.name }));
       const notAssessed = match.notAssessed.map((p) => ({ name: p.name, missing: p.missing }));

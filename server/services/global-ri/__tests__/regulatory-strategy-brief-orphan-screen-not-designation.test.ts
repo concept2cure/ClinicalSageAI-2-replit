@@ -35,7 +35,10 @@ describe('fees — an orphan screen is not a designation', () => {
       expect(fees.lineItems.every((li) => li.waived === false)).toBe(true);
       for (const li of fees.lineItems) {
         expect(li.note ?? '').not.toMatch(/orphan-designated product|orphan exemption from/i);
-        expect(li.note ?? '').toMatch(/would be waived if orphan-designated/i);
+        // Pinned "would be waived" for EU too until 2026-10-15: EMA grants reductions, not a waiver.
+        expect(li.note ?? '').toMatch(
+          m.agency === 'FDA' ? /would be waived if orphan-designated/i : /fee effect of orphan status not modelled for EMA/i,
+        );
       }
     }
   });
