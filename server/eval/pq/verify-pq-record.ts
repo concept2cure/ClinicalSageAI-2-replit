@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PqProtocol, RegistryPqClaim, computeVerdict, servedModelMatches } from './pq-verdict.js';
 import { hasCompletedProviderFlags } from './output-integrity.js';
+import { extractionCriteriaProblems as sharedExtractionCriteriaProblems } from './pq-criteria.js';
 
 export interface CanonicalPqEvidence {
   protocolText: string;
@@ -160,7 +161,8 @@ function protocolProblems(protocol: PqProtocol, rec: Row, text: string): string[
 function extractionCriteriaProblems(protocol: PqProtocol): string[] {
   const ext = protocol.components.extraction;
   if (!ext?.required) return [];
-  return object(ext.criteria) && unit(ext.criteria.minF1) && Object.keys(ext.criteria).every(k => k === 'minF1')
+  // The one reading of the extraction criteria the verdict applies (pq-criteria.ts), its sample floor included.
+  return object(ext.criteria) && sharedExtractionCriteriaProblems(ext.criteria).length === 0
     ? [] : ['canonical extraction criteria are malformed or unmeasured'];
 }
 

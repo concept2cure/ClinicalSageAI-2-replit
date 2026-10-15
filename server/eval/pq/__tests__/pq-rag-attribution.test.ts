@@ -10,7 +10,9 @@ const protocol = (): PqProtocol => {
 };
 const generation = Array.from({ length: 10 }, (_, i) => ({ taskId: `g${i}`, docType: 'ind', servedModel: 'generator-pin',
   servedModelVerified: true, sectionCoverage: 1, forbiddenHits: 0 }));
-const extraction = [{ taskId: 'e1', docType: 'ind', servedModel: 'generator-pin', servedModelVerified: true, f1: 1, precision: 1, recall: 1 }];
+// At the real protocol's extraction floor, as `generation` is at its generation floor.
+const extraction = Array.from({ length: 10 }, (_, i) => ({ taskId: `e${i}`, docType: 'ind', servedModel: 'generator-pin',
+  servedModelVerified: true, f1: 1, precision: 1, recall: 1 }));
 const record = () => ({ ran: true, itemsScored: 1, plannedItemIds: ['q1'],
   scopeVerified: true, scope: { organizationId: 7, organizationUuid: '11111111-1111-4111-8111-111111111111', programId: '22222222-2222-4222-8222-222222222222' },
   goldBankSha256: 'a'.repeat(64), corpusManifestSha256: 'b'.repeat(64),

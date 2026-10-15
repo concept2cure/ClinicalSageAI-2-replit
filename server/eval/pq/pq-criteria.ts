@@ -75,7 +75,7 @@ export function ragCriteriaProblems(criteria: Record<string, unknown> | undefine
 }
 
 /** The extraction criteria this verdict applies. A key outside this list is not assessed, so it is INCOMPLETE. */
-const EXTRACTION_CRITERIA = ['minF1'] as const;
+const EXTRACTION_CRITERIA = ['minF1', 'minTasksPerDocType'] as const;
 
 /**
  * Why the protocol's extraction criteria cannot be applied as written — the
@@ -83,15 +83,10 @@ const EXTRACTION_CRITERIA = ['minF1'] as const;
  * (founder decision P-31, 2026-10-13): a missing, misspelt or non-numeric
  * minimum left the component with nothing to miss, so the PQ passed on it.
  *
- * `minTasksPerDocType` is deliberately NOT in the list yet. The protocol
- * declares no extraction sample floor, and P-31 records why it is owed rather
- * than set here: the floor that matches generation's is 10 per document type,
- * the bank holds 4, and the 18 tasks owed need real source text with real
- * expected fields. Inventing them would fabricate the evidence the bank exists
- * to provide (gold-tasks.json says so of itself). Until the bank can meet a
- * floor, declaring one would turn a green gate red without making any model
- * better qualified — and the protocol is `draft`, so it can qualify nothing in
- * the meantime either way.
+ * The sample floor joined the list on 2026-10-15 (P-31 condition 3), when the
+ * bank grew to meet it: 10 extraction tasks per document type, the same floor
+ * generation has, so one scored item can no longer qualify the component.
+ * A protocol without one is INCOMPLETE, never silently floorless.
  */
 export function extractionCriteriaProblems(criteria: Record<string, unknown> | undefined): string[] {
   const c: Record<string, unknown> = criteria && typeof criteria === 'object' ? criteria : {};
@@ -103,6 +98,11 @@ export function extractionCriteriaProblems(criteria: Record<string, unknown> | u
   }
   if (!isUnitScore(c.minF1)) {
     out.push(`extraction criterion minF1 is ${'minF1' in c ? shown(c.minF1) : 'missing'}, not a number between 0 and 1`);
+  }
+  if (!('minTasksPerDocType' in c)) {
+    out.push('the protocol sets no extraction sample floor (criteria.minTasksPerDocType), so one scored task could qualify the component');
+  } else if (!isFloor(c.minTasksPerDocType)) {
+    out.push(`extraction criterion minTasksPerDocType is ${shown(c.minTasksPerDocType)}, not a positive whole number`);
   }
   return out;
 }
