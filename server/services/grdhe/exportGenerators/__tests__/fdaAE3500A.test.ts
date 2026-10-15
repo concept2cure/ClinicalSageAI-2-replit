@@ -44,22 +44,25 @@ function buildEvent(overrides: Record<string, any> = {}): CanonicalAdverseEvent 
     receiveDate: new Date(2026, 2, 15), // 2026-03-15 local
     eventDate: new Date(2026, 2, 15),
     isSerious: false,
+    // Canonical field names (server/services/grdhe/types.ts). 2026-10-15: this
+    // fixture used product_name, meddra_pt_code, reaction_term and
+    // patient_initials, which no type defines and the generator no longer reads.
     patient: {
-      patient_initials: 'AB',
+      initials: 'AB',
       sex: 'male',
     },
     reactions: [
       {
-        meddra_pt_code: '10012345',
-        reaction_term: 'Headache',
+        term_code: '10012345',
+        term: 'Headache',
         outcome: 'recovered',
         // String date-only field carrying a local-midnight time component, the
         // shape most exposed to a UTC shift.
         onset_date: '2026-03-15T00:00:00',
       },
     ],
-    suspectProducts: [{ product_name: 'TestDrug' }],
-    reporter: { qualification: '1' },
+    suspectProducts: [{ name: 'TestDrug' }],
+    reporter: { qualification_code: '1' },
   };
   return { ...base, ...overrides } as unknown as CanonicalAdverseEvent;
 }
@@ -86,7 +89,7 @@ describe('generateFDA3500AXML — administrativeGenderCode (finding a)', () => {
   });
 
   it('falls back to UN (defined by the code system), not 0, when sex is absent', () => {
-    const result = generateFDA3500AXML(buildEvent({ patient: { patient_initials: 'CD' } }), {} as any, MEDDRA_LOCK);
+    const result = generateFDA3500AXML(buildEvent({ patient: { initials: 'CD' } }), {} as any, MEDDRA_LOCK);
     expect(result.success).toBe(true);
     expect(result.content).toContain(
       `<administrativeGenderCode code="UN" codeSystem="${GENDER_OID}"/>`

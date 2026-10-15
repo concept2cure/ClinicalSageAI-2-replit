@@ -63,10 +63,12 @@ vi.mock('../../db', async () => {
         report_type: 'initial', event_date: '2026-03-10', receive_date: '2026-03-15', is_serious: false,
         seriousness_death: false, seriousness_life_threatening: false, seriousness_hospitalization: false,
         seriousness_disability: false, seriousness_congenital_anomaly: false, seriousness_other_medically_important: false,
-        patient: { patient_initials: 'AB', sex: 'F' },
-        reactions: [{ reaction_term: 'Headache', meddra_pt_code: '10019211', outcome: 'recovered' }],
-        suspect_products: [{ product_name: 'Examplamab', dose_value: 5, dose_unit: 'g' }],
-        reporter: { qualification: '1' }, sender: { sender_organization: 'Example Pharma' }, ...stamp,
+        // Canonical field names (types.ts); 2026-10-15 this row used product_name,
+        // meddra_pt_code and others that no type defines.
+        patient: { initials: 'AB', sex: 'F' },
+        reactions: [{ term: 'Headache', term_code: '10019211', outcome: 'recovered' }],
+        suspect_products: [{ name: 'Examplamab', dose: '5', dose_unit: 'g' }],
+        reporter: { qualification_code: '1' }, sender: { sender_organization: 'Example Pharma' }, ...stamp,
       }];
     }
     return [];

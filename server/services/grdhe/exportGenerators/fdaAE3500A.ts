@@ -1,8 +1,12 @@
 /**
- * FDA MedWatch 3500A XML Export Generator
+ * HL7 v3 ICSR-style XML export for FDA (the case content a MedWatch 3500A reports)
  *
- * Generates FDA-compliant XML for adverse event reporting per FDA MedWatch 3500A form.
- * This implementation follows the FDA HL7v3 Individual Case Safety Report (ICSR) format.
+ * Writes one case as an HL7 v3 message in the ICSR shape (MCCI_IN200100UV01
+ * wrapper). It is not MedWatch Form 3500A, which is a paper/PDF form, is not
+ * FDA's E2B(R3) regional implementation, and is not validated against any
+ * schema. 2026-10-15: this header, the file name and the format list called it
+ * "FDA MedWatch 3500A". The job format key FDA_AE_3500A and the exported
+ * function names stay: stored jobs and the routes use them.
  *
  * @version 1.0.0
  * @compliance FDA 21 CFR Part 803, FDA MedWatch 3500A
@@ -21,6 +25,9 @@ import {
   TIME_UNIT_UCUM,
   doseUnit,
   timeUnit,
+  doseNumber,
+  meddraCode,
+  qualificationCode,
 } from '../types';
 
 // Type assertion helper for flexible data access from canonical model
@@ -241,8 +248,12 @@ function caseFactErrors(event: CanonicalAdverseEvent): ValidationError[] {
       `Report type "${String(event.reportType ?? '')}" has no code here (initial, followup, final); none is assumed`
     ));
   }
-  if (patient.weight_value && !ucumWeightUnit(patient.weight_unit)) {
-    errors.push(fdaUnitError('patient.weight_unit', patient.weight_value, patient.weight_unit));
+  if (patient.weight && !ucumWeightUnit(patient.weight_unit)) {
+    errors.push(fdaUnitError('patient.weight_unit', patient.weight, patient.weight_unit));
+  }
+  // 2026-10-15: the age unit was written as its E2B code (801) in a PQ, whose unit is UCUM.
+  if (patient.age && !ucumTimeUnit(patient.age_unit)) {
+    errors.push(fdaUnitError('patient.age_unit', patient.age, patient.age_unit));
   }
   return errors;
 }
@@ -251,15 +262,21 @@ function caseFactErrors(event: CanonicalAdverseEvent): ValidationError[] {
 function quantityUnitErrors(event: CanonicalAdverseEvent): ValidationError[] {
   const errors: ValidationError[] = [];
   ((event.reactions || []) as AnyData[]).forEach((reaction, i) => {
-    if (reaction.duration_value && !ucumTimeUnit(reaction.duration_unit)) {
-      errors.push(fdaUnitError(`reactions[${i}].duration_unit`, reaction.duration_value, reaction.duration_unit));
+    if (reaction.duration && !ucumTimeUnit(reaction.duration_unit)) {
+      errors.push(fdaUnitError(`reactions[${i}].duration_unit`, reaction.duration, reaction.duration_unit));
     }
   });
   const lists = { suspectProducts: event.suspectProducts, concomitantProducts: event.concomitantProducts };
   for (const [list, products] of Object.entries(lists)) {
     ((products || []) as AnyData[]).forEach((product, i) => {
-      if (product.dose_value && !ucumDoseUnit(product.dose_unit)) {
-        errors.push(fdaUnitError(`${list}[${i}].dose_unit`, product.dose_value, product.dose_unit));
+      if (product.dose && !doseNumber(product.dose)) {
+        errors.push(fdaError(
+          'FDA-012',
+          `${list}[${i}].dose`,
+          `${list}[${i}].dose: "${String(product.dose)}" is not one number; a structured dose is not read out of text`
+        ));
+      } else if (product.dose && !ucumDoseUnit(product.dose_unit)) {
+        errors.push(fdaUnitError(`${list}[${i}].dose_unit`, product.dose, product.dose_unit));
       }
       const periodStarted = product.frequency_value || product.frequency_unit;
       if (periodStarted && !(product.frequency_value && ucumTimeUnit(product.frequency_unit))) {
@@ -268,6 +285,29 @@ function quantityUnitErrors(event: CanonicalAdverseEvent): ValidationError[] {
     });
   }
   return errors;
+}
+
+/**
+ * The report type, seriousness criteria, reaction outcome, drug role and
+ * reporter qualification are written without a codeSystem. 2026-10-15: each
+ * carried 2.16.840.1.113883.6.163, which is MedDRA's, and none is a MedDRA
+ * code. This repository vendors no OID for those ICH code lists (it has LOINC,
+ * NDC and the eCTD v4 lists), so none is invented; this names the ones the
+ * case's message carries.
+ */
+function codesWithoutSystemWarning(event: CanonicalAdverseEvent): ValidationWarning {
+  const lists = ['report type', 'drug role'];
+  const criteria = event.seriousnessDeath || event.seriousnessLifeThreatening || event.seriousnessHospitalization ||
+    event.seriousnessDisability || event.seriousnessCongenitalAnomaly || event.seriousnessOtherMedicallyImportant;
+  if (event.isSerious && criteria) lists.push('seriousness criterion');
+  if ((event.reactions || []).length > 0) lists.push('reaction outcome');
+  if (qualificationCode(event.reporter)) lists.push('reporter qualification');
+  return {
+    code: 'FDA-W005',
+    field: 'codeSystem',
+    message: `The ${lists.join(', ')} codes are written without a codeSystem: no OID for those ICH code lists is verified here, and they are not MedDRA codes`,
+    severity: 'warning',
+  };
 }
 
 /** Elements now omitted rather than filled in; the warnings say which. */
@@ -281,11 +321,14 @@ function omittedPartyWarnings(event: CanonicalAdverseEvent): ValidationWarning[]
       severity: 'warning',
     });
   }
-  if (!(event.reporter as AnyData | undefined)?.qualification) {
+  const reporter = event.reporter as AnyData | undefined;
+  if (!qualificationCode(reporter)) {
     warnings.push({
       code: 'FDA-W004',
       field: 'reporter.qualification',
-      message: "Reporter qualification is not recorded; the reporter's role code is omitted, not assumed",
+      message: reporter?.qualification || reporter?.qualification_code
+        ? `Reporter qualification "${String(reporter.qualification_code ?? reporter.qualification)}" has no ICH code here; the reporter's role code is omitted`
+        : "Reporter qualification is not recorded; the reporter's role code is omitted, not assumed",
       severity: 'warning',
     });
   }
@@ -333,7 +376,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): {
     });
   } else {
     // Patient validation
-    if (!patient.age_value && !patient.birth_date && !patient.age) {
+    if (!patient.age && !patient.date_of_birth) {
       warnings.push({
         code: 'FDA-W001',
         field: 'patient.age',
@@ -355,11 +398,18 @@ export function validateForFDA(event: CanonicalAdverseEvent): {
     (event.reactions as any[]).forEach((reaction: AnyData, index: number) => {
       // 2026-10-15: a term with no code passed this check, as its message says
       // it should not, and was filed under MedDRA as the code "unknown".
-      if (!reaction.meddra_pt_code) {
+      if (reaction.term_code && !meddraCode(reaction)) {
         errors.push({
           code: 'FDA-005',
-          field: `reactions[${index}].meddra_pt_code`,
-          message: `Reaction ${index + 1}: MedDRA preferred term code is required`,
+          field: `reactions[${index}].term_system`,
+          message: `Reaction ${index + 1}: term_code is a ${String(reaction.term_system)} code; it is not filed as a MedDRA code`,
+          severity: 'error',
+        });
+      } else if (!reaction.term_code) {
+        errors.push({
+          code: 'FDA-005',
+          field: `reactions[${index}].term_code`,
+          message: `Reaction ${index + 1}: MedDRA code is required`,
           severity: 'error',
         });
       }
@@ -377,10 +427,10 @@ export function validateForFDA(event: CanonicalAdverseEvent): {
   } else {
     // Validate each product
     suspectProducts.forEach((product: AnyData, index: number) => {
-      if (!product.product_name && !product.name) {
+      if (!product.name) {
         errors.push({
           code: 'FDA-007',
-          field: `suspectProducts[${index}].product_name`,
+          field: `suspectProducts[${index}].name`,
           message: `Product ${index + 1}: Product name is required`,
           severity: 'error',
         });
@@ -418,7 +468,7 @@ export function validateForFDA(event: CanonicalAdverseEvent): {
   }
 
   errors.push(...caseFactErrors(event), ...quantityUnitErrors(event));
-  warnings.push(...omittedPartyWarnings(event));
+  warnings.push(...omittedPartyWarnings(event), codesWithoutSystemWarning(event));
   return { errors, warnings };
 }
 
@@ -524,7 +574,7 @@ ${generateNarrativeSection(event)}
     success: true,
     content: xml,
     contentType: 'application/xml',
-    fileName: `FDA_3500A_${event.caseNumber}_${formatFDADate(new Date())}.xml`,
+    fileName: `FDA_HL7V3_ICSR_${event.caseNumber}_${formatFDADate(new Date())}.xml`,
     warnings: validation.warnings,
     metadata: {
       format: 'FDA_AE_3500A',
@@ -548,12 +598,12 @@ function generateReportTypeSection(event: CanonicalAdverseEvent): string {
   const reportTypeCode = fdaReportTypeCode(event.reportType) ?? '';
   const caseVersion = event.caseVersion || 1;
 
+  // No codeSystem: see codesWithoutSystemWarning (2026-10-15: MedDRA's OID).
   return `
         <!-- Report Type -->
         <component typeCode="COMP">
           <adverseEventAssessment classCode="INVSTG" moodCode="EVN">
             <code code="${reportTypeCode}"
-              codeSystem="2.16.840.1.113883.6.163"
               displayName="${event.reportType === 'followup' ? 'Follow-up' : event.reportType === 'final' ? 'Final' : 'Initial'}"/>
             <effectiveTime>
               <low value="${formatFDADate(event.receiveDate)}"/>
@@ -616,9 +666,10 @@ function generateSeriousnessSection(event: CanonicalAdverseEvent): string {
  * Generate seriousness component
  */
 function generateSeriousnessComponent(code: string, display: string, details?: string): string {
+  // No codeSystem: see codesWithoutSystemWarning (2026-10-15: MedDRA's OID).
   return `<component typeCode="COMP">
               <observation classCode="OBS" moodCode="EVN">
-                <code code="${code}" codeSystem="2.16.840.1.113883.6.163" displayName="${display}"/>
+                <code code="${code}" displayName="${display}"/>
                 ${details ? `<text>${cdataWrap(details)}</text>` : ''}
               </observation>
             </component>`;
@@ -632,29 +683,31 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
   const sexCode = mapSexCode(patient.sex);
 
   let ageSection = '';
-  if (patient.age_value && patient.age_unit) {
-    const ageUnitCode = CODE_SYSTEMS.ICH_AGE_UNIT[patient.age_unit] || patient.age_unit;
+  if (patient.age && patient.age_unit) {
+    // Validated before generation (UCUM). 2026-10-15: the E2B code (801) was the PQ unit.
     ageSection = `
             <component1 typeCode="COMP">
               <observationEvent classCode="OBS" moodCode="EVN">
                 <code code="3137-7" codeSystem="2.16.840.1.113883.6.1" displayName="Age at onset"/>
-                <value xsi:type="PQ" value="${patient.age_value}" unit="${ageUnitCode}"/>
+                <value xsi:type="PQ" value="${patient.age}" unit="${ucumTimeUnit(patient.age_unit) ?? ''}"/>
               </observationEvent>
             </component1>`;
-  } else if (patient.birth_date) {
-    ageSection = `
-            <birthTime value="${formatFDADate(patient.birth_date)}"/>`;
+  }
+  // Written beside a recorded age too (2026-10-15: an age dropped the birth date).
+  if (patient.date_of_birth) {
+    ageSection += `
+            <birthTime value="${formatFDADate(patient.date_of_birth)}"/>`;
   }
 
   let weightSection = '';
-  if (patient.weight_value) {
+  if (patient.weight) {
     // Validated before generation. 2026-10-15: an unrecorded unit was filed as kg.
     const weightUnit = ucumWeightUnit(patient.weight_unit) ?? '';
     weightSection = `
             <component1 typeCode="COMP">
               <observationEvent classCode="OBS" moodCode="EVN">
                 <code code="3141-9" codeSystem="2.16.840.1.113883.6.1" displayName="Body weight"/>
-                <value xsi:type="PQ" value="${patient.weight_value}" unit="${weightUnit}"/>
+                <value xsi:type="PQ" value="${patient.weight}" unit="${weightUnit}"/>
               </observationEvent>
             </component1>`;
   }
@@ -667,8 +720,8 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
         (condition: AnyData, idx: number) => `
               <observationEvent classCode="OBS" moodCode="EVN">
                 ${historyConditionCode(condition, meddraVersion)}
-                ${condition.start_date ? `<effectiveTime><low value="${formatFDADate(condition.start_date)}"/></effectiveTime>` : ''}
-                ${condition.ongoing ? '<statusCode code="active"/>' : '<statusCode code="completed"/>'}
+                ${conditionPeriod(condition)}
+                ${typeof condition.ongoing === 'boolean' ? `<statusCode code="${condition.ongoing ? 'active' : 'completed'}"/>` : ''}
               </observationEvent>`
       )
       .join('\n');
@@ -687,7 +740,7 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
         <!-- Patient Information -->
         <primaryRole classCode="INVSBJ">
           <player1 classCode="PSN" determinerCode="INSTANCE">
-            ${patient.patient_initials ? `<name>${escapeXml(patient.patient_initials)}</name>` : ''}
+            ${patient.initials ? `<name>${escapeXml(patient.initials)}</name>` : ''}
             <administrativeGenderCode code="${sexCode}" codeSystem="2.16.840.1.113883.5.1"/>
             ${ageSection}
           </player1>
@@ -702,13 +755,25 @@ function generatePatientSection(event: CanonicalAdverseEvent, meddraVersion: str
  * condition was filed under MedDRA as the code "unknown".
  */
 function historyConditionCode(condition: AnyData, meddraVersion: string): string {
-  if (!condition.meddra_code) {
-    return `<code nullFlavor="NI"><originalText>${escapeXml(condition.condition_term || '')}</originalText></code>`;
+  const code = meddraCode(condition);
+  if (!code) {
+    return `<code nullFlavor="NI"><originalText>${escapeXml(condition.term || '')}</originalText></code>`;
   }
-  return `<code code="${escapeXml(condition.meddra_code)}"
+  return `<code code="${escapeXml(code)}"
                   codeSystem="2.16.840.1.113883.6.163"
                   codeSystemVersion="${meddraVersion}"
-                  displayName="${escapeXml(condition.condition_term || condition.meddra_code)}"/>`;
+                  displayName="${escapeXml(condition.term || code)}"/>`;
+}
+
+/**
+ * The condition's recorded start and end. 2026-10-15: the end date was not
+ * read, and an unrecorded `ongoing` was filed as completed.
+ */
+function conditionPeriod(condition: AnyData): string {
+  if (!condition.start_date && !condition.end_date) return '';
+  const low = condition.start_date ? `<low value="${formatFDADate(condition.start_date)}"/>` : '';
+  const high = condition.end_date ? `<high value="${formatFDADate(condition.end_date)}"/>` : '';
+  return `<effectiveTime>${low}${high}</effectiveTime>`;
 }
 
 /**
@@ -719,6 +784,7 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
 
   const reactionComponents = reactions
     .map((reaction: AnyData, index: number) => {
+      // Written without a codeSystem: see codesWithoutSystemWarning (2026-10-15: MedDRA's OID).
       const outcomeCode = CODE_SYSTEMS.ICH_OUTCOME[reaction.outcome || 'unknown'] || '0';
 
       return `
@@ -728,15 +794,15 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
               <code code="PROBLEM" codeSystem="2.16.840.1.113883.5.4"/>
               <effectiveTime>
                 ${reaction.onset_date ? `<low value="${formatFDADate(reaction.onset_date)}"/>` : ''}
-                ${reaction.resolution_date ? `<high value="${formatFDADate(reaction.resolution_date)}"/>` : ''}
+                ${reaction.end_date ? `<high value="${formatFDADate(reaction.end_date)}"/>` : ''}
               </effectiveTime>
 
-              <!-- MedDRA Term -->
+              <!-- MedDRA Term (validated: term_code is MedDRA's) -->
               <value xsi:type="CD"
-                code="${escapeXml(reaction.meddra_pt_code)}"
+                code="${escapeXml(meddraCode(reaction) ?? '')}"
                 codeSystem="2.16.840.1.113883.6.163"
                 codeSystemVersion="${meddraVersion}"
-                displayName="${escapeXml(reaction.meddra_pt || reaction.reaction_term || '')}">
+                displayName="${escapeXml(reaction.term || '')}">
                 ${
                   reaction.meddra_llt_code
                     ? `
@@ -750,12 +816,12 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
 
               <!-- Duration -->
               ${
-                reaction.duration_value
+                reaction.duration
                   ? `
               <entryRelationship typeCode="MFST">
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="DURATION" codeSystem="2.16.840.1.113883.5.4"/>
-                  <value xsi:type="PQ" value="${reaction.duration_value}" unit="${ucumTimeUnit(reaction.duration_unit) ?? ''}"/>
+                  <value xsi:type="PQ" value="${reaction.duration}" unit="${ucumTimeUnit(reaction.duration_unit) ?? ''}"/>
                 </observation>
               </entryRelationship>`
                   : ''
@@ -766,7 +832,6 @@ function generateReactionsSection(event: CanonicalAdverseEvent, meddraVersion: s
                 <observation classCode="OBS" moodCode="EVN">
                   <code code="OUTCOME" codeSystem="2.16.840.1.113883.5.4"/>
                   <value xsi:type="CD" code="${outcomeCode}"
-                    codeSystem="2.16.840.1.113883.6.163"
                     displayName="${reaction.outcome || 'unknown'}"/>
                 </observation>
               </entryRelationship>
@@ -813,6 +878,7 @@ function generateProductComponent(
   index: number,
   role: 'suspect' | 'concomitant'
 ): string {
+  // No codeSystem on the role code: see codesWithoutSystemWarning (2026-10-15: MedDRA's OID).
   const roleCode = role === 'suspect' ? '1' : '2';
   const rechallenge = rechallengeText(product.rechallenge);
 
@@ -820,10 +886,10 @@ function generateProductComponent(
           <!-- ${role === 'suspect' ? 'Suspect' : 'Concomitant'} Product ${index + 1} -->
           <component typeCode="COMP">
             <substanceAdministration classCode="SBADM" moodCode="EVN">
-              <id extension="${escapeXml(product.product_id || `PROD-${index + 1}`)}"/>
+              ${product.id ? `<id extension="${escapeXml(String(product.id))}"/>` : '<id nullFlavor="NI"/>'}
 
               <!-- Role (Suspect/Concomitant) -->
-              <code code="${roleCode}" codeSystem="2.16.840.1.113883.6.163" displayName="${role}"/>
+              <code code="${roleCode}" displayName="${role}"/>
 
               <!-- Route -->${routeElement(product)}
 
@@ -833,11 +899,11 @@ function generateProductComponent(
 
               <!-- Dates -->
               ${
-                product.start_date || product.stop_date
+                product.start_date || product.end_date
                   ? `
               <effectiveTime xsi:type="IVL_TS">
                 ${product.start_date ? `<low value="${formatFDADate(product.start_date)}"/>` : ''}
-                ${product.stop_date ? `<high value="${formatFDADate(product.stop_date)}"/>` : ''}
+                ${product.end_date ? `<high value="${formatFDADate(product.end_date)}"/>` : ''}
               </effectiveTime>`
                   : ''
               }
@@ -846,7 +912,7 @@ function generateProductComponent(
               <consumable>
                 <manufacturedProduct classCode="MANU">
                   <manufacturedMaterialKind>${ndcElement(product)}
-                    <name>${escapeXml(product.product_name || '')}</name>
+                    <name>${escapeXml(product.name || '')}</name>
                     ${
                       product.manufacturer
                         ? `
@@ -916,9 +982,10 @@ function routeElement(product: AnyData): string {
 
 /** The dose in its recorded unit (validated, FDA-011). 2026-10-15: an unrecorded unit was filed as mg. */
 function doseElement(product: AnyData): string {
-  if (!product.dose_value) return '';
+  const dose = doseNumber(product.dose);
+  if (!dose) return '';
   return `
-              <doseQuantity value="${product.dose_value}" unit="${ucumDoseUnit(product.dose_unit) ?? ''}"/>`;
+              <doseQuantity value="${dose}" unit="${ucumDoseUnit(product.dose_unit) ?? ''}"/>`;
 }
 
 /**
@@ -935,13 +1002,14 @@ function periodElement(product: AnyData): string {
 }
 
 /**
- * The NDC, only when one is recorded. 2026-10-15: this fell back to the
- * internal product id, then to "unknown", in the NDC code system.
+ * The NDC, only when one is recorded: a substance_code whose substance_system
+ * is NDC. 2026-10-15: this fell back to the internal product id, then to
+ * "unknown", in the NDC code system; and it read ndc_code, which no field defines.
  */
 function ndcElement(product: AnyData): string {
-  if (!product.ndc_code) return '';
+  if (product.substance_system !== 'NDC' || !product.substance_code) return '';
   return `
-                    <code code="${escapeXml(product.ndc_code)}"
+                    <code code="${escapeXml(String(product.substance_code))}"
                       codeSystem="2.16.840.1.113883.6.69"/>`;
 }
 
@@ -979,7 +1047,10 @@ function generateReporterSection(event: CanonicalAdverseEvent): string {
                 ${reporter.middle_name ? `<given>${escapeXml(reporter.middle_name)}</given>` : ''}
                 ${reporter.family_name ? `<family>${escapeXml(reporter.family_name)}</family>` : ''}
               </name>`
-                  : ''
+                  : reporter.name
+                    ? `
+              <name>${escapeXml(String(reporter.name))}</name>`
+                    : ''
               }
             </assignedPerson>
 
@@ -990,21 +1061,21 @@ function generateReporterSection(event: CanonicalAdverseEvent): string {
               <name>${escapeXml(reporter.organization)}</name>
               ${reporter.department ? `<desc>${escapeXml(reporter.department)}</desc>` : ''}
               ${
-                reporter.street_address || reporter.city || reporter.country
+                reporter.address || reporter.city || reporter.country
                   ? `
               <addr>
-                ${reporter.street_address ? `<streetAddressLine>${escapeXml(reporter.street_address)}</streetAddressLine>` : ''}
+                ${reporter.address ? `<streetAddressLine>${escapeXml(reporter.address)}</streetAddressLine>` : ''}
                 ${reporter.city ? `<city>${escapeXml(reporter.city)}</city>` : ''}
-                ${reporter.state_province ? `<state>${escapeXml(reporter.state_province)}</state>` : ''}
+                ${reporter.state ? `<state>${escapeXml(reporter.state)}</state>` : ''}
                 ${reporter.postal_code ? `<postalCode>${escapeXml(reporter.postal_code)}</postalCode>` : ''}
                 ${reporter.country ? `<country>${escapeXml(reporter.country)}</country>` : ''}
               </addr>`
                   : ''
               }
               ${
-                reporter.telephone
+                reporter.phone
                   ? `
-              <telecom value="tel:${escapeXml(reporter.telephone)}"/>`
+              <telecom value="tel:${escapeXml(reporter.phone)}"/>`
                   : ''
               }
               ${
@@ -1028,10 +1099,14 @@ function generateReporterSection(event: CanonicalAdverseEvent): string {
  */
 function reporterRoleElements(reporter: AnyData): string {
   const id = reporter.reporter_id ? `<id extension="${escapeXml(reporter.reporter_id)}"/>` : '<id nullFlavor="NI"/>';
-  if (!reporter.qualification) return id;
-  const displayName = reporter.qualification_text ? ` displayName="${escapeXml(reporter.qualification_text)}"` : '';
+  // The ICH code (qualification_code, or the qualification named); 2026-10-15:
+  // the qualification text was written as the code.
+  const code = qualificationCode(reporter);
+  if (!code) return id;
+  const displayName = reporter.qualification ? ` displayName="${escapeXml(String(reporter.qualification))}"` : '';
+  // No codeSystem: see codesWithoutSystemWarning (2026-10-15: MedDRA's OID).
   return `${id}
-            <code code="${escapeXml(String(reporter.qualification))}" codeSystem="2.16.840.1.113883.6.163"${displayName}/>`;
+            <code code="${code}"${displayName}/>`;
 }
 
 /**

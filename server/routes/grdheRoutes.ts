@@ -19,7 +19,13 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { grdheService, AuditScopeError, ExportJobNotFoundError } from '../services/grdhe/grdheService';
+import {
+  grdheService,
+  AuditScopeError,
+  ExportJobNotFoundError,
+  AdverseEventNotFoundError,
+  ExportJobRefusedError,
+} from '../services/grdhe/grdheService';
 import {
   DataRegion,
   TerminologySystem,
@@ -182,6 +188,28 @@ const executionRefusal = (job: ExportJob): { status: number; code: string; messa
 /** case_type and report_type as the canonical_adverse_events CHECK constraints accept them. */
 const CASE_TYPES: readonly string[] = ['spontaneous', 'clinical_trial', 'literature', 'solicited', 'other'];
 const REPORT_TYPES: readonly string[] = ['initial', 'followup', 'amendment', 'nullification'];
+
+/** A calendar date as the ::date casts take it (YYYY-MM-DD, a day that exists). */
+const isIsoDate = (value: unknown): boolean =>
+  typeof value === 'string' &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) &&
+  new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
+
+/** The SQLSTATE of a database error, under drizzle's "Failed query" wrapper. */
+const sqlstate = (err: unknown): unknown =>
+  (err as { cause?: { code?: unknown } } | null)?.cause?.code ?? (err as { code?: unknown } | null)?.code;
+
+/*
+ * 2026-10-15: the catches below answered 400 or 404 with error.message. Under
+ * drizzle that is "Failed query: <SQL>\nparams: <values>" — the statement, its
+ * relation names and the case's own field values — and a lost connection on a
+ * read was a 404. A deliberate refusal keeps its answer in its own words;
+ * anything else is the server's failure, logged against the request id
+ * (serverError), never in the body.
+ */
+const notFound = (res: Response, code: string, message: string) =>
+  res.status(404).json({ success: false, error: { code, message } });
 
 router.use(auditMiddleware);
 
@@ -533,6 +561,8 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
   const request: CreateExportJobRequest = req.body;
   const actor = requireWriteActor(req, res);
   if (!actor) return;
+  // 2026-10-15: the body's tenantId reached the service unchecked.
+  if (!assertTenantMatchesAuth(req, res, String(request.tenantId ?? ''))) return;
 
   // Validate required fields
   const requiredFields = ['tenantId', 'sourceEntityType', 'sourceEntityIds', 'targetFormat', 'targetJurisdiction'];
@@ -558,15 +588,27 @@ router.post('/exports', asyncHandler(async (req: Request, res: Response) => {
       }
     });
   }
-  
+
+  // Case ids are UUIDs; anything else reached the ::uuid[] cast as a database error.
+  const ids: unknown = request.sourceEntityIds;
+  if (!Array.isArray(ids) || !ids.every(id => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'INVALID_SOURCE_ENTITY_IDS', message: 'sourceEntityIds must be a list of case ids (UUIDs)' },
+    });
+  }
+
   try {
     const job = await grdheService.createExportJob(request, actor);
-    
+
     res.status(201).json({
       success: true,
       data: job
     });
   } catch (error: any) {
+    if (!(error instanceof ExportJobRefusedError)) {
+      return serverError(res, log, 'creating the export job', error);
+    }
     res.status(400).json({
       success: false,
       error: {
@@ -586,19 +628,16 @@ router.get('/exports/:jobId', asyncHandler(async (req: Request, res: Response) =
   
   try {
     const job = await grdheService.getExportJob(jobId);
-    
+
     res.json({
       success: true,
       data: job
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'JOB_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof ExportJobNotFoundError)) {
+      return serverError(res, log, 'reading the export job', error, { jobId });
+    }
+    notFound(res, 'JOB_NOT_FOUND', 'Export job not found');
   }
 }));
 
@@ -775,15 +814,9 @@ router.post('/exports/:jobId/cancel', asyncHandler(async (req: Request, res: Res
     // Not this tenant's job: say so, rather than a success with no job in it
     // (ledger L203).
     if (error instanceof ExportJobNotFoundError) {
-      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Export job not found' } });
+      return notFound(res, 'NOT_FOUND', 'Export job not found');
     }
-    res.status(400).json({
-      success: false,
-      error: {
-        code: 'CANCEL_FAILED',
-        message: error.message
-      }
-    });
+    serverError(res, log, 'cancelling the export job', error, { jobId });
   }
 }));
 
@@ -799,9 +832,12 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
   const request: CreateAdverseEventRequest = req.body;
   const actor = requireWriteActor(req, res);
   if (!actor) return;
+  // 2026-10-15: the body's tenantId reached the service unchecked.
+  if (!assertTenantMatchesAuth(req, res, String(request.tenantId ?? ''))) return;
 
-  // Validate required fields
-  const requiredFields = ['tenantId', 'caseNumber', 'receiveDate', 'patient', 'reactions', 'suspectProducts', 'reporter'];
+  // Validate required fields (eventDate is NOT NULL in the table; a case
+  // without one reached the database and came back as its error text).
+  const requiredFields = ['tenantId', 'caseNumber', 'eventDate', 'receiveDate', 'patient', 'reactions', 'suspectProducts', 'reporter'];
   const missingFields = requiredFields.filter(f => !(request as any)[f]);
   
   if (missingFields.length > 0) {
@@ -821,6 +857,8 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
     typeof request.isSerious !== 'boolean' ? 'isSerious (true or false)' : null,
     !CASE_TYPES.includes(request.caseType) ? `caseType (one of ${CASE_TYPES.join(', ')})` : null,
     !REPORT_TYPES.includes(request.reportType) ? `reportType (one of ${REPORT_TYPES.join(', ')})` : null,
+    !isIsoDate(request.eventDate) ? 'eventDate (YYYY-MM-DD)' : null,
+    !isIsoDate(request.receiveDate) ? 'receiveDate (YYYY-MM-DD)' : null,
   ].filter((field): field is string => field !== null);
   if (unstated.length > 0) {
     return res.status(400).json({
@@ -834,19 +872,20 @@ router.post('/adverse-events', asyncHandler(async (req: Request, res: Response) 
 
   try {
     const event = await grdheService.createCanonicalAdverseEvent(request, actor);
-    
+
     res.status(201).json({
       success: true,
       data: event
     });
   } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      error: {
-        code: 'CREATE_FAILED',
-        message: error.message
-      }
-    });
+    // unique (tenant_id, case_number, case_version): the case is already recorded.
+    if (sqlstate(error) === '23505') {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'CASE_EXISTS', message: `Case ${request.caseNumber} is already recorded for this tenant` },
+      });
+    }
+    serverError(res, log, 'recording the adverse event', error);
   }
 }));
 
@@ -859,19 +898,16 @@ router.get('/adverse-events/:eventId', asyncHandler(async (req: Request, res: Re
   
   try {
     const event = await grdheService.getCanonicalAdverseEventById(eventId);
-    
+
     res.json({
       success: true,
       data: event
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'EVENT_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof AdverseEventNotFoundError)) {
+      return serverError(res, log, 'reading the adverse event', error, { eventId });
+    }
+    notFound(res, 'EVENT_NOT_FOUND', 'Adverse event not found');
   }
 }));
 
@@ -890,19 +926,16 @@ router.get('/adverse-events/tenant/:tenantId/case/:caseNumber', validateTenantId
       caseNumber,
       version ? parseInt(version as string) : undefined
     );
-    
+
     res.json({
       success: true,
       data: event
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'EVENT_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof AdverseEventNotFoundError)) {
+      return serverError(res, log, 'reading the adverse event', error);
+    }
+    notFound(res, 'EVENT_NOT_FOUND', 'Adverse event not found');
   }
 }));
 
@@ -976,13 +1009,10 @@ router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Reques
       }
     });
   } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      error: {
-        code: 'EVENT_NOT_FOUND',
-        message: error.message
-      }
-    });
+    if (!(error instanceof AdverseEventNotFoundError)) {
+      return serverError(res, log, 'validating the adverse event', error, { eventId });
+    }
+    notFound(res, 'EVENT_NOT_FOUND', 'Adverse event not found');
   }
 }));
 
@@ -1153,7 +1183,9 @@ router.get('/health', asyncHandler(async (req: Request, res: Response) => {
         mappingRules: true,
         exportJobs: true,
         adverseEvents: true,
-        electronicSignatures: true,
+        // 2026-10-15: this said true while both signature routes answer 410
+        // (retired 2026-09-10); signatures are made through /api/esignature/sign.
+        electronicSignatures: false,
         auditTrail: true
       },
       supportedFormats: Object.keys(SUPPORTED_FORMATS)

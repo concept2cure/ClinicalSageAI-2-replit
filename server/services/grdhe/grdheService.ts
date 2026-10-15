@@ -83,6 +83,19 @@ function requireActor(actor: string): string {
   return actor;
 }
 
+/** The transaction a write shares with its audit row. */
+type GrdheTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** One regulatory_harmonization.audit_log entry, as log_audit() takes it. */
+type AuditEntry = {
+  tableName: string;
+  recordId: string;
+  action: string;
+  oldData: Record<string, any> | null;
+  newData: Record<string, any> | null;
+  reason?: string;
+};
+
 /**
  * What a completed export job records about its output. The XML is returned in
  * the HTTP response and stored nowhere, so the job has no output path.
@@ -220,6 +233,26 @@ export class ExportJobNotFoundError extends Error {
   }
 }
 
+/**
+ * No adverse event the session can see has the id or case number. Typed so the
+ * routes answer 404 for this and 500 for a failed read (2026-10-15: every
+ * throw, a lost connection included, was a 404 carrying the error's text).
+ */
+export class AdverseEventNotFoundError extends Error {
+  constructor(ref: string) {
+    super(`Adverse event ${ref} not found`);
+    this.name = 'AdverseEventNotFoundError';
+  }
+}
+
+/** An export job the service refuses to create; the message is the service's own reason. */
+export class ExportJobRefusedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ExportJobRefusedError';
+  }
+}
+
 export class AuditScopeError extends Error {
   constructor(
     readonly code: 'AUDIT_TENANT_REQUIRED' | 'AUDIT_TABLE_UNCLASSIFIED' | 'AUDIT_NOT_TENANT_SCOPABLE',
@@ -319,7 +352,7 @@ export class GRDHEService {
   ): Promise<DataResidencyConfig> {
     const by = requireActor(actor);
 
-    const result = await db.execute(sql`
+    const upsert = sql`
       INSERT INTO regulatory_harmonization.tenant_data_residency (
         tenant_id, primary_region, allowed_processing_regions, backup_region,
         gdpr_subject, gdpr_lawful_basis, gdpr_dpo_contact, gdpr_data_subject_rights_url,
@@ -373,20 +406,26 @@ export class GRDHEService {
         updated_at = NOW(),
         updated_by = ${by}
       RETURNING id
-    `);
+    `;
 
-    // Log the change
-    await this.logAudit(
-      {
-        tableName: 'tenant_data_residency',
-        recordId: (result.rows[0] as any).id,
-        action: 'UPDATE',
-        oldData: null,
-        newData: config as any,
-        reason: 'Data residency configuration updated',
-      },
-      by
-    );
+    // 2026-10-15: the upsert committed on its own and log_audit() ran after it,
+    // so a failed audit insert (every one dated after 2026-03-31) left the
+    // change saved and unaudited. The write and its audit row commit together.
+    await db.transaction(async tx => {
+      const result = await tx.execute(upsert);
+      await this.writeAuditRow(
+        tx,
+        {
+          tableName: 'tenant_data_residency',
+          recordId: (result.rows[0] as any).id,
+          action: 'UPDATE',
+          oldData: null,
+          newData: config as any,
+          reason: 'Data residency configuration updated',
+        },
+        by
+      );
+    });
 
     return this.getDataResidencyConfig(config.tenantId) as Promise<DataResidencyConfig>;
   }
@@ -566,7 +605,7 @@ export class GRDHEService {
   async addTerminologyMapping(mapping: Omit<TerminologyMapping, 'id' | 'createdAt'>, actor: string): Promise<string> {
     const by = requireActor(actor);
 
-    const result = await db.execute(sql`
+    const insert = sql`
       INSERT INTO regulatory_harmonization.terminology_mappings (
         source_system, source_version_id, source_code, source_display, source_hierarchy_path,
         target_system, target_version_id, target_code, target_display, target_hierarchy_path,
@@ -592,23 +631,25 @@ export class GRDHEService {
         ${by}
       )
       RETURNING id
-    `);
+    `;
 
-    const mappingId = (result.rows[0] as any).id;
-
-    await this.logAudit(
-      {
-        tableName: 'terminology_mappings',
-        recordId: mappingId,
-        action: 'INSERT',
-        oldData: null,
-        newData: mapping as any,
-        reason: 'Terminology mapping created',
-      },
-      by
-    );
-
-    return mappingId;
+    // The mapping and its audit row commit together (2026-10-15; see setDataResidencyConfig).
+    return db.transaction(async tx => {
+      const mappingId: string = ((await tx.execute(insert)).rows[0] as any).id;
+      await this.writeAuditRow(
+        tx,
+        {
+          tableName: 'terminology_mappings',
+          recordId: mappingId,
+          action: 'INSERT',
+          oldData: null,
+          newData: mapping as any,
+          reason: 'Terminology mapping created',
+        },
+        by
+      );
+      return mappingId;
+    });
   }
 
   private mapTerminologyVersionRow(row: any): TerminologyVersion {
@@ -952,13 +993,13 @@ export class GRDHEService {
     const region = this.getRegionForJurisdiction(request.targetJurisdiction);
     const isValid = await this.validateDataRegion(request.tenantId, region);
     if (!isValid) {
-      throw new Error(`Data residency violation: tenant not authorized for ${request.targetJurisdiction} processing`);
+      throw new ExportJobRefusedError(`Data residency violation: tenant not authorized for ${request.targetJurisdiction} processing`);
     }
 
     // Get mapping rule
     const mappingRule = await this.getMappingRule(request.targetFormat, request.sourceEntityType);
     if (!mappingRule) {
-      throw new Error(`No approved mapping rule found for format ${request.targetFormat} and entity type ${request.sourceEntityType}`);
+      throw new ExportJobRefusedError(`No approved mapping rule found for format ${request.targetFormat} and entity type ${request.sourceEntityType}`);
     }
 
     // Lock terminology versions
@@ -1001,7 +1042,7 @@ export class GRDHEService {
     `);
 
     if (result.rows.length === 0) {
-      throw new Error(`Export job not found: ${jobId}`);
+      throw new ExportJobNotFoundError(jobId);
     }
 
     return this.mapExportJobRow(result.rows[0] as any);
@@ -1245,7 +1286,7 @@ export class GRDHEService {
   async createCanonicalAdverseEvent(request: CreateAdverseEventRequest, actor: string): Promise<CanonicalAdverseEvent> {
     const by = requireActor(actor);
 
-    const result = await db.execute(sql`
+    const insert = sql`
       INSERT INTO regulatory_harmonization.canonical_adverse_events (
         tenant_id, organization_id, case_number, case_type, report_type,
         event_date, event_date_precision, receive_date,
@@ -1283,21 +1324,24 @@ export class GRDHEService {
         ${by}
       )
       RETURNING id
-    `);
+    `;
 
-    const eventId = (result.rows[0] as any).id;
-
-    await this.logAudit(
-      {
-        tableName: 'canonical_adverse_events',
-        recordId: eventId,
-        action: 'INSERT',
-        oldData: null,
-        newData: request as any,
-        reason: 'Adverse event created',
-      },
-      by
-    );
+    // The case and its audit row commit together (2026-10-15; see setDataResidencyConfig).
+    await db.transaction(async tx => {
+      const eventId = ((await tx.execute(insert)).rows[0] as any).id;
+      await this.writeAuditRow(
+        tx,
+        {
+          tableName: 'canonical_adverse_events',
+          recordId: eventId,
+          action: 'INSERT',
+          oldData: null,
+          newData: request as any,
+          reason: 'Adverse event created',
+        },
+        by
+      );
+    });
 
     return this.getCanonicalAdverseEvent(request.tenantId, request.caseNumber);
   }
@@ -1326,7 +1370,7 @@ export class GRDHEService {
     const result = await db.execute(sql`${query} LIMIT 1`);
 
     if (result.rows.length === 0) {
-      throw new Error(`Adverse event not found: ${caseNumber}`);
+      throw new AdverseEventNotFoundError(caseNumber);
     }
 
     return this.mapCanonicalAdverseEventRow(result.rows[0] as any);
@@ -1342,7 +1386,7 @@ export class GRDHEService {
     `);
 
     if (result.rows.length === 0) {
-      throw new Error(`Adverse event not found: ${eventId}`);
+      throw new AdverseEventNotFoundError(eventId);
     }
 
     return this.mapCanonicalAdverseEventRow(result.rows[0] as any);
@@ -1455,35 +1499,29 @@ export class GRDHEService {
   /**
    * Log audit entry
    */
-  async logAudit(
-    entry: {
-      tableName: string;
-      recordId: string;
-      action: string;
-      oldData: Record<string, any> | null;
-      newData: Record<string, any> | null;
-      reason?: string;
-    },
-    actor: string
-  ): Promise<void> {
+  async logAudit(entry: AuditEntry, actor: string): Promise<void> {
     const by = requireActor(actor);
+    await db.transaction(tx => this.writeAuditRow(tx, entry, by));
+  }
 
-    // log_audit() takes no actor: audit_log.user_id defaults to
-    // app.current_user_id, which nothing set, so every row read 'system'
-    // (2026-10-15). It is set for this transaction only.
-    await db.transaction(async tx => {
-      await tx.execute(sql`SELECT set_config('app.current_user_id', ${by}, true)`);
-      await tx.execute(sql`
-        SELECT regulatory_harmonization.log_audit(
-          ${entry.tableName},
-          ${entry.recordId}::uuid,
-          ${entry.action},
-          ${entry.oldData ? JSON.stringify(entry.oldData) : null}::jsonb,
-          ${entry.newData ? JSON.stringify(entry.newData) : null}::jsonb,
-          ${entry.reason || null}
-        )
-      `);
-    });
+  /**
+   * The audit row for a write, in the transaction that makes the write.
+   * log_audit() takes no actor: audit_log.user_id defaults to
+   * app.current_user_id, which nothing set, so every row read 'system'
+   * (2026-10-15). It is set for this transaction only.
+   */
+  private async writeAuditRow(tx: GrdheTx, entry: AuditEntry, by: string): Promise<void> {
+    await tx.execute(sql`SELECT set_config('app.current_user_id', ${by}, true)`);
+    await tx.execute(sql`
+      SELECT regulatory_harmonization.log_audit(
+        ${entry.tableName},
+        ${entry.recordId}::uuid,
+        ${entry.action},
+        ${entry.oldData ? JSON.stringify(entry.oldData) : null}::jsonb,
+        ${entry.newData ? JSON.stringify(entry.newData) : null}::jsonb,
+        ${entry.reason || null}
+      )
+    `);
   }
 
   /**

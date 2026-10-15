@@ -30,7 +30,11 @@ const LOCKED: Record<string, TerminologyVersionLock> = {
   MEDDRA: { version_id: 'tv-meddra', version_code: '26.1', display_name: 'MedDRA 26.1', locked_at: '2026-10-15T00:00:00Z' },
 };
 
-/** A case with every fact the generators code recorded. Overrides replace whole keys. */
+/**
+ * A case with every fact the generators code recorded. Overrides replace whole keys.
+ * Canonical field names (types.ts): 2026-10-15 these fixtures used product_name,
+ * dose_value, meddra_pt_code and other names no type defines.
+ */
 function recordedCase(overrides: Record<string, unknown> = {}): CanonicalAdverseEvent {
   const base: Record<string, unknown> = {
     id: 'evt-1',
@@ -49,10 +53,10 @@ function recordedCase(overrides: Record<string, unknown> = {}): CanonicalAdverse
     seriousnessDisability: false,
     seriousnessCongenitalAnomaly: false,
     seriousnessOtherMedicallyImportant: false,
-    patient: { patient_initials: 'AB', sex: 'female', country: 'DE' },
-    reactions: [{ reaction_term: 'Headache', meddra_pt_code: '10019211', outcome: 'recovered' }],
-    suspectProducts: [{ product_name: 'Examplamab', dose_value: 5, dose_unit: 'g' }],
-    reporter: { qualification: '1', country_code: 'DE', family_name: 'Ng' },
+    patient: { initials: 'AB', sex: 'female', country: 'DE' },
+    reactions: [{ term: 'Headache', term_code: '10019211', outcome: 'recovered' }],
+    suspectProducts: [{ name: 'Examplamab', dose: 5, dose_unit: 'g' }],
+    reporter: { qualification_code: '1', country_code: 'DE', family_name: 'Ng' },
     sender: { sender_type: '1', sender_organization: 'Example Pharma GmbH' },
   };
   return { ...base, ...overrides } as unknown as CanonicalAdverseEvent;
@@ -70,7 +74,7 @@ describe('E2B export: codes only what the case records', () => {
 
   it('refuses a dose unit it has no code for, and a recorded dose with no unit', () => {
     const unknownUnit = generateE2BR3XML(
-      recordedCase({ suspectProducts: [{ product_name: 'Examplamab', dose_value: 2, dose_unit: 'tablespoon' }] }),
+      recordedCase({ suspectProducts: [{ name: 'Examplamab', dose: 2, dose_unit: 'tablespoon' }] }),
       JOB,
       LOCKED
     );
@@ -78,7 +82,7 @@ describe('E2B export: codes only what the case records', () => {
     expect(fields(unknownUnit)).toContain('suspectProducts[0].dose_unit');
 
     const noUnit = generateE2BR3XML(
-      recordedCase({ suspectProducts: [{ product_name: 'Examplamab', dose_value: 2 }] }),
+      recordedCase({ suspectProducts: [{ name: 'Examplamab', dose: 2 }] }),
       JOB,
       LOCKED
     );
@@ -98,7 +102,7 @@ describe('E2B export: codes only what the case records', () => {
 
   it('never asserts a reporter qualification or a country nobody recorded', () => {
     const r = generateE2BR3XML(
-      recordedCase({ reporter: { family_name: 'Ng' }, patient: { patient_initials: 'AB', sex: 'female' } }),
+      recordedCase({ reporter: { family_name: 'Ng' }, patient: { initials: 'AB', sex: 'female' } }),
       JOB,
       LOCKED
     );
@@ -135,7 +139,7 @@ describe('E2B export: codes only what the case records', () => {
   it('does not say a medical-history condition stopped when nobody recorded whether it continues', () => {
     const history = (ongoing?: boolean) =>
       generateE2BR3XML(
-        recordedCase({ medicalHistory: { conditions: [{ meddra_code: '10020772', ongoing }] } }),
+        recordedCase({ medicalHistory: { conditions: [{ term_code: '10020772', ongoing }] } }),
         JOB,
         LOCKED
       ).content;
@@ -144,7 +148,7 @@ describe('E2B export: codes only what the case records', () => {
   });
 
   it('codes a reaction duration through the time-unit list, and refuses a duration with no unit', () => {
-    const reaction = { reaction_term: 'Headache', meddra_pt_code: '10019211', outcome: 'recovered', duration_value: 3 };
+    const reaction = { term: 'Headache', term_code: '10019211', outcome: 'recovered', duration: 3 };
     const days = generateE2BR3XML(recordedCase({ reactions: [{ ...reaction, duration_unit: 'days' }] }), JOB, LOCKED);
     expect(days.content).toContain('<reactiondurationunit>804</reactiondurationunit>');
 
@@ -199,7 +203,7 @@ describe('FDA 3500A export: codes only what the case records', () => {
     expect(grams.content).toContain('<doseQuantity value="5" unit="g"/>');
 
     const none = generateFDA3500AXML(
-      recordedCase({ suspectProducts: [{ product_name: 'Examplamab', dose_value: 5 }] }),
+      recordedCase({ suspectProducts: [{ name: 'Examplamab', dose: 5 }] }),
       JOB,
       LOCKED
     );
@@ -209,7 +213,7 @@ describe('FDA 3500A export: codes only what the case records', () => {
 
   it('emits a dosing period only when one is recorded, never "every 1 d"', () => {
     const textOnly = generateFDA3500AXML(
-      recordedCase({ suspectProducts: [{ product_name: 'Examplamab', frequency: 'twice daily' }] }),
+      recordedCase({ suspectProducts: [{ name: 'Examplamab', frequency: 'twice daily' }] }),
       JOB,
       LOCKED
     );
@@ -217,7 +221,7 @@ describe('FDA 3500A export: codes only what the case records', () => {
     expect(textOnly.content).not.toContain('<period');
 
     const recorded = generateFDA3500AXML(
-      recordedCase({ suspectProducts: [{ product_name: 'Examplamab', frequency_value: 12, frequency_unit: 'hours' }] }),
+      recordedCase({ suspectProducts: [{ name: 'Examplamab', frequency_value: 12, frequency_unit: 'hours' }] }),
       JOB,
       LOCKED
     );
@@ -226,7 +230,7 @@ describe('FDA 3500A export: codes only what the case records', () => {
 
   it('refuses a weight or a reaction duration with no unit, instead of assuming kg or days', () => {
     const weight = generateFDA3500AXML(
-      recordedCase({ patient: { patient_initials: 'AB', sex: 'female', weight_value: 70 } }),
+      recordedCase({ patient: { initials: 'AB', sex: 'female', weight: 70 } }),
       JOB,
       LOCKED
     );
@@ -234,7 +238,7 @@ describe('FDA 3500A export: codes only what the case records', () => {
     expect(fields(weight)).toContain('patient.weight_unit');
 
     const duration = generateFDA3500AXML(
-      recordedCase({ reactions: [{ reaction_term: 'Headache', meddra_pt_code: '10019211', duration_value: 3 }] }),
+      recordedCase({ reactions: [{ term: 'Headache', term_code: '10019211', duration: 3 }] }),
       JOB,
       LOCKED
     );
@@ -244,7 +248,7 @@ describe('FDA 3500A export: codes only what the case records', () => {
 
   it('files a recorded negative rechallenge as negative', () => {
     const r = generateFDA3500AXML(
-      recordedCase({ suspectProducts: [{ product_name: 'Examplamab', rechallenge: 'negative' }] }),
+      recordedCase({ suspectProducts: [{ name: 'Examplamab', rechallenge: 'negative' }] }),
       JOB,
       LOCKED
     );
@@ -259,14 +263,14 @@ describe('FDA 3500A export: codes only what the case records', () => {
   });
 
   it('never writes the code "unknown" into the MedDRA, route or NDC code systems', () => {
-    const uncoded = generateFDA3500AXML(recordedCase({ reactions: [{ reaction_term: 'Headache' }] }), JOB, LOCKED);
+    const uncoded = generateFDA3500AXML(recordedCase({ reactions: [{ term: 'Headache' }] }), JOB, LOCKED);
     expect(uncoded.success, 'a reaction with no MedDRA code').toBe(false);
-    expect(fields(uncoded)).toContain('reactions[0].meddra_pt_code');
+    expect(fields(uncoded)).toContain('reactions[0].term_code');
 
     const r = generateFDA3500AXML(
       recordedCase({
-        suspectProducts: [{ product_name: 'Examplamab', product_id: 'internal-7' }],
-        medicalHistory: { conditions: [{ condition_term: 'Asthma' }] },
+        suspectProducts: [{ name: 'Examplamab', id: 'internal-7' }],
+        medicalHistory: { conditions: [{ term: 'Asthma' }] },
       }),
       JOB,
       LOCKED

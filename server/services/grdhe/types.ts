@@ -1078,3 +1078,33 @@ export function timeUnit(recorded: unknown): TimeUnit | null {
   if (typeof recorded !== 'string') return null;
   return TIME_UNIT_SPELLINGS.get(recorded.trim().toLowerCase()) ?? null;
 }
+
+// =============================================================================
+// CANONICAL CASE READS — shared by the exports. 2026-10-15: the generators read
+// product_name, dose_value, meddra_pt_code and other names no type above
+// defines, so a case recorded through intake lost those facts silently.
+// =============================================================================
+
+/** A recorded dose (SuspectProduct.dose is text) as one plain decimal; null when none is recorded or the text is not one. */
+export function doseNumber(recorded: unknown): string | null {
+  if (typeof recorded === 'number') return Number.isFinite(recorded) && recorded >= 0 ? String(recorded) : null;
+  const text = typeof recorded === 'string' ? recorded.trim() : '';
+  return /^\d+(\.\d+)?$/.test(text) ? text : null;
+}
+
+/**
+ * A recorded term code that is MedDRA's: term_system MEDDRA, or none recorded
+ * (the seeded mapping rules read reaction terms as MedDRA). Null otherwise.
+ */
+export function meddraCode(coded: { term_code?: string; term_system?: string } | undefined): string | null {
+  if (!coded?.term_code) return null;
+  return !coded.term_system || coded.term_system === 'MEDDRA' ? coded.term_code : null;
+}
+
+/** The ICH qualification code (CODE_SYSTEMS.ICH_QUALIFIER) a reporter records: qualification_code, else the qualification named; or null. */
+export function qualificationCode(reporter: Pick<Reporter, 'qualification' | 'qualification_code'> | undefined): string | null {
+  const code = reporter?.qualification_code?.trim() ?? '';
+  if (Object.values(CODE_SYSTEMS.ICH_QUALIFIER).includes(code)) return code;
+  const named = (reporter?.qualification ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return Object.prototype.hasOwnProperty.call(CODE_SYSTEMS.ICH_QUALIFIER, named) ? CODE_SYSTEMS.ICH_QUALIFIER[named] : null;
+}
