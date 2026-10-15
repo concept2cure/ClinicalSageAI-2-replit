@@ -1,3 +1,27 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Replace engineering notes in Apps-catalog descriptions with customer copy.
+--
+-- eCTD/CTD Context:
+--   - Module(s): none (Apps catalog copy shown to customers)
+--   - Integrity Risk Addressed: a representation about the system, made to the
+--     person buying it, that the system does not support
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Descriptions only; no module, entitlement or price changes.
+--   - Idempotent: re-runs on every deploy (CLAUDE.md Rule 1).
+-- =============================================================================
+-- ══ AMENDED IN PLACE 2026-10-15 (CLAUDE.md Rule 1) ══════════════════════════
+-- insights no longer states "30 report types": the report-type registry
+-- (migrations/20260930_report_type_registry_seed.sql) seeds 61, and a fixed
+-- count in copy goes stale the next time it grows. Session …01TzCCfqi5RbiwzZyfYxyBpX.
+-- ═════════════════════════════════════════════════════════════════════════════
 -- Catalog descriptions are customer copy. Stop shipping engineering notes as it.
 --
 -- THE DEFECT. 20260810_reconcile_module_catalog.sql seeded each module's
@@ -66,7 +90,7 @@ INSERT INTO module_copy (module_id, description) VALUES
   ('global-ri', 'Global regulatory intelligence — country and region requirements, pathway comparison, and market-by-market planning.'),
   ('haq-manager', 'Health-authority questions — agency information requests, Day-120 lists of questions and complete response letters, decomposed into source-traced, signed responses.'),
   ('inconsistency', 'Change a governed value once and propagate it to every document that cites it. Draft sections update in place; approved sections are flagged for re-approval with a task and an audit entry.'),
-  ('insights', 'Conversational governed reporting — 30 report types with a per-segment catalog and best-practice packs, assembled by AnA and traceable to source.'),
+  ('insights', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.'),
   ('intelligence-catalog', 'Reference catalog of the deterministic tools available across regulatory domains, with the trust level of each.'),
   ('ivd-completeness', 'IVDR technical-file completeness — GSPR Annex I, the Performance Evaluation Report under Annex XIII, analytical and clinical performance, scientific validity, and PMPF and PMS planning.'),
   ('labeling', 'Device labeling and instructions for use — authoring, the symbols register, and translation workflow.'),
