@@ -17,7 +17,6 @@ import {
   DEPTHS,
   TIER_TONE,
   type ConnectorState,
-  type DrJob,
   type ResearchDepth,
   type ConnectorTier,
 } from '../fixtures/deep-research-data';
@@ -63,7 +62,15 @@ interface DrRunJob {
   progress?: number;
   results?: DrResult[] | null;
   synthesis?: string | null;
-  connectorLogs?: Record<string, { resultCount?: number; state?: string }> | null;
+  /** As the orchestrator persists it: status 'success' | 'error', and the error of a failed search. */
+  connectorLogs?: Record<string, { status?: string; resultCount?: number; error?: string | null }> | null;
+}
+/** One connector's fan-out row. `hits` is null unless the source answered with a count. */
+interface FanoutRow {
+  name: string;
+  state: 'run' | 'done' | 'error';
+  hits: number | null;
+  error: string | null;
 }
 
 /* ── Inline shared kit helpers ── */
@@ -91,7 +98,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
      but INVISIBLE and was still sent in `connectorIds` on launch. */
   const [sel, setSel] = useState<string[]>([]);
   const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle');
-  const [jobs, setJobs] = useState<DrJob[]>([]);
+  const [jobs, setJobs] = useState<FanoutRow[]>([]);
   const [form, setForm] = useState<ConnectorState | null>(null);
   const [depth, setDepth] = useState<ResearchDepth>('standard');
   const [toast, fireToast] = useToast();
@@ -196,11 +203,22 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
     setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   const connName = (id: string) => conn.find((c) => c.id === id)?.name || id;
-  const fanout = (j: DrRunJob | null, done: boolean): DrJob[] =>
-    sel.map((id) => {
+  /* 2026-10-15: this was `hits: log?.resultCount ?? 0`, with any log counted as
+     done. A failed search is persisted as { status: 'error', resultCount: 0 }, so a
+     source nobody read showed "0 results returned". A failed source is shown as
+     failed; a settled job with no log for a source says no result was recorded. */
+  const fanout = (j: DrRunJob | null, done: boolean): FanoutRow[] =>
+    sel.map((id): FanoutRow => {
+      const name = connName(id);
       const log = (j?.connectorLogs || {})[id];
-      const isDone = done || (!!log && (log.state === 'done' || log.resultCount != null));
-      return { name: connName(id), state: isDone ? 'done' : 'run', hits: log?.resultCount ?? 0 };
+      if (log?.status === 'error') {
+        return { name, state: 'error', hits: null, error: log.error || 'the search failed without a message' };
+      }
+      if (log && typeof log.resultCount === 'number') {
+        return { name, state: 'done', hits: log.resultCount, error: null };
+      }
+      if (done) return { name, state: 'error', hits: null, error: 'no result was recorded for this source' };
+      return { name, state: 'run', hits: null, error: null };
     });
 
   /* Poll a real research job until it settles — the per-connector fan-out,
@@ -673,6 +691,9 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                 <span className="t">Fan-out progress</span>
                 <span className="s">
                   {jobs.filter((j) => j.state === 'done').length}/{jobs.length} connectors
+                  {jobs.some((j) => j.state === 'error')
+                    ? ` — ${jobs.filter((j) => j.state === 'error').length} failed`
+                    : ''}
                 </span>
               </div>
               <div className="pj-card-b">
@@ -680,7 +701,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                   {jobs.map((j, i) => (
                     <div key={i} className="sp-row">
                       <span className="sp-q-ic">
-                        {j.state === 'done' ? I.checkCircle : I.clock}
+                        {j.state === 'done' ? I.checkCircle : j.state === 'error' ? I.alertTriangle : I.clock}
                       </span>
                       <span className="sp-row-b">
                         <span className="sp-row-t">{j.name}</span>
@@ -688,10 +709,15 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                             result independently; without a live region the
                             whole sweep completes in silence. */}
                         <span className="sp-row-s" role="status" aria-live="polite">
-                          {j.state === 'done' ? j.hits + ' results returned' : 'querying...'}
+                          {j.state === 'done'
+                            ? j.hits + ' results returned'
+                            : j.state === 'error'
+                              ? 'Failed — ' + j.error
+                              : 'querying...'}
                         </span>
                       </span>
                       {j.state === 'done' && <span className="rd-chip tone-ok">done</span>}
+                      {j.state === 'error' && <span className="rd-chip tone-err">failed</span>}
                     </div>
                   ))}
                 </div>

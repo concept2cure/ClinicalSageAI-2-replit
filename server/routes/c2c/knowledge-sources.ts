@@ -45,6 +45,7 @@ import {
   sendSuccess,
 } from './shared';
 import { normalizeProjectSettings } from './project-access';
+import type { DossierUploadClassification } from '../../services/module3-convergence-service';
 
 const logger = createScopedLogger('concept2cure-knowledge-sources');
 const router = Router();
@@ -85,6 +86,106 @@ function sanitizeFilename(name: string): string {
 
 function estimateTokensFromBytes(bytes: number): number {
   return Math.ceil(bytes * 0.25);
+}
+
+/** regulatory_programs.program_type values that are Module 3 submission tracks. */
+const PROGRAM_TRACKS = new Set(['IND', 'NDA', 'BLA', '510K', 'PMA', 'CER']);
+
+type Module3Track =
+  | { ok: true; track: DossierUploadClassification['submissionTrack']; source: 'upload' | 'program' }
+  | { ok: false; reason: string };
+
+/**
+ * The submission track a Module 3 auto-map records: the one the upload states,
+ * else the one the project's regulatory program records. Never guessed — with
+ * neither, the reason comes back and the map is skipped.
+ */
+async function resolveModule3Track(
+  stated: string | null,
+  regulatoryProgramId: string | null | undefined,
+  organizationId: number,
+): Promise<Module3Track> {
+  if (stated) return { ok: true, track: stated as DossierUploadClassification['submissionTrack'], source: 'upload' };
+  if (!regulatoryProgramId) {
+    return {
+      ok: false,
+      reason: 'No submission track was stated with the upload, and the project is not anchored to a regulatory program that records one.',
+    };
+  }
+  let programType: unknown;
+  try {
+    const { rows } = await pool.query(
+      `SELECT program_type FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [regulatoryProgramId, organizationId],
+    );
+    programType = rows[0]?.program_type;
+  } catch (err) {
+    logger.warn('Program submission track read failed', { error: err instanceof Error ? err.message : String(err) });
+    return { ok: false, reason: "The program's recorded submission track could not be read." };
+  }
+  const track = typeof programType === 'string' ? programType.trim().toUpperCase() : '';
+  if (!track) {
+    return { ok: false, reason: "No submission track was stated with the upload, and the project's regulatory program records none." };
+  }
+  if (!PROGRAM_TRACKS.has(track)) {
+    return { ok: false, reason: `The program's type "${track}" is not a submission track a Module 3 source records.` };
+  }
+  return { ok: true, track: track as DossierUploadClassification['submissionTrack'], source: 'program' };
+}
+
+type Module3SourceMapping = { status: 'mapped' | 'skipped' | 'failed'; reason?: string };
+
+/** What the dossier_classify provenance event records about the track. */
+function module3TrackDetails(module3Track: Module3Track | null): Record<string, unknown> {
+  if (!module3Track) return {};
+  return {
+    module3Track: module3Track.ok
+      ? { track: module3Track.track, source: module3Track.source }
+      : { skipped: module3Track.reason },
+  };
+}
+
+/**
+ * Map an upload that feeds Module 3 to a CMC source object on its resolved
+ * track; skipped, with the reason, when no track is recorded. Non-fatal: a
+ * failed map is reported and the upload stands. undefined: not a Module 3 feed.
+ */
+async function mapUploadToModule3(
+  module3Track: Module3Track | null,
+  upload: {
+    organizationId: number;
+    projectIdRaw: string;
+    artifactId: string;
+    userId: number;
+    classification: { moduleCode: string | null; ctdSection: string | null; sourceType: string | null; tags: string[] };
+  },
+): Promise<Module3SourceMapping | undefined> {
+  if (!module3Track) return undefined;
+  const { organizationId, projectIdRaw, artifactId, userId, classification } = upload;
+  if (!module3Track.ok) {
+    logger.info('Module 3 source mapping skipped', { artifactId, reason: module3Track.reason });
+    return { status: 'skipped', reason: module3Track.reason };
+  }
+  try {
+    const { classifyAndMapArtifactToSource } = await import('../../services/module3-convergence-service');
+    await classifyAndMapArtifactToSource(organizationId, projectIdRaw, artifactId, {
+      submissionTrack: module3Track.track,
+      dossierModule: classification.moduleCode,
+      ctdSection: classification.ctdSection,
+      sourceType: classification.sourceType as DossierUploadClassification['sourceType'],
+      useAsModule3Source: true,
+      tags: classification.tags || [],
+    }, { actorUserId: userId });
+    logger.info('Auto-mapped uploaded artifact to Module 3 source object', {
+      artifactId,
+      sourceType: classification.sourceType,
+      ctdSection: classification.ctdSection,
+    });
+    return { status: 'mapped' };
+  } catch (mapErr) {
+    logger.warn('Module 3 source mapping failed (non-fatal)', { error: mapErr instanceof Error ? mapErr.message : String(mapErr) });
+    return { status: 'failed', reason: 'The Module 3 source mapping failed; the upload itself was stored.' };
+  }
 }
 
 /**
@@ -625,6 +726,16 @@ router.post(
         });
       }
 
+      // ── Module 3 auto-map track, resolved before the provenance event records it ──
+      // 2026-10-15: the map used `submissionTrack || 'general'`, writing a track
+      // nobody recorded into the CMC source object and its provenance. It is the
+      // upload's stated track, else the program's recorded one; with neither the
+      // map is skipped, and the reason is recorded below and returned.
+      const module3Track =
+        dossierClassification.feedsModule3 && dossierClassification.sourceType
+          ? await resolveModule3Track(dossierClassification.submissionTrack, project.regulatoryProgramId, organizationId)
+          : null;
+
       // ── Record dossier classification provenance ──
       if (dossierClassification.ctdSection || dossierClassification.feedsModule3) {
         try {
@@ -640,6 +751,7 @@ router.post(
                 classification: dossierClassification,
                 fileName: safeOriginalName,
                 documentId,
+                ...module3TrackDetails(module3Track),
               }),
             ]
           );
@@ -649,26 +761,13 @@ router.post(
       }
 
       // ── AUTO-MAP: If feedsModule3, create/update cmc_source_object from uploaded artifact ──
-      if (dossierClassification.feedsModule3 && dossierClassification.sourceType) {
-        try {
-          const { classifyAndMapArtifactToSource } = await import('../../services/module3-convergence-service');
-          await classifyAndMapArtifactToSource(organizationId, projectIdRaw, artifactId, {
-            submissionTrack: (dossierClassification.submissionTrack || 'general') as any,
-            dossierModule: dossierClassification.moduleCode,
-            ctdSection: dossierClassification.ctdSection,
-            sourceType: dossierClassification.sourceType as any,
-            useAsModule3Source: true,
-            tags: dossierClassification.tags || [],
-          }, { actorUserId: userId });
-          logger.info('Auto-mapped uploaded artifact to Module 3 source object', {
-            artifactId,
-            sourceType: dossierClassification.sourceType,
-            ctdSection: dossierClassification.ctdSection,
-          });
-        } catch (mapErr: any) {
-          logger.warn('Module 3 source mapping failed (non-fatal)', { error: mapErr.message });
-        }
-      }
+      const module3SourceMapping = await mapUploadToModule3(module3Track, {
+        organizationId,
+        projectIdRaw,
+        artifactId,
+        userId,
+        classification: dossierClassification,
+      });
 
       const settings = normalizeProjectSettings(project.settings);
       const knowledge = normalizeKnowledge(settings);
@@ -703,6 +802,7 @@ router.post(
         extractedText,
         tokenCount,
         artifact: artifactRecord,
+        module3SourceMapping,
       });
     } catch (error: any) {
       logger.error('Failed to upload knowledge document', { error: error.message });

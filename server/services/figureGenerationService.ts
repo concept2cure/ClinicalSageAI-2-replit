@@ -115,7 +115,15 @@ export interface FigureGenerationRequest {
 export interface FigureGenerationResult {
   success: boolean;
   figure?: FigureSpec;
+  /** A fixed sentence saying why no figure was generated — never a caught error's own text. */
   error?: string;
+  /**
+   * Why no figure was generated (absent on success): 'refused' — the request
+   * cannot be drawn as asked, the caller's to change; 'gateway' — the drafting
+   * model failed or returned nothing; 'internal' — this service could not read
+   * or store what it needed. 2026-10-15: unmarked, so all three read as a refusal.
+   */
+  failure?: 'refused' | 'gateway' | 'internal';
   insertionPoint?: {
     sectionCode: string;
     afterParagraph?: number;
@@ -262,17 +270,31 @@ const FIGURE_TYPE_CONFIG: Record<
  */
 const STATISTICAL_ESTIMATE_FIGURES: ReadonlySet<FigureType> = new Set<FigureType>(['kaplan_meier', 'forest_plot']);
 
+/** A failure this service states in its own fixed sentence, safe to pass on. */
+class FigureGenerationFailure extends Error {}
+
+const refused = (error: string): FigureGenerationResult => ({ success: false, failure: 'refused', error });
+
 const ESTIMATE_FIGURE_REFUSED: FigureGenerationResult = {
   success: false,
+  failure: 'refused',
   error:
     'Kaplan-Meier curves and forest plots show statistical estimates, which come from the statistics engine, not from a model. ' +
     'No figure was generated.',
 };
 
-const NO_SOURCE_DATA: FigureGenerationResult = {
-  success: false,
-  error: 'No source data was supplied, so no figure was generated. Link the data the figure should show.',
-};
+const NO_SOURCE_DATA: FigureGenerationResult = refused(
+  'No source data was supplied, so no figure was generated. Link the data the figure should show.',
+);
+
+/** Linked sources were found, and none has a data point to draw. */
+function noDataPoints(sources: Array<{ name: string }>): FigureGenerationResult {
+  const one = sources.length === 1;
+  const names = sources.map(s => `"${s.name}"`).join(', ');
+  return refused(
+    `The linked source${one ? '' : 's'} ${names} ${one ? 'has' : 'have'} no extracted data points, so no figure was generated.`,
+  );
+}
 
 function hasDataPoints(sources: Array<{ data: Record<string, unknown>[] }>): boolean {
   return sources.some(src => Array.isArray(src.data) && src.data.length > 0);
@@ -281,9 +303,14 @@ function hasDataPoints(sources: Array<{ data: Record<string, unknown>[] }>): boo
 /** Characters of serialized rows each source may put in the drafting prompt. */
 const PROMPT_ROWS_CHAR_BUDGET = 3000;
 
-const NO_ROW_FITS: FigureGenerationResult = {
+const NO_ROW_FITS: FigureGenerationResult = refused(
+  `No source row fits in the drafting prompt (${PROMPT_ROWS_CHAR_BUDGET} characters per source), so no figure was generated.`,
+);
+
+const GATEWAY_FAILED: FigureGenerationResult = {
   success: false,
-  error: `No source row fits in the drafting prompt (${PROMPT_ROWS_CHAR_BUDGET} characters per source), so no figure was generated.`,
+  failure: 'gateway',
+  error: 'The drafting model could not draft the figure, so no figure was generated.',
 };
 
 /**
@@ -304,6 +331,73 @@ function rowsThatFit(rows: Record<string, unknown>[]): Record<string, unknown>[]
 }
 
 /**
+ * Why there is nothing to draw, or null when there is. 2026-10-15: an unmatched
+ * or non-numeric reference was dropped silently, and a linked document with no
+ * data points refused as "No source data was supplied". Each is named now.
+ */
+function sourceRefusal(
+  sources: Array<{ name: string; data: Record<string, unknown>[] }>,
+  unmatchedRefs: string[]
+): FigureGenerationResult | null {
+  if (unmatchedRefs.length > 0) return refused(`${unmatchedRefs.join('; ')}, so no figure was generated.`);
+  if (hasDataPoints(sources)) return null;
+  return sources.length > 0 ? noDataPoints(sources) : NO_SOURCE_DATA;
+}
+
+/**
+ * Ask the drafting model for the figure. document_drafting: only a model
+ * approved for high-risk regulatory drafting serves it. It defaulted to gpt-4o
+ * as a 'general' request, and with no OpenAI key stored a placeholder figure.
+ * A gateway failure, or an answer with no figure, is a 'gateway' failure with a
+ * fixed sentence (2026-10-15: the gateway's own text was the reason); the
+ * detail goes to the log.
+ */
+async function draftFigure(
+  request: FigureGenerationRequest,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<{ content: string; model: string; tokensUsed?: number } | { failed: FigureGenerationResult }> {
+  try {
+    const aiResult = await ai.chat({
+      taskType: 'document_drafting',
+      callerModule: 'figureGeneration.generateFigure',
+      organizationId: request.organizationId,
+      userId: request.userId,
+      projectId: request.projectId,
+      temperature: 0.1,
+      max_tokens: 4000,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+    });
+    const content = aiResult.content || '';
+    if (!content.trim()) {
+      return { failed: { success: false, failure: 'gateway', error: 'The drafting model returned no figure, so nothing was stored.' } };
+    }
+    return { content, model: aiResult.model, tokensUsed: aiResult.usage?.totalTokens };
+  } catch (error) {
+    console.error('[FigureService] The drafting model call failed:', error);
+    return { failed: GATEWAY_FAILED };
+  }
+}
+
+/**
+ * Only this service's own sentences are passed on (2026-10-15: any caught
+ * error's message was); anything else is stated as an internal failure.
+ */
+function internalFailure(error: unknown): FigureGenerationResult {
+  return {
+    success: false,
+    failure: 'internal',
+    error:
+      error instanceof FigureGenerationFailure
+        ? error.message
+        : 'The figure could not be generated because of an internal failure, so nothing was stored.',
+  };
+}
+
+/**
  * Generate a regulatory-grade figure using AI.
  */
 export async function generateFigure(
@@ -316,14 +410,15 @@ export async function generateFigure(
 
   try {
     // 1. Resolve source data from Data Room if references provided
-    const sourceData = await resolveSourceData(
+    const { sources: sourceData, unmatchedRefs } = await resolveSourceData(
       request.sourceDataRefs || [],
       request.rawData || [],
       request.projectId,
       request.organizationId
     );
 
-    if (!hasDataPoints(sourceData)) return NO_SOURCE_DATA;
+    const refusal = sourceRefusal(sourceData, unmatchedRefs);
+    if (refusal) return refusal;
 
     // The rows the model is given: whole rows within the budget, per source.
     const promptRows = sourceData.map(s => rowsThatFit(s.data));
@@ -343,29 +438,10 @@ export async function generateFigure(
     const systemPrompt = buildFigureSystemPrompt(format, request.figureType);
     const userPrompt = buildFigureUserPrompt(request, sourceData, promptRows, format, figureNumber);
 
-    // 5. Draft the figure. document_drafting: only a model approved for
-    // high-risk regulatory drafting serves it. It defaulted to gpt-4o as a
-    // 'general' request, and with no OpenAI key stored a placeholder figure.
-    const aiResult = await ai.chat({
-      taskType: 'document_drafting',
-      callerModule: 'figureGeneration.generateFigure',
-      organizationId: request.organizationId,
-      userId: request.userId,
-      projectId: request.projectId,
-      temperature: 0.1,
-      max_tokens: 4000,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-    });
-
-    const content = aiResult.content || '';
-    if (!content.trim()) {
-      return { success: false, error: 'The drafting model returned no figure, so nothing was stored.' };
-    }
-    const tokensUsed = aiResult.usage?.totalTokens;
-    const model = aiResult.model;
+    // 5. Draft the figure (see draftFigure).
+    const draft = await draftFigure(request, systemPrompt, userPrompt);
+    if ('failed' in draft) return draft.failed;
+    const { content, model, tokensUsed } = draft;
 
     // 6. Build figure spec
     const figure: FigureSpec = {
@@ -421,12 +497,9 @@ export async function generateFigure(
           }
         : undefined,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[FigureService] Generation failed:', error);
-    return {
-      success: false,
-      error: error.message || 'Figure generation failed',
-    };
+    return internalFailure(error);
   }
 }
 
@@ -520,35 +593,47 @@ Only suggest figures that are standard for this section type in regulatory submi
 // INTERNAL HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * The linked Data Room documents and the caller's rows, as sources; and, for
+ * each reference that is not a document id or matched no document in this
+ * project, why (`unmatchedRefs`).
+ */
 async function resolveSourceData(
   dataRoomRefs: string[],
   rawData: Record<string, unknown>[],
   projectId: number,
   organizationId: number
-): Promise<Array<{ id: string; name: string; type: string; data: Record<string, unknown>[] }>> {
+): Promise<{
+  sources: Array<{ id: string; name: string; type: string; data: Record<string, unknown>[] }>;
+  unmatchedRefs: string[];
+}> {
   const sources: Array<{
     id: string;
     name: string;
     type: string;
     data: Record<string, unknown>[];
   }> = [];
+  const refs = dataRoomRefs.map(ref => ({ ref: String(ref), id: Number(ref) }));
+  const documentIds = refs.filter(r => Number.isInteger(r.id) && r.id > 0).map(r => r.id);
+  const found = new Set<number>();
 
   // Resolve Data Room references. 2026-10-15: a failed read was logged and the
   // figure refused as "No source data was supplied" — data was supplied; the
   // read failed, and that is what the caller is told now.
-  if (dataRoomRefs.length > 0) {
+  if (documentIds.length > 0) {
     const result = await pool
       .query(
         `SELECT id, title, metadata, content_type
          FROM concept2cure_artifacts
          WHERE id = ANY($1::int[]) AND project_id = $2 AND organization_id = $3`,
-        [dataRoomRefs.map(Number).filter(Boolean), projectId, organizationId]
+        [documentIds, projectId, organizationId]
       )
       .catch((error: unknown) => {
         console.error('[FigureService] Could not read the linked Data Room documents:', error);
-        throw new Error('The linked Data Room documents could not be read, so no figure was generated.', { cause: error });
+        throw new FigureGenerationFailure('The linked Data Room documents could not be read, so no figure was generated.', { cause: error });
       });
     for (const row of result.rows) {
+      found.add(Number(row.id));
       sources.push({
         id: String(row.id),
         name: row.title,
@@ -568,7 +653,14 @@ async function resolveSourceData(
     });
   }
 
-  return sources;
+  const unmatchedRefs = refs
+    .filter(r => !found.has(r.id))
+    .map(r =>
+      Number.isInteger(r.id) && r.id > 0
+        ? `figure reference ${r.ref} matched no data source`
+        : `figure reference "${r.ref}" is not a Data Room document id`
+    );
+  return { sources, unmatchedRefs };
 }
 
 async function getNextFigureNumber(projectId: number, sectionCode: string): Promise<string> {
@@ -587,7 +679,7 @@ async function getNextFigureNumber(projectId: number, sectionCode: string): Prom
   } catch (error) {
     // 2026-10-15: answered `Figure ${sectionCode}-1`, a number nobody assigned.
     console.error('[FigureService] Could not count existing figures:', error);
-    throw new Error('The figure number could not be assigned because the existing figures could not be read, so no figure was generated.', { cause: error });
+    throw new FigureGenerationFailure('The figure number could not be assigned because the existing figures could not be read, so no figure was generated.', { cause: error });
   }
 }
 
@@ -702,7 +794,7 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
     artifactPk = figRes.rows[0].id;
   } catch (error) {
     console.error('[FigureService] Could not store the figure:', error);
-    throw new Error('The drafted figure could not be stored, so no figure was generated.', { cause: error });
+    throw new FigureGenerationFailure('The drafted figure could not be stored, so no figure was generated.', { cause: error });
   }
   // Uniform provenance: a generated figure is a 'generation' event. Best-effort
   // beside an already-committed row, as for the other pool-level producers; a

@@ -73,8 +73,14 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
     });
 
     // A figure that was not generated is answered as that. It was wrapped in
-    // success: true with the failure nested inside.
-    if (!result.success) return res.status(422).json({ success: false, error: result.error });
+    // success: true with the failure nested inside. A refusal is 422; a gateway
+    // or internal failure is 5xx (2026-10-15: every one was 422). The engine's
+    // `error` is its own fixed sentence; the detail is in its log.
+    if (!result.success) {
+      const status = result.failure === 'refused' ? 422 : result.failure === 'gateway' ? 502 : 500;
+      if (status !== 422) logger.error('Figure generation failed', { failure: result.failure ?? 'unstated' });
+      return res.status(status).json({ success: false, error: result.error });
+    }
     res.json({ success: true, figure: result });
   } catch (error: any) {
     logger.error('Figure generation failed', { err: error instanceof Error ? error.message : String(error) });

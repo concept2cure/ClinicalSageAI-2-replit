@@ -45,7 +45,14 @@ export interface ConnectorResult {
   sourceConnector: string;
   title: string;
   summary: string;
-  relevanceScore: number;
+  /**
+   * 1-based position of this result in the source's own response. NOT a
+   * relevance score: no connector computes relevance, and positions from
+   * different sources are not comparable. (2026-10-15: this was
+   * `relevanceScore`, set to `1 - i * k` with k differing per connector — the
+   * list position presented as a relevance.)
+   */
+  sourceRank: number;
   metadata: Record<string, unknown>;
   url?: string;
 }
