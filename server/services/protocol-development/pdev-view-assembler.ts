@@ -567,7 +567,8 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
       soa: mapSoa(liveVisits, liveAssessments, liveCells, soaValidation),
       risks: g(byDoc.risks, id).map((r) => ({
         id: str(r.id), hazard: str(r.description), cat: str(r.category),
-        l: LIKELIHOOD[str(r.likelihood)] ?? 3, i: IMPACT[str(r.impact)] ?? 3,
+        // 0 — not on the 5×5 map — rather than an invented 3 (2026-10-15).
+        l: LIKELIHOOD[str(r.likelihood)] ?? 0, i: IMPACT[str(r.impact)] ?? 0,
         mitigation: str(r.mitigation),
         rl: LIKELIHOOD[str(r.residual_likelihood)] ?? 0, ri: IMPACT[str(r.residual_impact)] ?? 0,
         status: str(r.status), owner: str(r.owner),
