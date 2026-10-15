@@ -35,7 +35,16 @@ vi.mock('../../../services/submission-service/submission-service.js', () => ({
   createSubmissionTx: (...a: unknown[]) => createSubmissionTx(...a),
 }));
 
+// The creation gate (requireProjectCreationAccess) reads the caller's current
+// membership; the shared double answers it from the seats, so the queue below
+// stays the creation's own SQL and "before any SQL" still means exactly that.
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import projectsRouter from '../projects';
+import { clearSeats, seatMember } from './support/current-member';
 
 function appWith(org: number, userId: number) {
   const app = express();
@@ -43,6 +52,7 @@ function appWith(org: number, userId: number) {
   app.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { organizationId: number }).organizationId = org;
     (req as unknown as { userId: number }).userId = userId;
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (...a: unknown[]) => query(...a) };
     next();
   });
   app.use('/api/c2c/projects', projectsRouter);
@@ -53,6 +63,8 @@ beforeEach(() => {
   query.mockReset();
   query.mockResolvedValue({ rows: [] });
   createSubmissionTx.mockClear();
+  clearSeats();
+  seatMember(7, 3, 'member');
 });
 
 const callWith = (frag: string) =>
