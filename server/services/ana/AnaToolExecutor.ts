@@ -17936,7 +17936,7 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
       agency,
       dashboard,
       instruction:
-        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
+        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. approvalProbability is always null (no model exists); reviewTimeDays is the agency statutory clock (reviewClockBasis); unmetCriteriaCount counts criteria scored not met or partially met; trend "unknown" means fewer than two recorded scores. Never state a likelihood of approval.',
     });
   } catch (err: any) {
     // The program check THROWS when it could not run, rather than returning
