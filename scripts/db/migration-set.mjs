@@ -3212,6 +3212,12 @@ export const C2C_MIGRATION_FILES = [
   // creator migrations/20260504_capa_mdr.sql; conditional on the live default,
   // creates nothing, so it sits anywhere above the final pair.
   'migrations/20261015_complaint_assessment_no_default.sql',
+  // Withdraws the records of contradiction consequences that were never
+  // carried out (2026-10-15): findings, receipts and the consequence log
+  // naming ids the old consequence paths invented, and the propagation log's
+  // auto-trigger claims. Matches only those exact id formats; creates nothing,
+  // so it sits anywhere after its four tables' creators and above the pair.
+  'migrations/20261015b_contradiction_consequence_invented_ids.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
