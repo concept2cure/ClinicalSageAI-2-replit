@@ -25,6 +25,20 @@
 --   - Electronic signatures cryptographically bound to data versions
 --
 -- =============================================================================
+-- =============================================================================
+-- AMENDED IN PLACE 2026-10-15 (D2) — the seed claims nothing it has no record of.
+--   * The FDA 3500A and E2B(R3) mapping rules were seeded is_validated TRUE
+--     with no validation record (last_validated_at and validation_status
+--     NULL). They are seeded FALSE.
+--   * Fourteen terminology versions carried concept/term counts nobody
+--     sourced ("360000 / 1200000", "2500000"), and eleven were is_current —
+--     MedDRA 27.1 "current" in 2026. Counts are NULL and none is current: a
+--     seed cannot know either. (GET /api/grdhe/terminology/current still
+--     answers with the newest seeded version by effective date.)
+--   * ON CONFLICT DO NOTHING kept every deployed row as first written, so the
+--     correction UPDATEs below withdraw the claims from exactly the rows this
+--     file seeded and nobody has changed since, on every deploy (RULE 1).
+-- =============================================================================
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -1526,35 +1540,50 @@ INSERT INTO regulatory_harmonization.terminology_versions
   (terminology_system, version_code, version_date, display_name, effective_from, is_current, applicable_jurisdictions, concept_count, term_count)
 VALUES
   -- MedDRA versions
-  ('MEDDRA', '26.0', '2023-03-01', 'MedDRA Version 26.0', '2023-03-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], 83875, 92753),
-  ('MEDDRA', '26.1', '2023-09-01', 'MedDRA Version 26.1', '2023-09-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], 84125, 93021),
-  ('MEDDRA', '27.0', '2024-03-01', 'MedDRA Version 27.0', '2024-03-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], 84512, 93456),
-  ('MEDDRA', '27.1', '2024-09-01', 'MedDRA Version 27.1', '2024-09-01', TRUE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], 84823, 93892),
+  ('MEDDRA', '26.0', '2023-03-01', 'MedDRA Version 26.0', '2023-03-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], NULL, NULL),
+  ('MEDDRA', '26.1', '2023-09-01', 'MedDRA Version 26.1', '2023-09-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], NULL, NULL),
+  ('MEDDRA', '27.0', '2024-03-01', 'MedDRA Version 27.0', '2024-03-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], NULL, NULL),
+  ('MEDDRA', '27.1', '2024-09-01', 'MedDRA Version 27.1', '2024-09-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], NULL, NULL),
   
   -- SNOMED CT editions
-  ('SNOMED_CT_US', '2024-09', '2024-09-01', 'SNOMED CT US Edition September 2024', '2024-09-01', TRUE, ARRAY['FDA'], 360000, 1200000),
-  ('SNOMED_CT_INT', '2024-07', '2024-07-01', 'SNOMED CT International Edition July 2024', '2024-07-01', TRUE, ARRAY['EMA', 'MHRA', 'TGA', 'HEALTH_CANADA'], 355000, 1150000),
+  ('SNOMED_CT_US', '2024-09', '2024-09-01', 'SNOMED CT US Edition September 2024', '2024-09-01', FALSE, ARRAY['FDA'], NULL, NULL),
+  ('SNOMED_CT_INT', '2024-07', '2024-07-01', 'SNOMED CT International Edition July 2024', '2024-07-01', FALSE, ARRAY['EMA', 'MHRA', 'TGA', 'HEALTH_CANADA'], NULL, NULL),
   
   -- GUDID/EMDN for device identification
-  ('GUDID', '2024-Q4', '2024-10-01', 'GUDID Q4 2024', '2024-10-01', TRUE, ARRAY['FDA'], 2500000, 2500000),
-  ('EMDN', '2024-12', '2024-12-01', 'EMDN December 2024', '2024-12-01', TRUE, ARRAY['EMA'], 12500, 12500),
-  ('GMDN', '2024-12', '2024-12-01', 'GMDN December 2024', '2024-12-01', TRUE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], 22000, 22000),
+  ('GUDID', '2024-Q4', '2024-10-01', 'GUDID Q4 2024', '2024-10-01', FALSE, ARRAY['FDA'], NULL, NULL),
+  ('EMDN', '2024-12', '2024-12-01', 'EMDN December 2024', '2024-12-01', FALSE, ARRAY['EMA'], NULL, NULL),
+  ('GMDN', '2024-12', '2024-12-01', 'GMDN December 2024', '2024-12-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], NULL, NULL),
   
   -- ICH E2B(R3)
-  ('ICH_E2B_R3', '3.0', '2023-01-01', 'ICH E2B(R3) Implementation Guide v3.0', '2023-01-01', TRUE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA'], 500, 2500),
+  ('ICH_E2B_R3', '3.0', '2023-01-01', 'ICH E2B(R3) Implementation Guide v3.0', '2023-01-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA'], NULL, NULL),
   
   -- FHIR
-  ('HL7_FHIR_R4', '4.0.1', '2019-10-30', 'HL7 FHIR R4 v4.0.1', '2019-10-30', TRUE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], 145, 5000),
+  ('HL7_FHIR_R4', '4.0.1', '2019-10-30', 'HL7 FHIR R4 v4.0.1', '2019-10-30', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], NULL, NULL),
   
   -- LOINC
-  ('LOINC', '2.76', '2024-02-01', 'LOINC Version 2.76', '2024-02-01', TRUE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], 99000, 99000),
+  ('LOINC', '2.76', '2024-02-01', 'LOINC Version 2.76', '2024-02-01', FALSE, ARRAY['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'TGA', 'MHRA'], NULL, NULL),
   
   -- RxNorm
-  ('RXNORM', '2024-01', '2024-01-02', 'RxNorm January 2024', '2024-01-02', TRUE, ARRAY['FDA'], 125000, 380000),
+  ('RXNORM', '2024-01', '2024-01-02', 'RxNorm January 2024', '2024-01-02', FALSE, ARRAY['FDA'], NULL, NULL),
   
   -- UNII
-  ('UNII', '2024-01', '2024-01-15', 'FDA UNII January 2024', '2024-01-15', TRUE, ARRAY['FDA', 'EMA'], 120000, 120000)
+  ('UNII', '2024-01', '2024-01-15', 'FDA UNII January 2024', '2024-01-15', FALSE, ARRAY['FDA', 'EMA'], NULL, NULL)
 ON CONFLICT (terminology_system, version_code) DO NOTHING;
+
+-- Withdraw what earlier deploys seeded (see the 2026-10-15 note above): the
+-- invented counts and "current" flags, on rows still exactly as seeded.
+UPDATE regulatory_harmonization.terminology_versions t
+   SET concept_count = NULL, term_count = NULL, is_current = FALSE
+  FROM (VALUES
+    ('MEDDRA','26.0',83875,92753), ('MEDDRA','26.1',84125,93021), ('MEDDRA','27.0',84512,93456),
+    ('MEDDRA','27.1',84823,93892), ('SNOMED_CT_US','2024-09',360000,1200000),
+    ('SNOMED_CT_INT','2024-07',355000,1150000), ('GUDID','2024-Q4',2500000,2500000),
+    ('EMDN','2024-12',12500,12500), ('GMDN','2024-12',22000,22000), ('ICH_E2B_R3','3.0',500,2500),
+    ('HL7_FHIR_R4','4.0.1',145,5000), ('LOINC','2.76',99000,99000), ('RXNORM','2024-01',125000,380000),
+    ('UNII','2024-01',120000,120000)
+  ) AS seeded(sys, ver, c, n)
+ WHERE t.terminology_system::text = seeded.sys AND t.version_code = seeded.ver
+   AND t.concept_count = seeded.c AND t.term_count = seeded.n;
 
 -- =============================================================================
 -- SECTION 12: SEED DATA - MAPPING RULES
@@ -1660,7 +1689,7 @@ INSERT INTO regulatory_harmonization.mapping_rules (
       }
     }
   }'::jsonb,
-  TRUE,
+  FALSE,
   TRUE
 ),
 -- EMA E2B(R3) ICSR
@@ -1747,10 +1776,17 @@ INSERT INTO regulatory_harmonization.mapping_rules (
       }
     }
   }'::jsonb,
-  TRUE,
+  FALSE,
   TRUE
 )
 ON CONFLICT (rule_code) DO NOTHING;
+
+-- Withdraw "validated" from the rules earlier deploys seeded with no
+-- validation record (see the 2026-10-15 note above).
+UPDATE regulatory_harmonization.mapping_rules
+   SET is_validated = FALSE
+ WHERE rule_code IN ('FDA_AE_3500A_V1', 'EMA_AE_E2B_R3_V1')
+   AND is_validated AND last_validated_at IS NULL AND validation_status IS NULL;
 
 -- =============================================================================
 -- SECTION 13: PERMISSIONS
