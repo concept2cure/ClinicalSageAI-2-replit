@@ -164,13 +164,19 @@ function computeCompletenessScore(payload: CrossObjectReasoningPayload): number 
 }
 
 function computeQualityScore(payload: CrossObjectReasoningPayload): number {
-  if (payload.validations.length === 0) return 0;
+  /* Only runs that computed a score count. A run whose analysis did not cover
+     the content has none (complianceScore null); averaging it in as 0 would
+     call the content poor and as 100 sound, when nothing looked. With no
+     scored run, quality is 0, as with no run at all. */
+  const scored = payload.validations.flatMap((v) =>
+    v.complianceScore === null ? [] : [{ documentId: v.documentId, score: v.complianceScore }],
+  );
+  if (scored.length === 0) return 0;
 
-  const avgCompliance =
-    payload.validations.reduce((s, v) => s + v.complianceScore, 0) / payload.validations.length;
+  const avgCompliance = scored.reduce((s, v) => s + v.score, 0) / scored.length;
 
-  // Penalize for unvalidated documents
-  const validatedDocIds = new Set(payload.validations.map((v) => v.documentId));
+  // Penalize for documents with no scored validation
+  const validatedDocIds = new Set(scored.map((v) => v.documentId));
   const nonDraftDocs = payload.documents.filter((d) => d.status !== 'draft');
   const validationCoverage = nonDraftDocs.length > 0
     ? (validatedDocIds.size / nonDraftDocs.length) * 100
@@ -334,7 +340,7 @@ function computeModuleBreakdown(
 function computeDocumentInventory(
   payload: CrossObjectReasoningPayload
 ): DocumentReadinessItem[] {
-  const validatedMap = new Map<number, { score: number; critical: number }>();
+  const validatedMap = new Map<number, { score: number | null; critical: number }>();
   for (const v of payload.validations) {
     validatedMap.set(v.documentId, {
       score: v.complianceScore,
@@ -354,7 +360,10 @@ function computeDocumentInventory(
       status: d.status,
       module: d.module,
       isDrafted: d.status !== 'draft',
-      isValidated: !!val,
+      // Validated: its latest run analysed the whole content. A run that did
+      // not has findings, but no clean result to claim (Orchestration.tsx
+      // reads this to say a validation class is clear).
+      isValidated: val !== undefined && val.score !== null,
       isRouted: d.isRouted,
       isApproved: d.status === 'approved' || d.status === 'published',
       isExportReady: d.status === 'approved' || d.status === 'published',

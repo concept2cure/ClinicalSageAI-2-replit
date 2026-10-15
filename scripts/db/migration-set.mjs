@@ -3227,6 +3227,12 @@ export const C2C_MIGRATION_FILES = [
   // the in-place amendment of the overlay-only creator
   // migrations/20260622_protocol_risks.sql; conditional, creates nothing.
   'migrations/20261015d_protocol_risk_ratings_no_default.sql',
+  // coauthor_validation_history.agency becomes nullable (2026-10-15):
+  // run_validation recorded 'FDA' for every run that named no agency, though
+  // its checks are not agency-specific. The table comes from the drizzle
+  // schema (shared/schema.ts, amended alike); conditional on the live
+  // constraint, creates nothing.
+  'migrations/20261015e_coauthor_validation_history_agency_nullable.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
