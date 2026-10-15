@@ -17,7 +17,13 @@
 import express from 'express';
 import request from 'supertest';
 import { Router } from 'express';
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+
+// A preflight decision is recorded durably or not at all (2026-10-15); the
+// ledger write is stood in for so there is an ORG_A record to scope.
+vi.mock('../../../services/decision-record-service.js', () => ({
+  decisionRecordService: { create: vi.fn(async () => ({ id: 'row_1' })) },
+}));
 
 const ORG_A = 1;
 const ORG_B = 2;
@@ -52,7 +58,7 @@ beforeEach(() => {
 });
 
 /** A governed decision owned by ORG_A, on ORG_A's project. */
-function seedOrgADecision() {
+async function seedOrgADecision() {
   return decisionLifecycleService.recordPreflightDecision({
     projectId: PROJECT_A,
     organizationId: ORG_A,
@@ -67,7 +73,7 @@ function seedOrgADecision() {
 
 describe('GET /api/ana-ri/decisions — tenant scoping', () => {
   it("returns the caller's own organization's decisions", async () => {
-    seedOrgADecision();
+    await seedOrgADecision();
     callerOrgId = ORG_A;
 
     const res = await request(app).get(`/api/ana-ri/decisions?project_id=${PROJECT_A}`);
@@ -78,7 +84,7 @@ describe('GET /api/ana-ri/decisions — tenant scoping', () => {
   });
 
   it('does NOT hand another organization the decision trail for a project it does not own', async () => {
-    seedOrgADecision();
+    await seedOrgADecision();
     // Same authenticated request, different tenant. Nothing else changes.
     callerOrgId = ORG_B;
 
@@ -89,7 +95,7 @@ describe('GET /api/ana-ri/decisions — tenant scoping', () => {
   });
 
   it('a caller with no resolvable tenant gets nothing, not everything', async () => {
-    seedOrgADecision();
+    await seedOrgADecision();
     callerOrgId = null;
 
     const res = await request(app).get(`/api/ana-ri/decisions?project_id=${PROJECT_A}`);
