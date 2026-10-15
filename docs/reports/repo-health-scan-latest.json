@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T08:22:33.837Z",
+  "generatedAt": "2026-10-15T10:56:27.317Z",
   "git": {
-    "sha": "2efd6b57ee4b2d46e77ddb265d0e31fcdf44c66a",
+    "sha": "948b3f0fcb0d0dcf99ac5829cfe873fb250acd44",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2185,7 +2185,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1137496
+        "bytes": 1143901
       },
       {
         "file": "shared/schema.ts",
@@ -2209,7 +2209,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 227610
+        "bytes": 228602
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2248,6 +2248,10 @@
         "bytes": 156592
       },
       {
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "bytes": 154069
+      },
+      {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 151972
       },
@@ -2264,16 +2268,16 @@
         "bytes": 145405
       },
       {
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "bytes": 142705
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "bytes": 141216
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 137319
-      },
-      {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "bytes": 137175
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2290,10 +2294,6 @@
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
-      },
-      {
-        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 133645
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2329,7 +2329,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 117247
+        "bytes": 117431
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2358,10 +2358,6 @@
       {
         "file": "server/routes/c2c/project-vault.ts",
         "bytes": 113954
-      },
-      {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "bytes": 113548
       },
       {
         "file": "server/routes/auth.ts",
@@ -2410,12 +2406,16 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "bytes": 101005
+      },
+      {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "bytes": 100392
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21882
+        "lines": 21976
       },
       {
         "file": "shared/schema.ts",
@@ -2435,7 +2435,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5682
+        "lines": 5704
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2538,6 +2538,10 @@
         "lines": 2693
       },
       {
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "lines": 2646
+      },
+      {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
         "lines": 2623
       },
@@ -2551,7 +2555,7 @@
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2406
+        "lines": 2502
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2566,20 +2570,12 @@
         "lines": 2379
       },
       {
-        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "lines": 2348
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2324
-      },
-      {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "lines": 2302
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2690,16 +2686,20 @@
         "lines": 2008
       },
       {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 2003
+      },
+      {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 2001
-      },
-      {
         "file": "server/routes/ectd-compile.ts",
         "lines": 1984
+      },
+      {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "lines": 1975
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2719,7 +2719,7 @@
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1909
+        "lines": 1932
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2767,7 +2767,7 @@
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
-        "lines": 1828
+        "lines": 1827
       },
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
@@ -2790,6 +2790,10 @@
         "lines": 1794
       },
       {
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1789
+      },
+      {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
       },
@@ -2806,20 +2810,16 @@
         "lines": 1751
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
+        "lines": 1728
+      },
+      {
         "file": "tests/services/ana-biostats.test.ts",
         "lines": 1712
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1701
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
-        "lines": 1680
-      },
-      {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
