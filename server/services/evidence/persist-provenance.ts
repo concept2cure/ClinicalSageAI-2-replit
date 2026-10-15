@@ -74,6 +74,11 @@ export function provenanceToLineageEntry(
       query: record.query,
       url: record.citation.url,
       caveats: record.caveats,
+      // 2026-10-15: the level used to be recorded only as a 0-100 lookup
+      // figure in confidence_score; it is kept here as what it is, beside the
+      // tool's raw retrieval score when it supplied one.
+      confidenceLevel: record.confidence ?? null,
+      retrievalScore: record.retrievalScore ?? null,
     },
   };
 }

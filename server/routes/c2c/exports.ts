@@ -27,6 +27,7 @@ import {
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
+  exportReviewAttestation,
   type ExportGovernance,
 } from '../../services/export/exportReviewGate';
 import { createScopedLogger } from '../../utils/logger';
@@ -89,12 +90,21 @@ function validateExportGovernance(req: Request, res: Response): ExportGovernance
  * routes produce gets an EXPORT_GENERATED audit row carrying the SHA-256 of the
  * exact bytes delivered, and is not delivered when that row does not persist.
  * Until then they returned the file and recorded nothing
- * (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/).
+ * (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/). 2026-10-15: the row also
+ * records the review assertion that passed the gate, which was recorded
+ * nowhere — as an assertion, with the user who made it.
  */
 async function deliverRecordedExport(
   req: Request,
   res: Response,
-  file: { buffer: Buffer; mimeType: string; filename: string; sourceType: ExportSourceType; title: string },
+  file: {
+    buffer: Buffer;
+    mimeType: string;
+    filename: string;
+    sourceType: ExportSourceType;
+    title: string;
+    governance: ExportGovernance;
+  },
 ): Promise<void> {
   const organizationId = getOrganizationId(req);
   const userId = getUserId(req);
@@ -110,7 +120,7 @@ async function deliverRecordedExport(
       filename: file.filename,
       mimeType: file.mimeType,
       buffer: file.buffer,
-      metadata: { title: file.title },
+      metadata: { title: file.title, reviewAttestation: exportReviewAttestation(file.governance, userId) },
     });
   } catch (err) {
     if (isUnauditedExportRefusal(err)) {
@@ -148,6 +158,7 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
       filename: `${safeFilename}.docx`,
       sourceType: 'export_docx',
       title,
+      governance,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -389,6 +400,7 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
       filename: `${safeTitle}.pdf`,
       sourceType: 'export_pdf',
       title: String(title),
+      governance,
     });
   } catch (error: any) {
     logger.error('Failed to export PDF', { error: error.message });
@@ -443,6 +455,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
       filename: `${safeFilename}.pptx`,
       sourceType: 'export_pptx',
       title,
+      governance,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
