@@ -65,9 +65,12 @@ describe('eTMF artifact persistence', () => {
     expect(res.status).toBe(200);
     expect(res.body.ready).toBe(false);
     expect(res.body.summary.totalMissing).toBeGreaterThan(0);
-    // Zone 2 protocol is filed, so it should not be in zone 2's missing list.
+    /* 2026-10-15: this asserted that zone 2's `present` held 'protocol', filed
+       against 'doc-1-v2' — an off-platform reference nothing can check. A
+       filing row is not a document, so it is listed as filed but unverified. */
     const zone2 = res.body.zones.find((z: any) => z.number === 2);
-    expect(zone2.present).toContain('protocol');
+    expect(zone2.present).not.toContain('protocol');
+    expect(zone2.unverified).toContainEqual({ code: 'protocol', evidence: 'unverifiable' });
   });
 
   it('does not leak another org\'s artifacts', async () => {

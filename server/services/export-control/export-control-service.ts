@@ -14,6 +14,7 @@ import { pool } from '../../db';
 import {
   evaluateExportControl,
   evaluateExportReviewReadiness,
+  unansweredQuestions,
   type ExportControlAssessment,
   type ExportReviewReadinessResult,
 } from './export-control-logic';
@@ -47,6 +48,16 @@ export interface ExportReviewInput {
 export async function createReviewTx(client: Queryable, orgId: number, userId: number, input: ExportReviewInput): Promise<{ id: number }> {
   if (!input.projectTitle || !input.projectTitle.trim()) throw new ExportControlError('BAD_INPUT', 'A project title is required.');
   if (input.jurisdiction && !JURISDICTIONS.includes(input.jurisdiction)) throw new ExportControlError('BAD_INPUT', `Invalid jurisdiction "${input.jurisdiction}".`);
+  /* 2026-10-15: each unanswered question was stored as false (the columns are
+     NOT NULL DEFAULT false), and the determination then read it as "no". The
+     store cannot hold "unanswered", so a review opens only with all four. */
+  const unanswered = unansweredQuestions(input);
+  if (unanswered.length > 0) {
+    throw new ExportControlError(
+      'BAD_INPUT',
+      `Answer every screening question to open a review — not answered: ${unanswered.join(', ')}. An unanswered question is not recorded as "no".`,
+    );
+  }
   const { rows } = await client.query(
     `INSERT INTO export_control_reviews
        (organization_id, grant_proposal_id, project_title, description, jurisdiction, classification, involves_foreign_nationals, foreign_countries,
@@ -100,15 +111,18 @@ export async function updateReviewTx(client: Queryable, orgId: number, id: numbe
   );
 }
 
+/** A stored answer, or null when the column holds none — never coerced to "no". */
+const answerOf = (v: unknown): boolean | null => (typeof v === 'boolean' ? v : null);
+
 function inputFromRow(r: any) {
   return {
     jurisdiction: r.jurisdiction,
     classification: r.classification,
-    involvesForeignNationals: r.involves_foreign_nationals === true,
+    involvesForeignNationals: answerOf(r.involves_foreign_nationals),
     foreignCountries: r.foreign_countries,
-    hasPublicationRestrictions: r.has_publication_restrictions === true,
-    hasProprietaryRestrictions: r.has_proprietary_restrictions === true,
-    involvesPhysicalExport: r.involves_physical_export === true,
+    hasPublicationRestrictions: answerOf(r.has_publication_restrictions),
+    hasProprietaryRestrictions: answerOf(r.has_proprietary_restrictions),
+    involvesPhysicalExport: answerOf(r.involves_physical_export),
   };
 }
 
@@ -130,9 +144,12 @@ export async function determineReviewTx(client: Queryable, orgId: number, userId
   if (r.status === 'determined') throw new ExportControlError('INVALID_STATE', 'Determination is already final.');
   const readiness = evaluateExportReviewReadiness(inputFromRow(r));
   if (!readiness.readyToDetermine) throw new ExportControlError('INVALID_STATE', `Cannot determine — ${readiness.blockers.join(' ')}`);
+  // Readiness requires every question answered, so the FRE outcome is decided; refuse rather than store a guess if not.
+  const freApplies = readiness.assessment.freApplies;
+  if (freApplies === null) throw new ExportControlError('INVALID_STATE', 'Cannot determine — the Fundamental Research Exclusion outcome is undetermined.');
   await client.query(
     `UPDATE export_control_reviews SET status = 'determined', license_required = $3, fundamental_research_exclusion = $4, determined_by = $5, determined_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2`,
-    [id, orgId, readiness.assessment.licenseRequired, readiness.assessment.freApplies, userId],
+    [id, orgId, readiness.assessment.licenseRequired, freApplies, userId],
   );
   return { determined: true, readiness };
 }

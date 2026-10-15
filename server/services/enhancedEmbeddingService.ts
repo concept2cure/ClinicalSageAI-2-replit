@@ -73,14 +73,6 @@ export interface AtomEmbeddingJob {
   priority: 'high' | 'normal' | 'low';
 }
 
-export interface EmbeddingStats {
-  totalEmbedded: number;
-  totalPending: number;
-  avgProcessingTimeMs: number;
-  cacheHitRate: number;
-  estimatedCostUSD: number;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 //                          MODEL CONFIGURATIONS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -109,13 +101,6 @@ const MODEL_CONFIGS: Record<EmbeddingModel, EmbeddingConfig> = {
   },
 };
 
-// Cost per 1000 tokens in USD
-const MODEL_COSTS: Record<EmbeddingModel, number> = {
-  'text-embedding-3-small': 0.00002,
-  'text-embedding-3-large': 0.00013,
-  'text-embedding-ada-002': 0.0001,
-};
-
 // ═══════════════════════════════════════════════════════════════════════════
 //                          ENHANCED EMBEDDING SERVICE
 // ═══════════════════════════════════════════════════════════════════════════
@@ -124,8 +109,6 @@ export class EnhancedEmbeddingService {
   private pool: TenantKeyQueryable;
   private defaultModel: EmbeddingModel = 'text-embedding-3-small';
   private embeddingCache: Map<string, number[]> = new Map();
-  private cacheHits = 0;
-  private cacheMisses = 0;
   private processingQueue: AtomEmbeddingJob[] = [];
   private isProcessing = false;
 
@@ -146,7 +129,6 @@ export class EnhancedEmbeddingService {
     const cacheKey = this.getCacheKey(text, model);
     const cached = this.embeddingCache.get(cacheKey);
     if (cached) {
-      this.cacheHits++;
       return {
         text,
         embedding: cached,
@@ -155,7 +137,6 @@ export class EnhancedEmbeddingService {
         cached: true,
       };
     }
-    this.cacheMisses++;
 
     // Truncate if too long (8191 tokens max for embedding models)
     const truncatedText = this.truncateText(text, 8000);
@@ -278,21 +259,31 @@ export class EnhancedEmbeddingService {
     // Generate embedding
     const result = await this.embed(embeddingText, this.defaultModel);
 
-    // Store embedding
-    await this.pool.query(
+    // Store the embedding and its audit row in ONE statement: both or neither.
+    // 2026-10-15: the audit INSERT ran separately inside `catch { // Silently
+    // fail }`, so a lost embedding_audit_log row vanished while the caller was
+    // told the atom was embedded — and a row was written even when the UPDATE
+    // matched nothing.
+    const { rows: stored } = await this.pool.query(
       `
-      UPDATE lumen_data_atoms a
-      SET
-        embedding = $1::vector,
-        embedding_model = $2,
-        embedding_updated_at = NOW()
-      WHERE id = $3 AND ${atomOriginalFileAvailableSql('a')}
+      WITH stored AS (
+        UPDATE lumen_data_atoms a
+        SET
+          embedding = $1::vector,
+          embedding_model = $2,
+          embedding_updated_at = NOW()
+        WHERE id = $3 AND ${atomOriginalFileAvailableSql('a')}
+        RETURNING a.id
+      )
+      INSERT INTO embedding_audit_log (atom_id, model, token_count, cached, created_at)
+      SELECT id, $2::text, $4::int, $5::boolean, NOW() FROM stored
+      RETURNING atom_id
     `,
-      [`[${result.embedding.join(',')}]`, result.model, atomId]
+      [`[${result.embedding.join(',')}]`, result.model, atomId, result.tokenCount, result.cached]
     );
-
-    // Log audit
-    await this.logEmbeddingAudit(atomId, result);
+    if (stored.length === 0) {
+      throw new Error(`Atom ${atomId} was not updated (its original file is no longer available); no embedding was stored.`);
+    }
   }
 
   /**
@@ -657,28 +648,9 @@ export class EnhancedEmbeddingService {
     this.isProcessing = false;
   }
 
-  /**
-   * Get embedding statistics
-   */
-  async getStats(): Promise<EmbeddingStats> {
-    const { rows } = await this.pool.query(`
-      SELECT
-        COUNT(*) FILTER (WHERE embedding IS NOT NULL) as total_embedded,
-        COUNT(*) FILTER (WHERE embedding IS NULL) as total_pending
-      FROM lumen_data_atoms
-    `);
-
-    const totalRequests = this.cacheHits + this.cacheMisses;
-    const cacheHitRate = totalRequests > 0 ? this.cacheHits / totalRequests : 0;
-
-    return {
-      totalEmbedded: parseInt(rows[0].total_embedded, 10),
-      totalPending: parseInt(rows[0].total_pending, 10),
-      avgProcessingTimeMs: 0, // Would need to track this
-      cacheHitRate,
-      estimatedCostUSD: this.cacheMisses * MODEL_COSTS[this.defaultModel] * 0.5, // Rough estimate
-    };
-  }
+  // getStats() is gone (2026-10-15): it had no caller and reported
+  // avgProcessingTimeMs 0 ("would need to track this") and a cost from an assumed
+  // 500 tokens per cache miss, typed as measurements.
 
   // ═══════════════════════════════════════════════════════════════════════════
   //                          PRIVATE HELPERS
@@ -716,22 +688,6 @@ export class EnhancedEmbeddingService {
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-
-  private async logEmbeddingAudit(atomId: number, result: EmbeddingResult): Promise<void> {
-    try {
-      await this.pool.query(
-        `
-        INSERT INTO embedding_audit_log (
-          atom_id, model, token_count, cached, created_at
-        ) VALUES ($1, $2, $3, $4, NOW())
-        ON CONFLICT DO NOTHING
-      `,
-        [atomId, result.model, result.tokenCount, result.cached]
-      );
-    } catch {
-      // Silently fail audit logging
-    }
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -751,4 +707,4 @@ export function getEmbeddingService(pool: TenantKeyQueryable): EnhancedEmbedding
   return service;
 }
 
-export { MODEL_CONFIGS, MODEL_COSTS };
+export { MODEL_CONFIGS };
