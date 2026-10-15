@@ -51,8 +51,46 @@ interface IndlChecklist {
   sponsorName: string | null;
   submissionType: string | null;
   targetReceiptDate: string | null;
-  forms: IndlForm[];
+  forms: IndlFormRow[];
   sections: IndlSection[];
+}
+
+/* A Module 1 form as GET /api/ind-checklist sends it: the fixture shape plus
+   the state of the sponsor-attached file at its place. `attachment` is null
+   when no file is placed, and absent from a server that does not report it —
+   which is not "none". */
+interface IndlFormRow extends IndlForm {
+  attachment?: { attested: boolean; requiredFieldsMissing: string[] | null } | null;
+}
+
+/** The attached file at a form's place, in words — what the chip and AnA both say. */
+function formFileState(f: IndlFormRow): string {
+  const a = f.attachment;
+  if (a === undefined) return 'not reported';
+  if (a === null) return 'none';
+  if (!a.attested) return 'attached — not attested';
+  if (a.requiredFieldsMissing === null) return 'attested — not checked';
+  return a.requiredFieldsMissing.length > 0 ? 'attested — required fields missing' : 'attested — complete';
+}
+
+/* The form's chip, and the line under it when an attached file does not count.
+   2026-10-15 (report_ind_ivd_irb #15): an unattested attachment counted as
+   Complete on the server; now that it does not, it must not read as an empty
+   "Open" either — a file IS attached, and nobody has said it is the signed form. */
+function formChip(f: IndlFormRow): { label: string; note: string | null } {
+  if (f.done) return { label: 'Complete', note: null };
+  const a = f.attachment;
+  if (!a) return { label: 'Open', note: null };
+  if (!a.attested) {
+    return {
+      label: 'Attached — not attested',
+      note: 'A file is attached, but nobody has attested it is the completed, signed form, so it does not count. Attach it in 2a with the attestation.',
+    };
+  }
+  const missing = a.requiredFieldsMissing;
+  if (missing === null) return { label: 'Attested — not checked', note: 'The forms engine could not check the attached file. Attach it again in 2a.' };
+  if (missing.length > 0) return { label: 'Attested — fields missing', note: `Required fields missing: ${missing.join(', ')}.` };
+  return { label: 'Open', note: null };
 }
 
 /* The assembled IND cover letter (POST /api/ind-lifecycle/cover-letter) —
@@ -89,6 +127,8 @@ export interface DelivView {
   canFile: boolean;
   /** Honest note shown in place of the file action when filing is unavailable. */
   fileNote?: string;
+  /** Open sections a filing must acknowledge one by one, by the server's section key (the annual report's 312.33 gaps). */
+  openGaps?: Array<{ key: string; label: string }>;
 }
 interface DelivRun {
   busy: boolean;
@@ -96,7 +136,7 @@ interface DelivRun {
   view: DelivView | null;
   filing: boolean;
   fileError: string;
-  filed: { sequenceNumber: string; sequenceId: number | string; leafCount: number } | null;
+  filed: { sequenceNumber: string; sequenceId: number | string; leafCount: number; openSections: number } | null;
 }
 const EMPTY_RUN: DelivRun = { busy: false, error: '', view: null, filing: false, fileError: '', filed: null };
 
@@ -124,6 +164,36 @@ export interface WiredDeliverable {
   fields: DelivField[];
   payload: () => Record<string, unknown>;
   toView: (json: unknown) => DelivView | null;
+}
+
+/** The server's gap list as acknowledgeable sections: one per gap that carries a section key. */
+function openGapsOf(gaps: unknown): Array<{ key: string; label: string }> {
+  if (!Array.isArray(gaps)) return [];
+  return gaps.flatMap((g: { sectionKey?: unknown; heading?: unknown; cfrRef?: unknown } | null) =>
+    g && typeof g.sectionKey === 'string'
+      ? [{ key: g.sectionKey, label: `${String(g.heading ?? g.sectionKey)}${g.cfrRef ? ` (${String(g.cfrRef)})` : ''}` }]
+      : [],
+  );
+}
+
+/** One box per open section of a build: a ticked box is the filer's acknowledgement that it is filed open. */
+function OpenSectionAcks({ gaps, isTicked, onTick }: {
+  gaps: Array<{ key: string; label: string }>;
+  isTicked: (key: string) => boolean;
+  onTick: (key: string, ticked: boolean) => void;
+}) {
+  if (gaps.length === 0) return null;
+  return (
+    <fieldset className="indl-dcard-desc" style={{ border: 0, padding: 0, margin: '6px 0 0' }}>
+      <legend style={{ fontSize: 12 }}>To file with these sections open, acknowledge each one:</legend>
+      {gaps.map((g) => (
+        <label key={g.key} style={{ fontSize: 12, display: 'block' }}>
+          <input type="checkbox" style={{ marginRight: 6 }} checked={isTicked(g.key)} onChange={(e) => onTick(g.key, e.target.checked)} />
+          {g.label}
+        </label>
+      ))}
+    </fieldset>
+  );
 }
 
 /** Flatten a server section tree ({heading, body, cfrRef?, children?}) to text. */
@@ -287,7 +357,7 @@ function useServerClock(receiptISO: string | null): { clock: ServerClock; retry:
 /* Stable module-level empty seeds: useLiveRows synthesizes a fresh [] every
    render until the checklist resolves, so feeding these to the readiness memo
    (instead of an inline []) keeps its deps stable and avoids a render thrash. */
-const EMPTY_FORMS: IndlForm[] = [];
+const EMPTY_FORMS: IndlFormRow[] = [];
 const EMPTY_SECTIONS: IndlSection[] = [];
 
 /* ── The open program, and which checklist row is really its IND ──
@@ -501,7 +571,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               incomplete: R.requiredSections.incomplete,
             }
           : null,
-        module1Forms: formList.map((f) => ({ id: f.id, title: f.title, reference: f.ref, done: f.done })),
+        module1Forms: formList.map((f) => ({ id: f.id, title: f.title, reference: f.ref, done: f.done, attachedFile: formFileState(f) })),
         sections: sectionList.slice(0, 24).map((sec) => ({
           code: sec.code, title: sec.title, module: sec.module, status: sec.status,
         })),
@@ -669,12 +739,22 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      The FDA center goes up only when chosen (2026-10-15: the server addressed
      every letter to CDER; it now reports an unstated center as a gap). */
   const coverLetterCenter = (fields['cl.fdaCenter'] ?? '').trim();
+  /* 2026-10-15: this sent submissionType 'original' for every letter. The card
+     now names the submission (submissionId, declared below with the filing
+     anchor); the server reads the type from that record's lifecycle stage, or
+     reports it not stated — a gap, never the screen's guess. */
   const coverLetterPayload = () => ({
     sponsorName: prog.sponsorName ?? '',
     drugName: drug,
-    submissionType: 'original',
+    ...(submissionId != null ? { submissionId } : {}),
     ...(coverLetterCenter ? { fdaCenter: coverLetterCenter } : {}),
   });
+  /** Why the server refused the letter, in its words; "sign in and retry" only when it is about signing in. */
+  const coverLetterRefusal = async (res: Response): Promise<string> => {
+    if (res.status === 401 || res.status === 403) return 'sign in and retry';
+    const m = serverMessage(await res.json().catch(() => null));
+    return m ? m.replace(/\.\s*$/, '') : `the server could not complete it (HTTP ${res.status})`;
+  };
   /** A caught throw reduced to a fragment safe to compose into a sentence.
       Only ApiRequestError has been through the envelope reduction in
       queryClient; every other throw reaching here is the browser's own, whose
@@ -691,7 +771,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     try {
       const res = await apiRequest('POST', '/api/ind-lifecycle/cover-letter', coverLetterPayload());
       if (!res.ok) {
-        setCl({ busy: false, model: null, error: 'Could not assemble the cover letter — sign in and retry.' });
+        setCl({ busy: false, model: null, error: `Could not assemble the cover letter — ${await coverLetterRefusal(res)}.` });
         return;
       }
       const json = (await res.json().catch(() => null)) as { body?: unknown; gaps?: unknown } | null;
@@ -713,7 +793,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     try {
       const res = await apiRequest('POST', '/api/ind-lifecycle/cover-letter/pdf', coverLetterPayload());
       if (!res.ok) {
-        setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — sign in and retry.' }));
+        const why = await coverLetterRefusal(res);
+        setCl((s) => ({ ...s, busy: false, error: `Could not render the cover letter PDF — ${why}.` }));
         return;
       }
       downloadBlob('ind-cover-letter.pdf', await res.blob());
@@ -728,6 +809,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      own fields; the rendered model and every gap are the SERVER's verdict. */
   const runOf = (id: string): DelivRun => runs[id] ?? EMPTY_RUN;
   const fv = (k: string) => (fields[k] ?? '').trim();
+  /** The field holding the filer's acknowledgement of one open section of a card's build. */
+  const ackKey = (id: string, sectionKey: string) => `${id}.ack.${sectionKey}`;
   /* A regulated choice goes up only when the person made it (P-21, product
      decision 2026-10-08). The helper this replaces sent a select's FIRST option
      when it was untouched — the meeting type, file types, amendment category
@@ -765,6 +848,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
 
   const runAssemble = async (id: string, w: WiredDeliverable) => {
     patchRun(id, { busy: true, error: '', view: null, filed: null, fileError: '' });
+    // An acknowledgement belongs to the build it was made on: a new build starts with none.
+    setFields((f) => Object.fromEntries(Object.entries(f).filter(([k]) => !k.startsWith(ackKey(id, '')))));
     try {
       const res = await apiRequest('POST', w.assemblePath, w.payload());
       const json = (await res.json().catch(() => null)) as any;
@@ -814,8 +899,16 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       return;
     }
     patchRun(id, { filing: true, fileError: '' });
+    // Only the open sections the filer ticked, one by one (2026-10-15: the
+    // annual report was filed with every open section and nothing acknowledged).
+    const acknowledgedGaps = (runOf(id).view?.openGaps ?? []).filter((g) => fv(ackKey(id, g.key)) === 'yes').map((g) => g.key);
     try {
-      const res = await apiRequest('POST', w.file.path, { ...w.payload(), submissionId, sequenceNumber: seq });
+      const res = await apiRequest('POST', w.file.path, {
+        ...w.payload(),
+        submissionId,
+        sequenceNumber: seq,
+        ...(acknowledgedGaps.length > 0 ? { acknowledgedGaps } : {}),
+      });
       const json = (await res.json().catch(() => null)) as any;
       if (!res.ok || !json?.sequence) {
         patchRun(id, { filing: false, fileError: `Not filed — ${serverErr(json, res.status)}.` });
@@ -827,6 +920,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           sequenceNumber: String(json.sequence.sequenceNumber ?? seq),
           sequenceId: json.sequence.id,
           leafCount: Array.isArray(json.leaves) ? json.leaves.length : 0,
+          openSections: typeof json.filedWithOpenGaps === 'number' ? json.filedWithOpenGaps : 0,
         },
       });
     } catch (e) {
@@ -975,6 +1069,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               text: sectionsText(json.sections),
               gaps: Array.isArray(json.gaps) ? json.gaps.map((g: any) => String(g?.message ?? g)) : [],
               canFile: true,
+              // Each open 312.33 section is filed open only when acknowledged (filing.routes.ts).
+              openGaps: openGapsOf(json.gaps),
             }
           : null,
     },
@@ -1259,29 +1355,35 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 </span>
               </h3>
               <div className="indl-forms">
-                {forms.map((f) => (
-                  <div
-                    key={f.id}
-                    className={'indl-form' + (f.done ? ' ok' : '')}
-                  >
-                    <span className="indl-form-ic">
-                      {f.done ? I.checkCircle : I.alertTriangle}
-                    </span>
-                    <span className="indl-form-b">
-                      <span className="t">
-                        {f.title} — {f.label}
-                      </span>
-                      <span className="s">{f.ref}</span>
-                    </span>
-                    <span
-                      className={
-                        'rd-chip tone-' + (f.done ? 'good' : 'warn')
-                      }
+                {forms.map((f) => {
+                  const chip = formChip(f);
+                  return (
+                    <div
+                      key={f.id}
+                      className={'indl-form' + (f.done ? ' ok' : '')}
                     >
-                      {f.done ? 'Complete' : 'Open'}
-                    </span>
-                  </div>
-                ))}
+                      <span className="indl-form-ic">
+                        {f.done ? I.checkCircle : I.alertTriangle}
+                      </span>
+                      <span className="indl-form-b">
+                        <span className="t">
+                          {f.title} — {f.label}
+                        </span>
+                        <span className="s">{f.ref}</span>
+                        {chip.note && (
+                          <span className="s" style={{ fontFamily: 'inherit' }}>{chip.note}</span>
+                        )}
+                      </span>
+                      <span
+                        className={
+                          'rd-chip tone-' + (f.done ? 'good' : 'warn')
+                        }
+                      >
+                        {chip.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               <h3>
@@ -1652,6 +1754,12 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                           {run.view && w.file && (
                             run.view.canFile ? (
                               !run.filed && (
+                                <>
+                                <OpenSectionAcks
+                                  gaps={run.view.openGaps ?? []}
+                                  isTicked={(key) => fv(ackKey(d.id, key)) === 'yes'}
+                                  onTick={(key, ticked) => setFieldVal(ackKey(d.id, key), ticked ? 'yes' : '')}
+                                />
                                 <div className="indl-dcard-acts" style={{ alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
                                   <label style={{ fontSize: 12 }}>
                                     eCTD sequence number
@@ -1671,6 +1779,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                                     {I.rocket} {run.filing ? 'Filing…' : 'File into sequence'}
                                   </button>
                                 </div>
+                                </>
                               )
                             ) : run.view.fileNote ? (
                               <div className="indl-dcard-desc" role="status">
@@ -1689,6 +1798,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                               {String(run.filed.sequenceId)}) —{' '}
                               {run.filed.leafCount}{' '}
                               {run.filed.leafCount === 1 ? 'leaf' : 'leaves'} placed.
+                              {run.filed.openSections > 0 && ` Filed with ${run.filed.openSections} section(s) open, as acknowledged.`}
                             </div>
                           )}
                         </>

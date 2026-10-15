@@ -817,8 +817,10 @@ describe('a sponsor\'s completed official form is filed into the sequence', () =
 
     // And the listing now reports it as placed.
     const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-910' });
+    // Nobody attested this file is the completed, signed form, and the
+    // listing says so (attestedAt null, not absent).
     expect(listed.body.placements).toEqual([
-      expect.objectContaining({ formId: 'FDA_1571', sectionCode: 'm1.1', sequenceNumber: '0000' }),
+      expect.objectContaining({ formId: 'FDA_1571', sectionCode: 'm1.1', sequenceNumber: '0000', attestedAt: null }),
     ]);
   });
 
@@ -1126,10 +1128,14 @@ describe('an attached form counts as complete only when the forms engine finds n
     expect(res.body.complete).toBe(false);
   });
 
-  it('a signed 1571 with every required field recorded or stated: complete, and the checklist says so', async () => {
+  // 2026-10-15 (report_ind_ivd_irb #15): the clean check alone used to make this
+  // complete; it reads the record, not the file. The uploader's attestation is
+  // now required too — unattested, see ind-forms-official-upload-records-attestation.
+  it('a signed 1571 with every required field recorded or stated, attested by its uploader: complete, and the checklist says so', async () => {
     const { submissionId, sequenceId } = await seedIndWithFacts('BX-963');
     const res = await request(app).post('/api/ind-forms/FDA_1571/official-upload')
       .field('projectIdent', 'BX-963').field('sequenceId', String(sequenceId)).field('studyPhase', 'Phase 1')
+      .field('attestCompletedSigned', 'true')
       .attach('file', SIGNED_PDF, 'signed-1571.pdf');
     expect(res.status).toBe(201);
     expect(res.body.requiredFieldsMissing).toEqual([]);
@@ -1139,7 +1145,7 @@ describe('an attached form counts as complete only when the forms engine finds n
     // The listing carries the check with the placement.
     const listed = await request(app).get('/api/ind-forms/').query({ projectIdent: 'BX-963' });
     expect(listed.body.placements).toEqual([
-      expect.objectContaining({ formId: 'FDA_1571', requiredFieldsMissing: [] }),
+      expect.objectContaining({ formId: 'FDA_1571', requiredFieldsMissing: [], attestedAt: expect.any(String) }),
     ]);
   });
 });
