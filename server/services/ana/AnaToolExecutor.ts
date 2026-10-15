@@ -6962,6 +6962,18 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
       message: 'programId, source, channel, a valid receivedAt (ISO date), and eventNarrative are required',
     });
   }
+  // Harm and severity are assessments the user makes, never assumed: the
+  // intake classification is computed from patientHarm, and an absent value
+  // used to be stored as 'none' and classified "no MDR".
+  const { HARM_LEVELS, SEVERITY_LEVELS } = await import('../../../shared/schema/capa-mdr.js');
+  if (!(HARM_LEVELS as readonly unknown[]).includes(input.patientHarm) || !(SEVERITY_LEVELS as readonly unknown[]).includes(input.severityAssessment)) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message:
+        `patientHarm (${HARM_LEVELS.join(', ')}) and severityAssessment (${SEVERITY_LEVELS.join(', ')}) are required — ` +
+        'ask the user; the reportability classification is computed from the harm, so it is never assumed',
+    });
+  }
   try {
     const { createComplaint } = await import('../capa-mdr/capaMdr.service.js');
     const complaint = await createComplaint(organizationId, {

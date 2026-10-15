@@ -1,3 +1,35 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: CAPA, complaint, MDR and vigilance records for device programs.
+--
+-- eCTD/CTD Context:
+--   - Module(s): none (post-market quality records: 21 CFR 820.198, 803, 806)
+--   - Integrity Risk Addressed: a reportability determination made from a
+--     value nobody assessed
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Overlay-only (install-fresh step 3); not in C2C_MIGRATION_FILES.
+--   - Idempotent (IF NOT EXISTS throughout).
+-- =============================================================================
+-- ─── AMENDED 2026-10-15 — complaints.patient_harm and severity_assessment
+-- have NO default ──────────────────────────────────────────────────────────
+-- They defaulted to 'none' and 'minor'. The intake triage
+-- (server/services/capa-mdr/triageEngine.ts classify) computes preliminary MDR
+-- reportability from patient_harm, so a complaint filed without a harm
+-- assessment was stamped "No harm reported — log under 820.198, no MDR". Both
+-- are now explicit assessments: required by the route, the service and AnA's
+-- create_complaint tool, and an insert without them fails NOT NULL instead of
+-- inventing one. This file is overlay-only, so
+-- migrations/20261015_complaint_assessment_no_default.sql (in the set) drops
+-- the defaults on databases provisioned before this amendment. Session
+-- …01TzCCfqi5RbiwzZyfYxyBpX.
+-- ─────────────────────────────────────────────────────────────────────────────
 -- CAPA + complaint + MDR / vigilance migration.
 --
 -- Mirrors shared/schema/capa-mdr.ts. Hand-authored to match the Drizzle
@@ -57,8 +89,8 @@ CREATE TABLE IF NOT EXISTS complaints (
   event_location_country      varchar(8),
   event_narrative             text NOT NULL,
 
-  patient_harm                varchar(24) NOT NULL DEFAULT 'none',
-  severity_assessment         varchar(24) NOT NULL DEFAULT 'minor',
+  patient_harm                varchar(24) NOT NULL,
+  severity_assessment         varchar(24) NOT NULL,
 
   preliminary_classification  json,
 
