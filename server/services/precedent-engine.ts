@@ -515,7 +515,7 @@ export class PrecedentEngine {
       SELECT *
       FROM precedent.regulatory_precedents
       ${whereClause}
-      ORDER BY decision_date DESC NULLS LAST, confidence_score DESC
+      ORDER BY decision_date DESC NULLS LAST, confidence_score DESC NULLS LAST
       LIMIT $${paramIdx}
     `;
     params.push(limit);

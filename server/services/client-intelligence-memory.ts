@@ -28,7 +28,7 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
-import { resolveMemoryEntries } from './memory/llm-extraction.js';
+import { resolveMemoryEntries, type MemoryExtractor } from './memory/llm-extraction.js';
 import {
   extractMemoryEntriesFromText,
   extractProjectMemoryEntries,
@@ -84,7 +84,7 @@ async function embedInsertedMemoryEntries(
 /** The shared column shape both ingest paths write for one extracted entry. */
 function memoryEntryRow(
   entry: { category: string; subcategory?: string | null; title: string; content: string;
-           importanceLevel?: string | null },
+           importanceLevel?: string | null; extractedBy: MemoryExtractor },
   fileName: string,
 ) {
   return {
@@ -99,7 +99,9 @@ function memoryEntryRow(
     // constants or a model's self-report, shown to AnA as "confidence: NN%").
     confidenceScore: null,
     importanceLevel: entry.importanceLevel,
-    extractedBy: 'ai' as const,
+    // Which extractor produced the entry. Until 2026-10-15 every row was
+    // stamped 'ai', including the rule-based heuristic's when no model ran.
+    extractedBy: entry.extractedBy,
   };
 }
 

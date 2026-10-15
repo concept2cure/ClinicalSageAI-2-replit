@@ -119,8 +119,9 @@ describe('resolveMemoryEntries (LLM-first, heuristic fallback)', () => {
     title: 'heuristic',
     content: 'from regex',
     importanceLevel: 'medium',
+    extractedBy: 'heuristic', // 2026-10-15: drafts now name their extractor
   };
-  const llmEntry: MemoryEntryDraft = { ...heuristicEntry, title: 'llm', content: 'from model' };
+  const llmEntry: MemoryEntryDraft = { ...heuristicEntry, title: 'llm', content: 'from model', extractedBy: 'ai' };
   const baseInput = {
     kind: 'client' as const,
     text: 'doc text',

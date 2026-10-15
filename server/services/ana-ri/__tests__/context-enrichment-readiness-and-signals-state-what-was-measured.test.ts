@@ -78,6 +78,20 @@ describe('the readiness block', () => {
     expect(block).toContain('| quality | not measured |');
     expect(block).not.toContain('—/100');
   });
+
+  // 2026-10-15: a failed read of the assessment ('twin_unreadable') was told to
+  // the model as "No readiness assessment is on record".
+  it('does not tell the model no assessment exists when reading it failed', async () => {
+    const base = await h.readiness();
+    h.readiness.mockResolvedValue({
+      ...base,
+      predictions: { ...base.predictions, basis: 'twin_unreadable' },
+      scoreBasis: { ...base.scoreBasis, source: 'twin_unreadable' },
+    });
+    const { block } = await ask('/readiness');
+    expect(block).not.toContain('No readiness assessment is on record');
+    expect(block).toContain("The program's readiness assessment could not be read");
+  });
 });
 
 describe('the next-actions block', () => {

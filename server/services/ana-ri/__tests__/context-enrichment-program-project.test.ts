@@ -40,7 +40,10 @@ vi.mock('../../../db.js', () => ({ pool: { query: h.query }, getPool: () => ({ q
 vi.mock('../../../db', () => ({ pool: { query: h.query }, getPool: () => ({ query: h.query }), db: { query: h.query } }));
 vi.mock('../../intelligence/project-intelligence-service.js', () => ({ getProjectIntelligence: h.summary }));
 vi.mock('../workflow-orchestration.js', () => ({ buildWorkflowContext: h.workflow }));
-vi.mock('../../intelligence/readiness-scoring-engine.js', () => ({ computeReadinessScore: h.readiness }));
+vi.mock('../../intelligence/readiness-scoring-engine.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../intelligence/readiness-scoring-engine.js')>()),
+  computeReadinessScore: h.readiness,
+}));
 import { enrichContextForChat } from '../context-enrichment';
 
 const PROGRAM = 'd6160c9f-33d2-4be9-b779-eb27375f6e49';
@@ -216,11 +219,16 @@ describe('a project lookup that could not tell is reported, never read as "no li
 
 describe('a request that reads several sources reports each on its own', () => {
   it('/submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD', async () => {
-    h.readiness.mockResolvedValue({ overallScore: 61, trend: { direction: 'up' }, predictions: null, dimensions: {}, gaps: [] });
+    // A recorded assessment that measured every dimension (2026-10-15: the block
+    // states readiness through describeReadiness, which needs the score's basis).
+    h.readiness.mockResolvedValue({
+      overallScore: 61, trend: { direction: 'up' }, predictions: null, dimensions: {}, gaps: [],
+      scoreBasis: { source: 'twin_assessment', measured: ['completeness', 'quality', 'consistency', 'compliance'], notMeasured: [] },
+    });
     h.memory = async () => { throw connectionLost(); };
     const result = await enrichContextForChat({ message: '/submit', projectId: 42, organizationId: 7 });
 
-    expect(result.block).toContain('Overall Score: 61/100');
+    expect(result.block).toContain('Readiness 61/100 from the recorded assessment');
     expect(result.enrichmentMeta?.unavailableSources).toEqual(['ectd']);
     expect(result.enrichmentMeta?.unavailableReasons).toEqual({ ectd: 'error' });
     expect(result.block).not.toContain('No eCTD data found');

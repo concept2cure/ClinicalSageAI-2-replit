@@ -207,6 +207,16 @@ export type TurnProject =
 
 // ─── Enrichment functions ────────────────────────────────────────────────────
 
+/**
+ * A memory entry's recorded confidence as a whole percent, or null when none is
+ * recorded. 2026-10-15: the readers below tested the value for truthiness, so
+ * an unscored entry and a recorded 0 were both shown with no confidence and
+ * neither said so; each now renders the recorded figure or "unscored".
+ */
+function recordedConfidencePercent(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value * 100) : null;
+}
+
 // Reads project memory and returns the formatted block, `''` for a GENUINE
 // empty (no rows, or a legitimately-unprovisioned table), or `null` for a READ
 // FAILURE. The null is the honest signal a caller needs to tell "nothing
@@ -274,8 +284,9 @@ async function readProjectMemory(
 
     if (result.rows.length === 0) return '';
 
-    const items = result.rows.map((r: { confidence_score?: number; title?: string; content?: string }) => {
-      const conf = r.confidence_score ? ` [${Math.round(r.confidence_score * 100)}% confidence]` : '';
+    const items = result.rows.map((r: { confidence_score?: number | null; title?: string; content?: string }) => {
+      const pct = recordedConfidencePercent(r.confidence_score);
+      const conf = pct === null ? ' [unscored]' : ` [${pct}% confidence]`;
       const title = r.title ? `**${r.title}**` : '';
       return `- ${title}${conf}: ${(r.content || '').slice(0, 400)}`;
     }).join('\n');
@@ -387,7 +398,8 @@ async function enrichWithPrecedents(projectId: ProjectRowId, orgId?: number): Pr
       const cat = r.category as string;
       const label = categoryLabels[cat] || cat;
       if (!grouped[label]) grouped[label] = [];
-      const conf = r.confidence ? ` [${Math.round(r.confidence * 100)}% confidence]` : '';
+      const pct = recordedConfidencePercent(r.confidence);
+      const conf = pct === null ? ' [unscored]' : ` [${pct}% confidence]`;
       const title = r.title ? `**${r.title}**` : '';
       grouped[label].push(`- ${title}${conf}: ${(r.content || '').slice(0, 400)}`);
     }
@@ -513,8 +525,14 @@ async function enrichWithReadiness(projectId: ProjectRowId, orgId?: number): Pro
             ]
               .filter(Boolean)
               .join(' | ')
-          : `**No readiness assessment is on record for this program.** Do not state an ` +
-            `approval probability, a review-time estimate or a deficiency count — none has been computed.`;
+          : score.scoreBasis.source === 'twin_unreadable'
+            // 2026-10-15: a failed read of the assessment was told to the model
+            // as "no assessment is on record", a statement nobody had checked.
+            ? `**The program's readiness assessment could not be read.** Do not state an ` +
+              `approval probability, a review-time estimate or a deficiency count, and do not say ` +
+              `that none exists — whether one is on record is not known.`
+            : `**No readiness assessment is on record for this program.** Do not state an ` +
+              `approval probability, a review-time estimate or a deficiency count — none has been computed.`;
 
       return `\n\n## Live Readiness Assessment\n**${describeReadiness(score)}** | Trend: ${score.trend?.direction || 'not determined'}\n\n${outlook}\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.`;
     } catch (e: unknown) {
@@ -582,6 +600,41 @@ async function enrichWithRecommendations(projectId: ProjectRowId, orgId?: number
   return memoryResult + feedbackNote;
 }
 
+type ClaimMemoryRow = { category?: string; title?: string; confidence?: number | null; content?: string };
+
+/**
+ * The claims block over project-memory evidence entries. 2026-10-15: every
+ * unscored entry (and every recorded 0) entered the evidence chain at an
+ * invented relevance of 0.5, so a "Confidence: NN/100" was printed for entries
+ * nobody had scored. Only recorded confidences enter the chain now; with none,
+ * it is not assessed, and the block says which entries were left out.
+ */
+function claimsEvidenceBlock(rows: ClaimMemoryRow[]): string {
+  const scored = rows.filter((r): r is ClaimMemoryRow & { confidence: number } =>
+    recordedConfidencePercent(r.confidence) !== null);
+  const sources: EvidenceSource[] = scored.map(r => ({
+    sourceType: r.category === 'evidence_gap' ? 'ai_analysis' as const : 'document_state' as const,
+    sourceId: `mem-${r.title || 'unknown'}`,
+    sourceTitle: r.title || 'Evidence entry',
+    relevance: r.confidence,
+    extractedValue: r.content?.slice(0, 200),
+  }));
+  const unscored = rows.length - scored.length;
+  let assessment = '**Evidence Chain Strength / Confidence:** not assessed — no entry below carries a recorded confidence';
+  if (sources.length > 0) {
+    const chain = buildEvidenceChain(sources, 'ai_inferred');
+    const factors = analyzeFactors(sources);
+    assessment = `**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${computeConfidence(sources)}/100\n` +
+      `**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}` +
+      (unscored > 0 ? `\n**Not counted above:** ${unscored} of ${rows.length} entries (unscored)` : '');
+  }
+  const entryLines = rows.map(r => {
+    const pct = recordedConfidencePercent(r.confidence);
+    return `- **${r.title || r.category}** [${pct === null ? 'unscored' : `${pct}%`}]: ${r.content?.slice(0, 300)}`;
+  }).join('\n');
+  return `\n\n## Evidence & Claims Analysis\n${assessment}\n\n**Evidence Entries:**\n${entryLines}\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.`;
+}
+
 async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promise<string> {
   if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Same rule as readProjectMemory: no organization, no memory.
@@ -606,26 +659,7 @@ async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promis
       [projectId, orgId, 8]
     );
 
-    if (result.rows.length > 0) {
-      // Build evidence sources from memory entries
-      const sources: EvidenceSource[] = result.rows.map((r: { category?: string; title?: string; confidence?: number; content?: string }) => ({
-        sourceType: r.category === 'evidence_gap' ? 'ai_analysis' as const : 'document_state' as const,
-        sourceId: `mem-${r.title || 'unknown'}`,
-        sourceTitle: r.title || 'Evidence entry',
-        relevance: r.confidence || 0.5,
-        extractedValue: r.content?.slice(0, 200),
-      }));
-
-      const chain = buildEvidenceChain(sources, 'ai_inferred');
-      const confidence = computeConfidence(sources);
-      const factors = analyzeFactors(sources);
-
-      const entryLines = result.rows.map((r: { title?: string; category?: string; confidence?: number; content?: string }) =>
-        `- **${r.title || r.category}** [${r.confidence ? Math.round(r.confidence * 100) + '%' : '—'}]: ${r.content?.slice(0, 300)}`
-      ).join('\n');
-
-      return `\n\n## Evidence & Claims Analysis\n**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${confidence}/100\n**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}\n\n**Evidence Entries:**\n${entryLines}\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.`;
-    }
+    if (result.rows.length > 0) return claimsEvidenceBlock(result.rows);
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     // Fall through
   }
@@ -742,9 +776,10 @@ async function enrichWithKnowledgeSearch(query: string, projectId: ProjectRowId,
 
     if (result.rows.length === 0) return '';
 
-    const entries = result.rows.map((r: { title?: string; category?: string; confidence?: number; content?: string }) =>
-      `- **${r.title || r.category}** [${r.category}] ${r.confidence ? `(${Math.round(r.confidence * 100)}%)` : ''}: ${r.content?.slice(0, 300)}`
-    ).join('\n');
+    const entries = result.rows.map((r: { title?: string; category?: string; confidence?: number | null; content?: string }) => {
+      const pct = recordedConfidencePercent(r.confidence);
+      return `- **${r.title || r.category}** [${r.category}] ${pct === null ? '(unscored)' : `(${pct}%)`}: ${r.content?.slice(0, 300)}`;
+    }).join('\n');
 
     return `\n\n## Knowledge Base Search Results\n**${result.rows.length} entries** found in project knowledge.\n\n${entries}\n\nReference these knowledge atoms when answering. Cite the category and confidence level.`;
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
