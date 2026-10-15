@@ -205,8 +205,25 @@ async function getJson(url: string): Promise<any> {
 }
 
 /**
- * Search PubMed (esearch → esummary). Throws on network/HTTP error so the
- * caller can fall back to manual-search guidance.
+ * The esearch idlist and count. 2026-10-15: a body without esearchresult.idlist
+ * — NCBI's error envelope `{ esearchresult: { ERROR } }` among them — was parsed
+ * as zero articles, so a failed search read "PubMed: 0 articles". It is an error.
+ */
+function esearchIdsOrThrow(esearch: unknown): { ids: string[]; count: unknown } {
+  const parsed = EsearchSchema.safeParse(esearch);
+  if (!parsed.success) warnShapeMismatch('esearch', parsed.error);
+  const result = parsed.success ? parsed.data.esearchresult : undefined;
+  const idlist = result?.idlist;
+  if (!result || result.ERROR != null || !Array.isArray(idlist)) {
+    const ncbiError = result?.ERROR != null ? `: ${String(result.ERROR)}` : '';
+    throw new Error(`PubMed esearch response had no esearchresult.idlist${ncbiError}`);
+  }
+  return { ids: idlist, count: result.count };
+}
+
+/**
+ * Search PubMed (esearch → esummary). Throws on network/HTTP error, or on a
+ * body with no results key, so the caller can fall back to manual-search guidance.
  */
 export async function searchPubmed(params: PubmedSearchParams): Promise<PubmedSearchResult> {
   const esearchParams = buildEsearchParams(params);
@@ -220,11 +237,8 @@ export async function searchPubmed(params: PubmedSearchParams): Promise<PubmedSe
   }
 
   const esearch = await getJson(`${baseUrl()}/esearch.fcgi?${esearchParams.toString()}`);
-  const esearchParsed = EsearchSchema.safeParse(esearch);
-  if (!esearchParsed.success) warnShapeMismatch('esearch', esearchParsed.error);
-  const esearchResult = (esearchParsed.success ? esearchParsed.data : {})?.esearchresult ?? {};
-  const ids: string[] = Array.isArray(esearchResult.idlist) ? esearchResult.idlist : [];
-  const totalCount = Number(esearchResult.count ?? ids.length) || ids.length;
+  const { ids, count } = esearchIdsOrThrow(esearch);
+  const totalCount = Number(count ?? ids.length) || ids.length;
 
   if (ids.length === 0) {
     const emptyPayload = { source: 'PubMed' as const, totalCount: 0, articles: [] };
@@ -237,7 +251,9 @@ export async function searchPubmed(params: PubmedSearchParams): Promise<PubmedSe
   const summary = await getJson(`${baseUrl()}/esummary.fcgi?${summaryQs.toString()}`);
   const summaryParsed = EsummarySchema.safeParse(summary);
   if (!summaryParsed.success) warnShapeMismatch('esummary', summaryParsed.error);
-  const resultMap = (summaryParsed.success ? summaryParsed.data : {})?.result ?? {};
+  const resultMap = summaryParsed.success ? summaryParsed.data.result : undefined;
+  // 2026-10-15: a body without `result` returned every PMID as a blank article.
+  if (!resultMap) throw new Error('PubMed esummary response had no result map');
 
   const articles = ids.map(id => normalizeArticle(id, resultMap[id]));
   const payload = { source: 'PubMed' as const, totalCount, articles };

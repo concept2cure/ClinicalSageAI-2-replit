@@ -99,12 +99,13 @@ describe('getIntegrationStatuses', () => {
     expect(byId(failing, 'document_connectors').requires).toMatch(/unavailable/i);
   });
 
-  it('summarizeStatuses counts live / notConfigured / unknown', async () => {
+  it('summarizeStatuses counts live / configuredUnchecked / notConfigured / unknown', async () => {
     const statuses = await getIntegrationStatuses(null, makeDeps({ HUBSPOT_ACCESS_TOKEN: 'pat' }));
     const summary = summarizeStatuses(statuses);
-    // 6 public (CT.gov, PubMed, CMS, openFDA, ChEMBL, preprints) live; hubspot, gmail and calendar not
+    // 6 public (CT.gov, PubMed, CMS, openFDA, ChEMBL, preprints) configured, none called, so none live
+    // (2026-10-15: this pinned `live: 6` for six APIs nothing had probed); hubspot, gmail and calendar not
     // configured for this caller (2026-10-01, decision P-8: no organisation, so not the accounts' owner);
     // connectors unknown.
-    expect(summary).toEqual({ live: 6, notConfigured: 3, unknown: 1 });
+    expect(summary).toEqual({ live: 0, configuredUnchecked: 6, notConfigured: 3, unknown: 1 });
   });
 });
