@@ -69,13 +69,15 @@ describe('fdaDocumentationLevel', () => {
     expect(fdaDocumentationLevel({ failureCouldPresentProbableRiskOfDeathOrSeriousInjuryBeforeRiskControls: false }).level).toBe('basic');
   });
 
-  it('cites the 2023 guidance on fda.gov as regulator text, with a well-formed basis', () => {
+  it('cites the 2023 guidance on fda.gov, seen in a search extract, with a well-formed basis', () => {
     const d = fdaDocumentationLevel({});
     expect(FDA_DEVICE_SOFTWARE_GUIDANCE.title).toBe('Content of Premarket Submissions for Device Software Functions');
     expect(FDA_DEVICE_SOFTWARE_GUIDANCE.issued).toBe('2023-06-14');
     expect(d.basis.length).toBeGreaterThan(0);
     const definition = d.basis[0];
-    expect(definition.confidence).toBe('regulator-text');
+    // A search extract of the PDF is recall (pinned as regulator-text until 2026-10-15).
+    expect(definition.confidence).toBe('recall');
+    expect(definition.note).toMatch(/search extract/i);
     expect(definition.url).toMatch(/^https:\/\/www\.fda\.gov\/media\/153781\/download$/);
     for (const b of d.basis) expect(basisProblems(b)).toEqual([]);
   });

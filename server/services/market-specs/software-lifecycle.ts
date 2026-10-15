@@ -226,15 +226,15 @@ export const FDA_DEVICE_SOFTWARE_GUIDANCE = Object.freeze({
 const GUIDANCE_REF = `FDA guidance "${FDA_DEVICE_SOFTWARE_GUIDANCE.title}"`;
 
 /**
- * The Documentation Level definition — the one statement in this section that
- * was checked against FDA's own copy (search extract of the fda.gov PDF).
+ * The Documentation Level definition, matched against a search extract of the
+ * fda.gov PDF; the PDF itself was not read, so it is recall. 2026-10-15: it was
+ * labelled regulator-text over this same search-extract note.
  */
 const DOCUMENTATION_LEVEL_DEFINITION_BASIS: RegulatoryBasis = Object.freeze({
   ref: `${GUIDANCE_REF}, Documentation Level (Enhanced where a software failure or flaw could present a hazardous situation with a probable risk of death or serious injury, assessed prior to risk control measures; otherwise Basic)`,
-  confidence: 'regulator-text',
+  confidence: 'recall',
   url: FDA_DEVICE_SOFTWARE_GUIDANCE.url,
-  checked: '2026-10-05',
-  note: 'Search extract of the fda.gov copy; WebFetch to fda.gov is blocked in this environment, so a verbatim re-read of the PDF is owed.',
+  note: 'Search extract of the fda.gov copy on 2026-10-05; WebFetch to fda.gov is blocked in this environment, so a verbatim re-read of the PDF is owed.',
 });
 
 /** The documentation-set rows: recall until each is checked against the guidance's table. */

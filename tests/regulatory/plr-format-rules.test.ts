@@ -56,12 +56,14 @@ describe('assess_plr_structure formatting matches 21 CFR 201.57', () => {
   });
 });
 
-describe('PLR format rules are regulator text', () => {
+describe('PLR format rules cite 21 CFR 201.57 on eCFR', () => {
   it('lists the 201.57 format rules, each sourced to eCFR', () => {
     const rules = rulesByArea('labeling');
     expect(rules.length).toBeGreaterThanOrEqual(6);
     for (const r of rules) {
-      expect(r.basis.confidence, r.id).toBe('regulator-text');
+      // eCFR was seen only in search extracts: recall (pinned as regulator-text until 2026-10-15).
+      expect(r.basis.confidence, r.id).toBe('recall');
+      expect(r.basis.note, r.id).toMatch(/search extract/i);
       expect(r.basis.url, r.id).toMatch(/^https:\/\/www\.ecfr\.gov\//);
     }
   });

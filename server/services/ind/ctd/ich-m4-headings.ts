@@ -29,14 +29,15 @@
  *     ICH M4S by table (e.g. "2.6.7.1 Toxicology: Overview"), not by heading.
  *     Those table numbers are not modelled; `isIchHeading` is false for them.
  *
- * Basis. Each row carries its own. `M4E_R2` (regulator-text) is used only for
- * the rows whose number and wording were matched against search extracts of the
- * FDA-hosted ICH M4E(R2) on 2026-10-05. Every other row is `recall`, including
- * every ICH M4 organisation and M4S row: their wording was matched against
- * search extracts of FDA-hosted copies (fda.gov/media/71628, the FDA M4
- * organisation guidance), but `regulatory-basis.ts` declares no M4S or M4
- * constant yet, and a file in `ind/ctd` does not declare its own. The facts are
- * in docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+ * Basis. Each row carries its own, and every one is `recall`: a search extract
+ * is recall (`M4E_R2` was labelled regulator-text until 2026-10-15). `M4E_R2`
+ * is used only for the rows whose number and wording were matched against
+ * search extracts of the FDA-hosted ICH M4E(R2) on 2026-10-05. The ICH M4
+ * organisation and M4S rows were matched against search extracts of FDA-hosted
+ * copies (fda.gov/media/71628, the FDA M4 organisation guidance) and say so in
+ * their note; `regulatory-basis.ts` declares no M4S or M4 constant yet, and a
+ * file in `ind/ctd` does not declare its own. The facts are in
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
  * g-ich-m4-headings-facts.md.
  *
  * `ectdElement` (the ICH eCTD v3.2.2 DTD element name) is added once the DTD is
@@ -63,8 +64,11 @@ export interface IchM4Heading {
   basis: RegulatoryBasis;
 }
 
+// 2026-10-15: the note ended "regulator-text once its constant is declared in
+// regulatory-basis.ts"; declaring a constant reads nothing, so it promised a label
+// the evidence does not support.
 const SEARCH_EXTRACT_NOTE =
-  'wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts';
+  'wording matched against a search extract of the FDA-hosted copy on 2026-10-05; the document itself was not read. Verbatim re-read owed.';
 
 const M4_ORG = (): RegulatoryBasis => ({
   ...recall('ICH M4(R4), Organisation of the CTD'),

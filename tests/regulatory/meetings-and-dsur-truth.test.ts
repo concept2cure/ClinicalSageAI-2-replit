@@ -107,15 +107,20 @@ describe('FDA formal-meeting timelines come from one table', () => {
       expect(row.basis, `${type}: packageDueBasis listed in basis`).toContain(row.packageDueBasis);
     }
     expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES.C.packageDueBasis.confidence).toBe('recall');
-    expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES.B.packageDueBasis.confidence).toBe('regulator-text');
-    expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES['B(EOP)'].packageDueBasis.confidence).toBe('regulator-text');
+    // B and B(EOP) were seen only in a search extract of the 2023 draft text: recall
+    // with a note (pinned as regulator-text until 2026-10-15).
+    for (const type of ['B', 'B(EOP)'] as const) {
+      expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES[type].packageDueBasis.confidence, type).toBe('recall');
+      expect(lifecycle.FDA_FORMAL_MEETING_TIMELINES[type].packageDueBasis.note, type).toMatch(/search extract/i);
+    }
   });
 
-  it('a deadline read only from recall is said to be recall where it is stated (F18)', () => {
+  it('a deadline not read in FDA text is said to be recall where it is stated (F18)', () => {
     expect(lifecycle.meetingPackageDeadline('C')).toMatch(/\b47\b/);
-    expect(lifecycle.meetingPackageDeadline('C')).toMatch(/recall/i);
-    for (const type of ['A', 'B', 'B(EOP)', 'D', 'INTERACT'] as const) {
-      expect(lifecycle.meetingPackageDeadline(type), type).not.toMatch(/recall/i);
+    // Every package deadline rests on a search extract or a search synthesis, none on
+    // the guidance text, so each says so (until 2026-10-15 only C did).
+    for (const type of ['A', 'B', 'B(EOP)', 'C', 'D', 'INTERACT'] as const) {
+      expect(lifecycle.meetingPackageDeadline(type), type).toMatch(/recall/i);
     }
   });
 });
@@ -277,7 +282,7 @@ describe('the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclu
 
   it('exports the E2F outline once, every heading cited', () => {
     const sections = (lifecycle as Record<string, unknown>).ICH_E2F_DSUR_SECTIONS as
-      | Array<{ number?: string; title: string; basis: Array<{ ref: string; confidence: string; url?: string }> }>
+      | Array<{ number?: string; title: string; basis: Array<{ ref: string; confidence: string; url?: string; note?: string }> }>
       | undefined;
     expect(sections, 'ICH_E2F_DSUR_SECTIONS is not exported').toBeDefined();
     const numbered = sections!.filter((s) => s.number);
@@ -285,7 +290,9 @@ describe('the DSUR follows ICH E2F: §19 Summary of Important Risks, §20 Conclu
     expect(numbered[18].title).toBe('Summary of Important Risks');
     expect(numbered[19].title).toBe('Conclusions');
     for (const s of sections!) {
-      expect(s.basis[0]?.confidence, s.title).toBe('regulator-text');
+      // E2F was seen only in a search extract: recall (pinned as regulator-text until 2026-10-15).
+      expect(s.basis[0]?.confidence, s.title).toBe('recall');
+      expect(s.basis[0]?.note, s.title).toMatch(/search extract/i);
       expect(s.basis[0]?.url, s.title).toMatch(/ema\.europa\.eu|database\.ich\.org/);
     }
   });
