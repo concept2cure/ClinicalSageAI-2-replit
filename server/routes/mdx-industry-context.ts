@@ -301,6 +301,13 @@ router.get('/effective-context', async (req: Request, res: Response) => {
     });
     return ok(res, ctx);
   } catch (err) {
+    // 2026-10-15: the resolver used to answer a failed profile read with defaults.
+    if ((err as { code?: string } | null)?.code === 'INDUSTRY_CONTEXT_UNAVAILABLE') {
+      return res.status(503).json({
+        error: 'The industry profile could not be read, so the effective context was not resolved. Try again shortly.',
+        details: { code: 'INDUSTRY_CONTEXT_UNAVAILABLE', layer: (err as { layer?: string }).layer ?? null },
+      });
+    }
     return serverError(res, log, 'effective-context', err);
   }
 });

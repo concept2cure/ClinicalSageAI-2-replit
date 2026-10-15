@@ -1071,6 +1071,8 @@ router.get('/ana/templates/company/:type', async (req: Request, res: Response) =
   try {
     const { getCompanyTemplate } = await import('../services/industry-context-templates');
     const template = getCompanyTemplate(req.params.type as any);
+    // 2026-10-15: an unknown type was answered 200 with the biotech template.
+    if (!template) return sendError(res, 404, `No company template for type "${req.params.type}".`);
     return sendSuccess(res, { template });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET company template error:', err);
@@ -1086,6 +1088,8 @@ router.get('/ana/templates/project/:type', async (req: Request, res: Response) =
   try {
     const { getProjectTemplate } = await import('../services/industry-context-templates');
     const template = getProjectTemplate(req.params.type as any);
+    // 2026-10-15: an unknown type was answered 200 with the IND template.
+    if (!template) return sendError(res, 404, `No project template for type "${req.params.type}".`);
     return sendSuccess(res, { template });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET project template error:', err);
