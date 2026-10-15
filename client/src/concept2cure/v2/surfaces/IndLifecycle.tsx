@@ -163,6 +163,10 @@ const MEETING_TYPES = [
   { v: 'type_c', label: 'Type C' },
 ];
 const REF_FILE_TYPES = OPTS(['DMF', 'IND', 'NDA', 'BLA']);
+const FDA_CENTERS = [
+  { v: 'CDER', label: 'CDER — Center for Drug Evaluation and Research' },
+  { v: 'CBER', label: 'CBER — Center for Biologics Evaluation and Research' },
+];
 /* The safety-report option lists (event type, seriousness, causality, outcome,
    expectedness) moved with the withheld card to ./indSafetyReportCard.ts. */
 const AMENDMENT_CATEGORIES = OPTS(['protocol', 'protocol_amendment_summary', 'new_investigator', 'cmc', 'pharmacology_toxicology', 'clinical_summary', 'investigators_brochure', 'other']);
@@ -198,23 +202,32 @@ const NOT_ASSESSED: ScreenReadiness = {
   warnings: [],
 };
 
+/** The server's clock. `basis` may be absent from an older server; absent is
+    never read as a recorded receipt. */
+type ServerClockState = Omit<ClockState, 'basis' | 'holdHistoryAssessed'> &
+  Partial<Pick<ClockState, 'basis' | 'holdHistoryAssessed'>>;
+
 /** Where the server's 30-day clock is: each state renders as itself. */
 type ServerClock =
   | { state: 'no-target-date' }
   | { state: 'computing' }
-  | { state: 'computed'; clock: ClockState }
+  | { state: 'computed'; clock: ServerClockState }
   | { state: 'not-computed'; reason: string };
 
-function isClockState(x: unknown): x is ClockState {
-  const c = x as Partial<ClockState> | null;
+const boolOrNull = (v: unknown) => typeof v === 'boolean' || v === null;
+
+function isClockState(x: unknown): x is ServerClockState {
+  const c = x as Partial<ServerClockState> | null;
   return (
     !!c &&
     typeof c.status === 'string' &&
     typeof c.thirtyDayDate === 'string' &&
     !Number.isNaN(Date.parse(c.thirtyDayDate)) &&
     typeof c.daysUntilThirtyDay === 'number' &&
-    typeof c.safeToProceed === 'boolean' &&
-    typeof c.onHold === 'boolean' &&
+    // The engine answers null for a clearance or hold it could not assess
+    // (2026-10-15); that is an answer, not a malformed one.
+    boolOrNull(c.safeToProceed) &&
+    boolOrNull(c.onHold) &&
     typeof c.rationale === 'string'
   );
 }
@@ -395,21 +408,19 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     return d && !Number.isNaN(d.getTime()) ? d : null;
   }, [targetReceiptDate]);
   const { clock: clockState, retry: retryClock } = useServerClock(receiptDate ? receiptDate.toISOString() : null);
-  const clock: ClockState | null = clockState.state === 'computed' ? clockState.clock : null;
+  const clock: ServerClockState | null = clockState.state === 'computed' ? clockState.clock : null;
   /**
    * What the clock is computed FROM. 21 CFR 312.40(b) starts the 30-day period
    * at FDA's RECEIPT of the IND; the only date this surface has is the
-   * program's target submission date, which is a plan. A target date more than
-   * 30 days in the past therefore produced status 'safe_to_proceed', a
-   * good-tone chip, and the clock's own sentence — "clinical investigations may
-   * proceed (21 CFR 312.40(b))" — for an IND the FDA may never have received.
-   * That sentence authorises dosing the first human subject; it may only be
-   * said over a recorded receipt. Until the checklist carries one, the clock is
-   * a projection and says so in every register it speaks in.
+   * program's target submission date, which is a plan, and it never tells the
+   * server otherwise. Until 2026-10-15 the server's engine still answered
+   * 'safe_to_proceed' — "clinical investigations may proceed", a sentence that
+   * authorises dosing — over such a date, so this screen hard-coded the clock
+   * to a projection and ignored the engine's verdicts. The engine now states its
+   * own basis and answers null for what it could not assess, so the screen
+   * speaks on the basis the server states. An answer without one is a projection.
    */
-  // Typed as boolean, not narrowed to `false`: the receipt-backed branches stay
-  // live code for the day the checklist carries a recorded FDA receipt date.
-  const clockFromReceipt: boolean = false;
+  const clockFromReceipt = clock?.basis === 'fda_receipt';
   const clearDate = useMemo(
     () => (clock ? new Date(clock.thirtyDayDate) : null),
     [clock],
@@ -461,7 +472,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         (clock
           ? clockFromReceipt
             ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
-              `${clock.safeToProceed ? 'safe to proceed' : clock.onHold ? 'ON HOLD' : 'not yet cleared'}.`
+              `${clock.safeToProceed === true ? 'safe to proceed' : clock.onHold === true ? 'ON HOLD' : clock.safeToProceed === null ? 'clearance not determined' : 'not yet cleared'}.`
             : ` FDA receipt has NOT been recorded, so the 312.40(b) 30-day period has not started; ` +
               `${clock.daysUntilThirtyDay} day(s) is a projection from the program's target submission date, not a clearance.`
           : clockState.state === 'computing'
@@ -654,11 +665,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
 
   /* Cover-letter exemplar handlers — real POSTs against the real routes
      (server/routes/ind-lifecycle/documents.routes.ts). Identity comes from the
-     loaded checklist only; a failure is reported honestly, never as success. */
+     loaded checklist only; a failure is reported honestly, never as success.
+     The FDA center goes up only when chosen (2026-10-15: the server addressed
+     every letter to CDER; it now reports an unstated center as a gap). */
+  const coverLetterCenter = (fields['cl.fdaCenter'] ?? '').trim();
   const coverLetterPayload = () => ({
     sponsorName: prog.sponsorName ?? '',
     drugName: drug,
     submissionType: 'original',
+    ...(coverLetterCenter ? { fdaCenter: coverLetterCenter } : {}),
   });
   /** A caught throw reduced to a fragment safe to compose into a sentence.
       Only ApiRequestError has been through the envelope reduction in
@@ -718,6 +733,14 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      when it was untouched — the meeting type, file types, amendment category
      and change kind all reached the server as choices nobody made. */
   const chosen = (k: string, name: string): Record<string, string> => (fv(k) ? { [name]: fv(k) } : {});
+  /* The authorized scope of a right of reference, one entry per line. Sent
+     only when entered (2026-10-15: the server granted "the file in its
+     entirety" for an unstated scope; it now reports the gap). */
+  const scopeOf = (k: string): Record<string, string[]> => {
+    const lines = fv(k).split('\n').map((l) => l.trim()).filter(Boolean);
+    return lines.length > 0 ? { authorizedSections: lines } : {};
+  };
+  const SCOPE_HINT = 'e.g. 3.2.S Drug Substance — or: the file in its entirety';
   /** The server's own words for a failure — never a cheerful paraphrase, and
       never the machine's words either. The second term used to be a bare
       `json.error` string, so an envelope shaped { error: 'ESIGN_REQUIRED',
@@ -812,17 +835,20 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   /* Annual-report intake. The period registers (study statuses, safety reports
-     in period, IB changes) are not captured on this card; they go up as empty
-     lists and the SERVER's gap verdict marks the affected sections incomplete —
-     nothing is invented to fill them. */
+     in period, IB changes) are not captured on this card, and the SERVER's gap
+     verdict marks those sections incomplete. Until 2026-10-15 the two registers
+     went up as empty lists and the server printed "No IND Safety Reports were
+     submitted" / "No revisions to the IB" over them as complete sections. The
+     server now prints "none" only on the sponsor's statement, which these two
+     checkboxes are; untouched, nothing is stated and the gaps stand. */
   const annualReportPayload = (): Record<string, unknown> => ({
     productName: prog.productName ?? drug,
     indNumber: fv('ar.indNumber'),
     reportingPeriodStart: fv('ar.start'),
     reportingPeriodEnd: fv('ar.end'),
     studyStatuses: [],
-    safetyReportsInPeriod: [],
-    ibChanges: [],
+    ...(fv('ar.noSafetyReports') === 'yes' ? { noSafetyReportsInPeriod: true } : {}),
+    ...(fv('ar.noIbChanges') === 'yes' ? { noIbChangesInPeriod: true } : {}),
     ...(fv('ar.safetySummary') ? { safetySummary: fv('ar.safetySummary') } : {}),
     ...(fv('ar.plan') ? { investigationalPlan: fv('ar.plan') } : {}),
   });
@@ -893,6 +919,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         { key: 'loa.number', label: 'Referenced file number', kind: 'text', placeholder: 'e.g. DMF 12345' },
         { key: 'loa.holder', label: 'File holder (grantor)', kind: 'text' },
         { key: 'loa.subject', label: 'Subject (drug substance / product)', kind: 'text' },
+        { key: 'loa.scope', label: 'Authorized scope (sections, one per line)', kind: 'textarea', placeholder: SCOPE_HINT },
         { key: 'loa.signatory', label: 'Signatory (for the holder)', kind: 'text' },
       ],
       payload: () => ({
@@ -901,6 +928,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         holderName: fv('loa.holder'),
         authorizedPartyName: prog.sponsorName ?? '',
         subjectName: fv('loa.subject'),
+        ...scopeOf('loa.scope'),
         signatoryName: fv('loa.signatory'),
       }),
       toView: modelSectionsView,
@@ -912,6 +940,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         { key: 'ror.type', label: 'Referenced file type', kind: 'select', options: REF_FILE_TYPES, placeholder: NOT_STATED },
         { key: 'ror.number', label: 'Referenced file number', kind: 'text' },
         { key: 'ror.subject', label: 'Subject (drug substance / product)', kind: 'text' },
+        { key: 'ror.scope', label: 'Authorized scope (sections, one per line)', kind: 'textarea', placeholder: SCOPE_HINT },
         { key: 'ror.signatory', label: 'Signatory (for the sponsor)', kind: 'text' },
       ],
       payload: () => ({
@@ -919,6 +948,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         ...chosen('ror.type', 'referencedFileType'),
         referencedFileNumber: fv('ror.number'),
         subjectName: fv('ror.subject'),
+        ...scopeOf('ror.scope'),
         signatoryName: fv('ror.signatory'),
       }),
       toView: modelSectionsView,
@@ -935,6 +965,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         { key: 'ar.end', label: 'Reporting period end', kind: 'date' },
         { key: 'ar.safetySummary', label: 'Summary of safety information (312.33(b))', kind: 'textarea' },
         { key: 'ar.plan', label: 'General investigational plan (312.33(c))', kind: 'textarea' },
+        { key: 'ar.noSafetyReports', label: 'No IND Safety Reports were submitted during the period (sponsor statement)', kind: 'checkbox' },
+        { key: 'ar.noIbChanges', label: "No revisions to the Investigator's Brochure during the period (sponsor statement)", kind: 'checkbox' },
       ],
       payload: annualReportPayload,
       toView: (json: any) =>
@@ -1451,6 +1483,22 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                       route, no dead affordance. */}
                   {d.id === 'cover-letter' ? (
                     <>
+                      <div style={{ display: 'grid', gap: 6, margin: '6px 0' }}>
+                        <label style={{ fontSize: 12 }}>
+                          FDA center
+                          <select
+                            className="c2c-input"
+                            style={{ height: 28, width: '100%' }}
+                            value={coverLetterCenter}
+                            onChange={(e) => setFieldVal('cl.fdaCenter', e.target.value)}
+                          >
+                            <option value="">{NOT_STATED}</option>
+                            {FDA_CENTERS.map((o) => (
+                              <option key={o.v} value={o.v}>{o.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
                       <div className="indl-dcard-acts">
                         <button
                           className="btn primary sm"

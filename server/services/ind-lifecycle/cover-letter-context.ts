@@ -25,19 +25,25 @@ export interface CoverLetterSubmission {
   lifecycleStage?: string | null;
 }
 
-/** Map a submission lifecycle stage to the cover letter's submission type. */
-export function lifecycleStageToSubmissionType(stage: string | null | undefined): IndSubmissionType {
+/**
+ * Map a submission lifecycle stage to the cover letter's submission type —
+ * only where the stage names exactly one. Null otherwise, so the letter raises
+ * a submissionType gap and the caller states it (overrides.submissionType).
+ *
+ * 2026-10-15: this mapped by assumption — 'amendment' was always an
+ * information amendment (a protocol amendment needs its 312.30(d) title),
+ * 'response' always an information-request response (never a clinical-hold
+ * response), and planning / variation / withdrawal / a missing stage all
+ * became "Initial Investigational New Drug Application".
+ */
+export function lifecycleStageToSubmissionType(stage: string | null | undefined): IndSubmissionType | null {
   switch (stage) {
-    case 'amendment':
-      return 'information_amendment';
-    case 'response':
-      return 'response_to_information_request';
+    case 'original':
+      return 'original';
     case 'annual':
       return 'annual_report';
-    case 'planning':
-    case 'original':
     default:
-      return 'original';
+      return null;
   }
 }
 
@@ -80,7 +86,7 @@ export function assembleCoverLetterContext(records: CoverLetterRecords): CoverLe
       ? composeAddress([s.addressLine1, s.addressLine2, s.city, s.stateProvince, s.postalCode, s.country])
       : undefined,
     drugName: sub?.productName ?? '',
-    submissionType: lifecycleStageToSubmissionType(sub?.lifecycleStage),
+    submissionType: lifecycleStageToSubmissionType(sub?.lifecycleStage) ?? undefined,
     contactName: s?.contactName ?? undefined,
     contactPhone: s?.contactPhone ?? undefined,
     contactEmail: s?.contactEmail ?? undefined,

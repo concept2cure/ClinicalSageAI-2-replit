@@ -27,13 +27,15 @@ const sponsor = {
 const submission = { productName: 'C2C-001', lifecycleStage: 'original' } as unknown as Submission;
 
 describe('lifecycleStageToSubmissionType', () => {
+  // 2026-10-15: planning / amendment / response / a missing stage used to map
+  // to a letter type by assumption; only stages that name one type map now.
   it('maps lifecycle stages to cover-letter submission types', () => {
     expect(lifecycleStageToSubmissionType('original')).toBe('original');
-    expect(lifecycleStageToSubmissionType('planning')).toBe('original');
-    expect(lifecycleStageToSubmissionType('amendment')).toBe('information_amendment');
+    expect(lifecycleStageToSubmissionType('planning')).toBeNull();
+    expect(lifecycleStageToSubmissionType('amendment')).toBeNull();
     expect(lifecycleStageToSubmissionType('annual')).toBe('annual_report');
-    expect(lifecycleStageToSubmissionType('response')).toBe('response_to_information_request');
-    expect(lifecycleStageToSubmissionType(undefined)).toBe('original');
+    expect(lifecycleStageToSubmissionType('response')).toBeNull();
+    expect(lifecycleStageToSubmissionType(undefined)).toBeNull();
   });
 });
 
@@ -63,7 +65,8 @@ describe('assembleCoverLetterContext', () => {
     const { input } = assembleCoverLetterContext({});
     expect(input.sponsorName).toBe('');
     expect(input.drugName).toBe('');
-    expect(input.submissionType).toBe('original');
+    // No submission record states no type (it used to read 'original').
+    expect(input.submissionType).toBeUndefined();
   });
 
   it('returns bridge context for the default IND regulatory type', () => {

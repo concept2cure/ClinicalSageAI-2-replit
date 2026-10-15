@@ -179,7 +179,16 @@ describe('pure compute routes', () => {
   });
 
   it('POST /clock → 200 with receiptDate', async () => {
-    const res = await request(app).post('/api/ind-lifecycle/clock').send({ receiptDate: '2026-01-01', asOf: '2026-02-15' });
+    // 2026-10-15: a bare date with no hold history used to come back
+    // 'safe_to_proceed'. It is a projection until the caller says the date is
+    // FDA's recorded receipt AND supplies the hold history.
+    const bare = await request(app).post('/api/ind-lifecycle/clock').send({ receiptDate: '2026-01-01', asOf: '2026-02-15' });
+    expect(bare.status).toBe(200);
+    expect(bare.body.status).toBe('projected');
+    expect(bare.body.safeToProceed).toBeNull();
+    const res = await request(app)
+      .post('/api/ind-lifecycle/clock')
+      .send({ receiptDate: '2026-01-01', receiptRecorded: true, events: [], asOf: '2026-02-15' });
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('safe_to_proceed');
   });

@@ -106,6 +106,8 @@ export const INDL_STATUS_LABEL: Record<string, string> = {
 export const INDL_CLOCK_STATUS: Record<string, IndlClockStatusEntry> = {
   submitted: { label: 'In 30-day review', tone: 'warn' },
   safe_to_proceed: { label: 'Safe to proceed', tone: 'good' },
+  // Day 30 passed over a recorded receipt, with no hold history supplied.
+  undetermined: { label: 'Hold history not assessed', tone: 'warn' },
   clinical_hold: { label: 'Clinical hold', tone: 'bad' },
   partial_clinical_hold: { label: 'Partial hold', tone: 'bad' },
   withdrawn: { label: 'Withdrawn', tone: 'bad' },

@@ -9,6 +9,8 @@
  * Pure / deterministic. Stateless — the caller supplies the anchor dates.
  */
 
+import { indAnniversary, annualReportDueAfter } from './ind-annual-report-service';
+
 export type MilestoneStatus = 'past' | 'due_soon' | 'upcoming';
 
 export interface TimelineMilestone {
@@ -81,11 +83,14 @@ export function buildIndTimeline(input: IndTimelineInput): IndTimeline {
   }
 
   // Annual report anniversaries + 60-day due dates (312.33), projected to the horizon.
+  // Calendar years via the annual-report service's helper (2026-10-15: this was
+  // effective + 365×n days, a day early per leap day passed, and disagreed with
+  // the annual-report due date).
   if (input.effectiveDate) {
     const effective = new Date(input.effectiveDate);
     for (let year = 1; year <= Math.ceil(horizonDays / 365) + 1; year += 1) {
-      const anniversary = addDays(effective, 365 * year);
-      const due = addDays(anniversary, 60);
+      const anniversary = indAnniversary(effective, year);
+      const due = annualReportDueAfter(anniversary);
       // Stop once both the anniversary and its due date are beyond the horizon.
       if (anniversary.getTime() > horizonEnd.getTime() && due.getTime() > horizonEnd.getTime()) break;
       const { status, daysFromNow } = statusFor(due, asOf, dueSoonDays);

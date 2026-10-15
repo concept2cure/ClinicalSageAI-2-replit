@@ -280,7 +280,7 @@ export interface ComputeReadinessOptions {
 export interface Module3CrossReference {
   /** "DMF 012345". */
   fileLabel: string;
-  /** Sections recorded as relied upon. Empty is "the file in its entirety", which names no heading. */
+  /** Sections recorded as relied upon. Empty is scope not recorded (SCOPE_NOT_SPECIFIED), which names no heading. */
   authorizedSections: readonly string[];
   /** A Letter of Authorization is recorded as on file for it. */
   loaOnFile: boolean;

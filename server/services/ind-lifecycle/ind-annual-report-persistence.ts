@@ -21,7 +21,7 @@ import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import {
   assembleIndAnnualReport,
-  computeAnnualReportDue,
+  computeAnnualReportDueForPeriod,
   type IndAnnualReportInput,
 } from './ind-annual-report-service';
 
@@ -82,7 +82,9 @@ export async function createAnnualReportDraft(
   const coerced = coerceInput(input.report);
   const model = assembleIndAnnualReport({ ...coerced, organizationId: String(ctx.organizationId) });
   const effective = d(input.indEffectiveDate);
-  const dueDate = effective ? computeAnnualReportDue(effective) : null;
+  // Due from this report's own period (2026-10-15; it was dated from the wall
+  // clock, so an early draft read overdue and a year-late one read on time).
+  const dueDate = effective ? computeAnnualReportDueForPeriod(effective, coerced.reportingPeriodEnd) : null;
 
   const [row] = await db
     .insert(indAnnualReports)

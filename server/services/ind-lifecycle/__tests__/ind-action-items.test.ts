@@ -22,6 +22,8 @@ const readiness = (blockers: Array<{ kind: 'required_section' | 'required_form';
 
 const heldClock: ClockState = {
   status: 'clinical_hold',
+  basis: 'fda_receipt',
+  holdHistoryAssessed: true,
   thirtyDayDate: '2026-01-31T00:00:00.000Z',
   safeToProceed: false,
   onHold: true,

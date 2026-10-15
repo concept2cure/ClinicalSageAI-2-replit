@@ -33,6 +33,8 @@ const readyReport = (ready: boolean, blockers: number): IndReadinessReport => ({
 
 const clock = (onHold: boolean, safe: boolean): ClockState => ({
   status: onHold ? 'clinical_hold' : 'safe_to_proceed',
+  basis: 'fda_receipt',
+  holdHistoryAssessed: true,
   thirtyDayDate: '2026-01-31T00:00:00.000Z',
   safeToProceed: safe,
   onHold,

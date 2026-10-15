@@ -7,7 +7,11 @@
  * now" view clients act from. Pure / deterministic.
  */
 
-import type { IndReadinessReport } from './ind-readiness-service';
+import {
+  OVERDUE_SAFETY_REPORTS_NOT_ASSESSED,
+  type IndReadinessReport,
+  type ReadinessBlocker,
+} from './ind-readiness-service';
 import type { ClockState } from './ind-regulatory-clock';
 import type { IndTimeline } from './ind-timeline-service';
 import type { SequenceValidationReport } from './ind-sequence-validation';
@@ -31,7 +35,11 @@ export interface IndActionItemsInput {
   clock?: ClockState | null;
   timeline?: IndTimeline | null;
   sequenceValidation?: SequenceValidationReport | null;
-  /** Count of expedited IND safety reports past their reporting deadline. */
+  /**
+   * Count of TRACKED expedited IND safety reports past their reporting deadline
+   * (drafted reports in the register). Omitted → an action says it was not
+   * assessed, unless the readiness in scope is for an initial IND.
+   */
   overdueSafetyReports?: number;
 }
 
@@ -42,6 +50,61 @@ export interface IndActionItems {
 }
 
 const PRIORITY_RANK: Record<ActionPriority, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+
+/** A readiness blocker's action title, by what kind of blocker it is. */
+function readinessActionTitle(b: ReadinessBlocker): string {
+  switch (b.kind) {
+    case 'required_form':
+      return `Complete form ${b.code}`;
+    case 'required_section':
+      return `Complete required section ${b.code}`;
+    case 'overdue_safety_report':
+      return 'Submit the overdue tracked IND safety report(s)';
+    case 'nothing_assessed':
+      return b.code === OVERDUE_SAFETY_REPORTS_NOT_ASSESSED ? 'Overdue IND safety reports not assessed' : `Not assessed: ${b.code}`;
+    case 'lifecycle':
+      return `Resolve lifecycle issue ${b.code}`;
+  }
+}
+
+/**
+ * The overdue IND safety-report action, if any. 2026-10-15: an omitted count
+ * read as zero (no action); it is now an action saying it was not assessed. An
+ * initial IND has no IND safety reports yet, so nothing is asked of it.
+ */
+function safetyActionItem(input: IndActionItemsInput): IndActionItem | null {
+  const overdue = typeof input.overdueSafetyReports === 'number' ? input.overdueSafetyReports : null;
+  if (overdue !== null && overdue > 0) {
+    return {
+      id: 'safety_overdue',
+      priority: 'critical',
+      category: 'safety',
+      title: `Submit ${overdue} overdue tracked IND safety report(s)`,
+      detail:
+        'Tracked expedited IND safety reports are past their 7/15-day reporting deadline. Tracked reports only: an adverse ' +
+        'event whose clock has lapsed with no drafted report is not counted.',
+      cfrRef: '21 CFR 312.32',
+    };
+  }
+  if (overdue === null && input.readiness?.filingType !== 'initial') {
+    return {
+      id: 'safety_not_assessed',
+      priority: 'high',
+      category: 'safety',
+      title: 'Overdue IND safety reports not assessed',
+      detail:
+        'No count of expedited IND safety reports past their 7/15-day deadline was supplied, so none is assumed. ' +
+        'Establish it from the safety-report register.',
+      cfrRef: '21 CFR 312.32',
+    };
+  }
+  return null;
+}
+
+/** Readiness blockers that state the same fact as the safety action above them. */
+function isSafetyBlocker(b: ReadinessBlocker): boolean {
+  return b.kind === 'overdue_safety_report' || (b.kind === 'nothing_assessed' && b.code === OVERDUE_SAFETY_REPORTS_NOT_ASSESSED);
+}
 
 /**
  * Derive the prioritized action list. Items are sorted critical → low; within a
@@ -63,28 +126,22 @@ export function deriveIndActionItems(input: IndActionItemsInput): IndActionItems
   }
 
   // 2. Overdue expedited safety reports (312.32).
-  const overdue = input.overdueSafetyReports ?? 0;
-  if (overdue > 0) {
-    items.push({
-      id: 'safety_overdue',
-      priority: 'critical',
-      category: 'safety',
-      title: `Submit ${overdue} overdue IND safety report(s)`,
-      detail: 'Expedited IND safety reports are past their 7/15-day reporting deadline.',
-      cfrRef: '21 CFR 312.32',
-    });
-  }
+  const safety = safetyActionItem(input);
+  if (safety) items.push(safety);
+  const safetyItemStated = safety !== null;
 
-  // 3. Readiness blockers (required sections / forms / safety) → high.
+  // 3. Readiness blockers (required sections / forms / safety) → high. A safety
+  //    blocker is not repeated when step 2 already states that fact.
   if (input.readiness) {
     for (const b of input.readiness.blockers) {
+      if (safetyItemStated && isSafetyBlocker(b)) continue;
       items.push({
         id: `readiness:${b.kind}:${b.code}`,
         priority: 'high',
         category: 'readiness',
-        title: b.kind === 'required_form' ? `Complete form ${b.code}` : `Complete required section ${b.code}`,
+        title: readinessActionTitle(b),
         detail: b.message,
-        cfrRef: '21 CFR 312.23',
+        cfrRef: isSafetyBlocker(b) ? '21 CFR 312.32' : '21 CFR 312.23',
       });
     }
   }
