@@ -837,13 +837,12 @@ export class FdaEsgGateway implements SubmissionGateway {
         transmissionId: r.transmission_id,
         contentType: 'message/disposition-notification',
         buffer: Buffer.from(r.mdn_raw, 'utf8'),
-        /* 2026-09-23 (W5/D7, round-3 review) — RESIDUAL, not fixed here: a row
-           that is not 'received' (an explicit rejection, or an in_transit row
-           whose MDN could not be tied to the message) has no ack_received_at,
-           so this falls back to the download time. It should be null, but
-           GatewayAcknowledgment.receivedAt is `Date` (types.ts) and the same
-           fallback is in platformTransmittalRecord (acknowledgement.ts). */
-        receivedAt: r.ack_received_at ?? new Date(),
+        /* A row that is not 'received' (an explicit rejection, or an
+           in_transit row whose MDN could not be tied to the message) has no
+           ack_received_at. This fell back to the download time — the residual
+           the 2026-09-23 round-3 review left open because the type was `Date`.
+           It is null now (2026-10-15). */
+        receivedAt: r.ack_received_at ?? null,
         // The only genuine agency artefact the platform holds: FDA's own MDN,
         // stored verbatim at transmit time. Everything else served from this
         // method is a platform record and is labelled as one.

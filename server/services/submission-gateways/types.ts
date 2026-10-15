@@ -342,7 +342,14 @@ export interface GatewayAcknowledgment {
   transmissionId: string;
   contentType: string;
   buffer: Buffer;
-  receivedAt: Date;
+  /**
+   * When the transmittal row recorded the acknowledgement, or null when it
+   * recorded none — a pending transmission, a rejection, an MDN that could not
+   * be tied to the message. Both builders used to fall back to `new Date()`,
+   * so a receipt nobody recorded read as received at the moment of download,
+   * and AnA's get_submission_ack reported that time (2026-10-15).
+   */
+  receivedAt: Date | null;
   /**
    * Who authored these bytes.
    *

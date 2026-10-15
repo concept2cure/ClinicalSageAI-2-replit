@@ -9418,6 +9418,10 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       transmissionId:  ack.transmissionId,
       contentType:     ack.contentType,
       ackText:         ack.buffer.toString('utf8').slice(0, 4000),
+      // 'agency' only for the agency's own stored bytes (an FDA MDN); a
+      // 'platform-record' is this platform's summary and is no proof of receipt.
+      provenance:      ack.provenance,
+      // null when the transmittal recorded no acknowledgement time.
       receivedAt:      ack.receivedAt,
     });
   } catch (err) {

@@ -648,7 +648,18 @@ export async function recordArtifactCreation(userId: number): Promise<void> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Add an AI-recommended task to a user's work queue.
+ * Where a queued item came from. 'manual' is a person's; the others are the
+ * rule that derived it from section status (generateWorkRecommendations).
+ * 'ai' is not written any more: nothing here asks a model (2026-10-15).
+ */
+export type WorkQueueSource = 'manual' | 'deadline' | 'review_request' | 'sequence';
+
+/**
+ * Add a task to a user's work queue.
+ *
+ * A failed insert used to log at warn and return null, and POST
+ * /work-queue/add answered 200 with { id: null }; it throws now. The
+ * ai_confidence column is written NULL: no model scored these items.
  */
 export async function addToWorkQueue(params: {
   userId: number;
@@ -662,40 +673,36 @@ export async function addToWorkQueue(params: {
   referenceId?: string;
   dueDate?: Date;
   estimatedMinutes?: number;
-  source?: string;
-  aiConfidence?: number;
+  source: WorkQueueSource;
+  /** Why the item is queued, in terms of the record it was derived from. */
   aiReasoning?: string;
-}): Promise<number | null> {
-  try {
-    const result = await pool.query(
-      `INSERT INTO user_work_queue
-        (user_id, organization_id, project_id, task_type, task_title, task_description,
-         priority, reference_type, reference_id, due_date, estimated_minutes,
-         source, ai_confidence, ai_reasoning)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-       RETURNING id`,
-      [
-        params.userId,
-        params.organizationId,
-        params.projectId || null,
-        params.taskType,
-        params.taskTitle,
-        params.taskDescription || null,
-        params.priority || 50,
-        params.referenceType || null,
-        params.referenceId || null,
-        params.dueDate || null,
-        params.estimatedMinutes || null,
-        params.source || 'ai',
-        params.aiConfidence || null,
-        params.aiReasoning || null,
-      ]
-    );
-    return result.rows[0]?.id || null;
-  } catch (error) {
-    logger.warn('Failed to add to queue', { error });
-    return null;
-  }
+}): Promise<number> {
+  const result = await pool.query(
+    `INSERT INTO user_work_queue
+      (user_id, organization_id, project_id, task_type, task_title, task_description,
+       priority, reference_type, reference_id, due_date, estimated_minutes,
+       source, ai_confidence, ai_reasoning)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL, $13)
+     RETURNING id`,
+    [
+      params.userId,
+      params.organizationId,
+      params.projectId || null,
+      params.taskType,
+      params.taskTitle,
+      params.taskDescription || null,
+      params.priority || 50,
+      params.referenceType || null,
+      params.referenceId || null,
+      params.dueDate || null,
+      params.estimatedMinutes || null,
+      params.source,
+      params.aiReasoning || null,
+    ]
+  );
+  const id = result.rows[0]?.id;
+  if (id == null) throw new Error('The work-queue item was not recorded.');
+  return Number(id);
 }
 
 /**
@@ -745,18 +752,23 @@ export async function generateWorkRecommendations(params: {
       (s: any) => s.status === 'internal_review' || s.status === 'qc_review'
     );
 
-    // Clear old AI recommendations for this project
+    /* Every item below is derived by rule from the sections' recorded status
+       and deadline. They were written as source 'ai' with constant
+       confidences (0.95 / 0.85 / 0.75) and reasons nothing checked —
+       "Blocking downstream sections from proceeding" with no dependency
+       looked at — and lumen-context-builder put those reasons in AnA's
+       prompt. Each now carries the rule that produced it and the facts it
+       read (2026-10-15). Old 'ai' rows are cleared with the rule's own. */
     await pool.query(
       `DELETE FROM user_work_queue
-       WHERE user_id = $1 AND project_id = $2 AND source = 'ai'
+       WHERE user_id = $1 AND project_id = $2
+         AND source IN ('ai', 'deadline', 'review_request', 'sequence')
          AND status = 'pending'`,
       [userId, projectId]
     );
 
-    // Generate new recommendations
     let priority = 1;
 
-    // Overdue items are highest priority
     for (const item of overdueItems.slice(0, 3)) {
       await addToWorkQueue({
         userId,
@@ -764,36 +776,33 @@ export async function generateWorkRecommendations(params: {
         projectId,
         taskType: 'draft_section',
         taskTitle: `OVERDUE: Complete ${item.title || item.section_code}`,
-        taskDescription: `Section ${item.section_code} (Module ${item.module}) was due ${new Date(item.deadline).toLocaleDateString()} and is currently "${item.status}". This needs immediate attention.`,
+        taskDescription: `Section ${item.section_code} (Module ${item.module}) was due ${new Date(item.deadline).toLocaleDateString()} and is currently "${item.status}".`,
         priority: priority++,
         referenceType: 'section',
         referenceId: item.section_code,
         dueDate: item.deadline,
-        source: 'ai',
-        aiConfidence: 0.95,
-        aiReasoning: 'Section is past deadline — regulatory timeline at risk',
+        source: 'deadline',
+        aiReasoning: `Past its deadline (${new Date(item.deadline).toISOString().slice(0, 10)}) and still "${item.status}".`,
       });
     }
 
-    // Items needing review
     for (const item of inReview.slice(0, 2)) {
+      const stage = item.status === 'internal_review' ? 'internal' : 'QC';
       await addToWorkQueue({
         userId,
         organizationId,
         projectId,
         taskType: 'review_document',
         taskTitle: `Review: ${item.title || item.section_code}`,
-        taskDescription: `Section ${item.section_code} is awaiting ${item.status === 'internal_review' ? 'internal' : 'QC'} review.`,
+        taskDescription: `Section ${item.section_code} is awaiting ${stage} review.`,
         priority: priority++,
         referenceType: 'section',
         referenceId: item.section_code,
-        source: 'ai',
-        aiConfidence: 0.85,
-        aiReasoning: 'Blocking downstream sections from proceeding',
+        source: 'review_request',
+        aiReasoning: `Awaiting ${stage} review.`,
       });
     }
 
-    // Not-started items in logical order
     for (const item of myNotStarted.slice(0, 5)) {
       await addToWorkQueue({
         userId,
@@ -805,12 +814,13 @@ export async function generateWorkRecommendations(params: {
         priority: priority++,
         referenceType: 'section',
         referenceId: item.section_code,
-        source: 'ai',
-        aiConfidence: 0.75,
-        aiReasoning: `Follows CTD Module ${item.module} authoring sequence`,
+        source: 'sequence',
+        aiReasoning: `Not started and ${item.assigned_to_id === userId ? 'assigned to you' : 'unassigned'}; listed in Module ${item.module} order.`,
       });
     }
   } catch (error) {
+    // A regeneration that failed is reported, not served as the queue.
     logger.warn('Failed to generate recommendations', { error });
+    throw error;
   }
 }
