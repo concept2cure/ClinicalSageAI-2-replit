@@ -154,3 +154,21 @@ would change nothing except which code path serves it. It becomes worth
 revisiting when patterns arrive that are `cited` — at that point the store
 carries something the arrays cannot express, and the better-factored
 implementation wins on evidence rather than on architecture.
+
+### Amendment 2026-10-15 — advisory-committee risk is not read from the store
+
+`regulatory_intel.advisory_committee_patterns` has no column for which
+submission types (or therapeutic areas) a trigger applies to. The store loader
+mapped every row to `submissionTypes: []`, and the matcher keeps only triggers
+whose submission types include the one assessed, so once the platform tier was
+seeded every assessment matched nothing and reported **"AdComm risk: low, 0
+triggers"**, a first-in-class oncology NDA included. That is the exact failure
+this ADR was written to prevent, reached through the path that was described as
+unable to make the product worse.
+
+`precedent-engine` no longer reads that table; its curated list, labelled
+`curated`, answers. `migrations/20260814n` no longer seeds the 8 rows and
+removes the copies it seeded where nobody has edited them. Advisory-committee
+patterns can move to the store when the table records applicability. Pinned by
+`server/services/__tests__/precedent-crl-store-fallback.test.ts` and
+`server/__tests__/migrations/regulatory-intel-adcom-unseeded.pglite.integration.test.ts`.

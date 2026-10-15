@@ -310,24 +310,18 @@ async function loadRtfTriggersFromStore(organizationId?: string): Promise<RTFTri
   })) ?? null;
 }
 
-/** Advisory-committee triggers from the store, or null so the curated list stands. */
-async function loadAdcomTriggersFromStore(organizationId?: string): Promise<AdvisoryCommitteeTrigger[] | null> {
-  const rows = await loadPatternRows(
-    'advisory_committee_patterns',
-    'pattern_name, risk_category, historical_frequency, typical_questions',
-    organizationId,
-  );
-  return rows?.map(r => ({
-    // `typical_questions` is this table's regulatory-language column.
-    evidenceBasis: Array.isArray(r.typical_questions) && r.typical_questions.length > 0 ? 'cited' : 'curated',
-    trigger: String(r.pattern_name),
-    probability: r.historical_frequency == null ? 0 : Number(r.historical_frequency),
-    severity: (Number(r.historical_frequency) >= 0.75 ? 'critical' : Number(r.historical_frequency) >= 0.65 ? 'high' : 'medium') as AdvisoryCommitteeTrigger['severity'],
-    description: String(r.risk_category ?? '').replace(/_/g, ' '),
-    submissionTypes: [],
-    therapeuticAreas: [],
-  })) ?? null;
-}
+/* Advisory-committee triggers are NOT read from the store (removed 2026-10-15).
+
+   regulatory_intel.advisory_committee_patterns records no submission-type or
+   therapeutic-area applicability, so a stored trigger was mapped with
+   `submissionTypes: []` — and the matcher below keeps only triggers whose
+   submission types include the one assessed. Once the platform tier was
+   seeded (migrations/20260814n), every assessment matched nothing and read
+   "overall AdComm risk: low, 0 triggers": a first-in-class NDA scored low.
+   That is the failure ADR 0013 was written to prevent, produced by the store
+   path that note says "can never make the product worse". A store that
+   cannot say which submissions a trigger applies to cannot answer this
+   question, so the curated list below answers it until the table can. */
 
 export class PrecedentEngine {
   // ── 1. SEARCH: Find closest regulatory precedents ──────────────────────
@@ -1860,9 +1854,9 @@ export class PrecedentEngine {
 
     log.info(`Analyzing Advisory Committee risk for ${input.submissionType}`);
 
-    // Advisory Committee triggers — submissions likely to get AdCom
-    const storedAdcom = await loadAdcomTriggersFromStore((input as { organizationId?: string }).organizationId);
-    const adcomTriggers: AdvisoryCommitteeTrigger[] = storedAdcom ?? [
+    // Advisory Committee triggers — submissions likely to get AdCom. Curated,
+    // and labelled so: the store has no applicability to match on (see above).
+    const adcomTriggers: AdvisoryCommitteeTrigger[] = [
       {
         evidenceBasis: 'curated',
         trigger: 'First-in-class mechanism of action',
