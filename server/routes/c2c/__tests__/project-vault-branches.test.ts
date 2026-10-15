@@ -58,14 +58,14 @@ beforeEach(() => {
   seatProgram(7, PROJECT);
 });
 
-function app(orgId: number) {
+function app(orgId: number, opts: { sessionUserOnly?: boolean } = {}) {
   const a = express();
   a.use(express.json());
   a.use((req: any, _res, next) => {
     req.organizationId = orgId;
     // The session's user, as the auth middleware sets both (authBoundary, auth.ts).
     req.userId = USER;
-    req.user = { id: USER };
+    if (!opts.sessionUserOnly) req.user = { id: USER };
     // The request's own connection, which the production request scope supplies.
     req.dbClient = { query: (...args: unknown[]) => queryMock(...args) };
     next();
@@ -100,6 +100,23 @@ beforeEach(() => {
   resolveSpineMock.mockReset();
   // Anchored is the normal state; a case that tests otherwise says so.
   resolveSpineMock.mockResolvedValue({ state: 'linked', artifactProjectId: 42, via: 'program-anchor' });
+});
+
+describe('GET /api/c2c/project-vault/:id — one identity for the gate and the handler', () => {
+  /* The access gate admits on governedActorId (req.userId ?? req.user.id).
+     The handler's own current-access read used resolveUserId (req.user.id
+     only), so a request the gate admitted on req.userId read as "not a
+     current active member" inside the handler and answered a generic 500. */
+  it('a caller the gate admitted on req.userId alone is the same caller inside the handler', async () => {
+    seedBase();
+    queryMock
+      .mockResolvedValueOnce({ rows: [] }) // no M3 artifacts
+      .mockResolvedValueOnce({ rows: [] }) // uploads
+      .mockResolvedValueOnce({ rows: [{ total: 0, unfiled: 0 }] })
+      .mockResolvedValueOnce({ rows: [] }); // data room sources
+    const res = await request(app(7, { sessionUserOnly: true })).get(`/api/c2c/project-vault/${PROJECT}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+  });
 });
 
 describe('GET /api/c2c/project-vault/:id — derived branches', () => {
