@@ -12515,7 +12515,7 @@ export const coauthorValidationHistory = pgTable(
     module: text('module').notNull(),
     // The agency the caller named, or null: the checks are not agency-specific,
     // and 'FDA' was assumed when none was named (2026-10-15,
-    // migrations/20261015e_coauthor_validation_history_agency_nullable.sql).
+    // migrations/20261015f_coauthor_validation_history_agency_nullable.sql).
     agency: text('agency'),
 
     // Validation Summary

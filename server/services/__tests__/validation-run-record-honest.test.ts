@@ -165,7 +165,7 @@ describe('the run_validation action', () => {
 
 describe('coauthor_validation_history.agency', () => {
   const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), 'utf8');
-  const MIGRATION = 'migrations/20261015e_coauthor_validation_history_agency_nullable.sql';
+  const MIGRATION = 'migrations/20261015f_coauthor_validation_history_agency_nullable.sql';
   const NO_AGENCY = `INSERT INTO coauthor_validation_history (validation_id, module, agency, validation_results, performed_by)
                      VALUES ('v-1', 'regulatory_submission', NULL, '{}', 'Dana Reyes')`;
 
