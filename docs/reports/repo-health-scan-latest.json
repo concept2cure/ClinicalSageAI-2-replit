@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T03:59:15.781Z",
+  "generatedAt": "2026-10-15T04:14:34.778Z",
   "git": {
-    "sha": "fb127f46390d444e979914f592572cbbf58b74d8",
+    "sha": "d7ed0d0fb829c579ee9b729a8a4c6d06483f56de",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2209,7 +2209,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 196021
+        "bytes": 196220
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2451,7 +2451,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3818
+        "lines": 3820
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2710,12 +2710,12 @@
         "lines": 1929
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1898
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1909
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1878
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1898
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
