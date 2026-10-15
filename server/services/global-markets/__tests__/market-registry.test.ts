@@ -90,14 +90,11 @@ describe('global-markets registry — field population', () => {
 });
 
 describe('global-markets registry — honest capability invariants', () => {
-  it('canTransmit is true for 11 markets with live gateways, false for 5 without (JP: no device e-application path)', () => {
-    const transmitCapable = listMarkets().filter((m) => m.canTransmit);
-    const transmitIncapable = listMarkets().filter((m) => !m.canTransmit);
-    expect(transmitCapable).toHaveLength(11);
-    expect(transmitIncapable).toHaveLength(5);
-    const incapableIds = transmitIncapable.map((m) => m.id).sort();
-    expect(incapableIds).toEqual(['jp-pmda', 'mdsap', 'sa-sfda', 'tw-tfda', 'za-sahpra']);
-    expect(marketRegistrySummary().transmitCapable).toHaveLength(11);
+  // 2026-10-15: pinned 11 transmit-capable markets, a hand-set claim. canTransmit
+  // is now what regulatory/market-support.ts states, and it states none.
+  it('canTransmit is false for every market: market-support.ts states no channel the platform sends through', () => {
+    expect(listMarkets().filter((m) => m.canTransmit).map((m) => m.id)).toEqual([]);
+    expect(marketRegistrySummary().transmitCapable).toEqual([]);
   });
 
   it('canAssemble is true only where an assembler genuinely exists', () => {
@@ -139,7 +136,7 @@ describe('global-markets registry — derived projections', () => {
     const regionSum = Object.values(s.byRegion).reduce((a, b) => a + b, 0);
     expect(regionSum).toBe(MARKET_IDS.length);
     expect(s.assembleCapable.length).toBeGreaterThan(0);
-    expect(s.transmitCapable).toHaveLength(11);
+    expect(s.transmitCapable).toEqual([]);
   });
 });
 

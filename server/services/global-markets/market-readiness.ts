@@ -7,7 +7,8 @@
  *
  * In the spirit of regulatory/global-pathways.ts `assessPathwayReadiness`, but
  * (a) banded, (b) percentage-scored 0..100, and (c) honesty-first: results for
- * markets without a live gateway carry the standing cannot-transmit blocker;
+ * markets the platform cannot transmit to (`canTransmit` false, which is every
+ * market today) carry the cannot-transmit blocker naming the authority;
  * markets requiring a local representative surface that too.
  *
  * PURE + DETERMINISTIC: no DB, no network, no LLM.
