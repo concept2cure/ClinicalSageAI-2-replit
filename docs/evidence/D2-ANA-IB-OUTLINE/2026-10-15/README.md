@@ -27,14 +27,27 @@ Both are projected from the canonical outline:
 
 `green/ib-one-outline.txt`: 3/3. The 84 suites that load the templates, the IB surfaces or the chat template detection pass, 1,706 of 1,706. Typecheck shows 0 errors, and the lint ratchet against origin shows no file gaining a warning.
 
+## Second slice (same day, measured at `3d8e30a41`)
+
+Five more trees now take their body headings from the canonical outline. Red: `red/ib-trees-slice2.txt`, 4 of 4.
+
+| Tree | Before | Now |
+|---|---|---|
+| IB builder (`ib-builder.ts`, the Investigator's Brochure surface) | Section 3 was titled its own way | Headings 1–6 come from the outline. Front matter, sub-sections and gap-engine inputs stay local until the outline carries them. |
+| Authoring "Start from" seed (`template-seeds.ts` `crossagency_ib`) | Sentence-case copies, free-text source | Built from the outline. Codes 1–6 and orderings 100–600 are unchanged, so documents already started from it keep their codes. The source reference is the outline's basis label. |
+| Projects blueprint (`project-bootstrap.ts` `ich_ib_sections`) | Module 5, named "ICH E6 §7" | Module 0 (a standalone document, as the protocol blueprint is), named "ICH E6(R3) Appendix A". Its persisted codes 1–9 are unchanged and remain a hand-on. |
+| Medical-writing advisor (`medical-writing.ts`) | No Introduction, headings of its own | The outline's headings. RSI stays among its key requirements. |
+| IND question flow (`ind-submission.ts` `ib_content_complete`) | Omitted the table of contents and "and Formulation" | Front matter, then the outline's numbered headings |
+
+Green: `green/ib-one-outline.txt` 7/7. Every suite that loads the IB builder, the seeds, the blueprints, medical writing, the IND flow or the template library passes: 135 files, 2,535 of 2,535, the database-backed ones included. Typecheck shows 0 errors, and the ratchet against origin is clean.
+
 ## Not done, recorded
 
 Hand-ons, each from the map:
 
 1. **The canonical outline lacks the E6 front matter and the sub-sections.** The front matter is title page, confidentiality statement and table of contents. The sub-sections are 4.1–4.3 and 5.1–5.3; `ib-builder.ts` has them. It was changed by another author within 24 hours of this commit, so it was not edited. Where Reference Safety Information sits must be confirmed against the E6(R3) text before it is added.
 2. **`project-bootstrap.ts` `IB_SECTIONS` is the only persisted tree that diverges.** It numbers codes 1–9 with front matter in the body, so its "4" is Summary while every other tree's "4" is Nonclinical. It stamps module 5, where the registry places the US IB at M1. It is named "ICH E6 §7". Existing `project_sections` rows need a guarded, replay-safe code remap inside the migration set, under Rule 1.
-3. **`ib-builder.ts` `IB_STRUCTURE`** should take number, title and required from the canonical record, keeping only its gap-engine inputs. Its codes are not persisted.
-4. **`template-seeds.ts` `IB_OUTLINE`** should be built from the canonical record. Its codes 1–6 already match.
+3. *(Done in the second slice: `ib-builder` body headings and `template-seeds`.)*
 5. **The phase-9 `c2c_rule_packs` IB row is labelled `ich-m4-v2.0`,** a wrong basis. It can be corrected only by a new version row.
 6. **Lists and data still to align with the canonical headings:**
    - prose lists: `medical-writing.ts`, `ind-submission.ts` help text, `lifecycle-document-types.ts`, `authoring-guidance.ts` 1.14.4.1;
