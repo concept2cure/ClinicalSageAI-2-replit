@@ -56,7 +56,7 @@ const connectionLost = () => Object.assign(new Error('terminating connection due
 /** "Nothing recorded", said of a project: only a read that completed and found no rows may say it. */
 const AFFIRMATIVE_ABSENCE = /No [\w /-]+ data found for this project yet/;
 
-const anchorReads = () => h.query.mock.calls.filter(([sql]) => /regulatory_program_id = \$1/.test(String(sql)));
+const anchorReads = () => h.query.mock.calls.filter(([sql]) => /regulatory_program_id\s*=\s*\$1/.test(String(sql)));
 const memoryReads = () => h.query.mock.calls.filter(([sql]) => String(sql).includes('project_memory_entries'));
 
 beforeEach(() => {
@@ -73,7 +73,7 @@ beforeEach(() => {
   // The live engine is unavailable unless a case says otherwise: readiness falls back to project memory.
   h.readiness.mockReset().mockImplementation(async () => { throw new Error('readiness engine unavailable'); });
   h.query.mockReset().mockImplementation(async (sql: string, params: unknown[] = []) => {
-    if (/regulatory_program_id = \$1/.test(sql)) return { rows: h.anchorRows };
+    if (/regulatory_program_id\s*=\s*\$1/.test(sql)) return { rows: h.anchorRows };
     if (sql.includes('project_memory_entries')) {
       if (typeof params[0] !== 'number') throw integerRefused(params[0]);
       return h.memory ? h.memory() : { rows: [] };
@@ -118,7 +118,7 @@ describe('a program UUID reads the project linked to it', () => {
 
   it('a database without the anchor column is no linked project, not a failure', async () => {
     h.query.mockImplementation(async (sql: string) => {
-      if (/regulatory_program_id = \$1/.test(sql)) throw Object.assign(new Error('column "regulatory_program_id" does not exist'), { code: '42703' });
+      if (/regulatory_program_id\s*=\s*\$1/.test(sql)) throw Object.assign(new Error('column "regulatory_program_id" does not exist'), { code: '42703' });
       return { rows: [] };
     });
     const result = await enrichContextForChat({ message: SEARCH, projectId: PROGRAM, organizationId: 7 });
@@ -179,7 +179,7 @@ describe('a program UUID reads the project linked to it', () => {
 describe('a project lookup that could not tell is reported, never read as "no linked project"', () => {
   it.each(['/safety', '/cmc', '/csr', MODULE_25])('a failed lookup on %s marks the project records unavailable and asserts no absence', async message => {
     h.query.mockImplementation(async (sql: string) => {
-      if (/regulatory_program_id = \$1/.test(sql)) throw connectionLost();
+      if (/regulatory_program_id\s*=\s*\$1/.test(sql)) throw connectionLost();
       return { rows: [] };
     });
     const result = await enrichContextForChat({ message, projectId: PROGRAM, organizationId: 7 });
@@ -273,7 +273,7 @@ describe('a source that could not be read is reported, with why', () => {
   it('a project lookup that cannot finish marks the project record unavailable and reads nothing', async () => {
     vi.useFakeTimers();
     h.query.mockImplementation(async (sql: string) => {
-      if (/regulatory_program_id = \$1/.test(sql)) return stalled();
+      if (/regulatory_program_id\s*=\s*\$1/.test(sql)) return stalled();
       return { rows: [] };
     });
     const settled = vi.fn();
