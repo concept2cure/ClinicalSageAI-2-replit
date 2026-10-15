@@ -190,7 +190,7 @@ router.post('/conversations/:conversationId/proposals/:proposalId/accept', async
     return;
   }
   try {
-    const result = await acceptProposal({ ...ctx, proposalId: req.params.proposalId });
+    const result = await acceptProposal({ ...ctx, proposalId: req.params.proposalId, ipAddress: req.ip ?? null });
     res.json({ success: true, result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });

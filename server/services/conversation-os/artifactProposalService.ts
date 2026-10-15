@@ -37,7 +37,7 @@ export async function listProposals(params: { conversationId: string; projectId?
   return kernelStore.proposals.get(ctx.conversationId) ?? [];
 }
 
-export async function acceptProposal(params: { conversationId: string; proposalId: string; projectId?: string; userId?: string; organizationId?: string }) {
+export async function acceptProposal(params: { conversationId: string; proposalId: string; projectId?: string; userId?: string; organizationId?: string; ipAddress?: string | null }) {
   const ctx = withDefaultCtx(params);
   if (!ctx.projectId || !ctx.userId) throw new Error('projectId and userId are required');
   const gate = await authorizeToolUse({ ...ctx, tool: 'artifact.accept', explicitTrigger: true });
@@ -97,10 +97,11 @@ export async function acceptProposal(params: { conversationId: string; proposalI
       // No ctdSection: a proposal names no CTD placement, and every accepted
       // one was filed as 5.0 and reported "placed" (removed 2026-10-15). It
       // arrives unplaced, as it is.
-      sourceJobId: `conversation-${ctx.conversationId}`,
       surfaceKey: 'conversation_os_proposal_accept',
       sourceType: 'proposal_accept',
-      metadata: { source: 'proposal_accept', proposalId: params.proposalId },
+      backendRoute: 'POST /api/conversation-os/conversations/:conversationId/proposals/:proposalId/accept',
+      ipAddress: params.ipAddress ?? null,
+      metadata: { source: 'proposal_accept', proposalId: params.proposalId, conversationId: ctx.conversationId },
       auditMetadata: { source: 'proposal_accept', proposalId: params.proposalId },
     });
 
