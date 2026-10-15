@@ -3266,6 +3266,13 @@ export const C2C_MIGRATION_FILES = [
   // constraint, creates nothing.
   'migrations/20261015f_coauthor_validation_history_agency_nullable.sql',
 
+  // innovation.calculate_readiness_score returned a constant 75% / 80% / 70%
+  // and "15 of 20 criteria met" for any program. Its creator,
+  // db/migrations/072_gcc_innovation_platform_core.sql, is amended in place
+  // but runs on install-fresh only; this replaces the function on databases
+  // installed earlier. Conditional on the function existing; creates nothing.
+  'migrations/20261015g_innovation_readiness_score_refuses.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
