@@ -20,6 +20,7 @@ import {
   type E3Section,
   type LifecycleComponent,
 } from '../ind/ctd/index.js';
+import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11.js';
 import { getDocumentTemplate } from '../market-specs/document-template-library.js';
 import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import {
@@ -179,6 +180,41 @@ function ibTemplateSections(): TemplateSection[] {
     guidance: IB_DRAFTING[s.number]?.guidance ?? s.purpose,
     ...(IB_DRAFTING[s.number] ? { targetWords: IB_DRAFTING[s.number].targetWords } : {}),
   }));
+}
+
+/**
+ * The protocol chat drafting uses: the ICH M11 front matter and level-1
+ * headings from the platform's one protocol record (shared/regulatory/
+ * protocol-m11.ts), the outline the open-document brief and the Projects
+ * blueprint give. Until 2026-10-15 this was ten headings of its own whose
+ * numbering diverged from M11 at section 5. The phase 1 drafting guidance and
+ * word ranges stay local, keyed by M11 heading.
+ */
+const M11_PHASE1_DRAFTING: Record<string, { guidance: string; targetWords?: [number, number] }> = {
+  '1': { targetWords: [400, 700], guidance: 'Protocol synopsis, trial schema and schedule of activities: title, design, objectives and estimands, endpoints, population, dose range, duration and statistical approach.' },
+  '2': { targetWords: [300, 600], guidance: 'Purpose of the trial and the assessment of risks and benefits: disease background, unmet need, mechanism of action, nonclinical support, and the rationale for dose, schedule and route.' },
+  '3': { targetWords: [200, 400], guidance: 'Primary objective (typically safety, tolerability, MTD or RP2D) and secondary objectives (PK, PD, preliminary efficacy), each with an operationally defined endpoint and, where applicable, its estimand.' },
+  '4': { targetWords: [300, 600], guidance: 'Phase, design type (3+3, mTPI, BOIN or other), dose levels and escalation rules, sentinel dosing, the DLT window, and expansion cohorts if applicable.' },
+  '5': { targetWords: [300, 600], guidance: 'Inclusion and exclusion criteria (disease, performance status, organ function, concurrent and prior therapy), each justified.' },
+  '6': { targetWords: [300, 600], guidance: 'Administration, formulation, pre-medication, dose modifications, de-escalation and re-escalation criteria, and concomitant therapy.' },
+  '7': { targetWords: [150, 300], guidance: 'Stopping rules for the trial intervention, and participant discontinuation and withdrawal.' },
+  '8': { targetWords: [300, 600], guidance: 'Safety assessments (AE monitoring, laboratory, ECG, vital signs), the PK sampling schedule, PD and biomarker assessments, and efficacy assessments if applicable.' },
+  '9': { targetWords: [200, 400], guidance: 'DLT definitions, AE and SAE recording, and IND safety reporting of serious and unexpected suspected adverse reactions (21 CFR 312.32).' },
+  '10': { targetWords: [200, 400], guidance: 'Study size justification, the DLT/MTD determination method, PK and PD analysis, and handling of missing data.' },
+  '11': { targetWords: [150, 300], guidance: 'IRB/IEC review, the informed consent process, sponsor and investigator responsibilities, data monitoring, and protocol amendments.' },
+  '14': { guidance: 'Key literature supporting the scientific rationale and trial design.' },
+};
+
+function m11TemplateSections(): TemplateSection[] {
+  return ICH_M11_PROTOCOL_SECTIONS.filter((s) => !s.number || !s.number.includes('.')).map((s) => {
+    const local = s.number ? M11_PHASE1_DRAFTING[s.number] : undefined;
+    return {
+      heading: s.number ? `${s.number}. ${s.title}` : s.title,
+      required: true,
+      guidance: local?.guidance ?? s.purpose,
+      ...(local?.targetWords ? { targetWords: local.targetWords } : {}),
+    };
+  });
 }
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
@@ -394,19 +430,8 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
     minConfidence: 0.65,
     draftingInstructions: 'Draft an FDA-compliant Phase 1 clinical trial protocol per ICH E6(R3) and FDA guidance. The protocol must be self-contained: a reviewer with no other knowledge should be able to understand the science, patient safety, and operational plan from this document alone. Include statistical rationale for dose escalation and stopping rules.',
-    regulatoryReferences: ['ICH E6(R3) (GCP)', 'ICH E8(R1) (clinical study design)', '21 CFR 312.23 (IND application)', 'FDA Phase 1 Protocol Guidance'],
-    sections: [
-      { heading: '1. Protocol Synopsis', required: true, targetWords: [400, 700], guidance: 'Concise summary: title, design, objectives, endpoints, population, dose range, duration, statistical approach.' },
-      { heading: '2. Introduction and Rationale', required: true, targetWords: [300, 600], guidance: 'Disease background, unmet need, mechanism of action, nonclinical support for clinical development, and rationale for the chosen dose, schedule, and route.' },
-      { heading: '3. Objectives and Endpoints', required: true, targetWords: [200, 400], guidance: 'Primary objective (typically safety/tolerability/MTD/RP2D), secondary objectives (PK, PD, preliminary efficacy). Endpoints must be operationally defined and measurable.' },
-      { heading: '4. Study Design', required: true, targetWords: [300, 600], guidance: 'Phase (1, open-label, first-in-human), design type (3+3, mTPI, BOIN, or other), dose levels, escalation rules, schedule, DLT window, and expansion cohorts if applicable.' },
-      { heading: '5. Selection of Subjects', required: true, targetWords: [300, 600], guidance: 'Inclusion criteria (disease, ECOG/Karnofsky, organ function), exclusion criteria (concurrent drugs, organ dysfunction, prior therapy). Justify each criterion.' },
-      { heading: '6. Treatment Plan', required: true, targetWords: [300, 600], guidance: 'Dose administration, formulation, pre-medications, dose modifications, and stopping rules. De-escalation and re-escalation criteria. Duration of treatment and off-treatment follow-up.' },
-      { heading: '7. Assessments', required: true, targetWords: [300, 600], guidance: 'Safety assessments (AE monitoring, DLT definitions, laboratory, ECG, vitals). PK sampling schedule. PD and biomarker assessments. Efficacy assessments if applicable.' },
-      { heading: '8. Statistical Considerations', required: true, targetWords: [200, 400], guidance: 'Study size justification, DLT/MTD determination method, PK and PD analysis plan, handling of missing data.' },
-      { heading: '9. Regulatory, Ethical, and Administrative Information', required: true, targetWords: [150, 300], guidance: 'IRB/IEC requirements, informed consent process, sponsor/investigator responsibilities, data monitoring, protocol amendments, safety reporting timelines (SUSAR: 7/15 day).' },
-      { heading: '10. References', required: true, guidance: 'Key literature supporting scientific rationale and study design.' },
-    ],
+    regulatoryReferences: [ICH_M11_PROTOCOL_BASIS.ref, 'ICH E6(R3) Appendix B', 'ICH E8(R1) (clinical study design)', '21 CFR 312.23 (IND application)'],
+    sections: m11TemplateSections(),
   },
 
   // ── CMC Module 3 ──────────────────────────────────────────────────────────
