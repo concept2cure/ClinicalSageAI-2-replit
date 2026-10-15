@@ -12,11 +12,12 @@
  * the WITH CHECK blocks writing another tenant's row; no tenant context returns
  * zero rows (fail-closed); and the super-admin role bypasses. The enforcement test
  * runs in a rolled-back transaction, so the DB is left in shadow mode (the main
- * 82/82 harness keeps working).
+ * 82/82 harness keeps working), and nothing it writes is committed — the fixture
+ * tenants included.
  *
  * Apply the migration first: psql ... -f migrations/20260612_rls_research_admin.sql
  */
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { RLS_ALLOWLIST } from '../../server/db/rlsAllowlist';
 
 const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
@@ -51,12 +52,15 @@ const set = (k: string, v: string) => `SELECT set_config('${k}', '${v}', true)`;
 const INS = (org: number, num: string) =>
   `INSERT INTO grant_awards (organization_id, award_number, funding_agency, status, created_by) VALUES (${org}, '${num}', 'nih', 'active', 1)`;
 
-async function main() {
-  await pool.query(
-    `INSERT INTO organizations(id,name) VALUES (1,'Org A'),(2,'Org B') ON CONFLICT DO NOTHING`
-  );
-  await pool.query(`INSERT INTO users(id,email) VALUES (1,'u@x') ON CONFLICT DO NOTHING`);
+/* The fixture tenants and user exist only inside the transactions below,
+   which roll back. 2026-10-15: they were committed on the pool, into whatever
+   database TEST_DATABASE_URL / DATABASE_URL named. */
+async function insertFixtures(client: PoolClient) {
+  await client.query(`INSERT INTO organizations(id,name) VALUES (1,'Org A'),(2,'Org B') ON CONFLICT DO NOTHING`);
+  await client.query(`INSERT INTO users(id,email) VALUES (1,'u@x') ON CONFLICT DO NOTHING`);
+}
 
+async function main() {
   console.log('\n[RLS] coverage — research-admin tables now carry tenant_isolation_policy');
   const policyMatrix = await pool.query(
     `WITH tenant_tables AS (
@@ -115,6 +119,7 @@ async function main() {
   const c = await pool.connect();
   try {
     await c.query('BEGIN');
+    await insertFixtures(c);
     await c.query(set('app.rls_enforce', 'on'));
 
     // Org 1 context: insert its own row; cross-tenant write must be rejected.
@@ -194,6 +199,7 @@ async function main() {
   const gc = await pool.connect();
   try {
     await gc.query('BEGIN');
+    await insertFixtures(gc);
     await gc.query(set('app.rls_enforce', 'on'));
     await setTenantContextTx(gc, 1); // exactly what server/routes/*.ts governed() now does
     const ins = await gc.query(INS(1, 'RLS-GOV') + ' RETURNING id');

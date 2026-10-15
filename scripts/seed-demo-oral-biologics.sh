@@ -1,36 +1,51 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# seed-lumen-biosciences.sh
+# seed-demo-oral-biologics.sh
 #
-# Creates a FAUX "Lumen Biosciences" client organization with realistic
-# projects modeled on their public clinical pipeline (spirulina-based
-# oral biologics for GI diseases). Seattle-based biotech.
+# Creates a fictional, labelled demo client organization — "[Demo] Oral
+# Biologics (fictional)" — with four oral VHH-biologic programs (DEMO-201 …
+# DEMO-501) and ~20 artifacts, through the API of a server on this machine.
+# Every name, number, person, site and result in it is invented.
 #
-# Creates: organization, admin user, 4 projects, ~30+ artifacts
-# Login:   dr.patel@lumenbiosciences.com / Lumen2026!
+#   DEMO_EMAIL=… DEMO_PASSWORD=… bash scripts/seed-demo-oral-biologics.sh
+#
+# 2026-10-15: it used to create a faux client named after a real company, with
+# that company's program codes and street address, a claimed government
+# contract, invented investigators at real hospitals, an IND number and a Form
+# 1571 marked as digitally signed, signing in with a password committed here.
+# The account now comes from the environment (created, or signed in to when it
+# exists), and the server must be on this machine unless SEED_ALLOW_REMOTE=1.
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-BASE="http://localhost:5000"
+BASE="${BASE_URL:-http://localhost:5000}"
+if [ -z "${DEMO_EMAIL:-}" ] || [ -z "${DEMO_PASSWORD:-}" ]; then
+  echo "seed-demo-oral-biologics: set DEMO_EMAIL and DEMO_PASSWORD, the demo account to create (or sign in as). No credential is built in." >&2
+  exit 1
+fi
+SEED_HOST=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.urlsplit(sys.argv[1]).hostname or "")' "$BASE" 2>/dev/null || true)
+case "$SEED_HOST" in
+  localhost|127.0.0.1|::1) ;;
+  *)
+    if [ "${SEED_ALLOW_REMOTE:-}" != "1" ]; then
+      echo "seed-demo-oral-biologics: $BASE is not a server on this machine. These records are invented demonstration data; set SEED_ALLOW_REMOTE=1 to send them there anyway." >&2
+      exit 1
+    fi
+    ;;
+esac
 
 echo "=========================================="
-echo "  Lumen Biosciences — Demo Client Setup"
-echo "  Seattle, WA | Oral Biologics Platform"
+echo "  [Demo] Oral Biologics (fictional) — Demo Client Setup"
+echo "  Fictional organization | Oral Biologics Platform"
 echo "=========================================="
 echo ""
 
-# ─── Step 1: Create Lumen Biosciences organization via signup ───
-echo "=== Creating Lumen Biosciences organization ==="
+# ─── Step 1: Create the demo organization via signup ───
+echo "=== Creating the demo organization ==="
+SIGNUP_BODY=$(python3 -c 'import json, os; print(json.dumps({"email": os.environ["DEMO_EMAIL"], "password": os.environ["DEMO_PASSWORD"], "companyName": "[Demo] Oral Biologics (fictional)", "industryMode": "biotech", "firstName": "Demo", "lastName": "Administrator"}))')
 SIGNUP_RESP=$(curl -sf "$BASE/api/auth/signup" \
   -H 'Content-Type: application/json' \
-  -d '{
-    "email": "dr.patel@lumenbiosciences.com",
-    "password": "Lumen2026!",
-    "companyName": "Lumen Biosciences",
-    "industryMode": "biotech",
-    "firstName": "Anita",
-    "lastName": "Patel"
-  }' 2>/dev/null || echo '{"error":"already exists"}')
+  --data-binary @- <<<"$SIGNUP_BODY" 2>/dev/null || echo '{"error":"already exists"}')
 
 # Check if signup succeeded or user already exists
 if echo "$SIGNUP_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); exit(0 if d.get('success') or d.get('token') else 1)" 2>/dev/null; then
@@ -38,9 +53,10 @@ if echo "$SIGNUP_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); ex
   TOKEN=$(echo "$SIGNUP_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('token',''))")
 else
   echo "  Organization may already exist, logging in..."
+  LOGIN_BODY=$(python3 -c 'import json, os; print(json.dumps({"email": os.environ["DEMO_EMAIL"], "password": os.environ["DEMO_PASSWORD"]}))')
   LOGIN_RESP=$(curl -sf "$BASE/api/auth/login" \
     -H 'Content-Type: application/json' \
-    -d '{"email":"dr.patel@lumenbiosciences.com","password":"Lumen2026!"}')
+    --data-binary @- <<<"$LOGIN_BODY")
   TOKEN=$(echo "$LOGIN_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])")
 fi
 
@@ -108,21 +124,21 @@ print(json.dumps({
 }
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║ PROJECT 1: LMN-201 — Anti-C. diff IND (Phase 2 ready, most advanced)    ║
+# ║ PROJECT 1: DEMO-201 — Anti-C. diff IND (Phase 2 ready, most advanced)    ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 echo ""
 echo "=========================================="
-echo "  PROJECT 1: LMN-201 Anti-C. diff IND"
+echo "  PROJECT 1: DEMO-201 Anti-C. diff IND"
 echo "=========================================="
 
 P1_RESP=$(curl -sf "$BASE/api/concept2cure/projects" \
   -H "$AUTH" -H "$CT" \
   -d '{
-    "name": "LMN-201 (Anti-C. difficile VHH) — IND Application",
+    "name": "DEMO-201 (Anti-C. difficile VHH) — IND Application",
     "submissionType": "IND",
-    "description": "Investigational New Drug application for LMN-201, an orally delivered VHH antibody (nanobody) produced in spirulina targeting C. difficile toxins TcdA and TcdB. Designed for prevention of recurrent C. difficile infection (rCDI). Phase 1 completed; Phase 2 PROTECT trial planning underway.",
-    "sponsor": "Lumen Biosciences, Inc.",
-    "product": "LMN-201 (Anti-TcdA/TcdB VHH)",
+    "description": "Investigational New Drug application for DEMO-201, an orally delivered VHH antibody (nanobody) produced in spirulina targeting C. difficile toxins TcdA and TcdB. Designed for prevention of recurrent C. difficile infection (rCDI). Phase 1 completed; Phase 2 PROTECT trial planning underway.",
+    "sponsor": "[Demo] Oral Biologics (fictional)",
+    "product": "DEMO-201 (Anti-TcdA/TcdB VHH)",
     "region": "US FDA",
     "targetSubmissionDate": "2026-05-15T00:00:00.000Z"
   }')
@@ -131,16 +147,16 @@ echo "  Project ID: $P1_ID"
 
 # Module 1: Administrative
 create_artifact "$P1_ID" \
-  "FDA Form 1571 — LMN-201 IND Application" \
+  "FDA Form 1571 — DEMO-201 IND Application" \
   "m1.1.1" \
   "approved" \
   "# FDA Form 1571 — IND Application
 
 ## Applicant Information
-- **Sponsor:** Lumen Biosciences, Inc.
-- **Address:** 4142 23rd Avenue W, Seattle, WA 98199
-- **IND Number:** IND 157832 (Phase 2 Amendment)
-- **Drug Name:** LMN-201 (Anti-TcdA/TcdB VHH Antibody)
+- **Sponsor:** [Demo] Oral Biologics (fictional)
+- **Address:** none (fictional organization)
+- **IND Number:** none — fictional program (Phase 2 Amendment)
+- **Drug Name:** DEMO-201 (Anti-TcdA/TcdB VHH Antibody)
 
 ## Submission Type
 - [ ] Initial IND
@@ -154,53 +170,53 @@ create_artifact "$P1_ID" \
 - **Dosage Form:** Enteric-coated capsules containing dried spirulina biomass
 
 ## Authorized Representative
-**Name:** Dr. Anita Patel, SVP Regulatory Affairs
-**Signature:** [Digital Signature Applied]
+**Name:** Demo Regulatory Lead (fictional)
+**Signature:** not signed (demonstration content)
 **Date:** 2026-03-10"
 
 create_artifact "$P1_ID" \
-  "FDA Form 1572 — Dr. James Harper, PI" \
+  "FDA Form 1572 — Demo Principal Investigator" \
   "m1.1.2" \
   "approved" \
   "# FDA Form 1572 — Statement of Investigator
 
 ## Principal Investigator
-- **Name:** James C. Harper, MD, FIDSA
-- **Institution:** University of Washington Medical Center
+- **Name:** Demo Principal Investigator (fictional)
+- **Institution:** Demo Clinical Site 1 (fictional)
 - **Department:** Division of Infectious Diseases
-- **Address:** 1959 NE Pacific St, Seattle, WA 98195
+- **Address:** none (fictional site)
 
 ## Qualifications
 Board Certified in Infectious Diseases. 20 years experience in C. difficile clinical research. Published >80 peer-reviewed articles on CDI pathogenesis and treatment.
 
 | Degree | Institution | Year |
 |--------|-------------|------|
-| MD | Stanford University School of Medicine | 2001 |
-| Residency | UCSF Internal Medicine | 2004 |
-| Fellowship | UW Infectious Diseases | 2007 |
+| MD | Demo Medical School (fictional) | 2001 |
+| Residency | Demo Internal Medicine Residency (fictional) | 2004 |
+| Fellowship | Demo Infectious Diseases Fellowship (fictional) | 2007 |
 
 ## Sub-Investigators
 | Name | Role | Institution |
 |------|------|-------------|
-| Dr. Nina Kowalski, MD | Sub-I, Site 1 | UW Medical Center |
-| Dr. Michael Tran, MD | Sub-I, Site 2 | Virginia Mason |
-| Dr. Priya Sharma, PhD | Translational Lead | Fred Hutch Cancer Center |"
+| Demo Sub-Investigator 1 (fictional) | Sub-I, Site 1 | Demo Clinical Site 1 (fictional) |
+| Demo Sub-Investigator 2 (fictional) | Sub-I, Site 2 | Demo Clinical Site 2 (fictional) |
+| Demo Translational Lead (fictional) | Translational Lead | Demo Research Institute (fictional) |"
 
 create_artifact "$P1_ID" \
-  "Introductory Statement — LMN-201" \
+  "Introductory Statement — DEMO-201" \
   "m1.2" \
   "approved" \
   "# Introductory Statement and General Investigational Plan
 
 ## 1. Drug Information
 - **Generic Name:** Anti-TcdA/TcdB VHH Antibody (spirulina-derived)
-- **Code Name:** LMN-201
+- **Code Name:** DEMO-201
 - **Drug Class:** Biologic — VHH antibody fragment (nanobody)
 - **Production Organism:** Arthrospira platensis (food-grade spirulina)
 - **Molecular Weight:** ~28 kDa (bispecific VHH fusion)
 
 ## 2. Therapeutic Rationale
-Recurrent C. difficile infection (rCDI) affects >150,000 patients annually in the US with mortality rates of 5-10%. Current standard of care (vancomycin/fidaxomicin) has 20-30% recurrence rates. LMN-201 provides targeted toxin neutralization in the GI lumen, preventing epithelial damage without disrupting the recovering microbiome.
+Recurrent C. difficile infection (rCDI) affects >150,000 patients annually in the US with mortality rates of 5-10%. Current standard of care (vancomycin/fidaxomicin) has 20-30% recurrence rates. DEMO-201 provides targeted toxin neutralization in the GI lumen, preventing epithelial damage without disrupting the recovering microbiome.
 
 ## 3. Spirulina Platform Advantages
 - GRAS organism (Generally Recognized as Safe)
@@ -223,13 +239,13 @@ Recurrent C. difficile infection (rCDI) affects >150,000 patients annually in th
 - Dose-dependent toxin neutralization in ex vivo stool assays"
 
 create_artifact "$P1_ID" \
-  "Investigator Brochure v4.0 — LMN-201" \
+  "Investigator Brochure v4.0 — DEMO-201" \
   "m1.3.1" \
   "approved" \
-  "# Investigator Brochure — LMN-201 v4.0
+  "# Investigator Brochure — DEMO-201 v4.0
 
 ## 1. Summary
-LMN-201 is a bispecific VHH antibody (nanobody) expressed in Arthrospira platensis (spirulina) that simultaneously neutralizes C. difficile toxins TcdA and TcdB. The drug is orally administered as enteric-coated capsules containing dried spirulina biomass.
+DEMO-201 is a bispecific VHH antibody (nanobody) expressed in Arthrospira platensis (spirulina) that simultaneously neutralizes C. difficile toxins TcdA and TcdB. The drug is orally administered as enteric-coated capsules containing dried spirulina biomass.
 
 ## 2. Physical/Chemical Properties
 - **Protein Class:** Camelid VHH (nanobody) fusion protein
@@ -262,13 +278,13 @@ LMN-201 is a bispecific VHH antibody (nanobody) expressed in Arthrospira platens
 
 # Module 2: Summaries
 create_artifact "$P1_ID" \
-  "Quality Overall Summary — LMN-201" \
+  "Quality Overall Summary — DEMO-201" \
   "m2.3" \
   "review" \
   "# Module 2.3 — Quality Overall Summary
 
 ## 2.3.S Drug Substance
-LMN-201 drug substance is whole dried Arthrospira platensis biomass expressing anti-TcdA/TcdB bispecific VHH at 2-5% of total soluble protein.
+DEMO-201 drug substance is whole dried Arthrospira platensis biomass expressing anti-TcdA/TcdB bispecific VHH at 2-5% of total soluble protein.
 
 ### Manufacturing Process
 1. Seed culture expansion (photobioreactor, 25°C, 5% CO₂)
@@ -294,13 +310,13 @@ Enteric-coated capsules (size 00) containing 500 mg dried spirulina biomass per 
 - No cold chain required — stable at 25°C/60% RH for 24 months"
 
 create_artifact "$P1_ID" \
-  "Nonclinical Overview — LMN-201" \
+  "Nonclinical Overview — DEMO-201" \
   "m2.4" \
   "approved" \
   "# Module 2.4 — Nonclinical Overview
 
 ## Pharmacology Summary
-LMN-201 acts locally in the GI lumen by neutralizing C. difficile toxins. No systemic absorption is expected or desired — the VHH antibody exerts its effect entirely within the intestinal lumen.
+DEMO-201 acts locally in the GI lumen by neutralizing C. difficile toxins. No systemic absorption is expected or desired — the VHH antibody exerts its effect entirely within the intestinal lumen.
 
 ### Mechanism of Action
 1. Oral capsule transits to small intestine (enteric coating dissolves at pH 5.5)
@@ -329,20 +345,20 @@ As a non-absorbed oral biologic derived from a GRAS organism, the toxicology pac
 | Local tolerance | Rabbit (GI) | 14 days | 2000 mg/kg/day | No mucosal irritation |"
 
 create_artifact "$P1_ID" \
-  "Clinical Overview — LMN-201" \
+  "Clinical Overview — DEMO-201" \
   "m2.5" \
   "review" \
   "# Module 2.5 — Clinical Overview
 
 ## Clinical Development Rationale
-Recurrent C. difficile infection (rCDI) represents a critical unmet medical need. Current therapies target the organism (antibiotics) but do not address the toxin-mediated tissue damage that drives recurrence. LMN-201 provides a complementary mechanism by neutralizing toxins in the GI lumen, protecting the epithelium while the microbiome recovers.
+Recurrent C. difficile infection (rCDI) represents a critical unmet medical need. Current therapies target the organism (antibiotics) but do not address the toxin-mediated tissue damage that drives recurrence. DEMO-201 provides a complementary mechanism by neutralizing toxins in the GI lumen, protecting the epithelium while the microbiome recovers.
 
-## Phase 1 Study (LMN-201-001) — Completed
+## Phase 1 Study (DEMO-201-001) — Completed
 ### Design
 Randomized, double-blind, placebo-controlled, SAD/MAD study in 48 healthy volunteers.
 
 ### Results Summary
-| Parameter | LMN-201 (n=36) | Placebo (n=12) |
+| Parameter | DEMO-201 (n=36) | Placebo (n=12) |
 |-----------|----------------|----------------|
 | Any AE | 22.2% | 16.7% |
 | GI-related AE | 8.3% | 6.3% |
@@ -356,10 +372,10 @@ Randomized, double-blind, placebo-controlled, SAD/MAD study in 48 healthy volunt
 3. No systemic absorption detected
 4. Dose-dependent toxin neutralization capacity in stool
 
-## Phase 2 PROTECT Trial (LMN-201-002) — Planned
+## Phase 2 PROTECT Trial (DEMO-201-002) — Planned
 - **Design:** Randomized, double-blind, placebo-controlled, Phase 2
 - **Population:** Adults with first recurrence of CDI on standard antibiotics
-- **Arms:** LMN-201 1000 mg BID vs placebo BID × 28 days (adjunctive to SOC antibiotics)
+- **Arms:** DEMO-201 1000 mg BID vs placebo BID × 28 days (adjunctive to SOC antibiotics)
 - **Primary Endpoint:** Sustained clinical response at Day 56 (no recurrence)
 - **N:** 200 (100 per arm)
 - **Sites:** 15 US sites
@@ -373,9 +389,9 @@ create_artifact "$P1_ID" \
   "# Module 3.2.S.1 — General Information: Drug Substance
 
 ## Nomenclature
-- **Drug Substance:** LMN-201 Active Biomass
+- **Drug Substance:** DEMO-201 Active Biomass
 - **Description:** Dried Arthrospira platensis biomass expressing anti-TcdA/TcdB bispecific VHH
-- **Expression Construct:** pLMN-201 (chromosomally integrated, marker-free)
+- **Expression Construct:** pDEMO-201 (chromosomally integrated, marker-free)
 - **Host Organism:** Arthrospira platensis strain UTEX LB 1926 (GRAS)
 
 ## Molecular Description of VHH
@@ -407,9 +423,9 @@ create_artifact "$P1_ID" \
   "# Module 3.2.S.2 — Manufacture
 
 ## Manufacturer
-**Lumen Biosciences Manufacturing Facility**
-4142 23rd Avenue W, Seattle, WA 98199
-FDA Establishment ID: FEI 3019876543
+**[Demo] Oral Biologics manufacturing facility (fictional)**
+Address: none (fictional facility)
+FDA Establishment ID: none (fictional facility)
 
 ## Manufacturing Process Overview
 \`\`\`
@@ -444,11 +460,11 @@ QC Release Testing → DS Storage (2-8°C, desiccated)
 ## Batch History
 | Batch | Scale | VHH (% TSP) | Potency (EC₅₀) | Yield (kg) |
 |-------|-------|-------------|----------------|-----------|
-| LMN-201-B001 | 5,000L | 3.2% | 8.3 nM | 42 |
-| LMN-201-B002 | 5,000L | 2.8% | 11.2 nM | 38 |
-| LMN-201-B003 | 5,000L | 4.1% | 7.9 nM | 45 |
-| LMN-201-B004 | 5,000L | 3.5% | 9.4 nM | 41 |
-| LMN-201-B005 | 5,000L | 3.8% | 10.1 nM | 43 |"
+| DEMO-201-B001 | 5,000L | 3.2% | 8.3 nM | 42 |
+| DEMO-201-B002 | 5,000L | 2.8% | 11.2 nM | 38 |
+| DEMO-201-B003 | 5,000L | 4.1% | 7.9 nM | 45 |
+| DEMO-201-B004 | 5,000L | 3.5% | 9.4 nM | 41 |
+| DEMO-201-B005 | 5,000L | 3.8% | 10.1 nM | 43 |"
 
 create_artifact "$P1_ID" \
   "Drug Product — Enteric Capsule Formulation (3.2.P.1)" \
@@ -468,7 +484,7 @@ Enteric-coated hard gelatin capsules for oral administration.
 ## Composition
 | Component | Function | mg/capsule | % w/w |
 |-----------|----------|-----------|-------|
-| LMN-201 Dried Biomass | Active | 500.0 | 83.3 |
+| DEMO-201 Dried Biomass | Active | 500.0 | 83.3 |
 | Microcrystalline cellulose | Filler | 55.0 | 9.2 |
 | Colloidal silicon dioxide | Glidant | 3.0 | 0.5 |
 | Magnesium stearate (vegetable) | Lubricant | 2.0 | 0.3 |
@@ -489,12 +505,12 @@ Store at 15-30°C. Protect from moisture. Stable for 24 months at 25°C/60% RH."
 
 # Module 4: Nonclinical
 create_artifact "$P1_ID" \
-  "28-Day Rat Toxicology — LMN-201" \
+  "28-Day Rat Toxicology — DEMO-201" \
   "m4.2.3.2" \
   "approved" \
   "# 28-Day Repeat-Dose Oral Toxicity Study in Sprague-Dawley Rats
 
-**Study Number:** LMN-TOX-001
+**Study Number:** DEMO-TOX-001
 **GLP Compliance:** Yes
 **Test Facility:** Charles River Laboratories, Reno, NV
 
@@ -526,7 +542,7 @@ create_artifact "$P1_ID" \
   "approved" \
   "# Primary Pharmacodynamics: C. difficile Hamster Challenge Model
 
-**Study Number:** LMN-PHARM-001
+**Study Number:** DEMO-PHARM-001
 **GLP Compliance:** Non-GLP (efficacy study)
 
 ## Study Design
@@ -536,53 +552,53 @@ Golden Syrian hamsters pre-treated with clindamycin (30 mg/kg IP, Day -1) were c
 | Group | Treatment | Route | Dose | Schedule | N |
 |-------|-----------|-------|------|----------|---|
 | 1 | Vehicle (WT spirulina) | PO | 30 mg/kg | BID × 10d | 10 |
-| 2 | LMN-201 Low | PO | 3 mg/kg | BID × 10d | 10 |
-| 3 | LMN-201 Mid | PO | 10 mg/kg | BID × 10d | 10 |
-| 4 | LMN-201 High | PO | 30 mg/kg | BID × 10d | 10 |
+| 2 | DEMO-201 Low | PO | 3 mg/kg | BID × 10d | 10 |
+| 3 | DEMO-201 Mid | PO | 10 mg/kg | BID × 10d | 10 |
+| 4 | DEMO-201 High | PO | 30 mg/kg | BID × 10d | 10 |
 | 5 | Vancomycin (positive) | PO | 20 mg/kg | BID × 10d | 10 |
 
 ## Survival Results (14-day observation)
 | Group | Survival | Median Survival | p vs Vehicle |
 |-------|----------|----------------|--------------|
 | Vehicle | 0/10 (0%) | 3 days | — |
-| LMN-201 3 mg/kg | 5/10 (50%) | 8 days | 0.003 |
-| LMN-201 10 mg/kg | 8/10 (80%) | >14 days | <0.001 |
-| LMN-201 30 mg/kg | 10/10 (100%) | >14 days | <0.001 |
+| DEMO-201 3 mg/kg | 5/10 (50%) | 8 days | 0.003 |
+| DEMO-201 10 mg/kg | 8/10 (80%) | >14 days | <0.001 |
+| DEMO-201 30 mg/kg | 10/10 (100%) | >14 days | <0.001 |
 | Vancomycin | 10/10 (100%) | >14 days | <0.001 |
 
 ## Cecal Pathology (Day 14 survivors)
 | Group | Pathology Score (0-4) | Toxin A (ng/g) | Toxin B (ng/g) |
 |-------|----------------------|----------------|----------------|
-| LMN-201 10 mg/kg | 0.6 ± 0.3 | 12 ± 8 | 8 ± 5 |
-| LMN-201 30 mg/kg | 0.2 ± 0.1 | <5 (BLQ) | <5 (BLQ) |
+| DEMO-201 10 mg/kg | 0.6 ± 0.3 | 12 ± 8 | 8 ± 5 |
+| DEMO-201 30 mg/kg | 0.2 ± 0.1 | <5 (BLQ) | <5 (BLQ) |
 | Vancomycin | 0.4 ± 0.2 | 24 ± 15 | 18 ± 11 |
 
 ## Conclusions
-LMN-201 provided complete protection against lethal CDI at 30 mg/kg BID with superior toxin neutralization vs vancomycin. Vancomycin-treated survivors showed residual toxin levels, consistent with the antibiotic's bactericidal (not toxin-neutralizing) mechanism."
+DEMO-201 provided complete protection against lethal CDI at 30 mg/kg BID with superior toxin neutralization vs vancomycin. Vancomycin-treated survivors showed residual toxin levels, consistent with the antibiotic's bactericidal (not toxin-neutralizing) mechanism."
 
 # Module 5: Clinical
 create_artifact "$P1_ID" \
-  "Phase 2 PROTECT Protocol (LMN-201-002)" \
+  "Phase 2 PROTECT Protocol (DEMO-201-002)" \
   "m5.3.5.1" \
   "review" \
-  "# Clinical Study Protocol LMN-201-002 (PROTECT)
+  "# Clinical Study Protocol DEMO-201-002 (PROTECT)
 
 ## Protocol Title
-A Phase 2, Randomized, Double-Blind, Placebo-Controlled Study of LMN-201 as Adjunctive Therapy for Prevention of Recurrent Clostridioides difficile Infection
+A Phase 2, Randomized, Double-Blind, Placebo-Controlled Study of DEMO-201 as Adjunctive Therapy for Prevention of Recurrent Clostridioides difficile Infection
 
 ## Sponsor
-Lumen Biosciences, Inc., Seattle, WA
+[Demo] Oral Biologics (fictional)
 
 ## Study Design
 - **Phase:** 2
 - **Design:** Randomized, double-blind, placebo-controlled, parallel-group
 - **Population:** Adults (≥18 years) with first recurrence of CDI receiving standard antibiotic therapy
-- **Randomization:** 1:1 (LMN-201 : Placebo), stratified by antibiotic (vancomycin vs fidaxomicin)
+- **Randomization:** 1:1 (DEMO-201 : Placebo), stratified by antibiotic (vancomycin vs fidaxomicin)
 
 ## Treatment
 | Arm | Drug | Dose | Route | Schedule | Duration |
 |-----|------|------|-------|----------|----------|
-| A | LMN-201 | 1000 mg (2 capsules) | Oral | BID with food | 28 days |
+| A | DEMO-201 | 1000 mg (2 capsules) | Oral | BID with food | 28 days |
 | B | Placebo (WT spirulina) | 1000 mg (2 capsules) | Oral | BID with food | 28 days |
 
 Note: All patients receive standard antibiotic therapy (vancomycin or fidaxomicin) per SOC.
@@ -604,19 +620,19 @@ Note: All patients receive standard antibiotic therapy (vancomycin or fidaxomici
 - C. difficile strain characterization (ribotyping, whole genome sequencing)
 
 ## Sample Size Justification
-Assuming 30% recurrence rate in placebo and 15% in LMN-201 (absolute risk reduction 15%), 90 patients per arm provides 80% power at two-sided alpha 0.05. Target enrollment: 200 (accounting for 10% dropout).
+Assuming 30% recurrence rate in placebo and 15% in DEMO-201 (absolute risk reduction 15%), 90 patients per arm provides 80% power at two-sided alpha 0.05. Target enrollment: 200 (accounting for 10% dropout).
 
 ## Sites
 15 academic medical centers across the US with established CDI research programs."
 
 create_artifact "$P1_ID" \
-  "Phase 1 Clinical Study Report (LMN-201-001)" \
+  "Phase 1 Clinical Study Report (DEMO-201-001)" \
   "m5.3.1" \
   "locked" \
-  "# Clinical Study Report: LMN-201-001
+  "# Clinical Study Report: DEMO-201-001
 
 ## Study Title
-A Phase 1, Randomized, Double-Blind, Placebo-Controlled, Single and Multiple Ascending Dose Study of LMN-201 in Healthy Volunteers
+A Phase 1, Randomized, Double-Blind, Placebo-Controlled, Single and Multiple Ascending Dose Study of DEMO-201 in Healthy Volunteers
 
 ## Study Status: COMPLETED
 - **First Patient In:** August 12, 2025
@@ -632,7 +648,7 @@ A Phase 1, Randomized, Double-Blind, Placebo-Controlled, Single and Multiple Asc
 3 dose cohorts: 500 mg BID, 1000 mg BID, 2000 mg BID × 14 days (8 active : 4 placebo per cohort)
 
 ## Demographics
-| Parameter | LMN-201 (n=36) | Placebo (n=12) |
+| Parameter | DEMO-201 (n=36) | Placebo (n=12) |
 |-----------|----------------|----------------|
 | Mean Age (years) | 34.2 ± 8.1 | 32.8 ± 7.4 |
 | Male (%) | 55.6% | 58.3% |
@@ -643,7 +659,7 @@ A Phase 1, Randomized, Double-Blind, Placebo-Controlled, Single and Multiple Asc
 | Race: Other | 8.3% | 8.3% |
 
 ## Safety Results
-| Category | LMN-201 | Placebo |
+| Category | DEMO-201 | Placebo |
 |----------|---------|---------|
 | Any AE | 8 (22.2%) | 2 (16.7%) |
 | GI AEs (mild) | 3 (8.3%) | 1 (8.3%) |
@@ -660,28 +676,28 @@ A Phase 1, Randomized, Double-Blind, Placebo-Controlled, Single and Multiple Asc
 | 21 (7d post-dose) | <1 (BLQ) | 0% |
 
 ## Key Conclusions
-1. LMN-201 was well tolerated at all doses tested
+1. DEMO-201 was well tolerated at all doses tested
 2. VHH antibody was detected in feces at all dose levels, confirming GI delivery
 3. No systemic absorption of VHH was detected (serum levels below LLOQ at all timepoints)
 4. Recommended Phase 2 dose: 1000 mg BID × 28 days"
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║ PROJECT 2: LMN-301 — Anti-Norovirus IND (Early stage)                   ║
+# ║ PROJECT 2: DEMO-301 — Anti-Norovirus IND (Early stage)                   ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 echo ""
 echo "=========================================="
-echo "  PROJECT 2: LMN-301 Anti-Norovirus IND"
+echo "  PROJECT 2: DEMO-301 Anti-Norovirus IND"
 echo "=========================================="
 
 P2_RESP=$(curl -sf "$BASE/api/concept2cure/projects" \
   -H "$AUTH" -H "$CT" \
   -d '{
-    "name": "LMN-301 (Anti-Norovirus VHH) — IND Application",
+    "name": "DEMO-301 (Anti-Norovirus VHH) — IND Application",
     "submissionType": "IND",
-    "description": "Investigational New Drug application for LMN-301, an oral multi-valent VHH antibody cocktail produced in spirulina for treatment and prophylaxis of norovirus gastroenteritis. Targets GII.4, GII.17, and GI.1 capsid proteins. Preclinical stage.",
-    "sponsor": "Lumen Biosciences, Inc.",
-    "product": "LMN-301 (Anti-Norovirus VHH Cocktail)",
+    "description": "Investigational New Drug application for DEMO-301, an oral multi-valent VHH antibody cocktail produced in spirulina for treatment and prophylaxis of norovirus gastroenteritis. Targets GII.4, GII.17, and GI.1 capsid proteins. Preclinical stage.",
+    "sponsor": "[Demo] Oral Biologics (fictional)",
+    "product": "DEMO-301 (Anti-Norovirus VHH Cocktail)",
     "region": "US FDA",
     "targetSubmissionDate": "2027-03-01T00:00:00.000Z"
   }')
@@ -689,13 +705,13 @@ P2_ID=$(echo "$P2_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin
 echo "  Project ID: $P2_ID"
 
 create_artifact "$P2_ID" \
-  "LMN-301 Pre-IND Strategy Summary" \
+  "DEMO-301 Pre-IND Strategy Summary" \
   "m1.2" \
   "draft" \
-  "# LMN-301 — Pre-IND Strategy Summary
+  "# DEMO-301 — Pre-IND Strategy Summary
 
 ## Drug Information
-- **Name:** LMN-301
+- **Name:** DEMO-301
 - **Class:** Multi-valent VHH antibody cocktail (spirulina-derived)
 - **Targets:** Norovirus capsid protein VP1 — genotypes GII.4, GII.17, GI.1
 - **VHH Components:** 3 individual VHH domains, each targeting distinct epitopes
@@ -725,7 +741,7 @@ create_artifact "$P2_ID" \
 3. Rapid viral evolution — need to assess VHH binding stability across variant panels"
 
 create_artifact "$P2_ID" \
-  "LMN-301 VHH Binding Characterization" \
+  "DEMO-301 VHH Binding Characterization" \
   "m4.2.1.1" \
   "draft" \
   "# Primary Pharmacodynamics: In Vitro VHH Binding Characterization
@@ -754,22 +770,22 @@ create_artifact "$P2_ID" \
 | Cocktail | 3.2 | 8.7 | 15.4 |
 
 ## Conclusions
-The LMN-301 VHH cocktail provides broad neutralization coverage across the three most prevalent norovirus genotypes. Cross-reactivity with GII.2 via VHH-NV4a provides additional coverage potential.
+The DEMO-301 VHH cocktail provides broad neutralization coverage across the three most prevalent norovirus genotypes. Cross-reactivity with GII.2 via VHH-NV4a provides additional coverage potential.
 
 **Status: DRAFT — Additional variant panel testing in progress**"
 
 create_artifact "$P2_ID" \
-  "LMN-301 Spirulina Strain Engineering Report" \
+  "DEMO-301 Spirulina Strain Engineering Report" \
   "m3.2.S.1" \
   "draft" \
-  "# Drug Substance: Spirulina Strain Engineering — LMN-301
+  "# Drug Substance: Spirulina Strain Engineering — DEMO-301
 
 ## Expression Strategy
 Three VHH genes (VHH-NV4a, VHH-NV17b, VHH-NV1c) will be co-expressed in a single spirulina strain as a polycistronic construct with individual ribosome binding sites.
 
 ## Construct Design
 \`\`\`
-pLMN-301: PcpcB → RBS-VHH-NV4a-STOP → RBS-VHH-NV17b-STOP → RBS-VHH-NV1c-STOP → TcpcB
+pDEMO-301: PcpcB → RBS-VHH-NV4a-STOP → RBS-VHH-NV17b-STOP → RBS-VHH-NV1c-STOP → TcpcB
 \`\`\`
 
 ## Current Status
@@ -789,21 +805,21 @@ pLMN-301: PcpcB → RBS-VHH-NV4a-STOP → RBS-VHH-NV17b-STOP → RBS-VHH-NV1c-ST
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║ PROJECT 3: LMN-401 — Anti-Campylobacter (Travelers' Diarrhea) IND      ║
+# ║ PROJECT 3: DEMO-401 — Anti-Campylobacter (Travelers' Diarrhea) IND      ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 echo ""
 echo "=========================================="
-echo "  PROJECT 3: LMN-401 Anti-Campylobacter"
+echo "  PROJECT 3: DEMO-401 Anti-Campylobacter"
 echo "=========================================="
 
 P3_RESP=$(curl -sf "$BASE/api/concept2cure/projects" \
   -H "$AUTH" -H "$CT" \
   -d '{
-    "name": "LMN-401 (Anti-Campylobacter VHH) — IND Application",
+    "name": "DEMO-401 (Anti-Campylobacter VHH) — IND Application",
     "submissionType": "IND",
-    "description": "Investigational New Drug application for LMN-401, an oral VHH antibody targeting Campylobacter jejuni CDT toxin and flagellar proteins for prophylaxis of travelers diarrhea. DoD-partnered program for military personnel. Discovery stage.",
-    "sponsor": "Lumen Biosciences, Inc.",
-    "product": "LMN-401 (Anti-Campylobacter VHH)",
+    "description": "Investigational New Drug application for DEMO-401, an oral VHH antibody targeting Campylobacter jejuni CDT toxin and flagellar proteins for prophylaxis of travelers diarrhea. Government-partnered program (fictional) for military personnel. Discovery stage.",
+    "sponsor": "[Demo] Oral Biologics (fictional)",
+    "product": "DEMO-401 (Anti-Campylobacter VHH)",
     "region": "US FDA",
     "targetSubmissionDate": "2028-06-01T00:00:00.000Z"
   }')
@@ -811,19 +827,19 @@ P3_ID=$(echo "$P3_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin
 echo "  Project ID: $P3_ID"
 
 create_artifact "$P3_ID" \
-  "LMN-401 Program Overview & DoD Partnership" \
+  "DEMO-401 Program Overview & Government Partnership (fictional)" \
   "m1.2" \
   "draft" \
-  "# LMN-401 — Program Overview
+  "# DEMO-401 — Program Overview
 
 ## Background
 Campylobacter jejuni is the leading bacterial cause of travelers' diarrhea worldwide, with an estimated 400-500 million cases annually. It is a critical readiness threat for military personnel deployed to endemic regions, with attack rates of 20-50% during 2-week deployments.
 
-## DoD Partnership
-Lumen Biosciences has received a \$24.7M contract from BARDA/JPEO-CBRND to develop LMN-401 as a prophylactic oral biologic for military personnel.
+## Government Partnership (fictional)
+In this fictional scenario a government biodefense program funds DEMO-401 as a prophylactic oral biologic for military personnel.
 
 ## Drug Design
-LMN-401 is a bispecific VHH targeting:
+DEMO-401 is a bispecific VHH targeting:
 1. **CDT (Cytolethal Distending Toxin):** Primary virulence factor causing cell cycle arrest and apoptosis in intestinal epithelium
 2. **FlaA (Flagellin A):** Major colonization factor enabling gut mucosa adhesion
 
@@ -847,21 +863,21 @@ LMN-401 is a bispecific VHH targeting:
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║ PROJECT 4: LMN-501 — Anti-Inflammatory Bowel Disease (IBD) BLA         ║
+# ║ PROJECT 4: DEMO-501 — Anti-Inflammatory Bowel Disease (IBD) BLA         ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 echo ""
 echo "=========================================="
-echo "  PROJECT 4: LMN-501 Anti-TNFα for IBD"
+echo "  PROJECT 4: DEMO-501 Anti-TNFα for IBD"
 echo "=========================================="
 
 P4_RESP=$(curl -sf "$BASE/api/concept2cure/projects" \
   -H "$AUTH" -H "$CT" \
   -d '{
-    "name": "LMN-501 (Oral Anti-TNFα VHH) — BLA Application",
+    "name": "DEMO-501 (Oral Anti-TNFα VHH) — BLA Application",
     "submissionType": "BLA",
-    "description": "Biologics License Application planning for LMN-501, a topically-acting oral anti-TNFα VHH produced in spirulina for treatment of mild-to-moderate ulcerative colitis. Designed to provide local TNFα neutralization in the colonic mucosa without systemic immunosuppression.",
-    "sponsor": "Lumen Biosciences, Inc.",
-    "product": "LMN-501 (Oral Anti-TNFα VHH)",
+    "description": "Biologics License Application planning for DEMO-501, a topically-acting oral anti-TNFα VHH produced in spirulina for treatment of mild-to-moderate ulcerative colitis. Designed to provide local TNFα neutralization in the colonic mucosa without systemic immunosuppression.",
+    "sponsor": "[Demo] Oral Biologics (fictional)",
+    "product": "DEMO-501 (Oral Anti-TNFα VHH)",
     "region": "US FDA",
     "targetSubmissionDate": "2029-01-01T00:00:00.000Z"
   }')
@@ -869,13 +885,13 @@ P4_ID=$(echo "$P4_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin
 echo "  Project ID: $P4_ID"
 
 create_artifact "$P4_ID" \
-  "LMN-501 Scientific Rationale & Development Plan" \
+  "DEMO-501 Scientific Rationale & Development Plan" \
   "m1.2" \
   "draft" \
-  "# LMN-501 — Oral Anti-TNFα for Ulcerative Colitis
+  "# DEMO-501 — Oral Anti-TNFα for Ulcerative Colitis
 
 ## Scientific Rationale
-Current anti-TNFα biologics (infliximab, adalimumab) are systemically delivered and carry significant risks: serious infections, malignancy, and immunogenicity. LMN-501 delivers TNFα-neutralizing VHH antibodies directly to the colonic mucosa via oral, colon-targeted capsules, providing local efficacy without systemic immunosuppression.
+Current anti-TNFα biologics (infliximab, adalimumab) are systemically delivered and carry significant risks: serious infections, malignancy, and immunogenicity. DEMO-501 delivers TNFα-neutralizing VHH antibodies directly to the colonic mucosa via oral, colon-targeted capsules, providing local efficacy without systemic immunosuppression.
 
 ## Drug Design
 - **VHH Target:** Human TNFα (binds receptor-binding domain)
@@ -885,7 +901,7 @@ Current anti-TNFα biologics (infliximab, adalimumab) are systemically delivered
 - **Dose concept:** 2000 mg BID (delivering ~80 mg VHH to colonic lumen per day)
 
 ## Competitive Advantages
-| Feature | Systemic Anti-TNFα | LMN-501 (Oral, Local) |
+| Feature | Systemic Anti-TNFα | DEMO-501 (Oral, Local) |
 |---------|-------------------|----------------------|
 | Route | IV/SC injection | Oral capsule |
 | Systemic exposure | Yes (immunosuppression) | Minimal (<0.01% absorbed) |
@@ -910,14 +926,14 @@ Current anti-TNFα biologics (infliximab, adalimumab) are systemically delivered
 3. Regulatory pathway for topically-acting oral biologic is novel — pre-IND meeting critical"
 
 create_artifact "$P4_ID" \
-  "LMN-501 In Vitro Pharmacology Data" \
+  "DEMO-501 In Vitro Pharmacology Data" \
   "m4.2.1.1" \
   "draft" \
-  "# In Vitro Pharmacology — LMN-501 Anti-TNFα VHH
+  "# In Vitro Pharmacology — DEMO-501 Anti-TNFα VHH
 
 ## TNFα Binding Characterization
 ### Surface Plasmon Resonance (BIAcore)
-| Parameter | LMN-501 VHH | Adalimumab (reference) |
+| Parameter | DEMO-501 VHH | Adalimumab (reference) |
 |-----------|------------|----------------------|
 | ka (1/Ms) | 4.2 × 10⁵ | 5.8 × 10⁵ |
 | kd (1/s) | 1.3 × 10⁻⁴ | 5.8 × 10⁻⁵ |
@@ -949,26 +965,26 @@ Next steps: In vivo efficacy in DSS colitis model (scheduled Q2 2026)"
 
 echo ""
 echo "=========================================="
-echo "  Lumen Biosciences Setup Complete!"
+echo "  [Demo] Oral Biologics (fictional) setup complete"
 echo "=========================================="
 echo ""
-echo "Organization: Lumen Biosciences (Seattle, WA)"
-echo "Login: dr.patel@lumenbiosciences.com / Lumen2026!"
+echo "Organization: [Demo] Oral Biologics (fictional)"
+echo "Login: $DEMO_EMAIL (password: the DEMO_PASSWORD you set)"
 echo ""
 echo "Projects created:"
-echo "  1. LMN-201 (Anti-C. diff VHH)      — Phase 2 ready, most advanced"
+echo "  1. DEMO-201 (Anti-C. diff VHH)      — Phase 2 ready, most advanced"
 echo "     Project ID: $P1_ID"
-echo "  2. LMN-301 (Anti-Norovirus VHH)     — Preclinical, early stage"
+echo "  2. DEMO-301 (Anti-Norovirus VHH)     — Preclinical, early stage"
 echo "     Project ID: $P2_ID"
-echo "  3. LMN-401 (Anti-Campylobacter VHH) — Discovery, DoD-partnered"
+echo "  3. DEMO-401 (Anti-Campylobacter VHH) — Discovery, government-partnered"
 echo "     Project ID: $P3_ID"
-echo "  4. LMN-501 (Oral Anti-TNFα VHH)     — Preclinical, IBD program"
+echo "  4. DEMO-501 (Oral Anti-TNFα VHH)     — Preclinical, IBD program"
 echo "     Project ID: $P4_ID"
 echo ""
 echo "Total artifacts: ~20 documents across all projects"
-echo "  LMN-201: 12 artifacts (IND pyramid fully populated)"
-echo "  LMN-301: 3 artifacts (early stage)"
-echo "  LMN-401: 1 artifact (discovery)"
-echo "  LMN-501: 2 artifacts (preclinical)"
+echo "  DEMO-201: 12 artifacts (IND pyramid fully populated)"
+echo "  DEMO-301: 3 artifacts (early stage)"
+echo "  DEMO-401: 1 artifact (discovery)"
+echo "  DEMO-501: 2 artifacts (preclinical)"
 echo ""
 echo "Ready for demo!"

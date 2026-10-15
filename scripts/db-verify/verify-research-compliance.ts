@@ -1,9 +1,13 @@
 /**
  * DB verification harness (run with DATABASE_URL set, via tsx).
  * Exercises the GOVERNED service paths end-to-end against real Postgres:
- * audit chain + provenance + domain invariants. Not committed — verification only.
+ * audit chain + provenance + domain invariants. Verification only — but it
+ * COMMITS what it exercises (see the guard below).
  */
 import { pool } from '../../server/db';
+import { getRuntimeDatabaseUrl } from '../../server/db/getDatabaseUrl';
+// @ts-expect-error — a plain .mjs module, no declarations.
+import { databaseHost, isLocalDatabase } from '../seed/local-only.mjs';
 import { recordGovernedAction } from '../../server/routes/c2c/actions';
 import * as fcoi from '../../server/services/financial-disclosures/fcoi-service';
 import * as ha from '../../server/services/ha-interactions/ha-service';
@@ -18,6 +22,28 @@ import * as coi from '../../server/services/research-security/coi-service';
 import { bridgeIngestedStudyTx, mapStudyType } from '../../server/services/preclinical/preclinical-governed-bridge';
 import * as grants from '../../server/services/grants/grants-service';
 import { buildComplianceBriefing } from '../../server/services/research-compliance/compliance-briefing';
+
+/* It commits everything it exercises into organization 1 — 'Org A',
+   investigator 'Dr Verify', signed disclosures, a DEA registration, IACUC
+   approvals, grants, governed actions on the audit hash-chain — so it runs
+   against a database on this machine only, and never in a production process.
+   2026-10-15: it ran against whatever database it reached, and its header said
+   "Not committed". */
+{
+  const url = getRuntimeDatabaseUrl() ?? '';
+  const reason =
+    process.env.NODE_ENV === 'production'
+      ? 'NODE_ENV is production'
+      : isLocalDatabase(url)
+        ? null
+        : `"${databaseHost(url)}" is not on this machine`;
+  if (reason !== null) {
+    console.error(
+      `verify-research-compliance commits the records it exercises, so it runs against a database on this machine only, and ${reason}.`,
+    );
+    process.exit(1);
+  }
+}
 
 let pass = 0, fail = 0;
 function ok(cond: boolean, msg: string) { if (cond) { pass++; console.log('  ✓', msg); } else { fail++; console.log('  ✗ FAIL:', msg); } }
