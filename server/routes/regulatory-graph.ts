@@ -484,8 +484,10 @@ router.post(
 
       res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
-      // A defensePacketId the program has no packet for is the request's fault.
-      if (err instanceof ReviewerSimulationInputError) {
+      // A defensePacketId the program has no packet for is the request's fault —
+      // and so is a ctdProgramId not on record for this organization
+      // (CtdProgramNotFoundError; 2026-10-15: it read as a program with no studies).
+      if (err instanceof ReviewerSimulationInputError || (err instanceof Error && err.name === 'CtdProgramNotFoundError')) {
         return res.status(422).json({ error: err.message, code: err.code });
       }
       return serverError(res, logger, 'saving reviewer simulation', err);

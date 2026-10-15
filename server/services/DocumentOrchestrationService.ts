@@ -40,6 +40,17 @@ interface FormNotProduced {
   reason: string;
 }
 
+/**
+ * The 510(k) project named is not one of the caller's organization's (or does
+ * not exist). The routes answer 404; they match it by name.
+ */
+export class OrchestrationProjectNotFoundError extends Error {
+  constructor() {
+    super('Project not found');
+    this.name = 'OrchestrationProjectNotFoundError';
+  }
+}
+
 class DocumentOrchestrationService {
   /**
    * Main orchestration method - drafts and saves the FDA forms for a project.
@@ -78,9 +89,9 @@ class DocumentOrchestrationService {
       const userIdNum = parseInt(userIdStr);
       const orgIdNum = parseInt(orgIdStr);
 
-      // 1. Fetch project
-      const project = await this.fetchProject(projectIdNum);
-      if (!project) throw new Error('Project not found');
+      // 1. Fetch project — this organization's
+      const project = await this.fetchProject(projectIdNum, orgIdNum);
+      if (!project) throw new OrchestrationProjectNotFoundError();
 
       // 2. Draft and save the FDA forms
       const { forms, failed } = await this.generateFDAForms(project, userIdNum, orgIdNum);
@@ -107,15 +118,19 @@ class DocumentOrchestrationService {
   }
 
   /**
-   * Fetch project details
+   * The organization's 510(k) project with this id, or undefined. 2026-10-15:
+   * read by id alone, so another organization's 510(k) project was drafted
+   * against (and, when it pointed at this organization's base project, had
+   * this organization's forms filed under it).
    */
-  private async fetchProject(projectId: number) {
+  private async fetchProject(projectId: number, organizationId: number) {
+    if (!Number.isSafeInteger(projectId) || !Number.isSafeInteger(organizationId)) return undefined;
     const [project] = await db!
       .select()
       .from(fda510kProjects)
-      .where(eq(fda510kProjects.id, projectId))
+      .where(and(eq(fda510kProjects.id, projectId), eq(fda510kProjects.organizationId, organizationId)))
       .limit(1);
-    
+
     return project;
   }
 
@@ -139,7 +154,7 @@ class DocumentOrchestrationService {
     organizationId: number
   ): Promise<{ forms: GeneratedFormRecord[]; failed: FormNotProduced[] }> {
     const projectData = await loadFormProjectData(project.projectId, organizationId);
-    if (!projectData) throw new Error('Project not found');
+    if (!projectData) throw new OrchestrationProjectNotFoundError();
 
     const generator = new FDAFormGenerator();
     const forms: GeneratedFormRecord[] = [];

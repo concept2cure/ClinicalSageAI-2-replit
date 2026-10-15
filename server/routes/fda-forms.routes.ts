@@ -321,6 +321,10 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
     });
 
   } catch (error: any) {
+    // 2026-10-15: another organization's 510(k) project was read by id and answered 500.
+    if (error instanceof Error && error.name === 'OrchestrationProjectNotFoundError') {
+      return res.status(404).json({ error: 'Project not found' });
+    }
     console.error('Error generating all forms:', error);
     res.status(500).json({ error: 'Failed to generate FDA forms' });
   }
@@ -598,20 +602,30 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
     }
     const formGenerator = new FDAFormGenerator();
 
-    // Map stages to relevant forms
-    const stageFormMap: { [key: string]: string[] } = {
-      '0': ['form_3514', 'form_3601'],
-      '1': ['form_3881', 'form_3654'],
-      '2': ['form_3872', 'form_3674'],
-      '3': ['form_2891', 'form_3455'],
-      '4': ['form_3429', 'form_3500A'],
-      '5': ['form_3419', 'form_3417'],
-      '6': ['form_3847', 'form_3898']
+    // Each stage's forms by FDA form number, drafted under the registry key
+    // (FDA_<number>). 2026-10-15: listed as 'form_3514', …, which no registry
+    // key matches, so every stage form failed to draft; a form the registry
+    // does not define is now named as not supported and not attempted, and a
+    // stage this map does not define is refused (it answered 200 success).
+    const stageFormMap: Record<string, string[]> = {
+      '0': ['3514', '3601'],
+      '1': ['3881', '3654'],
+      '2': ['3872', '3674'],
+      '3': ['2891', '3455'],
+      '4': ['3429', '3500A'],
+      '5': ['3419', '3417'],
+      '6': ['3847', '3898']
     };
-    
-    const formsToGenerate = stageFormMap[stage] || [];
-    const results = [];
-    
+
+    const formNumbers = Object.prototype.hasOwnProperty.call(stageFormMap, stage) ? stageFormMap[stage] : null;
+    if (!formNumbers) {
+      return res.status(400).json({ error: `Unknown stage "${stage}". Stages are 0 to 6.` });
+    }
+    const results: Array<
+      | { formId: string; formNumber: string; status: 'success'; form: unknown }
+      | { formId: string | null; formNumber: string; status: 'error' | 'not_supported'; reason: string }
+    > = [];
+
     // Fetch project data once — scoped to the caller's org
     const projectData = await loadFormProjectData(parseInt(projectId), organizationId);
     if (!projectData) {
@@ -620,11 +634,22 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
 
     // Generate each stage form. 2026-10-15: as auto-generate — the caught
     // error's text in a 200 body headed success: true.
-    for (const formId of formsToGenerate) {
+    for (const formNumber of formNumbers) {
+      const formId = `FDA_${formNumber}`;
+      if (!formsRegistry.getForm(formId)) {
+        results.push({
+          formId: null,
+          formNumber,
+          status: 'not_supported',
+          reason: `Form FDA ${formNumber} is not in the forms registry, so it was not drafted.`
+        });
+        continue;
+      }
       try {
         const generatedForm = await formGenerator.generateSmartForm(formId, projectData);
         results.push({
           formId,
+          formNumber,
           status: 'success',
           form: generatedForm
         });
@@ -632,21 +657,23 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
         console.error(`[FDA Forms] Error drafting stage form ${formId}:`, error);
         results.push({
           formId,
+          formNumber,
           status: 'error',
           reason: FORM_NOT_DRAFTED
         });
       }
     }
 
-    const totalFailed = results.filter(r => r.status === 'error').length;
-    const run = formRunStatus(totalFailed);
+    const totalGenerated = results.filter(r => r.status === 'success').length;
+    const run = formRunStatus(results.length - totalGenerated);
     res.status(run.status).json({
       success: run.success,
       projectId,
       stage,
       results,
-      totalGenerated: results.filter(r => r.status === 'success').length,
-      totalFailed,
+      totalGenerated,
+      totalFailed: results.filter(r => r.status === 'error').length,
+      totalNotSupported: results.filter(r => r.status === 'not_supported').length,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {

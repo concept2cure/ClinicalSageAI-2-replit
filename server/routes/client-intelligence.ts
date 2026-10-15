@@ -77,6 +77,8 @@ function sendSuccess(res: Response, data: Record<string, unknown> = {}, status =
   return res.status(status).json({ success: true, ...data });
 }
 
+/** A refusal with fixed text. A failure goes through serverError (cause logged,
+ *  never sent): until 2026-10-15, 29 handlers sent err.message here as a 500. */
 function sendError(res: Response, status: number, message: string) {
   return res.status(status).json({ success: false, error: message });
 }
@@ -161,9 +163,8 @@ router.get('/profile', async (req: Request, res: Response) => {
     }
 
     return sendSuccess(res, { profile });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] GET /profile error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading the client profile', err);
   }
 });
 
@@ -188,9 +189,8 @@ router.post('/profile', async (req: Request, res: Response) => {
     );
 
     return sendSuccess(res, { profile });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] POST /profile error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'saving the client profile', err);
   }
 });
 
@@ -303,9 +303,8 @@ router.get('/checklist', async (req: Request, res: Response) => {
 
     const checklist = await getDocumentChecklist(profileId, organizationId);
     return sendSuccess(res, { checklist });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] GET /checklist error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading the document checklist', err);
   }
 });
 
@@ -331,9 +330,8 @@ router.get('/memory', async (req: Request, res: Response) => {
 
     const result = await getMemoryEntries(profileId, organizationId, { category, limit, offset });
     return sendSuccess(res, { ...result });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] GET /memory error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'listing memory entries', err);
   }
 });
 
@@ -367,9 +365,8 @@ router.get('/memory/semantic-search', async (req: Request, res: Response) => {
     });
 
     return sendSuccess(res, { ...result });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] GET /memory/semantic-search error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'searching client memory', err);
   }
 });
 
@@ -423,8 +420,7 @@ router.get('/memory/context-assemble', async (req: Request, res: Response) => {
       console.error('[ClientIntelligence] GET /memory/context-assemble timed out after 30s');
       return sendError(res, 504, 'Memory context assembly timed out');
     }
-    console.error('[ClientIntelligence] GET /memory/context-assemble error:', err);
-    return sendError(res, 500, err.message);
+    return serverError(res, log, 'assembling the memory context', err);
   }
 });
 
@@ -441,9 +437,8 @@ router.post('/memory/:id/verify', async (req: Request, res: Response) => {
       return sendError(res, 404, 'Memory entry not found');
     }
     return sendSuccess(res);
-  } catch (err: any) {
-    console.error('[ClientIntelligence] POST /memory/:id/verify error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'verifying the memory entry', err);
   }
 });
 
@@ -461,9 +456,8 @@ router.post('/memory/:id/supersede', async (req: Request, res: Response) => {
 
     await supersedeClientMemoryEntry(entryId, organizationId, supersededById);
     return sendSuccess(res);
-  } catch (err: any) {
-    console.error('[ClientIntelligence] POST /memory/:id/supersede error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'superseding the memory entry', err);
   }
 });
 
@@ -479,9 +473,8 @@ router.delete('/memory/:id', async (req: Request, res: Response) => {
       return sendError(res, 404, 'Memory entry not found');
     }
     return sendSuccess(res);
-  } catch (err: any) {
-    console.error('[ClientIntelligence] DELETE /memory/:id error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'archiving the memory entry', err);
   }
 });
 
@@ -499,9 +492,8 @@ router.get('/context', async (req: Request, res: Response) => {
 
     const context = await buildClientIntelligenceContext(organizationId, clientWorkspaceId);
     return sendSuccess(res, { context });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] GET /context error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'building the client intelligence context', err);
   }
 });
 
@@ -519,9 +511,8 @@ router.get('/project/:projectId/profile', async (req: Request, res: Response) =>
     const { organizationId } = getRequestContext(req);
     const profile = await getProjectIntelligence(projectId, organizationId);
     return sendSuccess(res, { profile });
-  } catch (err: any) {
-    console.error('[ProjectIntelligence] GET profile error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading the project intelligence profile', err);
   }
 });
 
@@ -535,9 +526,8 @@ router.post('/project/:projectId/profile', async (req: Request, res: Response) =
     const projectId = parseInt(String(req.params.projectId), 10);
     const profile = await upsertProjectIntelligence(projectId, organizationId, req.body, userId);
     return sendSuccess(res, { profile });
-  } catch (err: any) {
-    console.error('[ProjectIntelligence] POST profile error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'saving the project intelligence profile', err);
   }
 });
 
@@ -613,9 +603,8 @@ router.get('/project/:projectId/memory', async (req: Request, res: Response) => 
     const category = req.query.category as string | undefined;
     const result = await getProjectMemoryEntries(profile.id, { category });
     return sendSuccess(res, { ...result });
-  } catch (err: any) {
-    console.error('[ProjectIntelligence] GET memory error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'listing project memory entries', err);
   }
 });
 
@@ -652,9 +641,8 @@ router.get('/project/:projectId/memory/semantic-search', async (req: Request, re
     );
 
     return sendSuccess(res, { ...result });
-  } catch (err: any) {
-    console.error('[ProjectIntelligence] GET semantic memory error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'searching project memory', err);
   }
 });
 
@@ -670,9 +658,8 @@ router.post('/project/:projectId/memory/:id/supersede', async (req: Request, res
 
     await supersedeProjectMemoryEntry(entryId, projectId, organizationId);
     return sendSuccess(res);
-  } catch (err: any) {
-    console.error('[ProjectIntelligence] POST /project/:projectId/memory/:id/supersede error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'superseding the project memory entry', err);
   }
 });
 
@@ -698,9 +685,8 @@ router.get('/memory/shared-pool', async (req: Request, res: Response) => {
     });
 
     return sendSuccess(res, { ...result });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] GET /memory/shared-pool error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading the shared memory pool', err);
   }
 });
 
@@ -714,9 +700,8 @@ router.get('/project/:projectId/context', async (req: Request, res: Response) =>
     const projectId = parseInt(String(req.params.projectId), 10);
     const context = await buildProjectIntelligenceContext(projectId, organizationId);
     return sendSuccess(res, { context });
-  } catch (err: any) {
-    console.error('[ProjectIntelligence] GET context error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'building the project intelligence context', err);
   }
 });
 
@@ -758,9 +743,8 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
       .limit(1);
 
     return sendSuccess(res, { profile: profile || null });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET user-profile error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading the AnA user profile', err);
   }
 });
 
@@ -778,9 +762,8 @@ router.post('/ana/user-profile', async (req: Request, res: Response) => {
 
     await upsertUserProfile(userId, organizationId, req.body);
     return sendSuccess(res);
-  } catch (err: any) {
-    console.error('[AnA Intelligence] POST user-profile error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'saving the AnA user profile', err);
   }
 });
 
@@ -807,9 +790,8 @@ router.get('/ana/merged-context', async (req: Request, res: Response) => {
     });
 
     return sendSuccess(res, { ...result });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET merged-context error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'building the merged AnA context', err);
   }
 });
 
@@ -835,9 +817,8 @@ router.get('/ana/capabilities', async (req: Request, res: Response) => {
       .limit(100);
 
     return sendSuccess(res, { capabilities });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET capabilities error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'listing AnA capabilities', err);
   }
 });
 
@@ -908,9 +889,8 @@ router.post('/ana/log-outcome', async (req: Request, res: Response) => {
     }
 
     return sendSuccess(res);
-  } catch (err: any) {
-    console.error('[AnA Intelligence] POST log-outcome error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'recording the AnA outcome', err);
   }
 });
 
@@ -948,9 +928,8 @@ router.get('/ana/wisdom', async (req: Request, res: Response) => {
     });
 
     return sendSuccess(res, { wisdom: filtered });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET wisdom error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading AnA platform wisdom', err);
   }
 });
 
@@ -986,9 +965,8 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
       .limit(50);
 
     return sendSuccess(res, { objectives });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET objectives error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'listing client objectives', err);
   }
 });
 
@@ -1027,9 +1005,8 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
       .returning()) as any[];
 
     return sendSuccess(res, { objective });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] POST objectives error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'creating the client objective', err);
   }
 });
 
@@ -1051,9 +1028,8 @@ router.get('/ana/templates/company-types', async (_req: Request, res: Response) 
   try {
     const { getCompanyTypes } = await import('../services/industry-context-templates');
     return sendSuccess(res, { types: getCompanyTypes() });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET company-types error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'listing company templates', err);
   }
 });
 
@@ -1065,9 +1041,8 @@ router.get('/ana/templates/project-types', async (_req: Request, res: Response) 
   try {
     const { getProjectTypes } = await import('../services/industry-context-templates');
     return sendSuccess(res, { types: getProjectTypes() });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET project-types error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'listing project templates', err);
   }
 });
 
@@ -1082,9 +1057,8 @@ router.get('/ana/templates/company/:type', async (req: Request, res: Response) =
     // 2026-10-15: an unknown type was answered 200 with the biotech template.
     if (!template) return sendError(res, 404, `No company template for type "${req.params.type}".`);
     return sendSuccess(res, { template });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET company template error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading the company template', err);
   }
 });
 
@@ -1099,9 +1073,8 @@ router.get('/ana/templates/project/:type', async (req: Request, res: Response) =
     // 2026-10-15: an unknown type was answered 200 with the IND template.
     if (!template) return sendError(res, 404, `No project template for type "${req.params.type}".`);
     return sendSuccess(res, { template });
-  } catch (err: any) {
-    console.error('[AnA Intelligence] GET project template error:', err);
-    return sendError(res, 500, err.message);
+  } catch (err) {
+    return serverError(res, log, 'reading the project template', err);
   }
 });
 

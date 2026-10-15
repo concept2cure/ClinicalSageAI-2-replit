@@ -447,6 +447,11 @@ export async function evidenceSufficiencyAssess(
     };
   }
 
+  // 2026-10-15: unlike its siblings, this persisted an assessment for any
+  // program id shaped like a UUID, another organization's included.
+  const notOwned = await refuseUnownedProgram(action, programId, ctx);
+  if (notOwned) return notOwned;
+
   try {
     const result = await assessSufficiency({
       organizationId: ctx.organizationId,
@@ -508,12 +513,13 @@ function notUsedClause(params: Record<string, unknown>): string {
 }
 
 /**
- * The simulator's refusal of the request (a packet not on record, or no packet
- * store on the database), as a refusal. 2026-10-15: it reached the model as
+ * The simulator's refusal of the request (a packet not on record, no packet
+ * store on the database, or a ctdProgramId not on record for the organization —
+ * CtdProgramNotFoundError), as a refusal. 2026-10-15: it reached the model as
  * EXECUTION_FAILED "Action failed: …".
  */
 function simulatorRefusal(action: string, err: unknown): CommandResult | null {
-  if (!(err instanceof Error) || err.name !== 'ReviewerSimulationInputError') return null;
+  if (!(err instanceof Error) || !['ReviewerSimulationInputError', 'CtdProgramNotFoundError'].includes(err.name)) return null;
   const code = (err as { code?: unknown }).code;
   return { success: false, action, message: err.message, error: typeof code === 'string' ? code : 'INVALID_INPUT' };
 }
@@ -547,6 +553,11 @@ export async function reviewerSimulationRun(
   // reports were passed on, so the model supplied the figures the questions
   // printed. The simulator reads those facts from the records; they are not
   // passed, and the message says they were not used.
+
+  // 2026-10-15: unlike its siblings, this ran (and persisted) a simulation for
+  // any program id shaped like a UUID, another organization's included.
+  const notOwned = await refuseUnownedProgram(action, programId, ctx);
+  if (notOwned) return notOwned;
 
   try {
     const result = await runReviewerSimulation({
