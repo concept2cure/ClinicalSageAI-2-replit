@@ -22,6 +22,7 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { databaseUrl } from '../setup.db';
+import { seedNativeCatalogProject } from './catalog-native-fixture';
 
 const PROBE = 'dbtest-dataroom';
 /* Captures are append-only (VR-16: DELETE is the table owner's alone), so a
@@ -147,6 +148,12 @@ beforeAll(async () => {
   programId = await program('main', orgId);
   siblingProgramId = await program('sibling', orgId);
   otherProgramId = await program('foreign', otherOrgId);
+  // The current-access gate (14362ef00, 2026-10-14) admits a current member through the project
+  // the program is anchored to; the suite predates it and supplied neither.
+  await owner.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
+       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
+  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId, namespace: `${PROBE}-${RUN}` });
   app = await buildApp();
 }, 60_000);
 

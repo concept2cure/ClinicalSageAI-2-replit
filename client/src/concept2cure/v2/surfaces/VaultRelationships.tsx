@@ -17,6 +17,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 
 type RelationshipType = 'supporting' | 'references' | 'based_on';
 
@@ -202,7 +203,19 @@ function AddForm({ projectId, documentId, onAdded }: { projectId: string; docume
   );
 }
 
-function RelationshipRow({ r, projectId, onRemoved }: { r: RelationshipShape; projectId: string; onRemoved: (text: string) => void }) {
+/** The Remove control, offered only to a role the remove route admits. */
+function RemoveOpener({ canWrite, onOpen }: { canWrite: boolean; onOpen: () => void }) {
+  if (!canWrite) return null;
+  return (
+    <div className="vd-d-filing-acts">
+      <button className="sp-ask" onClick={onOpen}>Remove</button>
+    </div>
+  );
+}
+
+function RelationshipRow({ r, projectId, canWrite, onRemoved }: {
+  r: RelationshipShape; projectId: string; canWrite: boolean; onRemoved: (text: string) => void;
+}) {
   const [removing, setRemoving] = useState(false);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -243,11 +256,7 @@ function RelationshipRow({ r, projectId, onRemoved }: { r: RelationshipShape; pr
             <button className="sp-ask" disabled={busy} onClick={() => setRemoving(false)}>Cancel</button>
           </div>
         </>
-      ) : (
-        <div className="vd-d-filing-acts">
-          <button className="sp-ask" onClick={() => setRemoving(true)}>Remove</button>
-        </div>
-      )}
+      ) : <RemoveOpener canWrite={canWrite} onOpen={() => setRemoving(true)} />}
       {error ? <div className="vd-dr-err" role="alert">{error}</div> : null}
     </div>
   );
@@ -255,6 +264,7 @@ function RelationshipRow({ r, projectId, onRemoved }: { r: RelationshipShape; pr
 
 export function VaultRelationships({ projectId, documentId, onChanged }: { projectId: string; documentId: string; onChanged: () => void }) {
   const { items, readError, load } = useRelationships(projectId, documentId);
+  const canWrite = useVaultCanWrite();
   const [adding, setAdding] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const changed = (text: string) => {
@@ -272,12 +282,12 @@ export function VaultRelationships({ projectId, documentId, onChanged }: { proje
         <>
           <div className="vd-d-idx">Only related documents you can currently access are shown.</div>
           <div className="vd-d-filing" role="list" aria-label="Related documents">
-            {items.map((r) => <RelationshipRow key={r.id} r={r} projectId={projectId} onRemoved={changed} />)}
+            {items.map((r) => <RelationshipRow key={r.id} r={r} projectId={projectId} canWrite={canWrite} onRemoved={changed} />)}
           </div>
         </>
       ) : null}
       {done ? <div className="vd-d-idx" role="status">{done}</div> : null}
-      {adding
+      {!canWrite ? <VaultViewOnly act="relate or unrelate documents" testId="vault-relationships-view-only" /> : adding
         ? <AddForm projectId={projectId} documentId={documentId} onAdded={changed} />
         : (
           <div className="vd-d-filing-acts">

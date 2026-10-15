@@ -14,10 +14,13 @@
  * table names the rule that classified it.
  *
  * Not a conformance check (Pinnacle 21 and the FDA validator rules are not
- * reproduced here), and not a reader for SAS transport (.xpt), which the
- * platform does not admit (founder decision pending, see the design doc §6).
+ * reproduced here). SAS transport (.xpt v5) and CDISC Dataset-JSON are read
+ * from their own metadata (founder decision 2026-10-15, "Do it all", on the
+ * design doc's §6): xpt-structure.ts and dataset-json-structure.ts.
  */
 import { cellValueToDisplay, loadWorkbook } from '../documentIntelligence/spreadsheetService.js';
+import { readXptStructure, type XptVariable } from './xpt-structure.js';
+import { readDatasetJsonStructure } from './dataset-json-structure.js';
 
 export type ColumnType = 'number' | 'date' | 'text' | 'empty';
 
@@ -32,7 +35,7 @@ export interface ProfiledTable {
 }
 
 export interface DatasetProfile {
-  format: 'csv' | 'tsv' | 'xlsx' | 'define-xml';
+  format: 'csv' | 'tsv' | 'xlsx' | 'define-xml' | 'xpt' | 'dataset-json';
   tables: ProfiledTable[];
   /** Tables beyond MAX_TABLES are counted, not profiled. */
   tableCount: number;
@@ -49,6 +52,9 @@ export function profileFormat(fileName: string, mimeType: string): DatasetProfil
   const n = fileName.toLowerCase();
   const m = mimeType.toLowerCase();
   if (/define[^/]*\.xml$/.test(n)) return 'define-xml';
+  if (n.endsWith('.xpt') || m === 'application/x-sas-xport') return 'xpt';
+  // A .json is a dataset only when its content says so; the reader declines any other.
+  if (n.endsWith('.ndjson') || n.endsWith('.json')) return 'dataset-json';
   if (n.endsWith('.tsv') || m === 'text/tab-separated-values') return 'tsv';
   if (n.endsWith('.csv') || m === 'text/csv') return 'csv';
   if (n.endsWith('.xlsx') || m === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return 'xlsx';
@@ -170,12 +176,52 @@ function profileDefineXml(bytes: Buffer): DatasetProfile | null {
   return { format: 'define-xml', tables, tableCount: groups.length, profiledBy: 'dataset-profile v1' };
 }
 
+/** A transport variable's type: a numeric with a date or time format is a date. */
+function xptType(v: XptVariable): ColumnType {
+  if (v.type === 'character') return 'text';
+  return /^(DATE|YYMMDD|MMDDYY|DDMMYY|IS8601|E8601|B8601|DATETIME|DTDATE|TIME|TOD)/i.test(v.format) ? 'date' : 'number';
+}
+
+function profileXpt(bytes: Buffer): DatasetProfile | null {
+  const read = readXptStructure(bytes);
+  if (!read.ok) return null;
+  const tables = read.members.slice(0, MAX_TABLES).map((m) => ({
+    name: m.name,
+    columns: m.variables.slice(0, MAX_COLUMNS).map((v) => ({ name: v.name, type: xptType(v) })),
+    rowCount: m.rowCount,
+    columnCount: m.variables.length,
+    cdisc: detectCdisc(m.variables.map((v) => v.name)),
+  }));
+  return { format: 'xpt', tables, tableCount: read.members.length, profiledBy: 'dataset-profile v1' };
+}
+
+const JSON_NUMBER = new Set(['integer', 'decimal', 'float', 'double']);
+const JSON_DATE = new Set(['date', 'datetime', 'time']);
+
+function profileDatasetJson(bytes: Buffer, fileName: string): DatasetProfile | null {
+  const read = readDatasetJsonStructure(bytes, fileName);
+  if (!read.ok) return null;
+  const tables = read.tables.slice(0, MAX_TABLES).map((t) => ({
+    name: t.name,
+    columns: t.columns.slice(0, MAX_COLUMNS).map((c) => ({
+      name: c.name,
+      type: (JSON_NUMBER.has(c.dataType) ? 'number' : JSON_DATE.has(c.dataType) ? 'date' : 'text') as ColumnType,
+    })),
+    rowCount: t.rowCount,
+    columnCount: t.columns.length,
+    cdisc: detectCdisc(t.columns.map((c) => c.name)),
+  }));
+  return { format: 'dataset-json', tables, tableCount: read.tables.length, profiledBy: 'dataset-profile v1' };
+}
+
 /** The profile of a capture this profiler reads, or null. Never throws: a profile is derived data. */
 export async function profileDataset(bytes: Buffer, fileName: string, mimeType: string): Promise<DatasetProfile | null> {
   const format = profileFormat(fileName, mimeType);
   if (!format) return null;
   try {
     if (format === 'define-xml') return profileDefineXml(bytes);
+    if (format === 'xpt') return profileXpt(bytes);
+    if (format === 'dataset-json') return profileDatasetJson(bytes, fileName);
     if (format === 'tsv') return profileTsv(bytes, fileName);
     return await profileWorkbook(bytes, fileName, mimeType);
   } catch {
