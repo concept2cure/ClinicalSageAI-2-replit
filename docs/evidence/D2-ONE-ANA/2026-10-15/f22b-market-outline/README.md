@@ -50,3 +50,24 @@ Left as is, with the reason:
 - A malformed id gets the store-unreachable reason. Nothing is written either way.
 
 The `ci:sql-interpolation` baseline moves 2 counts from `server/routes/c2c/documents.ts` (6 → 4) to `server/services/c2c/document-outline.ts` (2). These are the same two fixed fragments (`rulePackProvenanceSelectSql('rp')` and `sectionHasContentSql('content')`), moved with the outline read. No value is interpolated.
+
+## The editor (client slice)
+
+`useFilingOutline(projectId, boundDocumentId)` reads the home filing (`scope=home`) and the markets (`scope=market`). When the open document is a market's editing copy, the outline is that market's own sections and `gaps`. `editor/FilingMarkets.tsx` adds three things to the outline pane:
+- the project's filings, each with Open, "Shown in the outline", or "Create editing copy" (`POST /api/authoring/docs` with `c2c_document_id`, then opened);
+- the gap note;
+- a failed market read, said as such, with the home outline left in place.
+
+- `red/editor-outline-home-only.txt`: `filingOutlinePerMarket.test.tsx` on the pre-change workbench and hook. 3 of 3 fail.
+- `green/editor-outline.txt`: the same test with the outline, start-section and provenance suites and every editor test (52 files, 541 tests).
+
+An accessibility lens (read-only) reviewed the pane before commit. Applied:
+- each action's name is its visible text, with the filing as its description (2.5.3);
+- busy is `aria-disabled`, so focus stays;
+- state text uses the body-size class (the 10px label measures 4.43:1);
+- the failed read is `role="status"`;
+- the gap list is named by its sentence.
+
+Not done: moving focus after the copy opens. The toast announces the create, and the workbench's document open owns focus.
+
+Gates: typecheck clean; the ratchet shows no change. These pass: `ci:undefined-css-classes`, `ci:design-system`, `ci:class-vocabulary`, `check:microcopy`, `ci:internals-in-copy`, `ci:canvas-path`. HawkScan not run: HAWK_API_KEY is not set.
