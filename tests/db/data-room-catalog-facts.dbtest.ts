@@ -119,6 +119,21 @@ beforeAll(async () => {
   );
   userId = Number(user.rows[0].id);
   programId = await program('main', orgId);
+  // The current-access gate (14362ef00, 2026-10-14) admits a current member, through the project
+  // the program is anchored to; the suite predates it and supplied neither.
+  await owner.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
+       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
+  const ws = await owner.query(
+    `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id) VALUES ($1, $2, $2, 'active', $3) RETURNING id`,
+    [orgId, `${PROBE}-${RUN}`, userId],
+  );
+  const anchor = await owner.query(
+    `INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, created_by_id, regulatory_program_id, settings)
+     VALUES ($1, $2, $3, 'regulatory', 'active', $4, $4, $5, '{}'::jsonb) RETURNING id`,
+    [orgId, ws.rows[0].id, `${PROBE} ${RUN}`, userId, programId],
+  );
+  await owner.query('INSERT INTO project_visibility_settings (organization_id, project_id, visibility) VALUES ($1, $2, $3)', [orgId, anchor.rows[0].id, 'org_public']);
   const sibling = await program('sibling', orgId);
   studyId = await study(orgId, programId, `BX-${RUN}-02`, 'main');
   // The same protocol id in another project of the organization: never considered.

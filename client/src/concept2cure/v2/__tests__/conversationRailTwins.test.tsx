@@ -387,8 +387,9 @@ describe('the composer never claims a file it did not send', () => {
 
   it('rejects an unsupported type without a network call', async () => {
     await mount(shellChat());
-    pick(new File(['x'], 'subjects.xpt', { type: 'application/octet-stream' }));
-    await waitFor(() => expect(chip('subjects.xpt')?.textContent).toMatch(/Unsupported file type/));
+    // SAS's native format; its transport format (.xpt) is admitted since 2026-10-15.
+    pick(new File(['x'], 'subjects.sas7bdat', { type: 'application/octet-stream' }));
+    await waitFor(() => expect(chip('subjects.sas7bdat')?.textContent).toMatch(/Unsupported file type/));
     expect(uploads()).toHaveLength(0);
   });
 });

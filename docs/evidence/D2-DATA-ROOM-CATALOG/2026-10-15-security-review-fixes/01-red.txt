@@ -1,0 +1,17 @@
+# RED at 9e8a38a17: the readers and the name binding as committed, the regression tests kept (2026-10-15T07:05:28Z)
+ × server/services/clinical-regulatory-evidence/__tests__/dataset-parser-cost.test.ts > the dataset readers stay linear on crafted input > an .xpt of one-byte blank observations 2054ms
+   → expected +0 to be 20971440 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/dataset-parser-cost.test.ts > the dataset readers stay linear on crafted input > an NDJSON of blank lines after its metadata 2653ms
+   → expected 2607.800232 to be less than 1000
+ × server/services/clinical-regulatory-evidence/__tests__/dataset-parser-cost.test.ts > the dataset readers stay linear on crafted input > a .json that is not a dataset is declined without being parsed 2943ms
+   → expected 2923.4091799999997 to be less than 1000
+ × server/utils/__tests__/fileSignature.test.ts > security review 2026-10-15: name binding gaps > F2: a trailing space or dot does not unbind the name 19ms
+   → "evil.pdf ": expected true to be false // Object.is equality
+ × server/utils/__tests__/fileSignature.test.ts > security review 2026-10-15: name binding gaps > F3: a transport or NDJSON type is admitted for its own name only 3ms
+   → evil.tif: expected true to be false // Object.is equality
+ × server/utils/__tests__/fileSignature.test.ts > security review 2026-10-15: name binding gaps > F3: a transport file is its whole first record, not the first 48 characters 2ms
+   → expected true to be false // Object.is equality
+ × server/utils/__tests__/fileSignature.test.ts > security review 2026-10-15: name binding gaps > an .ndjson sent as octet-stream, as a browser sends it, is checked as NDJSON text 6ms
+   → expected { ok: false, …(1) } to deeply equal { ok: true }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 44 passed (51)

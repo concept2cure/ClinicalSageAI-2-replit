@@ -1,0 +1,3 @@
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > C2(b): in plain text every character is shown, so there is no region > "<LLOQ" and a later ">3×ULN" (the weaker case) are AnA's 0ms
+ Test Files  116 passed (116)
+      Tests  1581 passed (1581)

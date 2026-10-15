@@ -31,6 +31,7 @@ import {
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 import { VaultLibraryResults } from './VaultLibraryResults';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
@@ -705,6 +706,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
   /* Confirm N suggested (VR-11b): held here for the same reason. */
   const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+  const canWrite = useVaultCanWrite();
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -1318,6 +1320,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             {I.shieldCheck} Inspection readiness
           </button>
         )}
+        {/* Uploading is an ingest, which admits the writing roles only (VaultViewOnly). */}
+        {canWrite ? (
+          <>
         {/* What the file IS — the ingest schema's own vocabulary, so the
             picker can never offer a type the server refuses. MODULE_3 is how
             an uploaded CMC document declares itself and gets handled as one
@@ -1387,6 +1392,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         >
           {I.sparkles || I.plus} Ask AnA to import
         </button>
+          </>
+        ) : null}
       </div>
 
       {(uploadNote || downloadNote) && (
@@ -1849,7 +1856,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                           {sel.filing.rationale}
                         </div>
                       )}
-                      <div className="vd-d-filing-acts">
+                      {!canWrite ? <VaultViewOnly act="file, move or unfile it" testId="vault-filing-view-only" /> : null}
+                      {canWrite ? <div className="vd-d-filing-acts">
                         {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
                           <input
                             className="vd-d-filing-reason"
@@ -1908,7 +1916,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                             Unfile
                           </button>
                         )}
-                      </div>
+                      </div> : null}
                     </div>
 
                     {projectId && sel.docId && sel.details ? (
