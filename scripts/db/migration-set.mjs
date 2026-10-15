@@ -3282,6 +3282,14 @@ export const C2C_MIGRATION_FILES = [
   // created them. Conditional on the table and the live shape; creates nothing.
   'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
 
+  // canonical_facts.confidence was NOT NULL DEFAULT 0.5000, so every governed
+  // fact nobody scored was stored at 0.5 (2026-10-15). Its creator,
+  // migrations/20260603_living_record_spine.sql, is amended in place but runs
+  // on install-fresh only; this relaxes the column on databases installed
+  // earlier. Conditional on the table and the live column shape; keeps stored
+  // scores; creates nothing, drops nothing.
+  'migrations/20261015k_canonical_facts_confidence_unscored.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

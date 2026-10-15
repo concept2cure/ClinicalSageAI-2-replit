@@ -40,6 +40,7 @@ import {
 } from '../../../shared/schema/gspr-postmarket';
 import { reactiveDependencyService } from '../reactive-dependency-service';
 import { resolveLegacyProgram } from '../living-record/program-link';
+import { systemActorEmail } from '../part11/governed-actor';
 import {
   propagateClaimChange,
   propagateEvidenceChange,
@@ -152,7 +153,9 @@ async function reactiveTrigger(req: RegulatoryChangeRequest): Promise<HandlerOut
       sourceId: req.sourceId,
       sourceLabel: req.sourceLabel,
       reason: req.reason ?? `regulatory event ${req.event}`,
-      triggeredBy: req.userId ?? 'system',
+      // 2026-10-15: was `req.userId ?? 'system'` — a cascade no user started was
+      // logged as 'system', which names nobody. It names this router now.
+      triggeredBy: req.userId || systemActorEmail('change-router'),
     });
     return { channel: 'reactive_dependency_service', detail: result };
   } catch (err: any) {

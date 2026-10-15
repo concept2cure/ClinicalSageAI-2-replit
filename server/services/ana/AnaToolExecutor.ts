@@ -6430,7 +6430,8 @@ registerToolHandler('list_governed_facts', async (input: Record<string, unknown>
         unit: f.unit,
         valueType: f.valueType,
         version: f.version,
-        confidence: f.confidence,
+        // 2026-10-15: unscored facts were stored at 0.5 / 1.0 and handed over as a score.
+        confidence: f.confidence ?? 'unscored',
       }));
     return JSON.stringify({
       status: 'computed',
