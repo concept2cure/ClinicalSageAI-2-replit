@@ -86,6 +86,67 @@ export function isReviewState(value: unknown): value is ReviewState {
   return typeof value === 'string' && (REVIEW_STATES as readonly string[]).includes(value);
 }
 
+/**
+ * One project's submission gate, counted over EVERY finding it holds.
+ *
+ * The Inconsistency board used to derive this in the browser from the page of
+ * findings it had read (200 by default, most severe first), so a blocking
+ * finding of lower severity past that page was not counted and the screen could
+ * read "clear" over a project checkPromotionBlocked holds. Counted here, from
+ * the authority each finding was recorded with, by checkPromotionBlocked's own
+ * rule: a finding leaves the gate in a GATE_CLEARING_STATES review state, and
+ * an open one with blocks_promotion blocks.
+ */
+export interface ProjectGate {
+  /** Every finding recorded for the project, in any review state. */
+  total: number;
+  /** Still on the gate: neither resolved nor superseded. */
+  open: number;
+  resolved: number;
+  superseded: number;
+  /** Open findings, by the authority recorded on them. */
+  blocking: number;
+  needApproval: number;
+  needEscalation: number;
+  needReview: number;
+  advisory: number;
+  /** Open findings whose authority_state is none of the five above (the column has no CHECK). */
+  unrecognized: number;
+  blocked: boolean;
+}
+
+/** The gate from `(review_state, authority_state, n)` groups. Pure, so it is tested without a database. */
+export function projectGateFromCounts(
+  groups: ReadonlyArray<{ review_state: string; authority_state: string; n: number | string }>,
+): ProjectGate {
+  const gate: ProjectGate = {
+    total: 0, open: 0, resolved: 0, superseded: 0,
+    blocking: 0, needApproval: 0, needEscalation: 0, needReview: 0, advisory: 0, unrecognized: 0,
+    blocked: false,
+  };
+  for (const g of groups) {
+    const n = Number(g.n);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    gate.total += n;
+    if (GATE_CLEARING_STATES.has(g.review_state as ReviewState)) {
+      if (g.review_state === 'superseded') gate.superseded += n;
+      else gate.resolved += n;
+      continue;
+    }
+    gate.open += n;
+    switch (g.authority_state) {
+      case 'blocks_promotion': gate.blocking += n; break;
+      case 'requires_approval': gate.needApproval += n; break;
+      case 'requires_escalation': gate.needEscalation += n; break;
+      case 'requires_review': gate.needReview += n; break;
+      case 'advisory_only': gate.advisory += n; break;
+      default: gate.unrecognized += n;
+    }
+  }
+  gate.blocked = gate.blocking > 0;
+  return gate;
+}
+
 /** Shortest reason accepted for a review transition — the same bar the revalue route sets. */
 export const REVIEW_REASON_MIN = 8;
 
@@ -783,6 +844,20 @@ class ContradictionEngineService {
       blockingFindings,
       warningFindings,
     };
+  }
+
+  /** The project's whole submission gate (ProjectGate). A read failure throws — it is never an empty gate. */
+  async projectGate(organizationId: number, projectId: number): Promise<ProjectGate> {
+    const result = await pool!.query(
+      `
+      SELECT review_state, authority_state, COUNT(*)::int AS n
+      FROM contradiction_findings
+      WHERE organization_id = $1 AND project_id = $2
+      GROUP BY review_state, authority_state
+    `,
+      [organizationId, projectId]
+    );
+    return projectGateFromCounts(result.rows);
   }
 
   /**

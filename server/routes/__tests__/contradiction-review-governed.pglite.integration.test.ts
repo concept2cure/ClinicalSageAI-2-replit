@@ -3,8 +3,8 @@
  * decision, and records itself as one.
  *
  * Resolving a finding is what clears the submission gate: checkPromotionBlocked
- * and the Inconsistency surface's giPromotionGate both drop a finding once its
- * review_state is 'approved_resolution' or 'superseded'. Before this change the
+ * and the gate the Inconsistency board counts (projectGate) both drop a finding
+ * once its review_state is 'approved_resolution' or 'superseded'. Before this change the
  * route passed `req.body.reviewState` unvalidated into a bare
  * `UPDATE contradiction_findings` on the shared pool — no reason, no role gate,
  * no audit row — and the surface rendered the resolver as the literal

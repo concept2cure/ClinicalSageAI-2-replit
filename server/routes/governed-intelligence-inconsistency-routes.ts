@@ -22,6 +22,16 @@
  * source (program.app, program.filing, finding.factId, the verified-consistent
  * "checks" list) are returned as documented null / [] and are NEVER fabricated.
  *
+ * THE GATE is `gate`, counted by contradictionEngineService.projectGate over
+ * every finding the project holds — not over `findings`, which is a page (most
+ * severe first, `limit` rows). It fails closed with 503 like the findings read.
+ * Each finding carries the severity and authority the engine recorded,
+ * including any regulator overlay rule applied when it was detected
+ * (regulatorBody + overlayRuleId). The surface used to re-score both in the
+ * browser from two hard-coded overlay rules — one of them, an EMA dosage rule,
+ * in no organisation's rule table — under an FDA/EMA toggle. Removed
+ * 2026-10-15; the recorded authority is the one checkPromotionBlocked enforces.
+ *
  * @module server/routes/governed-intelligence-inconsistency-routes
  */
 
@@ -30,6 +40,7 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
 import { query as dbQuery } from '../db.js';
 import { contradictionEngineService } from '../services/contradiction-engine-service';
+import type { ProjectGate } from '../services/contradiction-engine-service';
 import { assumptionRegistryService } from '../services/assumption-registry-service';
 import { decisionRecordService } from '../services/decision-record-service';
 
@@ -67,6 +78,10 @@ interface InconsistencyFinding {
   resolvedAt: string | null;
   /** No fact-linkage column exists on contradiction_findings — always null. */
   factId: string | null;
+  /** The regulator body the finding was detected against, as stored. */
+  regulatorBody: string | null;
+  /** The overlay rule the engine applied at detection, or null when none was. */
+  overlayRuleId: string | null;
 }
 
 interface InconsistencyAssumption {
@@ -109,6 +124,8 @@ interface InconsistencyCheck {
 
 interface InconsistencyBoard {
   program: InconsistencyProgram;
+  /** Counted over every finding of the project; `findings` may be a page of them. */
+  gate: ProjectGate;
   findings: InconsistencyFinding[];
   assumptions: InconsistencyAssumption[];
   decisions: InconsistencyDecision[];
@@ -196,13 +213,14 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
       // 2) Findings — the promotion-gating data. Fail CLOSED on read error:
       //    an empty findings set is interpreted downstream as "clean / ready to
       //    file", so we must never emit [] when we simply could not read.
+      //    The gate is counted over all of them, so it fails closed the same way.
       let findingRecords;
+      let gate: ProjectGate;
       try {
-        findingRecords = await contradictionEngineService.searchFindings({
-          organizationId: orgId,
-          projectId,
-          limit,
-        });
+        [findingRecords, gate] = await Promise.all([
+          contradictionEngineService.searchFindings({ organizationId: orgId, projectId, limit }),
+          contradictionEngineService.projectGate(orgId, projectId),
+        ]);
       } catch (error) {
         logger.error('contradiction findings read failed', { projectId, err: errMsg(error) });
         return res
@@ -261,6 +279,8 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
           // HONESTY: contradiction_findings has no fact-linkage column; the CMC
           // "change value everywhere" affordance has no persisted backing datum.
           factId: null,
+          regulatorBody: f.regulatorBody,
+          overlayRuleId: f.overlayRuleId,
         };
       });
 
@@ -303,6 +323,7 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
 
       const board: InconsistencyBoard = {
         program,
+        gate,
         findings,
         assumptions,
         decisions,
