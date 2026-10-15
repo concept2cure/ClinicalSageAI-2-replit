@@ -406,74 +406,75 @@ export async function autoInsertFigures(params: {
 }): Promise<FigureGenerationResult[]> {
   const results: FigureGenerationResult[] = [];
 
-  try {
-    // Where figures belong in a section: suggestions only. Each one still goes
-    // through generateFigure, which drafts only from source data and only with
-    // an approved model.
-    const analysis = await ai.chat({
-      taskType: 'document_analysis',
-      callerModule: 'figureGeneration.autoInsertFigures',
-      temperature: 0.1,
-      max_tokens: 2000,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory document analyst. Analyze the given section content and identify where figures/charts should be inserted to strengthen the submission. Return JSON:
+  // A failed or unreadable analysis is an error, never [] — which read as
+  // "no figures to insert" for an analysis that did not run (2026-10-15).
+  // Where figures belong in a section: suggestions only. Each one still goes
+  // through generateFigure, which drafts only from source data and only with
+  // an approved model.
+  const analysis = await ai.chat({
+    taskType: 'document_analysis',
+    callerModule: 'figureGeneration.autoInsertFigures',
+    temperature: 0.1,
+    max_tokens: 2000,
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: `You are a regulatory document analyst. Analyze the given section content and identify where figures/charts should be inserted to strengthen the submission. Return JSON:
 {
   "figures": [
-    {
-      "figureType": "bar_chart|line_chart|kaplan_meier|consort_flow|process_flow|stability_trend|pk_concentration|comparison_table|forest_plot|waterfall_plot|box_plot|pie_chart|dose_response|custom",
-      "title": "Figure title",
-      "description": "What this figure should show",
-      "insertAfterText": "First 50 chars of the paragraph this should follow",
-      "dataNeeded": "What data is needed to generate this figure",
-      "regulatoryJustification": "Why this figure strengthens the submission"
-    }
+  {
+    "figureType": "bar_chart|line_chart|kaplan_meier|consort_flow|process_flow|stability_trend|pk_concentration|comparison_table|forest_plot|waterfall_plot|box_plot|pie_chart|dose_response|custom",
+    "title": "Figure title",
+    "description": "What this figure should show",
+    "insertAfterText": "First 50 chars of the paragraph this should follow",
+    "dataNeeded": "What data is needed to generate this figure",
+    "regulatoryJustification": "Why this figure strengthens the submission"
+  }
   ]
 }
 Only suggest figures that are standard for this section type in regulatory submissions.`,
-        },
-        {
-          role: 'user',
-          content: `Section ${params.sectionCode}:\n\n${params.sectionContent.slice(0, 8000)}`,
-        },
-      ],
+      },
+      {
+        role: 'user',
+        content: `Section ${params.sectionCode}:\n\n${params.sectionContent.slice(0, 8000)}`,
+      },
+    ],
+  });
+
+  const analysisContent = analysis.content || '{}';
+  let suggestions: {
+    figures: Array<{
+      figureType: string;
+      title: string;
+      description: string;
+      insertAfterText: string;
+      dataNeeded: string;
+      regulatoryJustification: string;
+    }>;
+  };
+
+  try {
+    suggestions = JSON.parse(analysisContent);
+  } catch {
+    throw new Error('The figure analysis returned no readable suggestions.');
+  }
+  if (!suggestions || typeof suggestions !== 'object' || (suggestions.figures !== undefined && !Array.isArray(suggestions.figures))) {
+    throw new Error('The figure analysis returned no readable suggestions.');
+  }
+
+  // Generate each suggested figure
+  for (const suggestion of (suggestions.figures || []).slice(0, 5)) {
+    const result = await generateFigure({
+      projectId: params.projectId,
+      organizationId: params.organizationId,
+      userId: params.userId,
+      figureType: (suggestion.figureType || 'custom') as FigureType,
+      title: suggestion.title,
+      description: `${suggestion.description}\n\nData needed: ${suggestion.dataNeeded}\nRegulatory justification: ${suggestion.regulatoryJustification}`,
+      targetSection: params.sectionCode,
     });
-
-    const analysisContent = analysis.content || '{}';
-    let suggestions: {
-      figures: Array<{
-        figureType: string;
-        title: string;
-        description: string;
-        insertAfterText: string;
-        dataNeeded: string;
-        regulatoryJustification: string;
-      }>;
-    };
-
-    try {
-      suggestions = JSON.parse(analysisContent);
-    } catch {
-      suggestions = { figures: [] };
-    }
-
-    // Generate each suggested figure
-    for (const suggestion of (suggestions.figures || []).slice(0, 5)) {
-      const result = await generateFigure({
-        projectId: params.projectId,
-        organizationId: params.organizationId,
-        userId: params.userId,
-        figureType: (suggestion.figureType || 'custom') as FigureType,
-        title: suggestion.title,
-        description: `${suggestion.description}\n\nData needed: ${suggestion.dataNeeded}\nRegulatory justification: ${suggestion.regulatoryJustification}`,
-        targetSection: params.sectionCode,
-      });
-      results.push(result);
-    }
-  } catch (error) {
-    console.error('[FigureService] Auto-insert analysis failed:', error);
+    results.push(result);
   }
 
   return results;
