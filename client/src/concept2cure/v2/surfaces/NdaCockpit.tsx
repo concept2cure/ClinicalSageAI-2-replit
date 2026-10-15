@@ -14,13 +14,46 @@ import { C2CToast, useToast } from '../toast';
 
 /* ── Inline fixture types ── */
 
+/** One CTD module, measured against its sections in the canonical required-section
+ *  profile (server: nda-modules-view-assembler.ts NdaModuleRow). */
 interface NdaModule {
   m: string;
   label: string;
-  pct: number;
+  /** complete / required, rounded. Null when not assessed. */
+  pct: number | null;
+  /** The module's required sections — the denominator. */
+  required: number | null;
+  /** Required sections authored to a complete status. */
+  complete: number | null;
+  /** Required sections not complete, not-started ones included. */
+  open: number | null;
+  /** Sections authored in the module — an inventory, not the denominator. */
   docs: number;
-  open: number;
   gate: string | null;
+  /** The required-section profile's citation, when assessed. */
+  basis: string | null;
+  /** Why there is no percentage, when there is none. */
+  notAssessed: string | null;
+}
+
+type MeasuredModule = NdaModule & { pct: number; required: number; complete: number; open: number };
+
+const isMeasured = (m: NdaModule): m is MeasuredModule =>
+  typeof m.pct === 'number' && typeof m.required === 'number' &&
+  typeof m.complete === 'number' && typeof m.open === 'number';
+
+/** Required sections complete and required, summed over the modules — over the
+ *  canonical profile the validate-completeness engine and dispatch gate also read.
+ *  Null when any module was not measured against it, or there is none. */
+function requiredSectionTotals(rows: NdaModule[]): { complete: number; required: number } | null {
+  let complete = 0;
+  let required = 0;
+  for (const r of rows) {
+    if (!isMeasured(r)) return null;
+    complete += r.complete;
+    required += r.required;
+  }
+  return required > 0 ? { complete, required } : null;
 }
 
 interface NdaM1Doc {
@@ -117,13 +150,20 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
      eCTD submission core (submissions where application_type IN ('nda','bla') +
      ectd_sequences + submission_leaves + coauthor_documents) by
      GET /api/nda-cockpit/modules. Fixture-free: real data, an honest empty
-     state, or an honest failed-load state — never a fabricated stand-in. The
-     overall % ready is derived from the loaded rows. */
+     state, or an honest failed-load state — never a fabricated stand-in.
+
+     2026-10-15: `overall` was the mean of the rows' pct, each taken over the
+     sections someone had authored with unstarted modules omitted, so one
+     approved Module 1 section read "You're 100% ready". It is now required
+     sections complete over required sections across all five modules, and
+     null — not 0 — when that cannot be measured. "Ready to file" is said only
+     when every required section is complete, by count, never a rounded 100. */
   const modulesLive = useLiveRows<NdaModule>('/api/nda-cockpit/modules');
   const modules = modulesLive.rows;
-  const overall = modules.length
-    ? Math.round(modules.reduce((a, m) => a + m.pct, 0) / modules.length)
-    : 0;
+  const totals = useMemo(() => requiredSectionTotals(modules), [modules]);
+  const overall = totals ? Math.round((totals.complete / totals.required) * 100) : null;
+  const allRequiredComplete = totals !== null && totals.complete === totals.required;
+  const notAssessedReason = modules.find((m) => !isMeasured(m))?.notAssessed ?? null;
   /* Real rows — the org's Refuse-to-File risk log (org-scoped DB read that
      fails closed to an empty list). The list stays locally mutable so a logged
      risk appears immediately, and the POST persists it. Seed the local list
@@ -302,7 +342,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   /* Context-aware human lead */
   const highs = rtf.filter(r => r.sev === 'high');
   const topHigh = highs[0] || rtf.find(r => r.sev === 'med');
-  const gateMod = modules.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
+  const gateMod = modules.filter(isMeasured).filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
   const openItems = m1open + rtf.filter(r => r.sev !== 'low').length;
 
   /* ── Which of the three states is this program actually in? (BP-W0-3) ───────
@@ -333,7 +373,9 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     findingCount: rtf.length,
     assessmentRan: false,
   });
-  const reassuring = mayReassure(filingState, overall);
+  /* "Close out the last items" is reassurance only when no required section is
+     still open; a clean review over 1 of 23 required sections is not close. */
+  const reassuring = overall !== null && allRequiredComplete && mayReassure(filingState, overall);
 
   /* What AnA can see of this screen.
      She knew the user was on "nda-cockpit" and nothing else — not the CTD
@@ -371,13 +413,21 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     const m1Clause = m1Loaded
       ? `${m1open} Module 1 admin item(s) open`
       : 'Module 1 admin status could not be read';
+    /* A count of required sections, not a "readiness" (2026-10-15: this said
+       "CTD readiness N%" off the mean over authored sections). */
+    const unmeasuredWhy = notAssessedReason
+      ?? (modules.length > 0 ? 'the module rows carry no required-section counts' : 'no NDA/BLA submission in scope');
+    const ctdClause = totals
+      ? `${totals.complete} of ${totals.required} required CTD sections complete (${overall}%)`
+      : `required CTD section completeness not assessed (${unmeasuredWhy})`;
     return {
       summary:
-        `NDA cockpit${progName ? ` for ${progName}` : ''}: CTD readiness ${overall}% across ` +
-        `${modules.length} module(s), ${m1Clause}. ${rtfClause}.`,
+        `NDA cockpit${progName ? ` for ${progName}` : ''}: ${ctdClause}, ${m1Clause}. ${rtfClause}.`,
       facts: {
         program: progName,
-        ctdReadinessPct: overall,
+        requiredCtdSectionsComplete: totals ? totals.complete : null,
+        requiredCtdSectionsTotal: totals ? totals.required : null,
+        requiredCtdSectionsCompletePct: overall,
         moduleCount: modules.length,
         module1AdminOpen: m1Loaded ? m1open : null,
         /* The surface's own verdict, not a re-derivation. */
@@ -394,7 +444,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         'Review the BLA assessment set',
       ],
     };
-  }, [filingState, progName, overall, modules.length, m1open, m1Live.loading, m1Live.error, rtf.length, highs.length, reassuring, tab]);
+  }, [filingState, progName, totals, overall, notAssessedReason, modules.length, m1open, m1Live.loading, m1Live.error, rtf.length, highs.length, reassuring, tab]);
   usePublishSurfaceContext('nda-cockpit', anaContext);
 
   /* The KPI strip speaks from the SAME state the lead does, derived here rather
@@ -425,7 +475,13 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
   /* Each state gets its own sentence. No state borrows another's vocabulary,
      and only `assessed-clear` — unreachable here for the reason above — may
-     speak of blockers being absent. */
+     speak of blockers being absent.
+
+     The figure is named for what it is (2026-10-15: it read "You're N% ready",
+     N being a mean over authored sections). */
+  const completeness: React.ReactNode = totals
+    ? <><b>{overall}% of the required CTD sections</b> are complete ({totals.complete} of {totals.required})</>
+    : <>Required-section completeness has not been assessed</>;
   const leadCopy: Record<string, { tone: 'calm' | 'urgent' | 'good'; headline: React.ReactNode; body: React.ReactNode }> = {
     loading: {
       tone: 'calm',
@@ -451,17 +507,25 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     'assessed-with-findings': {
       tone: 'urgent',
       headline: topHigh
-        ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
-        : <>You're <b>{overall}% ready</b>, with {rtf.length} filing-risk {rtf.length === 1 ? 'item' : 'items'} open.</>,
+        ? <>{completeness}, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
+        : <>{completeness}, with {rtf.length} filing-risk {rtf.length === 1 ? 'item' : 'items'} open.</>,
       body: topHigh
-        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()}. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
+        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()}. {gateMod ? <>Module {gateMod.m}, at {gateMod.complete} of {gateMod.required} required sections complete, is the next thing behind it.</> : null}</>
         : <>{openItems} {openItems === 1 ? 'item' : 'items'} to work before you submit. None is currently rated high severity.</>,
     },
-    'assessed-clear': {
-      tone: 'good',
-      headline: <>You're <b>{overall}% ready</b> to file &mdash; the completed review found no Refuse-to-File blockers, {openItems} items to tidy before you submit.</>,
-      body: <>The remaining items are administrative, not structural &mdash; close them out and the package is fileable.</>,
-    },
+    /* "100% ready to file" only when every required section is complete by the
+       canonical profile; a clean review alone does not make a package fileable. */
+    'assessed-clear': allRequiredComplete
+      ? {
+          tone: 'good',
+          headline: <>You're <b>100% ready</b> to file &mdash; every required CTD section is complete and the completed review found no Refuse-to-File blockers, {openItems} items to tidy before you submit.</>,
+          body: <>The remaining items are administrative, not structural &mdash; close them out and the package is fileable.</>,
+        }
+      : {
+          tone: 'calm',
+          headline: <>The completed review found no Refuse-to-File blockers. {completeness}.</>,
+          body: <>Required CTD sections are structural: the package cannot be filed until each one is complete.</>,
+        },
   };
   const copy = leadCopy[filingState];
 
@@ -539,7 +603,9 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
           in the review; it is not taken here, because removing a scannable
           summary is a product decision rather than a defect fix. */}
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{kpiReady ? `${overall}%` : '—'}</div><div className="reg-kpi-l">Application readiness</div></div>
+        {/* Completeness, so labelled (2026-10-15: "Application readiness"). No
+            figure when nothing could be measured — not a 0%. */}
+        <div className="reg-kpi"><div className="reg-kpi-v">{kpiReady && overall !== null ? `${overall}%` : '—'}</div><div className="reg-kpi-l">Required CTD sections complete</div></div>
         {/* "not started" asserted that a clock exists and has not begun. There
             is no review-clock store at all (see the header note), and the clock
             tab below says so in its own words — this label now matches it
@@ -558,22 +624,33 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'ctd' && (
         modules.length > 0 ? (
-          <div className="nda-mods">
-            {modules.map(m => (
-              <button key={m.m} className="nda-mod" onClick={() => open('dossier')}>
-                <div className="nda-mod-n">M{m.m}</div>
-                <div className="nda-mod-b">
-                  <div className="nda-mod-top"><span className="nda-mod-l">{m.label}</span><span className="nda-mod-pct">{m.pct}%</span></div>
-                  <div className="nda-mod-track"><span className="nda-mod-fill" data-risk={m.gate ? true : undefined} style={{ width: m.pct + '%' }} /></div>
-                  <div className="nda-mod-meta">
-                    <span>{m.docs} documents {I.dot} {m.open} open</span>
-                    {m.gate ? <span className="nda-mod-gate">{I.alertTriangle} {m.gate}</span> : <span className="nda-mod-ok">{I.check} module complete</span>}
+          <>
+            <div className="nda-mods">
+              {/* Each module against its required sections (2026-10-15: "N documents ·
+                  N open · module complete" over only the sections already authored). */}
+              {modules.map(m => (
+                <button key={m.m} className="nda-mod" onClick={() => open('dossier')}>
+                  <div className="nda-mod-n">M{m.m}</div>
+                  <div className="nda-mod-b">
+                    <div className="nda-mod-top"><span className="nda-mod-l">{m.label}</span><span className="nda-mod-pct">{isMeasured(m) ? `${m.pct}%` : '—'}</span></div>
+                    <div className="nda-mod-track">{isMeasured(m) && <span className="nda-mod-fill" data-risk={m.gate ? true : undefined} style={{ width: m.pct + '%' }} />}</div>
+                    <div className="nda-mod-meta">
+                      <span>{isMeasured(m) ? `${m.complete} of ${m.required} required sections complete` : 'Required sections not assessed'} {I.dot} {m.docs > 0 ? `${m.docs} authored` : 'not started'}</span>
+                      {m.gate
+                        ? <span className="nda-mod-gate">{I.alertTriangle} {m.gate}</span>
+                        : isMeasured(m) && m.open === 0 ? <span className="nda-mod-ok">{I.check} module complete</span> : null}
+                    </div>
                   </div>
-                </div>
-                <span className="nda-mod-go">{I.arrowRight || I.right}</span>
-              </button>
-            ))}
-          </div>
+                  <span className="nda-mod-go">{I.arrowRight || I.right}</span>
+                </button>
+              ))}
+            </div>
+            {notAssessedReason
+              ? <p className="scaf-note">{notAssessedReason}</p>
+              : totals
+                ? <p className="scaf-note">Each module is measured against its required sections{modules[0].basis ? ` (${modules[0].basis})` : ''}. A section counts as complete only when approved, signed or locked.</p>
+                : null}
+          </>
         ) : modulesLive.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading CTD module readiness…</div>
         ) : modulesLive.error ? (
