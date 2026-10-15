@@ -20,6 +20,7 @@ import {
   type E3Section,
   type LifecycleComponent,
 } from '../ind/ctd/index.js';
+import { getDocumentTemplate } from '../market-specs/document-template-library.js';
 import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import {
   FDA_FORMAL_MEETING_TIMELINES,
@@ -145,6 +146,39 @@ function lifecycleMeetingTemplate(
     regulatoryReferences: entry.regulatoryBasis,
     sections: entry.components.map(lifecycleTemplateSection),
   };
+}
+
+/**
+ * The IB sections chat drafting uses, projected from the platform's one IB
+ * outline (market-specs 'investigators_brochure', ICH E6(R3) Appendix A) — the
+ * outline the open-document brief and get_document_template give. Until
+ * 2026-10-15 this was a hand-written copy (no "and Formulation", a mandatory
+ * References chapter). Only the drafting guidance and word ranges are local.
+ */
+const IB_DRAFTING: Record<string, { guidance: string; targetWords: [number, number] }> = {
+  '1': { targetWords: [300, 600], guidance: 'Brief summary of the compound: pharmacological class, proposed indication, key nonclinical and clinical findings, and guidance to the investigator.' },
+  '2': { targetWords: [200, 400], guidance: 'Chemical name, INN/USAN, mechanism of action, therapeutic rationale, and overview of current development stage.' },
+  '3': { targetWords: [200, 400], guidance: 'Physicochemical properties, formulations used in clinical trials, storage conditions, and handling precautions.' },
+  '4': { targetWords: [800, 1500], guidance: 'Key nonclinical findings relevant to human safety and clinical monitoring: pharmacology (primary and safety pharmacology), ADME, and toxicology (repeat-dose, genotoxicity, reproductive, carcinogenicity if available). Express safety margins in multiples of clinical exposure.' },
+  '5': { targetWords: [600, 1200], guidance: 'All available human data: PK/PD from phase 1 studies, efficacy signals from phase 2, safety data. If phase 3 data are available, include key findings. Integrate nonclinical-to-clinical PK correlations.' },
+  '6': { targetWords: [300, 600], guidance: 'Overall benefit-risk assessment at the current stage of development. Specific guidance on monitoring, dose modifications, and management of anticipated adverse events.' },
+};
+
+function ibOutline() {
+  const outline = getDocumentTemplate('investigators_brochure');
+  if (!outline) throw new Error("The Investigator's Brochure outline is unavailable.");
+  return outline;
+}
+
+const IB_OUTLINE_BASIS = ibOutline().regulatoryBasis;
+
+function ibTemplateSections(): TemplateSection[] {
+  return ibOutline().sections.map((s) => ({
+    heading: `${s.number}. ${s.heading}`,
+    required: s.required,
+    guidance: IB_DRAFTING[s.number]?.guidance ?? s.purpose,
+    ...(IB_DRAFTING[s.number] ? { targetWords: IB_DRAFTING[s.number].targetWords } : {}),
+  }));
 }
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
@@ -341,17 +375,8 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
     minConfidence: 0.65,
     draftingInstructions: "Draft an ICH E6(R3)-compliant Investigator's Brochure. This document is provided to investigators to enable informed decisions about clinical trial participation. Include all relevant preclinical and clinical data, clearly labeling what is known vs. investigational. Follow the ICH E6(R3) template structure. Write for a clinically trained audience who may be unfamiliar with this compound.",
-    regulatoryReferences: ['ICH E6(R3) (GCP)', 'ICH M4S / M4E (nonclinical / clinical sections)', '21 CFR 312.23(a)(5)'],
-    sections: [
-      { heading: 'Table of Contents', required: true, guidance: 'Complete TOC with section numbers and page numbers.' },
-      { heading: '1. Summary', required: true, targetWords: [300, 600], guidance: 'Brief summary of the compound: pharmacological class, proposed indication, key nonclinical and clinical findings, and guidance to the investigator.' },
-      { heading: '2. Introduction', required: true, targetWords: [200, 400], guidance: 'Chemical name, INN/USAN, mechanism of action, therapeutic rationale, and overview of current development stage.' },
-      { heading: '3. Physical, Chemical, and Pharmaceutical Properties', required: true, targetWords: [200, 400], guidance: 'Physicochemical properties, formulations used in clinical trials, storage conditions, and handling precautions.' },
-      { heading: '4. Nonclinical Studies', required: true, targetWords: [800, 1500], guidance: 'Key nonclinical findings relevant to human safety and clinical monitoring: pharmacology (primary and safety pharmacology), ADME, and toxicology (repeat-dose, genotoxicity, reproductive, carcinogenicity if available). Express safety margins in multiples of clinical exposure.' },
-      { heading: '5. Effects in Humans', required: true, targetWords: [600, 1200], guidance: 'All available human data: PK/PD from phase 1 studies, efficacy signals from phase 2, safety data. If phase 3 data are available, include key findings. Integrate nonclinical-to-clinical PK correlations.' },
-      { heading: '6. Summary of Data and Guidance for the Investigator', required: true, targetWords: [300, 600], guidance: 'Overall benefit-risk assessment at the current stage of development. Specific guidance on monitoring, dose modifications, and management of anticipated adverse events.' },
-      { heading: 'References', required: true, guidance: 'Comprehensive reference list. All nonclinical and clinical study reports referenced should be available as IND appendices.' },
-    ],
+    regulatoryReferences: [IB_OUTLINE_BASIS, 'ICH M4S / M4E (nonclinical / clinical sections)', '21 CFR 312.23(a)(5)'],
+    sections: ibTemplateSections(),
   },
 
   ind_phase1_protocol: {
