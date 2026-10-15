@@ -46,8 +46,14 @@ export async function acceptProposal(params: { conversationId: string; proposalI
   const proposals = await listProposals(ctx);
   const target = proposals.find(p => p.id === params.proposalId);
   if (!target) throw new Error('Proposal not found');
+  // Accepted once, from pending. Every acceptance created another governed
+  // artifact, and the status write's "no row changed" answer was ignored.
+  if (target.status !== 'pending') throw new Error(`Proposal is already ${target.status}`);
 
-  await conversationPersistence.updateProposalStatus(ctx, params.proposalId, 'accepted');
+  const moved = await conversationPersistence.updateProposalStatus(ctx, params.proposalId, 'accepted');
+  if (!moved && !allowConversationOsMemoryFallback()) {
+    throw new Error('Proposal is no longer pending; nothing was accepted');
+  }
   if (allowConversationOsMemoryFallback()) {
     const mem = kernelStore.proposals.get(ctx.conversationId) ?? [];
     kernelStore.proposals.set(
@@ -88,7 +94,9 @@ export async function acceptProposal(params: { conversationId: string; proposalI
       userId: numericUserId,
       title: `Accepted Proposal ${params.proposalId}`,
       content: target.content,
-      ctdSection: '5.0',
+      // No ctdSection: a proposal names no CTD placement, and every accepted
+      // one was filed as 5.0 and reported "placed" (removed 2026-10-15). It
+      // arrives unplaced, as it is.
       sourceJobId: `conversation-${ctx.conversationId}`,
       surfaceKey: 'conversation_os_proposal_accept',
       sourceType: 'proposal_accept',
@@ -140,7 +148,14 @@ export async function acceptProposal(params: { conversationId: string; proposalI
 export async function rejectProposal(params: { conversationId: string; proposalId: string; projectId?: string; userId?: string }) {
   const ctx = withDefaultCtx(params);
   if (!ctx.projectId || !ctx.userId) throw new Error('projectId and userId are required');
-  await conversationPersistence.updateProposalStatus(ctx, params.proposalId, 'rejected');
+  // A proposal that does not exist, or was already decided, is not "REJECTED".
+  const target = (await listProposals(ctx)).find(p => p.id === params.proposalId);
+  if (!target) throw new Error('Proposal not found');
+  if (target.status !== 'pending') throw new Error(`Proposal is already ${target.status}`);
+  const moved = await conversationPersistence.updateProposalStatus(ctx, params.proposalId, 'rejected');
+  if (!moved && !allowConversationOsMemoryFallback()) {
+    throw new Error('Proposal is no longer pending; nothing was rejected');
+  }
   if (allowConversationOsMemoryFallback()) {
     const mem = kernelStore.proposals.get(ctx.conversationId) ?? [];
     kernelStore.proposals.set(
