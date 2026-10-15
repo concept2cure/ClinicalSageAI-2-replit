@@ -12795,9 +12795,12 @@ registerToolHandler('review_grant_reporting', async (input, ctx) => {
     const { periodStart, periodEnd } = await getAwardPeriod(ctx.organizationId, awardId);
     const today = new Date().toISOString().slice(0, 10);
     const obligations = reportingObligations(periodStart, periodEnd);
+    const periodState = awardPeriodState(periodStart, periodEnd, today);
     return JSON.stringify({
-      ok: true, periodState: awardPeriodState(periodStart, periodEnd, today), obligations,
-      message: `${obligations.length} reporting obligation(s); award is ${awardPeriodState(periodStart, periodEnd, today).replace(/_/g, ' ')}.`,
+      ok: true, periodState, obligations,
+      message: `${obligations.length} reporting obligation(s); ` + (periodState === 'undetermined'
+        ? 'where the award sits in its period cannot be determined: its start or end date is not recorded.'
+        : `award is ${periodState.replace(/_/g, ' ')}.`),
     });
   } catch (err) {
     return JSON.stringify({ error: `review_grant_reporting failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13115,9 +13118,11 @@ registerToolHandler('review_cost_share', async (input, ctx) => {
     const s = await getCostShareStatus(ctx.organizationId, awardId);
     return JSON.stringify({
       ok: true, ...s,
-      message: s.committed === 0
-        ? `No cost share committed for award ${awardId}.`
-        : `Cost share: ${s.contributed} of ${s.committed} met (${s.metPct}%)${s.met ? ' — fully met' : `, shortfall ${s.shortfall} (2 CFR 200.306)`}.`,
+      message: s.committed === null
+        ? `No cost-share commitment is recorded for award ${awardId}; whether cost share is met cannot be assessed.`
+        : s.committed === 0
+          ? `No cost share committed for award ${awardId}.`
+          : `Cost share: ${s.contributed} of ${s.committed} met (${s.metPct}%)${s.met ? ' — fully met' : `, shortfall ${s.shortfall} (2 CFR 200.306)`}.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_cost_share failed: ${err instanceof Error ? err.message : String(err)}` });
