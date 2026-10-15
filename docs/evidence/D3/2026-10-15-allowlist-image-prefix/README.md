@@ -24,3 +24,7 @@ An extension is admitted only by the list, or by a declared type the route names
 
 - `01-red.txt`: `uploadAllowlist.ts` as on trunk at `7559080e0`. `archive.zip` declared `image/png` is admitted.
 - `02-green.txt`: the allowlist, receive, module-integration and route suites.
+
+## Failures found, not caused here
+
+The route suites run with 19 failures in 6 files: `agent-swarm-retired`, `authoring-section-figure-refs`, `report-os-audit-recording`, `report-os-report-pack-export`, `report-os-saved-read-access` and `submissions-program-anchor`. None touch uploads. They fail identically on trunk at `7559080e0` with this commit's files reverted, 19 failed and 85 passed both ways (`02-green.txt`). They are left for the trunk-green lane.
