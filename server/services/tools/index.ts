@@ -1174,6 +1174,7 @@ registerTool({
 // ─── Regulatory Precedent Engine Tools ─────────────────────────────────────
 
 import { precedentEngine } from '../precedent-engine';
+import { riskNotAssessedResult, STRATEGY_NEEDS_TYPE, strategyToolResult } from './precedent-tool-results';
 import { precedentOrgId } from '../precedent-isolation';
 
 registerTool({
@@ -1382,6 +1383,7 @@ registerTool({
         deviceClass: params.deviceClass,
       });
 
+      if (analysis.overallRisk === 'not_assessed' || analysis.riskScore === null) return riskNotAssessedResult(analysis);
       const riskEmoji = { low: '🟢', medium: '🟡', high: '🟠', critical: '🔴' };
       const factorList = analysis.factors
         .map(
@@ -1438,8 +1440,9 @@ registerTool({
   aliases: ['regulatory.strategy', 'submission.strategy'],
   execute: async (params, ctx): Promise<ToolResult> => {
     try {
+      if (!params.submissionType) return STRATEGY_NEEDS_TYPE;
       const strategy = await precedentEngine.recommendStrategy({
-        submissionType: params.submissionType || '510(k)',
+        submissionType: params.submissionType,
         indication: params.indication,
         therapeuticArea: params.therapeuticArea,
         deviceName: params.deviceName,
@@ -1447,30 +1450,7 @@ registerTool({
         productCode: params.productCode,
       }, precedentOrgId(ctx?.organizationId));
 
-      const altList = strategy.alternativeStrategies
-        .map(
-          a =>
-            `  • **${a.strategy}** — ${a.precedentCount} precedent(s), ${Math.round(a.successRate * 100)}% success rate`
-        )
-        .join('\n');
-      const testList = strategy.testingRequirements.map(t => `  • ${t}`).join('\n');
-      const riskList = strategy.keyRisks.map(r => `  ⚠️ ${r}`).join('\n');
-
-      return {
-        ok: true,
-        artifact: {
-          type: 'strategy_recommendation',
-          id: `prec-strat-${Date.now()}`,
-          title: 'Submission Strategy Recommendation',
-          status: 'generated',
-          data: strategy as unknown as Record<string, unknown>,
-        },
-        summary: `Recommended: "${strategy.recommendedStrategy}" (${Math.round(strategy.confidence * 100)}% confidence), ${strategy.supportingPrecedents.length} supporting precedents`,
-        message: {
-          role: 'assistant',
-          content: `## Submission Strategy Recommendation\n\n**Recommended Strategy:** ${strategy.recommendedStrategy}\n**Confidence:** ${Math.round(strategy.confidence * 100)}%\n**Estimated Timeline:** ${strategy.estimatedTimeline}\n\n**Supporting Precedents:** ${strategy.supportingPrecedents.length} successful submission(s)\n\n**Testing Requirements:**\n${testList || '  Standard testing requirements.'}\n\n**Alternative Strategies:**\n${altList || '  No alternatives identified.'}\n\n**Key Risks:**\n${riskList || '  No major risks identified.'}`,
-        },
-      };
+      return strategyToolResult(strategy);
     } catch (err: any) {
       return {
         ok: false,

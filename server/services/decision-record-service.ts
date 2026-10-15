@@ -70,7 +70,8 @@ export interface DecisionRecord {
   recommendationType: RecommendationType;
   recommendationSummary: string;
   recommendationRationale: string | null;
-  confidenceLevel: string;
+  /** As the decider stated it; null when nobody did. */
+  confidenceLevel: string | null;
   evidenceBasis: EvidenceBasis | null;
   actionState: ActionState;
   approvedBy: string | null;
@@ -89,6 +90,9 @@ export interface DecisionRecord {
   updatedAt: string;
 }
 
+/** A value the caller stated, or null when it stated none. */
+const stated = (value: unknown): string | null => (typeof value === 'string' && value ? value : null);
+
 export interface CreateDecisionInput {
   organizationId: number;
   projectId: number;
@@ -98,8 +102,10 @@ export interface CreateDecisionInput {
   recommendationType: RecommendationType;
   recommendationSummary: string;
   recommendationRationale?: string;
-  confidenceLevel?: string;
-  evidenceBasis?: EvidenceBasis;
+  /** Stated by the decider, or absent. It defaulted to 'moderate' (2026-10-15). */
+  confidenceLevel?: string | null;
+  /** Stated by the caller, or absent. createDecision asserted 'expert_judgment'. */
+  evidenceBasis?: EvidenceBasis | null;
   /**
    * The lifecycle state the record is born in. Omit for a human-authored
    * recommendation, which correctly starts at the column default 'proposed'
@@ -182,8 +188,10 @@ export class DecisionRecordService {
       recommendationType: (input.recommendationType as RecommendationType) || 'regulatory_strategy',
       recommendationSummary: String(input.recommendationSummary || ''),
       recommendationRationale: (input.recommendationDetail as string) || undefined,
-      confidenceLevel: (input.confidence as string) || 'moderate',
-      evidenceBasis: 'expert_judgment',
+      // What the caller stated, or null: every record was 'moderate', and
+      // 'expert_judgment' whatever produced it — an SAP generator included.
+      confidenceLevel: stated(input.confidence),
+      evidenceBasis: stated(input.evidenceBasis) as EvidenceBasis | null,
       relatedAssumptionIds: (input.relatedAssumptionIds as string[]) || [],
       decidedBy: String(input.createdById || 'system'),
       notes: (input.notes as string) || undefined,
@@ -221,7 +229,7 @@ export class DecisionRecordService {
         input.recommendationType,
         input.recommendationSummary,
         input.recommendationRationale ?? null,
-        input.confidenceLevel ?? 'moderate',
+        input.confidenceLevel ?? null,
         input.evidenceBasis ?? null,
         input.relatedAssumptionIds ?? [],
         input.decidedBy,
@@ -591,7 +599,7 @@ export class DecisionRecordService {
       recommendationType: row.recommendation_type as RecommendationType,
       recommendationSummary: row.recommendation_summary as string,
       recommendationRationale: row.recommendation_rationale as string | null,
-      confidenceLevel: row.confidence_level as string,
+      confidenceLevel: (row.confidence_level as string | null) ?? null,
       evidenceBasis: row.evidence_basis as EvidenceBasis | null,
       actionState: row.action_state as ActionState,
       approvedBy: row.approved_by as string | null,
