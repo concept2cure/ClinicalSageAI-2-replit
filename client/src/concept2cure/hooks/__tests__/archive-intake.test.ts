@@ -67,7 +67,7 @@ describe('expandArchive', () => {
 
   it('refuses an entry compressed like a bomb, without inflating it', async () => {
     const x = await expandArchive(asFile(await zipOf({ 'zeros.csv': new Uint8Array(20 * 1024 * 1024) })));
-    expect(x.ok && x.refused).toEqual([{ path: 'zeros.csv', reason: 'it is compressed more than 1000:1, which is how archive bombs are built' }]);
+    expect(x.ok && x.refused).toEqual([{ path: 'zeros.csv', reason: 'it is compressed more than 200:1, which is how archive bombs are built' }]);
   });
 
   it('stops inflating at the cap when a header understates the size, and refuses a size that does not match', async () => {

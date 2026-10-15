@@ -27,8 +27,7 @@
  * uploader chose is not enough when the uploader also chose the name.
  */
 
-import path from 'node:path';
-import { UPLOAD_NAME_BINDINGS } from '../../shared/constants/upload-name-bindings';
+import { NAME_ONLY_TYPES, UPLOAD_NAME_BINDINGS, extensionOf } from '../../shared/constants/upload-name-bindings';
 
 export interface SignatureCheck {
   ok: boolean;
@@ -42,8 +41,12 @@ const GIF87_MAGIC = Buffer.from('GIF87a');
 const GIF89_MAGIC = Buffer.from('GIF89a');
 const ZIP_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const OLE_COMPOUND_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]); // legacy .doc / .xls
-/** SAS transport v5's first record (the format FDA's Technical Conformance Guide requires for datasets). */
-const XPORT_V5_MAGIC = Buffer.from('HEADER RECORD*******LIBRARY HEADER RECORD!!!!!!!', 'latin1');
+/**
+ * SAS transport v5's whole first record (the format FDA's Technical Conformance
+ * Guide requires for datasets): its 48-character header, 30 zeros and two
+ * blanks. The 48 characters alone admitted anything that began with them.
+ */
+const XPORT_V5_MAGIC = Buffer.from(`HEADER RECORD*******LIBRARY HEADER RECORD!!!!!!!${'0'.repeat(30)}  `, 'latin1');
 
 const TEXT_LIKE_PREFIXES = ['text/', 'application/json', 'application/xml', 'application/csv'];
 const TEXT_LIKE_EXACT = new Set([
@@ -206,7 +209,7 @@ const NAME_BINDINGS = UPLOAD_NAME_BINDINGS;
  */
 export function signatureTypeFor(fileName: string, declaredMime: string): string {
   const declared = String(declaredMime ?? '').split(';')[0].trim().toLowerCase();
-  const binding = NAME_BINDINGS.get(path.extname(String(fileName ?? '')).toLowerCase());
+  const binding = NAME_BINDINGS.get(extensionOf(fileName));
   return binding && binding.declared.includes(declared) ? binding.canonical : declaredMime;
 }
 
@@ -222,10 +225,12 @@ export function verifyDeclaredTypeForName(
   fileName: string,
   declaredMime: string,
 ): SignatureCheck {
-  const ext = path.extname(String(fileName ?? '')).toLowerCase();
+  const ext = extensionOf(fileName);
   const binding = NAME_BINDINGS.get(ext);
-  if (!binding) return { ok: true };
   const declared = String(declaredMime ?? '').split(';')[0].trim().toLowerCase();
+  const onlyFor = NAME_ONLY_TYPES.get(declared);
+  if (onlyFor && onlyFor !== ext) return { ok: false, reason: `${declared} is admitted for a ${onlyFor} file only` };
+  if (!binding) return { ok: true };
   if (!binding.declared.includes(declared)) {
     return { ok: false, reason: `a ${ext} file must be declared as ${binding.declared.join(' or ')}` };
   }

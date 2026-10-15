@@ -8,7 +8,7 @@
  */
 
 import type { CSSProperties } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 import { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
@@ -227,8 +227,11 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
     [projectId, refuse],
   );
 
+  /** Archives open one after another, so two dropped together never hold both in memory at once. */
+  const archiveQueue = useRef<Promise<void>>(Promise.resolve());
+
   /** A .zip: opened here, and each file inside sent as its own upload, one at a time (archive-intake.ts). */
-  const addArchive = useCallback(
+  const openArchive = useCallback(
     async (file: File) => {
       setStatusMessage(`Opening ${file.name}…`);
       const opened = await expandArchive(file).catch(() => ({ ok: false as const, reason: 'it could not be opened.' }));
@@ -242,6 +245,11 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
       setStatusMessage(archiveSummary(file.name, opened));
     },
     [uploadOne, refuse],
+  );
+  const addArchive = useCallback(
+    // A failure is reported on its own chip; it never stops the archives queued behind it.
+    (file: File) => { archiveQueue.current = archiveQueue.current.then(() => openArchive(file)).catch(() => undefined); },
+    [openArchive],
   );
 
   const addFiles = useCallback(

@@ -82,20 +82,56 @@ function parse(text: string): unknown {
   }
 }
 
-/** NDJSON (v1.1 streaming form): metadata on the first line, one row per further line. */
-function readNdjson(text: string): DatasetJsonReadResult {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '');
-  const meta = parse(lines[0] ?? '');
+/** Lines with anything but whitespace in bytes [from, end), counted without building them. */
+function countRowLines(bytes: Buffer, from: number): number {
+  let rows = 0;
+  let content = false;
+  for (let i = from; i < bytes.length; i++) {
+    const c = bytes[i];
+    if (c === 0x0a) { if (content) rows++; content = false; } else if (c !== 0x20 && c !== 0x09 && c !== 0x0d) content = true;
+  }
+  return content ? rows + 1 : rows;
+}
+
+/**
+ * NDJSON (v1.1 streaming form): metadata on the first line, one row per further
+ * line. Only the metadata line is parsed; the rows are counted by scanning the
+ * bytes. Splitting the text built one string per line, about 2 GB for 50 MB of
+ * blank lines (security review 2026-10-15, F1).
+ */
+function readNdjson(bytes: Buffer): DatasetJsonReadResult {
+  let start = 0;
+  while (start < bytes.length && (bytes[start] === 0x0a || bytes[start] === 0x0d || bytes[start] === 0x20 || bytes[start] === 0x09)) start++;
+  const nl = bytes.indexOf(0x0a, start);
+  const end = nl < 0 ? bytes.length : nl;
+  if (end - start > META_MAX_BYTES) return { ok: false, reason: 'NOT_DATASET_JSON' };
+  const meta = parse(bytes.toString('utf8', start, end));
   if (!isObj(meta) || !('datasetJSONVersion' in meta)) return { ok: false, reason: 'NOT_DATASET_JSON' };
-  const table = readV11(meta, lines.length - 1);
+  const table = readV11(meta, nl < 0 ? 0 : countRowLines(bytes, nl + 1));
   return table ? { ok: true, version: str(meta.datasetJSONVersion), tables: [table] } : { ok: false, reason: 'MALFORMED' };
+}
+
+/** A metadata line longer than this is not one: column definitions, not rows. */
+const META_MAX_BYTES = 4 * 1024 * 1024;
+/** How far into a .json the Dataset-JSON keys must appear before the whole file is parsed. */
+const SNIFF_BYTES = 64 * 1024;
+const DATASET_KEYS = /"(datasetJSONVersion|clinicalData|referenceData)"\s*:/;
+
+/**
+ * Whether a .json opens as a Dataset-JSON object. Most .json uploads are not
+ * datasets, and parsing every one in full let 50 MB of '[' hold the event loop
+ * for seconds (security review 2026-10-15, F1).
+ */
+function looksLikeDatasetJson(bytes: Buffer): boolean {
+  const head = bytes.toString('utf8', 0, Math.min(bytes.length, SNIFF_BYTES)).trimStart().replace(/^\uFEFF/, '');
+  return head.startsWith('{') && DATASET_KEYS.test(head);
 }
 
 /** Read a Dataset-JSON file's structure. Never throws. */
 export function readDatasetJsonStructure(bytes: Buffer, fileName: string): DatasetJsonReadResult {
-  const text = bytes.toString('utf8');
-  if (/\.ndjson$/i.test(fileName)) return readNdjson(text);
-  const doc = parse(text);
+  if (/\.ndjson$/i.test(fileName)) return readNdjson(bytes);
+  if (!looksLikeDatasetJson(bytes)) return { ok: false, reason: 'NOT_DATASET_JSON' };
+  const doc = parse(bytes.toString('utf8'));
   if (!isObj(doc)) return { ok: false, reason: 'NOT_DATASET_JSON' };
   const version = str(doc.datasetJSONVersion);
   if (version && 'columns' in doc) {

@@ -34,9 +34,14 @@ export const ARCHIVE_LIMITS = {
   maxEntries: 500,
   /** Each file inside: the same cap as any upload. */
   maxEntryBytes: CHAT_UPLOAD_MAX_BYTES,
-  maxTotalBytes: 1024 * 1024 * 1024,
-  /** Inflated over compressed, for entries over 1 MB. Clinical text compresses well; nothing honest is 1000:1. */
-  maxRatio: 1000,
+  /** Every file's bytes are held until it is sent, so this is the tab's memory (security review 2026-10-15, F4). */
+  maxTotalBytes: 300 * 1024 * 1024,
+  /**
+   * Inflated over compressed, for entries over 1 MB. Deflate tops out near
+   * 1032:1, so 1000 refused almost nothing; a transport file's blank padding
+   * compresses well, and 200:1 still leaves it room.
+   */
+  maxRatio: 200,
 };
 export type ArchiveLimits = typeof ARCHIVE_LIMITS;
 

@@ -305,3 +305,33 @@ describe('the name bindings the browser declares from (shared/constants/upload-n
     }
   });
 });
+
+describe('security review 2026-10-15: name binding gaps', () => {
+  const HTML = Buffer.from('<!doctype html><script>alert(1)</script>');
+  const XPORT_FIRST = Buffer.from(`HEADER RECORD*******LIBRARY HEADER RECORD!!!!!!!${'0'.repeat(30)}  `, 'latin1');
+
+  it('F2: a trailing space or dot does not unbind the name', () => {
+    for (const name of ['evil.pdf ', 'evil.pdf.', 'evil.pdf .', 'evil.xpt ']) {
+      expect(verifyDeclaredTypeForName(HTML, name, 'text/html').ok, JSON.stringify(name)).toBe(false);
+    }
+  });
+
+  it('F3: a transport or NDJSON type is admitted for its own name only', () => {
+    const fake = Buffer.concat([XPORT_FIRST, HTML]);
+    for (const name of ['evil.tif', 'evil.html', 'evil']) {
+      expect(verifyDeclaredTypeForName(fake, name, 'application/x-sas-xport').ok, name).toBe(false);
+      expect(verifyDeclaredTypeForName(Buffer.from('{}\n'), name, 'application/x-ndjson').ok, name).toBe(false);
+    }
+  });
+
+  it('F3: a transport file is its whole first record, not the first 48 characters', () => {
+    const prefixOnly = Buffer.concat([Buffer.from('HEADER RECORD*******LIBRARY HEADER RECORD!!!!!!!', 'latin1'), HTML, Buffer.alloc(80, 0x20)]);
+    expect(verifyDeclaredTypeForName(prefixOnly, 'ae.xpt', 'application/octet-stream').ok).toBe(false);
+    expect(verifyDeclaredTypeForName(Buffer.concat([XPORT_FIRST, Buffer.alloc(160, 0x20)]), 'ae.xpt', 'application/octet-stream')).toEqual({ ok: true });
+  });
+
+  it('an .ndjson sent as octet-stream, as a browser sends it, is checked as NDJSON text', () => {
+    expect(verifyDeclaredTypeForName(Buffer.from('{"datasetJSONVersion":"1.1.0"}\n["a"]\n'), 'ae.ndjson', 'application/octet-stream')).toEqual({ ok: true });
+    expect(verifyDeclaredTypeForName(Buffer.from([0, 1, 2, 0, 0]), 'ae.ndjson', 'application/octet-stream').ok).toBe(false);
+  });
+});

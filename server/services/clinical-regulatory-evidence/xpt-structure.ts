@@ -82,8 +82,12 @@ function nextRecord(b: Buffer, from: number, marker: string): number {
 function countRows(b: Buffer, from: number, to: number, obsLength: number): number {
   if (obsLength <= 0) return 0;
   let rows = Math.floor((to - from) / obsLength);
-  // The last record is padded with blanks; a trailing "observation" made only of padding is not one.
-  while (rows > 0) {
+  // The last record is padded with blanks, fewer than one record's worth, so only
+  // the observations that padding could fill are looked at. Looking further made
+  // a 50 MB file of one-byte blank observations cost seconds of the event loop
+  // (security review 2026-10-15, F1); a blank observation before them is data.
+  const floor = Math.max(0, rows - Math.ceil(REC / obsLength));
+  while (rows > floor) {
     const start = from + (rows - 1) * obsLength;
     if (!b.subarray(start, start + obsLength).every((c) => c === 0x20)) break;
     rows--;

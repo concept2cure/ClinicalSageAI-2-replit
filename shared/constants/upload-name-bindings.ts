@@ -39,12 +39,30 @@ export const UPLOAD_NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<st
   // A browser has no type for .xpt and sends application/octet-stream; that is
   // admitted for this name only, and only for bytes that are a v5 transport file.
   ['.xpt', { canonical: 'application/x-sas-xport', declared: ['application/x-sas-xport', 'application/octet-stream'] }],
-  ['.ndjson', { canonical: 'application/x-ndjson', declared: ['application/x-ndjson', 'application/json', 'text/plain'] }],
+  // A browser has no type for .ndjson either; octet-stream is checked as NDJSON text.
+  ['.ndjson', { canonical: 'application/x-ndjson', declared: ['application/x-ndjson', 'application/json', 'text/plain', 'application/octet-stream'] }],
 ]);
 
-/** The lower-cased extension of a file name, with its dot ('' when none). */
+/**
+ * Types admitted for one bound name only. Declared for any other name, they
+ * would carry a signature check written for that format (a transport file's
+ * first record, NDJSON's text shape) under a name nothing binds, so a .tif or
+ * .html could be stored as one (security review 2026-10-15, F3).
+ */
+export const NAME_ONLY_TYPES: ReadonlyMap<string, string> = new Map([
+  ['application/x-sas-xport', '.xpt'],
+  ['application/x-ndjson', '.ndjson'],
+]);
+
+/**
+ * The lower-cased extension of a file name, with its dot ('' when none).
+ * Trailing whitespace and dots are not part of it: `report.pdf ` and
+ * `report.pdf.` are PDFs to every operating system and to the allowlist, and
+ * reading them as unbound let a .pdf declared text/html past the name binding
+ * (SEC-A-3, reopened by the security review of 2026-10-15, F2).
+ */
 export function extensionOf(fileName: string): string {
-  const base = String(fileName ?? '').split(/[\\/]/).pop() ?? '';
+  const base = (String(fileName ?? '').split(/[\\/]/).pop() ?? '').replace(/[\s.]+$/, '');
   const dot = base.lastIndexOf('.');
   return dot > 0 ? base.slice(dot).toLowerCase() : '';
 }
