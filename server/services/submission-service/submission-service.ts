@@ -59,6 +59,8 @@ import {
 import {
   SHADOW_REVIEW_WAIVED_ACTION,
   SHADOW_WAIVER_INTENT,
+  completedShadowReviewRuns,
+  evaluateShadowPresenceWithWaiver,
   resolveShadowReviewWaiver,
   shadowReviewWaivable,
   shadowWaiverInsert,
@@ -70,6 +72,8 @@ import {
 import {
   SHADOW_FINDING_DISPOSITIONED_ACTION,
   SHADOW_FINDING_DISPOSITION_INTENT,
+  criticalsStandingOpen,
+  reopenedCriticalSentence,
   dispositionSignatureReason,
   isShadowFindingDisposition,
   readShadowFindingDisposition,
@@ -1644,6 +1648,58 @@ export async function precheckGovernedStep(
   }
 }
 
+/**
+ * The Shadow Review waiver a governed step went forward on (P-34): what its
+ * §11.10(e) row names when the presence gate cleared because of a waiver, so a
+ * freeze, dispatch or transmit made without an AI review says under which
+ * signature, and on which failed run. Null when a completed review cleared it.
+ */
+function waiverReliedOn(a: Partial<Pick<DispatchReadinessAssessment, 'shadowReviewRunCount' | 'shadowReviewWaiver'>>): Record<string, unknown> | null {
+  const w = a.shadowReviewWaiver;
+  if (a.shadowReviewRunCount !== 0 || w?.state !== 'active') return null;
+  return {
+    signatureActionId: w.signatureActionId ?? null,
+    signatureId: w.signatureId ?? null,
+    waiverRunId: w.waiverRunId ?? null,
+    failedRunId: w.failedRunId ?? null,
+    failureCode: w.failureCode ?? null,
+  };
+}
+
+/** `{ shadowReviewWaiver }` for an audit row's details, or nothing. */
+function withWaiverReliedOn(a: Parameters<typeof waiverReliedOn>[0]): { shadowReviewWaiver?: Record<string, unknown> } {
+  const w = waiverReliedOn(a);
+  return w ? { shadowReviewWaiver: w } : {};
+}
+
+/**
+ * Under the transition lock, on the transaction's client: does what the
+ * Shadow Review half of the verdict relied on still stand? The assessment ran
+ * seconds earlier, unlocked; a revocation in that window must not freeze or
+ * dispatch over it. A waiver it relied on must still be active (P-34), and no
+ * critical finding may block that it counted as closed (P-35: a closure stands
+ * only while its signature is in force). The reason, or null.
+ */
+async function shadowReviewRefusalUnderLock(
+  q: SequenceQueryable,
+  a: Partial<Pick<DispatchReadinessAssessment, 'shadowReviewRunCount' | 'shadowReviewWaiver' | 'unacknowledgedShadowCriticals'>>,
+  scope: { sequenceId: number; organizationId: number },
+  step: string,
+): Promise<string | null> {
+  const since = `Since this ${step} was checked`;
+  const criticals = await criticalsStandingOpen(q, scope);
+  if (criticals.count > Number(a.unacknowledgedShadowCriticals ?? 0)) {
+    const why = criticals.reopened.map(reopenedCriticalSentence).join(' ');
+    return `${since}, a critical Shadow Review finding blocks dispatch again. ${why}`.trim();
+  }
+  if (!waiverReliedOn(a)) return null;
+  const presence = evaluateShadowPresenceWithWaiver(
+    await completedShadowReviewRuns(q, scope),
+    await resolveShadowReviewWaiver(q, scope),
+  );
+  return presence.cleared ? null : `${since}, the Shadow Review waiver it relied on no longer stands. ${presence.blockers.join(' ')}`;
+}
+
 async function applyGovernedSequenceTransition(
   id: number,
   toStatus: 'frozen' | 'dispatched',
@@ -1719,6 +1775,8 @@ async function applyGovernedSequenceTransition(
         }
         const lockedOrderRefusal = await filingOrderRefusal(q, seq, ctx.organizationId, step);
         if (lockedOrderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', lockedOrderRefusal);
+        const shadowRefusal = await shadowReviewRefusalUnderLock(q, assessment, { sequenceId: id, organizationId: ctx.organizationId }, step);
+        if (shadowRefusal) throw new SubmissionError('DISPATCH_BLOCKED', shadowRefusal);
       },
       /* COMPARE-AND-SET on the status this transition was authorized against.
          `seq.status` was read at the top of this function, and everything since —
@@ -1748,6 +1806,8 @@ async function applyGovernedSequenceTransition(
         signatureActionId,
         validationErrors: assessment.validationErrors,
         unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
+        // P-34: the waiver this step went forward on, when no review had completed.
+        ...withWaiverReliedOn(assessment),
       },
     },
   );
@@ -2693,6 +2753,8 @@ async function transmitDispatchedSequence(
         // warnings, on the §11.10(e) record of the send (2026-09-22, W5/D7).
         preTransmitFailedChecks: preTransmit.failedChecks,
         preTransmitWarnings: preTransmit.warnings,
+        // P-34: the waiver the send went forward on, when no review had completed.
+        ...withWaiverReliedOn(assessment),
       },
     },
   );

@@ -156,12 +156,7 @@ export async function shadowReviewWaivable(
       reason: `Shadow Review can be waived only before the sequence is frozen; this sequence is ${seq.status}.`,
     };
   }
-  const completed = (await q.query(
-    `SELECT count(*)::int AS n FROM shadow_review_runs
-      WHERE sequence_id = $1 AND organization_id = $2 AND status = 'complete' AND deleted_at IS NULL`,
-    [sequenceId, organizationId],
-  )).rows[0] as { n: number } | undefined;
-  if (Number(completed?.n ?? 0) > 0) {
+  if ((await completedShadowReviewRuns(q, { sequenceId, organizationId })) > 0) {
     return { eligible: false, reason: 'A completed Shadow Review exists for this sequence, so there is no missing review to waive.' };
   }
   const newest = (await q.query(
@@ -171,6 +166,19 @@ export async function shadowReviewWaivable(
     [sequenceId, organizationId],
   )).rows[0] as NewestRun | undefined;
   return newestRunWaivability(newest, params.now ?? new Date(), shadowReviewWaiverWindowHours());
+}
+
+/** Completed, non-deleted Shadow Review runs of a sequence, read on `q` (the pool or a transaction's client). */
+export async function completedShadowReviewRuns(
+  q: WaiverQueryable,
+  params: { sequenceId: number; organizationId: number },
+): Promise<number> {
+  const row = (await q.query(
+    `SELECT count(*)::int AS n FROM shadow_review_runs
+      WHERE sequence_id = $1 AND organization_id = $2 AND status = 'complete' AND deleted_at IS NULL`,
+    [params.sequenceId, params.organizationId],
+  )).rows[0] as { n: number } | undefined;
+  return Number(row?.n ?? 0);
 }
 
 /** Why a waiver citing `failedRunId` is refused, given what is offered, or null. Pure. */
