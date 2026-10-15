@@ -75,7 +75,6 @@ const knowledgeUpload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: ['pdf', 'doc', 'docx', 'txt', 'md', 'xlsx', 'xls', 'csv'],
     mimeTypes: [...allowedKnowledgeMimeTypes],
-    allowMimePrefixes: [],
   }),
 });
 

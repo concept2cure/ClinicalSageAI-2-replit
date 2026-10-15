@@ -1173,7 +1173,7 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
 const officialFormUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024, files: 1 },
-  fileFilter: makeUploadFileFilter({ extensions: ['pdf'], mimeTypes: ['application/pdf'], allowMimePrefixes: [] }),
+  fileFilter: makeUploadFileFilter({ extensions: ['pdf'], mimeTypes: ['application/pdf'] }),
 }).single('file');
 
 /** Map a submission-service refusal onto its HTTP status, in its own words. */
