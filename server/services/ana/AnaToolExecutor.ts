@@ -15215,25 +15215,18 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
 
     /* Run detection. */
     const detected = await detectArchive(sourcePath);
-    let mappedCount = 0;
+    /* The REST import's own row builder (routes/mdx-imports.ts), storing the status
+       the detector gives each file. 2026-10-15: this handler kept its own INSERT and
+       derived status from mappingConfidence >= 0.5, so a filename suggestion was
+       stored 'pending' at mapping_confidence 0.00 with no rule id; it also never
+       set the job's skipped_count. */
+    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     for (const f of detected.files) {
-      const status = f.detectedKind === 'leaf' && f.mappingConfidence >= 0.5 ? 'mapped'
-                   : f.detectedKind === 'leaf' ? 'pending'
-                   : 'skipped';
-      if (status === 'mapped') mappedCount++;
-      await getPool().query(
-        `INSERT INTO import_job_files (
-           import_job_id, organization_id, relative_path, file_name, size_bytes,
-           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
-           mapped_artifact_kind, mapping_confidence, mapping_source, status
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-        [
-          jobId, ctx.organizationId, f.relativePath, f.fileName, f.sizeBytes,
-          f.sha256, f.detectedKind, f.mappedCtdSection, f.mappedSectionKey,
-          f.mappedArtifactKind, f.mappingConfidence, f.mappingSource, status,
-        ],
-      );
+      await getPool().query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, ctx.organizationId, f));
     }
+    const mappedCount = detected.files.filter((f) => f.reviewStatus === 'mapped').length;
+    const suggestedCount = detected.files.filter((f) => f.reviewStatus === 'suggested').length;
+    const skippedCount = detected.files.filter((f) => f.reviewStatus === 'skipped').length;
     for (const fnd of detected.findings) {
       await getPool().query(
         `INSERT INTO import_job_findings (import_job_id, organization_id, severity, code, message, file_path)
@@ -15246,13 +15239,13 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       `UPDATE import_jobs
           SET detected_format = $2, detected_region = $3,
               detected_application_id = $4, detected_sequence = $5, detected_sponsor = $6,
-              file_count = $7, mapped_count = $8,
-              error_count = $9, status = 'ready_for_review', updated_at = NOW()
+              file_count = $7, mapped_count = $8, skipped_count = $9,
+              error_count = $10, status = 'ready_for_review', updated_at = NOW()
         WHERE id = $1`,
       [
         jobId, detected.format, detected.region,
         detected.applicationId, detected.sequence, detected.sponsor,
-        detected.files.length, mappedCount, errorCount,
+        detected.files.length, mappedCount, skippedCount, errorCount,
       ],
     );
 
@@ -15263,8 +15256,17 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       detectedRegion: detected.region,
       fileCount: detected.files.length,
       mappedCount,
+      suggestedCount,
+      skippedCount,
       errorCount,
-      message: `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped, ${errorCount} errors). Review then call approve_import.`,
+      message:
+        `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped by the archive's backbone, ` +
+        `${suggestedCount} suggested by filename pattern, ${errorCount} errors). ` +
+        (suggestedCount > 0
+          ? `${suggestedCount} suggested placement(s) need confirming: confirm each (override_import_mapping, status 'mapped') ` +
+            'or correct it; approve_import imports only mapped files. '
+          : '') +
+        'Review then call approve_import.',
     });
   } catch (err) {
     return JSON.stringify({

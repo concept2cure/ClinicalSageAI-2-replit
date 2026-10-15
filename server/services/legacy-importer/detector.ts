@@ -63,8 +63,9 @@ export interface DetectedFile {
    * 1 when the archive itself declares this placement (mappingSource
    * 'backbone_xml'), 0 when nothing in it does. A flag, not a probability: no
    * confidence is measured for a filename-pattern suggestion, so callers persist
-   * NULL there. Still numeric only because AnA's start_legacy_import handler
-   * compares it; that handler moves to `reviewStatus`, and this field goes.
+   * NULL there. No caller reads it since AnA's start_legacy_import moved to
+   * `reviewStatus` (2026-10-15); only this module's own test still pins it, and
+   * the field goes with that pin.
    */
   mappingConfidence:  0 | 1;
   mappingSource:      'backbone_xml' | 'filename_heuristic' | 'fallback';
