@@ -414,8 +414,9 @@ echo "   Checking for fixture fallback in client surfaces..."
 if ! npm run --silent ci:fixture-fallback 2>&1; then
   echo ""
   echo "🚫 ERROR: Ungated fixture fallback FAILED."
-  echo "   A surface falls back to example rows when its read fails. Use"
-  echo "   useSampleRows(live, fixture) behind the explicit sample-mode boundary."
+  echo "   A surface shows example rows where the tenant's own belong — on a"
+  echo "   failed read, or through the sample mode removed on 2026-10-14."
+  echo "   Render the read's own loading / error / empty state instead."
   echo ""
   exit 1
 fi

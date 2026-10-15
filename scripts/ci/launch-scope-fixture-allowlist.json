@@ -1,5 +1,5 @@
 {
-  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs behind useSampleRows + SampleDataBanner or nowhere. Reviewed 2026-09-20 against each export's definition.",
+  "_comment": "Symbols a launch-scope surface may import from client/src/concept2cure/v2/fixtures/. Every entry is a reference constant, configuration map or pure function \u2014 the folder name predates the de-mock work. A record array (invented projects, documents, tasks, users) must never be added here; it belongs nowhere (the sample mode that once held such rows was removed 2026-10-14). Reviewed 2026-09-20 against each export's definition.",
   "symbols": {
     "admin-data.ARTIFACT_FMT": "ARTIFACT_FMT: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
     "admin-data.AUDIT_KINDS": "AUDIT_KINDS: audit-kind filter labels, platform-service descriptions and artifact format labels \u2014 reference configuration",
