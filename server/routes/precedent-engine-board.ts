@@ -228,7 +228,8 @@ function emptyPattern(title: string): PatternAnalysisDTO {
 function mapCrl(r: CrlResult): PatternAnalysisDTO {
   return {
     title: 'CRL trigger patterns',
-    rate: r.overallCRLRisk ? `${r.overallCRLRisk} overall risk` : '—',
+    // A curated checklist: no overall risk is computed (precedent-engine.ts).
+    rate: `curated checklist · ${r.totalPatterns} categories`,
     items: (r.triggers ?? []).map(t => `${t.category} — ${t.description}`),
   };
 }
@@ -256,8 +257,8 @@ function mapAdcomm(r: AdcommResult): PatternAnalysisDTO {
   const items = (r.triggers ?? []).map(t => `${t.trigger} — ${t.description}`);
   return {
     title: 'Advisory Committee risk',
-    rate: r.overallAdcomRisk ? `${r.overallAdcomRisk} overall risk` : '—',
-    items: items.length ? items : (r.votingInsights ?? []),
+    rate: `curated checklist · ${r.totalTriggers} triggers`,
+    items,
   };
 }
 
