@@ -65,6 +65,7 @@ import {
   listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
   readSubmissionLeavesForRequest, requireSubmissionReadStillCurrent, readDeliverableEvaluationInput, SubmissionReadError,
 } from '../services/submission-service/submission-request-read';
+import { readSubmissionHistoryForRequest } from '../services/submission-service/submission-history-read';
 import { ProgramReadAccessError } from '../services/c2c/current-program-access';
 import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
 import { readSubmissionLeafSourceEvidence, requireSubmissionLeafSourceEvidenceStillCurrent, SubmissionLeafSourceReadError } from '../services/ectd/submission-leaf-source-evidence';
@@ -1073,6 +1074,24 @@ router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
     await requireSubmissionLeafSourceEvidenceStillCurrent(q, sources.admission);
     await requireSubmissionReadStillCurrent(q, admitted);
     res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sources.sourceDocuments[i], sourceRef: sources.leaves[i]?.sourceRef })));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/* The sequence's history: who created the submission, and every placement in
+   the sequence, removed ones included, from the one ledger with its chain
+   verdict (submission-history-read.ts; filing-spine review item 3). Admitted
+   as the leaves read is. */
+router.get('/sequences/:seqId/history', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  try {
+    const q = requestPgClient(req);
+    const admitted = await readSubmissionSequenceForRequest(q, ctx, seqId, readSelection(req));
+    res.json({ success: true, data: await readSubmissionHistoryForRequest(q, admitted) });
   } catch (err) {
     fail(res, err);
   }
