@@ -4350,7 +4350,7 @@ export async function runRIMScan(
 // 25. INTELLIGENT REPORT ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Generate a regulatory report (sealed, audited, 21 CFR Part 11 compliant) */
+/** Generate a regulatory report as a draft. Sealing is a separate step after review. */
 export async function generateReport(
   ctx: CommandContext,
   params: Record<string, unknown>
@@ -4381,7 +4381,9 @@ export async function generateReport(
         verificationCode: report?.verificationCode,
         title: params.title,
       },
-      message: `Report "${params.title}" generated (domain: ${params.domain}). Cryptographically sealed with verification code.`,
+      // Generated as a draft: sealing is a separate, later step. This said
+      // "Cryptographically sealed" (2026-10-15).
+      message: `Report "${params.title}" generated as a draft (domain: ${params.domain}). It is not sealed.`,
     };
   } catch (err: unknown) {
     return {
@@ -5173,7 +5175,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   {
     name: 'generate_report',
     description:
-      'Generate a sealed regulatory report (21 CFR Part 11 compliant, cryptographically sealed). Domains: regulatory_submission, clinical_study, cmc_manufacturing, pharmacovigilance, quality_management, compliance_attestation, strategic_intelligence, device_regulatory, biostatistics',
+      'Generate a draft regulatory report, hashed at generation and sealed separately after review. Domains: regulatory_submission, clinical_study, cmc_manufacturing, pharmacovigilance, quality_management, compliance_attestation, strategic_intelligence, device_regulatory, biostatistics',
     parameters: 'domain, title, projectId?, targetRegulatory?, parameters?',
     example: '"Generate a clinical study report for our Phase 2 trial"',
   },
