@@ -28,7 +28,6 @@ vi.mock('../../services/usage-metering.js', () => ({
 }));
 // The remaining data services, stubbed only so the router's module graph loads.
 vi.mock('../../services/csr-search-service.js', () => ({ csrSearchService: { searchCSRs: vi.fn() } }));
-vi.mock('../../services/regulatory-pathway-intelligence.js', () => ({ getRegulatoryPathwayIntelligence: () => ({}) }));
 vi.mock('../../services/endpoint-recommender-service.js', () => ({
   getEndpointRecommenderService: () => ({ getComprehensiveEndpointRecommendations: endpointRecsMock }),
 }));
