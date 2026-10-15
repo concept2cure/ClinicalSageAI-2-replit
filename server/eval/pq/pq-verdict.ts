@@ -243,13 +243,13 @@ function taskShortfalls(generation: PqGenerationResult[], scored: PqGenerationRe
 }
 
 /** Document types with fewer scored tasks than the protocol's sample floor. */
-function sampleShortfall(floor: number | undefined, scored: PqGenerationResult[]): string[] {
-  if (typeof floor !== 'number') return [];
+function sampleShortfall(floor: unknown, scored: ReadonlyArray<{ docType: string }>, component = ''): string[] {
+  if (!isFloor(floor)) return [];
   const byDoc = new Map<string, number>();
   for (const g of scored) byDoc.set(g.docType, (byDoc.get(g.docType) ?? 0) + 1);
   const short = [...byDoc].filter(([, n]) => n < floor);
   return short.length
-    ? [`sample below the protocol floor of ${floor} per document type: ${short.map(([d, n]) => `${d}=${n}`).join(', ')}`]
+    ? [`${component}sample below the protocol floor of ${floor} per document type: ${short.map(([d, n]) => `${d}=${n}`).join(', ')}`]
     : [];
 }
 
@@ -325,6 +325,10 @@ function extractionFindings(
 
   const missed: string[] = [];
   const counted = scored.filter((e) => e.servedModelVerified);
+  /* The sample floor (P-31 condition 3), counted over the tasks the pinned
+     model verifiably answered: a fallback model's answer cannot make up the
+     pinned model's sample. */
+  incomplete.push(...sampleShortfall(ext.criteria.minTasksPerDocType, counted, 'extraction '));
   const minF1 = ext.criteria.minF1;
   if (isUnitScore(minF1) && counted.length) {
     const meanF1 = counted.reduce((a, e) => a + (e.f1 as number), 0) / counted.length;
