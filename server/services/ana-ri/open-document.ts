@@ -182,10 +182,12 @@ export function renderOpenDocumentBlock(result: OpenDocumentResult): string {
   }
   lines.push(`What it contains (${sanitizeLine(o.regulatoryBasis, 240)}):`);
   for (const lim of o.outlineLimitations ?? []) lines.push(`Limitation: ${sanitizeLine(lim, 240)}`);
+  if (o.frontMatter?.length) lines.push(`Front matter: ${o.frontMatter.map((f) => sanitizeLine(f.heading, 80)).join('; ')}`);
   let body = lines.join('\n');
   let shown = 0;
   for (const s of o.sections) {
-    const next = `\n${sectionLine(s)}`;
+    const subs = (s.subsections ?? []).map((c) => `\n  ${sectionLine(c)}`).join('');
+    const next = `\n${sectionLine(s)}${subs}`;
     if (body.length + next.length > OPEN_DOCUMENT_BRIEF_CHARS - 120) break;
     body += next;
     shown++;

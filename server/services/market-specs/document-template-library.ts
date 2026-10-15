@@ -28,6 +28,7 @@ import { e3TopLevel, type E3Section } from '../ind/ctd/index.js';
 import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
+import { IB_FRONT_MATTER, IB_SUBSECTIONS } from './ib-outline-detail.js';
 import { citeE6R3 } from '../../../shared/regulatory/ich-e6r3';
 import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
@@ -44,6 +45,8 @@ export interface TemplateSection {
   /** What this section is for (concise, factual). */
   purpose: string;
   required: boolean;
+  /** Sub-sections, where the record names them (e.g. the IB's 4.1–4.3). */
+  subsections?: TemplateSection[];
 }
 
 export interface DocumentTemplateStructure {
@@ -67,6 +70,8 @@ export interface DocumentTemplateStructure {
     | { kind: 'lifecycle-record' | 'document-outline'; registryId: string; record: string };
   /** Scope/currency limitations the author must see before using an existing scaffold. */
   outlineLimitations?: string[];
+  /** Unnumbered front matter (title page, table of contents …), with non-numeric codes. */
+  frontMatter?: TemplateSection[];
   sections: TemplateSection[];
 }
 
@@ -273,6 +278,7 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
       { number: '2.5.4', heading: 'Overview of Efficacy', purpose: 'Critical analysis of efficacy across the relevant studies and endpoints.', required: true },
       { number: '2.5.5', heading: 'Overview of Safety', purpose: 'Critical analysis of the safety database, exposure, and key risks.', required: true },
       { number: '2.5.6', heading: 'Benefits and Risks Conclusions', purpose: 'Integrated benefit-risk assessment supporting the indication.', required: true },
+      { number: '2.5.7', heading: 'Literature References', purpose: 'The literature cited in the Clinical Overview (added 2026-10-15; M4E lists it).', required: true },
     ],
   },
   {
@@ -428,12 +434,13 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     title: "Investigator's Brochure (IB)",
     families: ['ectd', 'ctis'],
     basis: IB_BASIS,
+    frontMatter: IB_FRONT_MATTER,
     sections: [
       { number: '1', heading: 'Summary', purpose: 'Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.', required: true },
       { number: '2', heading: 'Introduction', purpose: 'Chemical/generic name, properties, rationale, and anticipated indications.', required: true },
       { number: '3', heading: 'Physical, Chemical and Pharmaceutical Properties and Formulation', purpose: 'Description of the substance and formulation.', required: true },
-      { number: '4', heading: 'Nonclinical Studies', purpose: 'Nonclinical pharmacology, pharmacokinetics, and toxicology results.', required: true },
-      { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true },
+      { number: '4', heading: 'Nonclinical Studies', purpose: 'Nonclinical pharmacology, pharmacokinetics, and toxicology results.', required: true, subsections: IB_SUBSECTIONS['4'] },
+      { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true, subsections: IB_SUBSECTIONS['5'] },
       { number: '6', heading: 'Summary of Data and Guidance for the Investigator', purpose: 'Overall discussion and guidance on recognising/treating possible overdose and adverse reactions.', required: true },
     ],
   }),
