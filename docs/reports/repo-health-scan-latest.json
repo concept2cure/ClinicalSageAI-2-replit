@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T03:59:15.781Z",
+  "generatedAt": "2026-10-15T04:34:05.100Z",
   "git": {
-    "sha": "fb127f46390d444e979914f592572cbbf58b74d8",
+    "sha": "c68e7a68c8b93bf7f165a7168645f39f2554c51f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2209,7 +2209,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 196021
+        "bytes": 196220
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2248,12 +2248,12 @@
         "bytes": 149969
       },
       {
-        "file": "server/storage.ts",
-        "bytes": 145405
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 147646
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 144995
+        "file": "server/storage.ts",
+        "bytes": 145405
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2381,7 +2381,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "bytes": 103970
+        "bytes": 104136
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2451,7 +2451,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3818
+        "lines": 3820
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2466,6 +2466,10 @@
         "lines": 3509
       },
       {
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3375
+      },
+      {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3361
       },
@@ -2476,10 +2480,6 @@
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
-      },
-      {
-        "file": "server/routes/authoring-actions.ts",
-        "lines": 3325
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2635,7 +2635,7 @@
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2083
+        "lines": 2085
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -2691,7 +2691,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1949
+        "lines": 1952
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
@@ -2702,20 +2702,16 @@
         "lines": 1936
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1932
-      },
-      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1929
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1898
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1909
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1878
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1898
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
@@ -2728,6 +2724,10 @@
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
+      },
+      {
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1866
       },
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",

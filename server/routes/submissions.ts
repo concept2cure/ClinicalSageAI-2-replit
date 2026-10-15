@@ -77,6 +77,8 @@ const limiter = createRateLimiter();
 interface Ctx {
   userId: number;
   organizationId: number;
+  /** The request's address, for governed-export provenance and audit rows. */
+  ipAddress: string | null;
 }
 function ctxOf(req: Request): Ctx | null {
   const r = req as any;
@@ -89,7 +91,7 @@ function ctxOf(req: Request): Ctx | null {
   if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(organizationId) || organizationId <= 0) {
     return null;
   }
-  return { userId, organizationId };
+  return { userId, organizationId, ipAddress: req.ip ?? null };
 }
 
 const CODE_STATUS: Record<string, number> = {
@@ -1498,6 +1500,7 @@ async function deliverTechnicalFile(ctx: Ctx, d: TechnicalFileDelivery) {
       mimeType: 'application/zip',
       filename: d.filename,
       metadata,
+      ipAddress: ctx.ipAddress,
     });
   }
   return createAuditedUnplacedExport({

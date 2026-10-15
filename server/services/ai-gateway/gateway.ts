@@ -485,7 +485,7 @@ const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
     '## Regulatory Review (Demo Mode)\n\n' +
     'No review was performed. AnA is running in demo mode without an AI provider.\n\n' +
     '**With a provider connected, AnA provides:**\n' +
-    '- **Compliance check** against 21 CFR Part 11, ICH E6(R2), EU MDR, ISO 14155\n' +
+    '- **Compliance check** against 21 CFR Part 11, ICH E6(R3), EU MDR, ISO 14155\n' +
     '- **Gap detection** with body-specific expectations (FDA, EMA, PMDA, MHRA)\n' +
     '- **Risk ranking** with severity classification (critical → major → minor)\n' +
     '- **Correction drafts** with governed execution paths\n' +

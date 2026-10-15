@@ -34,6 +34,8 @@ export interface GovernedExportInput {
   mimeType: string;
   filename: string;
   metadata?: Record<string, unknown>;
+  /** The request's address; the audit row says 'ip-not-captured' without it. */
+  ipAddress?: string | null;
 }
 
 const DEFAULT_MAX_GOVERNED_EXPORT_BYTES = 25 * 1024 * 1024; // 25 MiB
@@ -140,9 +142,12 @@ export async function createGovernedExportConsequence(
     title: input.title,
     content: input.contentForArtifact,
     ctdSection: input.ctdSection,
-    sourceJobId: `${input.sourceType}_${Date.now()}`,
+    // An export is not a compute job, and the person who exported is not
+    // "Export Governance Plane": no job id, and the actor is resolved from the
+    // user id by the writer.
     surfaceKey: input.sourceType,
-    actorName: 'Export Governance Plane',
+    sourceType: 'export',
+    ipAddress: input.ipAddress ?? null,
     backendRoute: input.backendRoute,
     backendService: 'export-governance',
     sourceDescription: `Governed export via ${input.sourceType}`,
