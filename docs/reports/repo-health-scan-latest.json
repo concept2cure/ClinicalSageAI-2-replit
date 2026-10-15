@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T04:46:22.378Z",
+  "generatedAt": "2026-10-15T05:13:55.927Z",
   "git": {
-    "sha": "bf9a86735600cab7748b99f1afed008a38658591",
+    "sha": "2e39856e995e0f3a6b947dffced684c3acd1e791",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2244,12 +2244,12 @@
         "bytes": 151972
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "bytes": 149969
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 151220
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 147646
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "bytes": 149969
       },
       {
         "file": "server/storage.ts",
@@ -2393,7 +2393,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 102117
+        "bytes": 102105
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2467,7 +2467,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3375
+        "lines": 3451
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2727,7 +2727,7 @@
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1866
+        "lines": 1868
       },
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
