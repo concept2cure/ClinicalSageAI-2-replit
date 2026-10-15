@@ -331,7 +331,7 @@ describe("'fixed' needs a completed review after the finding's run", () => {
     expect(offered).toMatchObject({ findingId: crit, runId: r1, offered: ['accepted'], laterCompletedRunId: null });
 
     const pre = await precheckGovernedStep(seq, INTENT, ctx, { findingId: crit, disposition: 'fixed' });
-    expect(pre).toMatchObject({ step: INTENT, cleared: false, refusal: expect.stringMatching(new RegExp(`since run #${r1}`)) });
+    expect(pre).toMatchObject({ step: INTENT, cleared: false, refusal: expect.stringContaining(`since run #${r1}`) });
     expect((await precheckGovernedStep(seq, INTENT, ctx, { findingId: crit, disposition: 'accepted' })).cleared).toBe(true);
 
     const early = await signFor(seq, crit, 'fixed', { reason: FIXED_REASON });
@@ -394,7 +394,7 @@ describe('a refused disposition', () => {
     const b = await finding(r1);
     const forA = await signFor(seq, a, 'accepted');
     const refused = await outcome(dispose(seq, b, 'accepted', forA));
-    expect(refused).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringMatching(new RegExp(`given for finding #${a}, not finding #${b}`)) });
+    expect(refused).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringContaining(`given for finding #${a}, not finding #${b}`) });
     expect((await findingRow(a)).status).toBe('open');
     expect((await findingRow(b)).status).toBe('open');
 
@@ -461,10 +461,10 @@ describe('a disposition signature is used once, and is its own act', () => {
     const crit = await finding(await run(seq, 'complete', 1));
     const disposition = await signFor(seq, crit, 'accepted');
     expect(await outcome(freezeSequence(seq, ctx, disposition))).toMatchObject({
-      code: 'GOVERNED_REQUIRED', message: expect.stringMatching(new RegExp(`declares intent '${INTENT}', not 'freeze'`)),
+      code: 'GOVERNED_REQUIRED', message: expect.stringContaining(`declares intent '${INTENT}', not 'freeze'`),
     });
     expect(await outcome(waiveShadowReview({ sequenceId: seq, signatureActionId: disposition, failedRunId: 1 }, ctx))).toMatchObject({
-      code: 'GOVERNED_REQUIRED', message: expect.stringMatching(new RegExp(`declares intent '${INTENT}', not 'shadow-waiver'`)),
+      code: 'GOVERNED_REQUIRED', message: expect.stringContaining(`declares intent '${INTENT}', not 'shadow-waiver'`),
     });
     // Neither refusal is this act's, so neither voids the disposition signature.
     expect(await signatureRow(disposition)).toMatchObject({ is_valid: true });
@@ -472,7 +472,7 @@ describe('a disposition signature is used once, and is its own act', () => {
     for (const intent of ['freeze', 'shadow-waiver']) {
       const sig = await sign(seq, { intent, findingId: crit, disposition: 'accepted' }, { meaning: 'approval' });
       expect(await outcome(dispose(seq, crit, 'accepted', sig))).toMatchObject({
-        code: 'GOVERNED_REQUIRED', message: expect.stringMatching(new RegExp(`declares intent '${intent}', not '${INTENT}'`)),
+        code: 'GOVERNED_REQUIRED', message: expect.stringContaining(`declares intent '${intent}', not '${INTENT}'`),
       });
       expect(await signatureRow(sig)).toMatchObject({ is_valid: true, verification_status: 'valid' });
     }

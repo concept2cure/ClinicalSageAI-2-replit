@@ -356,7 +356,7 @@ describe('a refused waive', () => {
     await run(seq, 'failed', 'provider_unavailable', 1);
     const sig = await sign(seq, 'shadow-waiver');
     const refused = await outcome(waiveShadowReview({ sequenceId: seq, signatureActionId: sig, failedRunId: older }, ctx));
-    expect(refused).toMatchObject({ code: 'SHADOW_WAIVER_NOT_ELIGIBLE', message: expect.stringMatching(new RegExp(`cites run #${older}`)) });
+    expect(refused).toMatchObject({ code: 'SHADOW_WAIVER_NOT_ELIGIBLE', message: expect.stringContaining(`cites run #${older}`) });
   });
 
   it("the sequence's creator cannot waive its review (separation of duties)", async () => {
@@ -404,7 +404,7 @@ describe('a waiver signature is its own act', () => {
     for (const intent of ['freeze', 'dispatch']) {
       const sig = await sign(seq, intent, 'approval');
       const refused = await outcome(waiveShadowReview({ sequenceId: seq, signatureActionId: sig, failedRunId: failed }, ctx));
-      expect(refused).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringMatching(new RegExp(`declares intent '${intent}', not 'shadow-waiver'`)) });
+      expect(refused).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringContaining(`declares intent '${intent}', not 'shadow-waiver'`) });
       expect(await signatureRow(sig)).toMatchObject({ is_valid: true, verification_status: 'valid' });
     }
     expect(await waivedRows(seq)).toEqual([]);
@@ -461,7 +461,7 @@ describe('the dispatch verdict reads the waiver (assessSequenceDispatchReadiness
     expect(after.shadowReviewRunCount).toBe(0);
     expect(after.shadowReviewWaivable).toMatchObject({ eligible: false });
     expect(presenceOf(after)).toMatchObject({ cleared: true, blockers: [] });
-    expect(presenceOf(after)?.notAssessed).toMatch(new RegExp(`waived under signature ${signatureId} by Dana Reyes`));
+    expect(presenceOf(after)?.notAssessed).toContain(`waived under signature ${signatureId} by Dana Reyes`);
     for (const verdict of [after.gate, after.freezeGate, after.dispatchGateOnSigning]) {
       expect(verdict.blockers.join(' ')).not.toMatch(/Shadow Review/);
     }
