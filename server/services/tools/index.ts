@@ -1174,6 +1174,7 @@ registerTool({
 // ─── Regulatory Precedent Engine Tools ─────────────────────────────────────
 
 import { precedentEngine } from '../precedent-engine';
+import { riskNotAssessedResult, STRATEGY_NEEDS_TYPE, strategyToolResult } from './precedent-tool-results';
 import { precedentOrgId } from '../precedent-isolation';
 
 registerTool({
@@ -1382,18 +1383,7 @@ registerTool({
         deviceClass: params.deviceClass,
       });
 
-      if (analysis.overallRisk === 'not_assessed' || analysis.riskScore === null) {
-        // Every source failed or did not apply: no assessment, not "LOW, 0%".
-        const why = Object.values(analysis.sources)
-          .map((s) => (s === 'read' ? '' : s.notRead))
-          .filter(Boolean)
-          .join('; ');
-        return {
-          ok: false,
-          artifact: null,
-          message: { role: 'assistant', content: `Risk analysis not assessed — no source could be read (${why}).` },
-        };
-      }
+      if (analysis.overallRisk === 'not_assessed' || analysis.riskScore === null) return riskNotAssessedResult(analysis);
       const riskEmoji = { low: '🟢', medium: '🟡', high: '🟠', critical: '🔴' };
       const factorList = analysis.factors
         .map(
@@ -1450,14 +1440,7 @@ registerTool({
   aliases: ['regulatory.strategy', 'submission.strategy'],
   execute: async (params, ctx): Promise<ToolResult> => {
     try {
-      // submissionType is a required parameter; it defaulted to 510(k).
-      if (!params.submissionType) {
-        return {
-          ok: false,
-          artifact: null,
-          message: { role: 'assistant', content: 'Which submission type? Strategies differ by application type (510(k), PMA, De Novo, NDA, BLA, IND).' },
-        };
-      }
+      if (!params.submissionType) return STRATEGY_NEEDS_TYPE;
       const strategy = await precedentEngine.recommendStrategy({
         submissionType: params.submissionType,
         indication: params.indication,
@@ -1467,47 +1450,7 @@ registerTool({
         productCode: params.productCode,
       }, precedentOrgId(ctx?.organizationId));
 
-      const altList = strategy.alternativeStrategies
-        .map(
-          a =>
-            `  • **${a.strategy}** — ${a.precedentCount} precedent(s), ${Math.round(a.shareOfApprovedPrecedents * 100)}% of approved precedents`
-        )
-        .join('\n');
-      const testList = strategy.testingRequirements.map(t => `  • ${t}`).join('\n');
-      const riskList = strategy.keyRisks.map(r => `  ⚠️ ${r}`).join('\n');
-      if (strategy.basis === 'no-precedents') {
-        const none = 'No approved precedent that records a strategy matched, so no strategy is recommended.';
-        return {
-          ok: true,
-          artifact: {
-            type: 'strategy_recommendation',
-            id: `prec-strat-${Date.now()}`,
-            title: 'Submission Strategy Recommendation',
-            status: 'generated',
-            data: strategy as unknown as Record<string, unknown>,
-          },
-          summary: none,
-          message: { role: 'assistant', content: `## Submission Strategy Recommendation\n\n${none}` },
-        };
-      }
-
-      return {
-        ok: true,
-        artifact: {
-          type: 'strategy_recommendation',
-          id: `prec-strat-${Date.now()}`,
-          title: 'Submission Strategy Recommendation',
-          status: 'generated',
-          data: strategy as unknown as Record<string, unknown>,
-        },
-        summary: `Recommended: "${strategy.recommendedStrategy}" (${Math.round((strategy.confidence ?? 0) * 100)}% confidence), ${strategy.supportingPrecedents.length} supporting precedents`,
-        message: {
-          role: 'assistant',
-          // An empty list is what the precedents recorded, said as such: these
-          // read "Standard testing requirements." and "No major risks identified."
-          content: `## Submission Strategy Recommendation\n\n**Recommended Strategy:** ${strategy.recommendedStrategy}\n**Confidence:** ${Math.round((strategy.confidence ?? 0) * 100)}%\n**Estimated Timeline:** ${strategy.estimatedTimeline ?? 'not estimated (no timeline for this clearance type)'}\n\n**Supporting Precedents:** ${strategy.supportingPrecedents.length} approved submission(s)\n\n**Testing Requirements:**\n${testList || '  None recorded in the supporting precedents.'}\n\n**Alternative Strategies:**\n${altList || '  No alternatives identified.'}\n\n**Key Risks:**\n${riskList || '  None recorded in the matched rejected precedents.'}`,
-        },
-      };
+      return strategyToolResult(strategy);
     } catch (err: any) {
       return {
         ok: false,
