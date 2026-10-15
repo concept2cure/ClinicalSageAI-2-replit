@@ -23,6 +23,36 @@ interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
+/**
+ * The board's determination date, as recorded by the board — required.
+ *
+ * A missing date was stamped as the day the record was entered, and the
+ * approval date and the continuing-review expiration were derived from it: an
+ * approval entered a week late expired a week late (2026-10-15).
+ */
+/**
+ * A designated-member review names its reviewers' count when there is more than
+ * one; one is the default only there. A full-committee review was recorded as
+ * reviewed by 1 when the count was not given (2026-10-15).
+ */
+function reviewerCountFor(reviewType: IacucReviewType, count: number | undefined): number {
+  if (typeof count === 'number' && Number.isInteger(count) && count > 0) return count;
+  if (reviewType === 'designated_member_review') return 1;
+  throw new IacucError('BAD_INPUT', 'reviewerCount is required for a full-committee review.');
+}
+
+function requireDeterminationDate(
+  value: string | null | undefined,
+  Err: new (code: 'BAD_INPUT', message: string) => Error,
+): string {
+  const v = typeof value === 'string' ? value.trim() : '';
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00Z`) : null;
+  if (!d || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) {
+    throw new Err('BAD_INPUT', 'determinationDate is required, as the date the board made the determination (YYYY-MM-DD).');
+  }
+  return v;
+}
+
 export class IacucError extends Error {
   constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT', message: string) {
     super(message);
@@ -90,11 +120,11 @@ export async function recordReviewTx(
   input: { reviewType: IacucReviewType; reviewerCount?: number; outcome: 'approved' | 'conditional' | 'tabled' | 'withdrawn'; conditions?: string | null; determinationDate?: string | null },
 ): Promise<{ reviewId: number; expirationDate: string | null; provenanceLinkId: number | null }> {
   const protocol = await getProtocol(client, orgId, protocolId);
-  const determinationDate = input.determinationDate ?? new Date().toISOString().slice(0, 10);
+  const determinationDate = requireDeterminationDate(input.determinationDate, IacucError);
   const { rows } = await client.query(
     `INSERT INTO iacuc_reviews (organization_id, protocol_id, review_type, reviewer_count, outcome, conditions, determination_date, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-    [orgId, protocolId, input.reviewType, input.reviewerCount ?? 1, input.outcome, input.conditions ?? null, determinationDate, userId],
+    [orgId, protocolId, input.reviewType, reviewerCountFor(input.reviewType, input.reviewerCount), input.outcome, input.conditions ?? null, determinationDate, userId],
   );
   const reviewId = Number(rows[0].id);
 

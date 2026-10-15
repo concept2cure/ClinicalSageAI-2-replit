@@ -159,7 +159,7 @@ const reviewSchema = z.object({
   reviewerCount: z.number().int().positive().optional(),
   outcome: z.enum(['approved', 'conditional', 'tabled', 'withdrawn']),
   conditions: z.string().max(4000).optional(),
-  determinationDate: z.string().optional(),
+  determinationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'determinationDate must be YYYY-MM-DD'),
   reason,
 });
 

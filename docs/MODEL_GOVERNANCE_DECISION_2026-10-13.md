@@ -164,6 +164,21 @@ it was never evaluated on.** Document types for those are owed before approval.
 Items 3–6 are authoring and operations work, not judgement calls. When they
 land, the approval is a signature, and this record is the reasoning behind it.
 
+**2026-10-15 — items 3 and 5 landed** (`docs/evidence/D4/2026-10-15-pq-extraction-floor/`):
+
+- The protocol declares `extraction.criteria.minTasksPerDocType: 10`, counted
+  over tasks the pinned model verifiably answered. The verdict, the canonical
+  record verifier (now on the one shared criteria reader) and the bank check
+  all apply it.
+- The bank holds 12 extraction tasks per document type, 24 of them authored
+  for this. Each expected value is stated in its own source passage, and no
+  captured candidate is invented.
+- Both floors have headroom: retiring any one task leaves every document type
+  at or above them.
+
+Items 4 (CMC / Module 3 and M2.5–2.7 coverage) and 6 (a product provider key)
+remain.
+
 ### The strongest argument against this decision
 
 That it makes a blocked gate more blocked. AnA cannot be credited as an author

@@ -268,15 +268,15 @@ F2 removes both tabs:
 | FDA | IND, NDA, BLA, ANDA. Device outlines exist (510(k), De Novo, PMA), but device programs get no submission (`projects.ts:818-821`, by reading) | Built to FDA headings (`server/services/ectd/regional-backbone-readiness.ts:45`) | Yes | ESG AS2 envelope is not PKCS#7, so FDA would reject it (`server/services/submission-gateways/fda-esg.ts:18-30`). No ESG account, no DTDs (D7) | "Transmit not proven: \<server reason\>" |
 | EMA | CTA (CTR 536), MAA, MDR, IVDR | Flat under `<m1-eu>` | Yes (`eu`) | Centralised MAA: CESP refuses and the channel is unconnected. CTA goes through the CTIS portal only | "Applicant uploads" / "CTIS portal only" |
 | PMDA | J-NDA | Flat. A new application needs eCTD v4.0 and is blocked (`server/services/ectd/dispatch-readiness.ts:214-241`) | Yes (`jp`) | The adapter refuses (`pmda-gateway.ts`) | "New applications blocked: eCTD v4.0 required from 2026-04-01" (the dated fact's date, named since 2026-10-08) |
-| Health Canada | None (`NO_RULE_PACK`) | Flat | No | The adapter posts to an endpoint written from no agency source (`health-canada-gateway.ts:7-16`) | "No outline; no channel" |
+| Health Canada | None (`NO_RULE_PACK`) | Flat | No | The adapter posts to an endpoint written from no agency source (`health-canada-gateway.ts:7-16`) | "No outline; no transmit channel" |
 | MHRA | `ind:mhra` exists but is mislabelled: the UK has no IND | EU placeholder | No | Generic adapter, no channel | Not offered |
-| NMPA, MFDS | None | EU placeholder | Yes (`cn`, `kr`) | No channel | "No outline; no channel" |
-| TGA | None | EU placeholder | No | No channel | "No outline; no channel" |
+| NMPA, MFDS | None | EU placeholder | Yes (`cn`, `kr`) | No channel | "No outline; no transmit channel" |
+| TGA | None | EU placeholder | No | No channel | "No outline; no transmit channel" |
 | Swissmedic, ANVISA, CDSCO, HSA, EU national authorities, notified bodies | Unmapped (`server/services/c2c/document-class.ts:67-70`) | EU placeholder | No | No channel | Refused at creation |
 
 Region profiles exist only for fda, eu, jp, cn and kr (`server/services/region-profiles/region-profile-service.ts:66-72`).
 
-The "no channel" labels for Health Canada and the generic adapters follow regulatory practice as the judges described it. Health Canada's CESG uses AS2, and the other agencies take portal uploads. I have not checked this against agency documents.
+The "no channel" labels (worded "no transmit channel" on screen since 2026-10-15) for Health Canada and the generic adapters follow regulatory practice as the judges described it. Health Canada's CESG uses AS2, and the other agencies take portal uploads. I have not checked this against agency documents.
 
 ### How the UI says so
 
@@ -659,9 +659,9 @@ Every slice files its red run, then its green run, under `docs/evidence/D2-ONE-A
 
   | Input | Expected |
   |---|---|
-  | `('maa','EMA')` | Flat Module 1, no channel |
+  | `('maa','EMA')` | Flat Module 1, no transmit channel |
   | `('nda','FDA')` | Structured Module 1 |
-  | `('nds','Health_Canada')` | No outline, no channel |
+  | `('nds','Health_Canada')` | No outline, no transmit channel |
   | `('nda','ANVISA')` | Unmapped |
 
   The resolver must no longer report EMA or PMDA as buildable. Red: the module is absent, and the resolver reads `:237`.

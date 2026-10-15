@@ -3218,6 +3218,10 @@ export const C2C_MIGRATION_FILES = [
   // auto-trigger claims. Matches only those exact id formats; creates nothing,
   // so it sits anywhere after its four tables' creators and above the pair.
   'migrations/20261015b_contradiction_consequence_invented_ids.sql',
+  // Removes the sentinel "findings" the rules engine's trigger_ai_analysis
+  // action wrote for analyses nothing performed (2026-10-15). Deletes only
+  // rows matching everything that writer stamped; creates nothing.
+  'migrations/20261015c_sentinel_queued_ai_analysis_rows.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

@@ -152,7 +152,7 @@ export function filedNextStep(format: string, approved: boolean): string {
     return `Submissions take PDF, so this ${format === 'DOCX' ? 'Word' : format} copy cannot be placed into one. To submit this document, file it again as PDF.`;
   }
   return approved
-    ? 'Next: open it in the Vault and use “Place into submission…” on its record.'
+    ? 'Next: open it in the Vault and use “Place into filing…” on its record.'
     : 'Next: review and approve this version in the Vault. It can be placed into a submission before then, but the sequence is not frozen or transmitted until it is approved.';
 }
 

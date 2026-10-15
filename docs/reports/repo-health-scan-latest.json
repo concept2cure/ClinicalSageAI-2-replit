@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T04:34:05.100Z",
+  "generatedAt": "2026-10-15T04:46:22.378Z",
   "git": {
-    "sha": "c68e7a68c8b93bf7f165a7168645f39f2554c51f",
+    "sha": "bf9a86735600cab7748b99f1afed008a38658591",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2209,7 +2209,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 196220
+        "bytes": 196343
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2300,12 +2300,12 @@
         "bytes": 126270
       },
       {
-        "file": "server/src/routes/stability.router.ts",
-        "bytes": 125383
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "bytes": 125538
       },
       {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "bytes": 124958
+        "file": "server/src/routes/stability.router.ts",
+        "bytes": 125383
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2345,7 +2345,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 114000
+        "bytes": 113954
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2451,7 +2451,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3820
+        "lines": 3821
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2531,7 +2531,7 @@
       },
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 2616
+        "lines": 2623
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2551,7 +2551,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2381
+        "lines": 2380
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",

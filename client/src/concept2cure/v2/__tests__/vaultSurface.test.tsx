@@ -528,7 +528,7 @@ describe('Vault — placing a document into a submission', () => {
 
     // Open the upload, then the dialog.
     fireEvent.click((await screen.findAllByText('stability-summary-24m'))[0]);
-    fireEvent.click(await screen.findByRole('button', { name: /place into submission/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /place into filing/i }));
 
     const sub = await screen.findByLabelText('Target submission');
     fireEvent.change(sub, { target: { value: '4' } });
@@ -541,7 +541,7 @@ describe('Vault — placing a document into a submission', () => {
     // Scoped to the dialog: the trigger button behind it matches the same name,
     // and clicking that one would re-open rather than submit.
     const dialog = screen.getByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: /^place into submission$/i }));
+    fireEvent.click(within(dialog).getByRole('button', { name: /^place into filing$/i }));
 
     await waitFor(() => expect(writes.some((w) => w.method === 'PUT')).toBe(true));
     const put = writes.find((w) => w.method === 'PUT')!;
