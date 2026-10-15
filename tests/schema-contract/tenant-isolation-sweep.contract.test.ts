@@ -138,6 +138,22 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // there with `relation "submissions" does not exist` and no assertion below
   // ran. A real deploy applies the creator first and is unaffected.
   await safe(readMig('migrations/20260604_submission_core_canonical.sql'));
+  // Sixth of the same class (2026-10-15). public.shadow_review_runs is created by
+  // migrations/20260604_shadow_review.sql at index 5 of the set, before
+  // BATCH_START. migrations/20261015_shadow_review_waiver.sql, IN the batch,
+  // ALTERs that table (ADD COLUMN IF NOT EXISTS does not guard the TABLE's
+  // existence), so pass 1 aborted there with `relation
+  // "public.shadow_review_runs" does not exist` and no assertion below ran. A
+  // real deploy applies the creator first and is unaffected.
+  await safe(readMig('migrations/20260604_shadow_review.sql'));
+  // Seventh, same day, same class: public.c2c_documents is created by
+  // migrations/20260528_phase9_document_schema.sql at index 3 of the set, and
+  // migrations/20261015e_c2c_documents_filing_scope.sql, IN the batch, ALTERs it.
+  // That creator runs as one transaction and references c2c_ana_actions, which
+  // migrations/20260527_mutation_primitives.sql (index 2) creates — so both, in
+  // set order.
+  await safe(readMig('migrations/20260527_mutation_primitives.sql'));
+  await safe(readMig('migrations/20260528_phase9_document_schema.sql'));
   // The Part 11 port precedes this batch on real deployments. Its status
   // widening needs the REAL orchestrator store port, which itself needs the
   // canonical submissions store above. This fixture omitted both pre-batch
