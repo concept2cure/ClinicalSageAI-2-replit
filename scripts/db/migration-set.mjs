@@ -3306,6 +3306,17 @@ export const C2C_MIGRATION_FILES = [
   // scores; creates nothing, drops nothing.
   'migrations/20261015k_canonical_facts_confidence_unscored.sql',
 
+  // evidence_claims.confidence was NOT NULL DEFAULT 0.50, so an unscored claim
+  // (and the governed fact established from it) read back at 0.5; and
+  // fact_drift.severity defaulted to 'medium', so an unrated drift read as a
+  // medium one (2026-10-15). The creators — shared/schema.ts (pushed by
+  // install-fresh), db/migrations/20260319_evidence_fabric.sql and
+  // migrations/20260603_living_record_spine.sql — are amended in place but none
+  // runs on a deploy; this relaxes the columns on databases installed earlier.
+  // Conditional on each table and the live shape; keeps stored values; creates
+  // nothing, drops nothing.
+  'migrations/20261015m_claim_confidence_and_drift_severity_unstated.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

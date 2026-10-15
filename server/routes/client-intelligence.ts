@@ -219,6 +219,16 @@ function sendIngestion(res: Response, result: DocumentIngestionResult) {
 }
 
 /**
+ * A listed document without its stored processing_error, which holds the
+ * failed ingestion's err.message (driver text). The lists sent it as stored
+ * until 2026-10-15; the listing says only that the ingestion failed.
+ */
+const INGESTION_FAILED = 'Ingestion failed. The failure detail is withheld from this listing.';
+function withoutFailureText<T extends { processingError: string | null }>(doc: T): T {
+  return doc.processingError == null ? doc : { ...doc, processingError: INGESTION_FAILED };
+}
+
+/**
  * POST /api/client-intelligence/documents/upload
  * Upload and ingest a document into client intelligence memory.
  */
@@ -253,9 +263,9 @@ router.post(
       );
 
       return sendIngestion(res, result);
-    } catch (err: any) {
-      console.error('[ClientIntelligence] POST /documents/upload error:', err);
-      return sendError(res, 500, err.message);
+    } catch (err) {
+      // The cause is logged, not sent (2026-10-15: `500 { error: err.message }`).
+      return serverError(res, log, 'ingesting the upload', err);
     }
   }
 );
@@ -273,10 +283,9 @@ router.get('/documents', async (req: Request, res: Response) => {
     }
 
     const documents = await getIngestedDocuments(profileId, organizationId);
-    return sendSuccess(res, { documents });
-  } catch (err: any) {
-    console.error('[ClientIntelligence] GET /documents error:', err);
-    return sendError(res, 500, err.message);
+    return sendSuccess(res, { documents: documents.map(withoutFailureText) });
+  } catch (err) {
+    return serverError(res, log, 'listing ingested documents', err);
   }
 });
 
@@ -565,9 +574,9 @@ router.post(
       );
 
       return sendIngestion(res, result);
-    } catch (err: any) {
-      console.error('[ProjectIntelligence] POST documents/upload error:', err);
-      return sendError(res, 500, err.message);
+    } catch (err) {
+      // The cause is logged, not sent (2026-10-15: `500 { error: err.message }`).
+      return serverError(res, log, 'ingesting the project upload', err);
     }
   }
 );
@@ -584,10 +593,9 @@ router.get('/project/:projectId/documents', async (req: Request, res: Response) 
     if (!profile) return sendSuccess(res, { documents: [] });
 
     const documents = await getProjectIngestedDocuments(profile.id);
-    return sendSuccess(res, { documents });
-  } catch (err: any) {
-    console.error('[ProjectIntelligence] GET documents error:', err);
-    return sendError(res, 500, err.message);
+    return sendSuccess(res, { documents: documents.map(withoutFailureText) });
+  } catch (err) {
+    return serverError(res, log, 'listing project documents', err);
   }
 });
 
@@ -928,7 +936,8 @@ router.get('/ana/wisdom', async (req: Request, res: Response) => {
           sql`${anaPlatformWisdom.evidenceCount} >= ${anaPlatformWisdom.minEvidenceThreshold}`
         )
       )
-      .orderBy(desc(anaPlatformWisdom.confidenceScore))
+      // 2026-10-15: by confidence_score, a stamped figure now null; by evidence.
+      .orderBy(desc(anaPlatformWisdom.evidenceCount))
       .limit(50);
 
     // Filter by context if provided

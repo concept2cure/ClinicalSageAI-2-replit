@@ -65,7 +65,8 @@ export interface CaptureProjectLessonParams {
 
 export interface RiskAlert {
   riskId: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
+  /** 'unrated' when no recorded fact rates it (2026-10-15: platform wisdom was rated from its stamped confidence). */
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'unrated';
   category: string;
   description: string;
   recommendation: string;
@@ -180,7 +181,8 @@ export async function captureProjectLesson(params: CaptureProjectLessonParams): 
       // in the title; nothing measured a confidence in the lesson.
       confidenceScore: null,
       importanceLevel: outcome === 'failure' ? 'high' : 'medium',
-      extractedBy: 'ai',
+      // A string template, not a model: it was labelled 'ai' (2026-10-15).
+      extractedBy: 'heuristic',
       status: 'active',
     });
 
@@ -299,7 +301,8 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
           content: newContent,
           confidenceScore: null,
           importanceLevel: 'high',
-          extractedBy: 'ai',
+          // A count of projects, not a model: it was labelled 'ai' (2026-10-15).
+          extractedBy: 'heuristic',
           status: 'active',
         });
         promoted++;
@@ -360,7 +363,8 @@ export async function promoteToPlatformWisdom(): Promise<number> {
         projectType: anaOutcomeLog.projectType,
         outcome: anaOutcomeLog.outcome,
         count: sql<number>`count(*)::int`.as('count'),
-        avgQuality: sql<number>`avg(${anaOutcomeLog.qualityScore})`.as('avg_quality'),
+        // NULL when no outcome in the pattern recorded a quality score.
+        avgQuality: sql<number | string | null>`avg(${anaOutcomeLog.qualityScore})`.as('avg_quality'),
         distinctOrgs: sql<number>`count(distinct ${anaOutcomeLog.organizationId})::int`.as('distinct_orgs'),
       })
       .from(anaOutcomeLog)
@@ -390,11 +394,13 @@ export async function promoteToPlatformWisdom(): Promise<number> {
           ? `Caution with ${pattern.capabilityKey} in this context — high failure rate observed. Consider alternative approaches.`
           : `${pattern.capabilityKey} shows mixed results — review outputs carefully.`;
 
-      const effectivenessScore = pattern.outcome === 'success'
-        ? Math.min(1, (pattern.avgQuality ?? 70) / 100)
-        : pattern.outcome === 'failure'
-          ? Math.max(0, 1 - (pattern.count / (pattern.count + 10)))
-          : 0.5;
+      // 2026-10-15: an unrated success was scored as if rated 70, a partial
+      // outcome 0.5 and a failure 10/(n+10), and confidence was stamped
+      // 0.5 + 0.05·organizations on insert and refresh. Effectiveness is now the
+      // recorded mean quality of a success; anything nothing measured is null.
+      const effectivenessScore = pattern.outcome === 'success' && pattern.avgQuality != null
+        ? Math.min(1, Number(pattern.avgQuality) / 100)
+        : null;
 
       if (existing) {
         // Update existing
@@ -405,7 +411,7 @@ export async function promoteToPlatformWisdom(): Promise<number> {
             patternDescription: description,
             recommendation,
             effectivenessScore,
-            confidenceScore: Math.min(0.95, 0.5 + pattern.distinctOrgs * 0.05),
+            confidenceScore: null,
             lastValidatedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -419,7 +425,7 @@ export async function promoteToPlatformWisdom(): Promise<number> {
           projectType: pattern.projectType ?? null,
           patternDescription: description,
           recommendation,
-          confidenceScore: Math.min(0.95, 0.5 + pattern.distinctOrgs * 0.05),
+          confidenceScore: null,
           evidenceCount: pattern.count,
           effectivenessScore,
           isActive: true,
@@ -470,7 +476,9 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
           gte(anaPlatformWisdom.evidenceCount, MIN_EVIDENCE_FOR_PLATFORM_WISDOM),
         )
       )
-      .orderBy(desc(anaPlatformWisdom.confidenceScore))
+      // 2026-10-15: ranked by, and rated from, the stamped confidence. Ranked by
+      // the evidence recorded; nothing recorded rates a pattern's severity.
+      .orderBy(desc(anaPlatformWisdom.evidenceCount))
       .limit(20);
 
     for (const wisdom of riskWisdom) {
@@ -481,7 +489,7 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
       if (bodyMatch && typeMatch) {
         risks.push({
           riskId: `platform-${wisdom.id}`,
-          severity: wisdom.confidenceScore >= 0.8 ? 'high' : wisdom.confidenceScore >= 0.6 ? 'medium' : 'low',
+          severity: 'unrated',
           category: wisdom.category,
           description: wisdom.patternDescription,
           recommendation: wisdom.recommendation,
@@ -507,10 +515,8 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
       .limit(10);
 
     for (const lesson of failureLessons) {
-      const lessonSeverity: RiskAlert['severity'] =
-        lesson.importanceLevel === 'high' || (lesson.confidenceScore != null && lesson.confidenceScore >= 0.8)
-          ? 'high'
-          : 'medium';
+      // The lesson's recorded importance; a confidence no longer raises it (2026-10-15).
+      const lessonSeverity: RiskAlert['severity'] = lesson.importanceLevel === 'high' ? 'high' : 'medium';
       risks.push({
         riskId: `lesson-${lesson.id}`,
         severity: lessonSeverity,
@@ -533,7 +539,7 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
           gte(anaPlatformWisdom.evidenceCount, MIN_EVIDENCE_FOR_PLATFORM_WISDOM),
         )
       )
-      .orderBy(desc(anaPlatformWisdom.confidenceScore))
+      .orderBy(desc(anaPlatformWisdom.evidenceCount))
       .limit(10);
 
     for (const wisdom of deficiencyWisdom) {
@@ -541,16 +547,10 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
       const typeMatch = !wisdom.projectType || wisdom.projectType === projectType;
 
       if (bodyMatch && typeMatch) {
-        const defSeverity: RiskAlert['severity'] = wisdom.confidenceScore >= 0.8
-          ? 'critical'
-          : wisdom.confidenceScore >= 0.6
-            ? 'high'
-            : wisdom.confidenceScore >= 0.4
-              ? 'medium'
-              : 'low';
         risks.push({
           riskId: `deficiency-${wisdom.id}`,
-          severity: defSeverity,
+          // Was 'critical' / 'high' / 'medium' / 'low' from the stamped confidence (2026-10-15).
+          severity: 'unrated',
           category: 'deficiency_prevention',
           description: wisdom.patternDescription,
           recommendation: wisdom.recommendation,
@@ -561,11 +561,13 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
     }
 
     // Sort by severity, then recorded confidence; an unscored risk follows the
-    // scored ones of its severity rather than ranking as an invented 0.5.
-    const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    // scored ones of its severity rather than ranking as an invented 0.5. An
+    // unrated risk follows the rated ones, in the evidence order read above.
+    const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, unrated: 4 };
     risks.sort((a, b) => {
       const sev = (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9);
       if (sev !== 0) return sev;
+      if (a.severity === 'unrated') return 0;
       if (a.confidenceScore == null || b.confidenceScore == null) {
         return (a.confidenceScore == null ? 1 : 0) - (b.confidenceScore == null ? 1 : 0);
       }
@@ -678,7 +680,8 @@ export async function buildWisdomContext(
       })
       .from(anaPlatformWisdom)
       .where(and(...platformConditions))
-      .orderBy(desc(anaPlatformWisdom.confidenceScore), desc(anaPlatformWisdom.evidenceCount))
+      // 2026-10-15: chosen by the stamped confidence first; by the evidence recorded now.
+      .orderBy(desc(anaPlatformWisdom.evidenceCount))
       .limit(1);
 
     if (platformInsight) {
@@ -735,11 +738,11 @@ export async function processUserFeedback(
 
     for (const wisdom of relatedWisdom) {
       if (feedback === 'accepted') {
-        // Reinforce: bump evidence count and adjust effectiveness up
-        const newEffectiveness = Math.min(
-          1,
-          (wisdom.effectivenessScore ?? 0.5) * 0.95 + 0.05,
-        );
+        // Reinforce: bump evidence count and adjust a measured effectiveness
+        // up. An unmeasured one stays null: it became 0.525 here (2026-10-15).
+        const newEffectiveness = wisdom.effectivenessScore == null
+          ? null
+          : Math.min(1, wisdom.effectivenessScore * 0.95 + 0.05);
         await db
           .update(anaPlatformWisdom)
           .set({

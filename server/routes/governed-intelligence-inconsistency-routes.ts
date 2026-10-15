@@ -298,7 +298,8 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
         executedArtifactId: d.executedArtifactId,
         executedArtifactVersion: d.executedArtifactVersion,
         decidedBy: d.decidedBy,
-        rationale: d.recommendationRationale ?? d.recommendationSummary,
+        // A summary nobody stated is null now, not '' (2026-10-15); say so.
+        rationale: d.recommendationRationale ?? d.recommendationSummary ?? 'No rationale or summary was recorded.',
       }));
 
       const program: InconsistencyProgram = {
