@@ -37,7 +37,6 @@
     "onboarding-data.LIC_TIER_LEVEL": "LIC_TIER_LEVEL: the same tier/role/archetype/price tables re-exported for the onboarding flow \u2014 reference configuration",
     "onboarding-data.licBundle": "licBundle: the same tier/role/archetype/price tables re-exported for the onboarding flow \u2014 reference configuration",
     "project-home-data.PJ_LIFECYCLE": "PJ_LIFECYCLE: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
-    "project-home-data.PJ_STAGE_TOOLS": "PJ_STAGE_TOOLS: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
     "project-home-data.Ring": "Ring: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
     "project-home-data.fileTone": "fileTone: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",
     "project-home-data.pjInitials": "pjInitials: lifecycle stage definitions, per-stage tool lists and pure helpers (initials, tone, ring) \u2014 reference configuration and functions, no project records",

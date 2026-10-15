@@ -3244,6 +3244,27 @@ export const C2C_MIGRATION_FILES = [
   // already, so it creates nothing the sweeps below must reach. Drops nothing.
   // Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p35-shadow-finding-disposition/.
   'migrations/20261015b_shadow_finding_disposition.sql',
+  // Removes the sentinel "findings" the rules engine's trigger_ai_analysis
+  // action wrote for analyses nothing performed (2026-10-15). Deletes only
+  // rows matching everything that writer stamped; creates nothing.
+  'migrations/20261015c_sentinel_queued_ai_analysis_rows.sql',
+  // protocol_risks.likelihood / impact lose their 'possible' / 'moderate'
+  // defaults (2026-10-15): a risk nobody rated scored 9, 'high'. Companion to
+  // the in-place amendment of the overlay-only creator
+  // migrations/20260622_protocol_risks.sql; conditional, creates nothing.
+  'migrations/20261015d_protocol_risk_ratings_no_default.sql',
+  // c2c_documents.filing_scope (2026-10-15, FILING_SPINE F22): which governed
+  // document is a project's home filing and which holds an added market's
+  // Module 1 and 3.2.R, so the editor's outline and a section's binding take
+  // the home one by name. After 20260528_phase9_document_schema, which creates
+  // the table. Additive: column, conditional CHECK, partial unique index.
+  'migrations/20261015e_c2c_documents_filing_scope.sql',
+  // coauthor_validation_history.agency becomes nullable (2026-10-15):
+  // run_validation recorded 'FDA' for every run that named no agency, though
+  // its checks are not agency-specific. The table comes from the drizzle
+  // schema (shared/schema.ts, amended alike); conditional on the live
+  // constraint, creates nothing.
+  'migrations/20261015f_coauthor_validation_history_agency_nullable.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

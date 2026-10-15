@@ -205,6 +205,60 @@ export async function confirmAndExecuteDecision(
   }
 }
 
+export type BodyExpectationsCheck = {
+  status: 'pass' | 'warn' | 'fail' | 'unknown';
+  reason?: string;
+  missing?: string[];
+  weak?: string[];
+  requiredLevel?: string;
+};
+
+/**
+ * The body-expectations check for one section: the section's own text measured
+ * against what the named regulator expects of that section.
+ *
+ * Every preflight measured it against '' — the empty string — so each recorded
+ * requirement came back 'missing' and the check failed whatever the section
+ * said, while a section with no recorded expectations passed, measured against
+ * nothing. A missing regulator or submission type was filled in as FDA / IND.
+ * The section preflight's verdict is written into a governed decision
+ * (recordPreflightDecision), so each of those became a recorded judgment
+ * (2026-10-15). It does not run without both a body and a type, or without
+ * text, or without expectations to measure against — and says which.
+ */
+export async function bodyExpectationsCheck(opts: {
+  regulatorBody?: string | null;
+  submissionType?: string | null;
+  sectionCode: string;
+  content: string | null | undefined;
+}): Promise<BodyExpectationsCheck> {
+  if (!opts.regulatorBody || !opts.submissionType) {
+    return { status: 'unknown', reason: 'A regulator body and a submission type are both needed to check body expectations.' };
+  }
+  const text = typeof opts.content === 'string'
+    ? opts.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    : '';
+  if (!text) {
+    return { status: 'unknown', reason: `Section ${opts.sectionCode} has no text to check.` };
+  }
+  const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
+  const analysis = await detectBodySpecificGaps(opts.regulatorBody, opts.submissionType, opts.sectionCode, text);
+  if (analysis.gaps.length === 0) {
+    return {
+      status: 'unknown',
+      reason: `No ${opts.regulatorBody} ${opts.submissionType} expectations are recorded for section ${opts.sectionCode}.`,
+    };
+  }
+  const missing = analysis.gaps.filter((g) => g.status === 'missing').map((g) => g.requirement);
+  const weak = analysis.gaps.filter((g) => g.status === 'weak').map((g) => g.requirement);
+  return {
+    status: missing.length > 0 ? 'fail' : weak.length > 0 ? 'warn' : 'pass',
+    missing,
+    weak,
+    requiredLevel: analysis.requiredLevel,
+  };
+}
+
 export function sectionPreflightVerdict(
   checks: Record<string, { status?: string } | null | undefined>,
 ): SectionPreflightVerdict {
@@ -1759,25 +1813,52 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
  * Helper: fetch all artifacts for a project, grouped by CTD module.
  * Returns Map<moduleCode, Array<{ctdSection, id, status}>>
  */
-async function fetchProjectArtifactsByModule(projectId: number): Promise<Map<string, Array<{ ctdSection: string; id: string; status: string }>>> {
-  const result = new Map<string, Array<{ ctdSection: string; id: string; status: string }>>();
-  try {
-    const { db } = await import('../db.js');
-    const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
-      where: (a: any, { eq }: any) => eq(a.projectId, projectId),
-    }).catch(() => []) || [];
-    for (const art of artifacts) {
-      if (!art.ctdSection) continue;
-      const major = art.ctdSection.split('.')[0];
-      const moduleCode = `m${major}`;
-      if (!result.has(moduleCode)) result.set(moduleCode, []);
-      result.get(moduleCode)!.push({
-        ctdSection: art.ctdSection,
-        id: String(art.id),
-        status: art.status || 'draft',
-      });
-    }
-  } catch { /* DB unavailable */ }
+/** The section's text: the artifact named, else this tenant's latest at that CTD section. */
+async function sectionText(
+  organizationId: number,
+  projectId: number,
+  sectionCode: string,
+  artifactId?: unknown,
+): Promise<string | null> {
+  if (artifactId != null && artifactId !== '') {
+    const art = await getScopedArtifact(projectId, Number(artifactId), organizationId);
+    return typeof art?.content === 'string' ? art.content : null;
+  }
+  const { db } = await import('../db.js');
+  const art = await db.query.concept2cureArtifacts.findFirst({
+    where: (a: any, { and, eq }: any) =>
+      and(eq(a.projectId, projectId), eq(a.organizationId, organizationId), eq(a.ctdSection, sectionCode)),
+    orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+  });
+  return typeof art?.content === 'string' ? art.content : null;
+}
+
+async function fetchProjectArtifactsByModule(
+  organizationId: number,
+  projectId: number,
+): Promise<Map<string, Array<{ ctdSection: string; id: string; status: string; content: string | null }>>> {
+  /* This read named no tenant — any caller's projectId listed another
+     organization's sections, ids and statuses — and a failed read became an
+     empty map, which the routes answered with "No sections found … Add
+     documents to this module first." (2026-10-15). Scoped, and a failure
+     propagates to the route's error response. */
+  const result = new Map<string, Array<{ ctdSection: string; id: string; status: string; content: string | null }>>();
+  const { db } = await import('../db.js');
+  const artifacts = (await db.query.concept2cureArtifacts.findMany({
+    where: (a: any, { and, eq }: any) => and(eq(a.projectId, projectId), eq(a.organizationId, organizationId)),
+  })) as Array<{ id: number; ctdSection: string | null; status: string | null; content: unknown }>;
+  for (const art of artifacts) {
+    if (!art.ctdSection) continue;
+    const major = art.ctdSection.split('.')[0];
+    const moduleCode = `m${major}`;
+    if (!result.has(moduleCode)) result.set(moduleCode, []);
+    result.get(moduleCode)!.push({
+      ctdSection: art.ctdSection,
+      id: String(art.id),
+      status: art.status || 'draft',
+      content: typeof art.content === 'string' ? art.content : null,
+    });
+  }
   return result;
 }
 
@@ -1795,7 +1876,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
     if (orgId == null) return;
 
     // Find all sections in this module
-    const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
+    const artifactMap = await fetchProjectArtifactsByModule(Number(orgId), Number(projectId));
     const moduleSections = artifactMap.get(moduleCode) || [];
 
     if (moduleSections.length === 0) {
@@ -1875,24 +1956,19 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
             const items = ((scanResult?.findings as any[]) || [])
               .filter((f: any) => f.sectionCode === sec.ctdSection || (f.affectedSections || []).includes(sec.ctdSection))
               .slice(0, 5).map((f: any) => ({
-                id: f.id || String(Math.random()), severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
+                id: f.id, severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
                 explanation: f.explanation || f.description || f.title,
               }));
             checks.contradictions = { status: items.some((i: any) => i.severity === 'critical') ? 'fail' : items.length ? 'warn' : 'pass', items };
           }
         } catch { checks.contradictions = { status: 'unknown' }; }
 
-        // Body gaps (lightweight)
-        if (regulatorBody || submissionType) {
-          try {
-            const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
-            if (detectBodySpecificGaps) {
-              const analysis = await detectBodySpecificGaps(regulatorBody || 'FDA', submissionType || 'IND', sec.ctdSection, '');
-              const missing = analysis.gaps.filter((g: any) => g.status === 'missing').map((g: any) => g.requirement);
-              checks.bodyExpectations = { status: missing.length ? 'fail' : 'pass', missing };
-            }
-          } catch { checks.bodyExpectations = { status: 'unknown' }; }
-        } else { checks.bodyExpectations = { status: 'unknown' }; }
+        // Body expectations — against this section's own text
+        try {
+          checks.bodyExpectations = await bodyExpectationsCheck({
+            regulatorBody, submissionType, sectionCode: sec.ctdSection, content: sec.content,
+          });
+        } catch { checks.bodyExpectations = { status: 'unknown', reason: 'The body-expectations check did not complete.' }; }
 
         /* These two are not checks. They are placeholders that have never had an
            implementation, and they were being written into `checks` with
@@ -1994,7 +2070,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       for (const blocker of majorBlockers) {
         signals.push({ kind: blocker.kind || 'readiness-blocker', summary: blocker.message, severity: blocker.severity });
       }
-      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+      decisionRecord = await decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
         organizationId: Number(orgId),
         kind: 'module-preflight-judgment',
@@ -2005,7 +2081,10 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
         createdById: (req as any).userId || undefined,
       });
-    } catch { /* non-blocking */ }
+    } catch (err) {
+      // Not recorded: the response carries decisionId null, and says so here.
+      console.warn('[authoring-actions] preflight decision not recorded:', err instanceof Error ? err.message : String(err));
+    }
 
     // ── Decision-aware gating enrichment ─────────────────────────
     let decisionAwareStatus: any = null;
@@ -2089,7 +2168,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
 
-    const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
+    const artifactMap = await fetchProjectArtifactsByModule(Number(orgId), Number(projectId));
     const moduleCodes = Array.from(artifactMap.keys()).sort();
 
     if (moduleCodes.length === 0) {
@@ -2240,7 +2319,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       for (const blocker of majorBlockers) {
         signals.push({ kind: blocker.kind || 'readiness-blocker', summary: blocker.message, severity: blocker.severity });
       }
-      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+      decisionRecord = await decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
         organizationId: Number(orgId),
         kind: 'dossier-preflight-judgment',
@@ -2251,7 +2330,10 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
         createdById: (req as any).userId || undefined,
       });
-    } catch { /* non-blocking */ }
+    } catch (err) {
+      // Not recorded: the response carries decisionId null, and says so here.
+      console.warn('[authoring-actions] preflight decision not recorded:', err instanceof Error ? err.message : String(err));
+    }
 
     // ── Decision-aware gating enrichment ─────────────────────────
     let decisionAwareStatus: any = null;
@@ -2391,7 +2473,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
               .filter((f: any) => f.sectionCode === sectionCode || (f.affectedSections || []).includes(sectionCode))
               .slice(0, 10)
               .map((f: any) => ({
-                id: f.id || f.findingId || String(Math.random()),
+                id: f.id || f.findingId,
                 severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
                 explanation: f.explanation || f.description || f.title,
               }));
@@ -2400,21 +2482,13 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             return { status, items: relevant };
           } catch { return null; }
         })(),
-        // 3. Body-aware gaps
+        // 3. Body expectations — against this section's own text
         (async () => {
-          if (!regulatorBody && !submissionType) return null;
           try {
-            const { detectBodySpecificGaps } = await import(
-              '../services/body-aware-authoring.js'
-            );
-            if (!detectBodySpecificGaps) return null;
-            const analysis = await detectBodySpecificGaps(
-              regulatorBody || 'FDA', submissionType || 'IND', sectionCode, ''
-            );
-            const missing = analysis.gaps.filter((g: any) => g.status === 'missing').map((g: any) => g.requirement);
-            const weak = analysis.gaps.filter((g: any) => g.status === 'weak').map((g: any) => g.requirement);
-            const status: CheckStatus = missing.length > 0 ? 'fail' : weak.length > 0 ? 'warn' : 'pass';
-            return { status, missing, weak, requiredLevel: 'required' };
+            return await bodyExpectationsCheck({
+              regulatorBody, submissionType, sectionCode,
+              content: await sectionText(Number(orgId), Number(projectId), String(sectionCode), artifactId),
+            });
           } catch { return null; }
         })(),
         // 4. Cross-section consistency
@@ -2433,9 +2507,10 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             const { db } = await import('../db.js');
             const sections: Record<string, string> = {};
             for (const code of [sectionCode, ...linked]) {
+              // This tenant's artifact: the read named no organization.
               const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
                 where: (a: any, { and, eq }: any) =>
-                  and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
+                  and(eq(a.projectId, Number(projectId)), eq(a.organizationId, Number(orgId)), eq(a.ctdSection, code)),
                 orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
               }).catch(() => null);
               if (artifact?.content) {
@@ -2445,7 +2520,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
             }
             if (Object.keys(sections).length < 2) return { status: 'unknown' as CheckStatus, items: [] };
             const engine = new HarmonizeEngine();
-            const result = await engine.check({ sections, submissionType: submissionType || 'IND' });
+            const result = await engine.check({ sections, submissionType: submissionType || 'unspecified' });
             const items = result.issues.slice(0, 10).map((i: any) => ({
               type: i.type, severity: i.severity, explanation: i.description,
               linkedSections: [i.sectionA, i.sectionB].filter(Boolean),
@@ -2545,7 +2620,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
         }
       }
 
-      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+      decisionRecord = await decisionLifecycleService.recordPreflightDecision({
         projectId: String(projectId),
         organizationId: Number(orgId),
         kind: 'section-preflight-judgment',
@@ -2557,8 +2632,9 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
         createdById: (req as any).userId || undefined,
       });
-    } catch {
-      // Decision recording is non-blocking
+    } catch (err) {
+      // Not recorded: the response carries decisionId null, and says so here.
+      console.warn('[authoring-actions] preflight decision not recorded:', err instanceof Error ? err.message : String(err));
     }
 
     // ── Pass 8: Contradiction context enrichment ─────────────────
@@ -3135,21 +3211,21 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
       }
     );
 
-    // Also get contradiction-aware decision status
-    let contradictionAwareStatus: any = null;
-    try {
-      const { decisionLifecycleService } = await import(
-        '../services/decision-lifecycle-service.js'
-      );
-      contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
-        String(projectId ?? ''),
-        {
-          moduleCode: moduleCode as string || undefined,
-          regulatorBody: regulatorBody as string || undefined,
-          submissionType: submissionType as string || undefined,
-        }
-      );
-    } catch { /* non-blocking */ }
+    // Also get contradiction-aware decision status — for this tenant. A
+    // failure fails the request: it was swallowed into `null` beside a
+    // context that read as complete.
+    const { decisionLifecycleService } = await import(
+      '../services/decision-lifecycle-service.js'
+    );
+    const contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
+      String(projectId ?? ''),
+      {
+        organizationId: orgId,
+        moduleCode: moduleCode as string || undefined,
+        regulatorBody: regulatorBody as string || undefined,
+        submissionType: submissionType as string || undefined,
+      }
+    );
 
     return res.json({
       status: 'data',

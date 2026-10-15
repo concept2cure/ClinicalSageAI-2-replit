@@ -11,15 +11,25 @@ export type DraftSourceReference = Pick<DraftSource, 'documentId' | 'contentHash
 export type VerifiedDraftSourceReference = Omit<DraftSource, 'text'>;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * One contiguous excerpt of at most 12,000 characters, anywhere in the document (S5d: the
+ * stretch relevant to the section, not only the opening). A receipt saved before S5d starts at 0.
+ */
+function parseSpan(raw: unknown): DraftSourceReference['span'] {
+  const span = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  const start = Number(span.start ?? 0);
+  const end = Number(span.end);
+  const totalChars = Number(span.totalChars);
+  const integers = [start, end, totalChars].every(Number.isSafeInteger);
+  if (!integers || start < 0 || end - start < 1 || end - start > 12000 || totalChars < end) throw new Error('Invalid source excerpt span');
+  return { start, end, totalChars };
+}
+
 function parseReference(raw: unknown): DraftSourceReference {
   const ref = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
-  const span = ref.span && typeof ref.span === 'object' ? ref.span as Record<string, unknown> : {};
   if (typeof ref.documentId !== 'string' || !UUID.test(ref.documentId) ||
       typeof ref.contentHash !== 'string' || !/^[0-9a-f]{64}$/i.test(ref.contentHash)) throw new Error('Invalid source identity/version');
-  if (span.start !== 0 || !Number.isSafeInteger(span.end) || !Number.isSafeInteger(span.totalChars) ||
-      Number(span.end) < 1 || Number(span.end) > 12000 || Number(span.totalChars) < Number(span.end)) throw new Error('Invalid source excerpt span');
-  return { documentId: ref.documentId.toLowerCase(), contentHash: ref.contentHash.toLowerCase(),
-    span: { start: 0, end: Number(span.end), totalChars: Number(span.totalChars) } };
+  return { documentId: ref.documentId.toLowerCase(), contentHash: ref.contentHash.toLowerCase(), span: parseSpan(ref.span) };
 }
 
 export function parseDraftSourceReferences(raw: unknown): DraftSourceReference[] {
@@ -27,7 +37,7 @@ export function parseDraftSourceReferences(raw: unknown): DraftSourceReference[]
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 8) throw new Error('Select one to eight source references');
   const refs = raw.map(parseReference);
   if (new Set(refs.map(r => r.documentId)).size !== refs.length ||
-      refs.reduce((n, r) => n + r.span.end, 0) > 48000) throw new Error('Duplicate sources or excerpt budget exceeded');
+      refs.reduce((n, r) => n + (r.span.end - r.span.start), 0) > 48000) throw new Error('Duplicate sources or excerpt budget exceeded');
   return refs;
 }
 
@@ -59,7 +69,7 @@ export async function verifyDraftSourceReferences(
    * catalogued facts that give the cited document its role in a comparison (`claimDocRoleOf`);
    * both may be absent, and the role is then `other`, which makes no role convention bind.
    */
-  options: { actor: AuthoringActor | undefined; excerpts?: Array<{ documentId: string; contentHash: string; text: string; ctdSection?: string | null; documentType?: string | null }> },
+  options: { actor: AuthoringActor | undefined; excerpts?: Array<{ documentId: string; contentHash: string; text: string; start?: number; ctdSection?: string | null; documentType?: string | null }> },
 ): Promise<VerifiedDraftSourceReference[]> {
   const { actor, excerpts } = options;
   const { loadDocumentForOrg } = await import('../vault/document-catalog.service.js');
@@ -70,13 +80,15 @@ export async function verifyDraftSourceReferences(
     excerpts?.push({
       documentId: doc.id,
       contentHash: doc.contentHash,
-      text: doc.extractedText.slice(0, ref.span.end),
+      // The characters served, where they stand in the document (S5d).
+      text: doc.extractedText.slice(ref.span.start, ref.span.end),
+      start: ref.span.start,
       ctdSection: doc.ctdSection ?? null,
       documentType: doc.documentType ?? null,
     });
     verified.push({ documentId: doc.id, programId, contentHash: doc.contentHash,
       title: doc.documentTitle || doc.fileName || '', span: ref.span,
-      completeText: ref.span.end === doc.extractedText.length,
+      completeText: ref.span.start === 0 && ref.span.end === doc.extractedText.length,
       extractionMethod: doc.catalog.extractionMethod, extractionConfidence: doc.catalog.extractionConfidence,
       ...sourceAvailabilityPresentation(doc) });
   }

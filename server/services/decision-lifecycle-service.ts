@@ -217,7 +217,7 @@ export class DecisionLifecycleService {
   /**
    * Record a preflight judgment as a formal decision.
    */
-  recordPreflightDecision(opts: {
+  async recordPreflightDecision(opts: {
     projectId: string;
     organizationId?: number;
     kind: 'section-preflight-judgment' | 'module-preflight-judgment' | 'dossier-preflight-judgment';
@@ -234,18 +234,24 @@ export class DecisionLifecycleService {
     sourceSignals: DecisionSourceSignal[];
     recommendedActionIds?: string[];
     createdById?: string;
-  }): FormalDecisionRecord {
+  }): Promise<FormalDecisionRecord> {
     const decision = buildPreflightDecision({
       ...opts,
       createdByType: 'system',
     });
 
+    /* AWAITED, and indexed only once it is durable (2026-10-15). This fired
+       unawaited and returned the id regardless — "persisted to memory only"
+       at log.warn — so the section preflight's verdict, the judgment a
+       promotion rests on, was reported recorded when it lived only in this
+       process's heap. The same rule as recordGovernedActionDecision. */
+    const persisted = await persistDecision(decision);
+    if (!persisted) {
+      throw new Error(
+        `Preflight decision ${decision.id} could not be recorded durably; refusing to report it as recorded.`,
+      );
+    }
     indexDecision(decision);
-    persistDecision(decision).then(ok => {
-      if (!ok) {
-        log.warn('Preflight decision persisted to memory only', { id: decision.id });
-      }
-    });
 
     log.info('Preflight decision recorded', {
       id: decision.id,
@@ -856,7 +862,14 @@ export class DecisionLifecycleService {
    */
   async computeContradictionAwareStatus(
     projectId: string,
-    scope: { moduleCode?: string; dossierId?: string; regulatorBody?: string; submissionType?: string }
+    scope: {
+      /** The caller's tenant. Required: both reads below are scoped by it. */
+      organizationId: number;
+      moduleCode?: string;
+      dossierId?: string;
+      regulatorBody?: string;
+      submissionType?: string;
+    }
   ): Promise<{
     hasUnresolvedContradictions: boolean;
     hasProvisionalDecisions: boolean;
@@ -870,31 +883,35 @@ export class DecisionLifecycleService {
     overlayActiveCount: number;
     summary: string;
   }> {
-    // Base decision-aware status
-    const baseStatus = this.computeDecisionAwareStatus(projectId, scope);
-
-    // Enrich with contradiction context
-    let contradictionCount = 0;
-    let contradictionBlockingCount = 0;
-    let overlayActiveCount = 0;
-
-    try {
-      const { contradictionEngineService } = await import('./contradiction-engine-service.js');
-      const contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
-        1, // Default org — real multi-tenant uses req context
-        Number(projectId),
-        {
-          moduleCode: scope.moduleCode,
-          regulatorBody: scope.regulatorBody,
-          submissionType: scope.submissionType,
-        }
-      );
-      contradictionCount = contradictionContext.unresolvedCount;
-      contradictionBlockingCount = contradictionContext.blockingCount;
-      overlayActiveCount = contradictionContext.overlayActiveCount;
-    } catch {
-      // Contradiction engine unavailable
+    /* Both reads are the caller's tenant's (2026-10-15). The contradiction read
+       was hard-coded to organization 1 ("Default org — real multi-tenant uses
+       req context"), so every other tenant was told its project had no
+       contradictions — while organization 1's counts were served to anyone
+       naming the same project id — and the decisions were read unscoped. A
+       failed read left the counts at 0 and the summary at "No pending
+       decisions or contradictions"; it now fails, rather than reporting none. */
+    if (!Number.isInteger(scope.organizationId) || scope.organizationId <= 0) {
+      throw new Error('computeContradictionAwareStatus: an organization is required');
     }
+    const baseStatus = this.computeDecisionAwareStatus(projectId, {
+      moduleCode: scope.moduleCode,
+      dossierId: scope.dossierId,
+      organizationId: scope.organizationId,
+    });
+
+    const { contradictionEngineService } = await import('./contradiction-engine-service.js');
+    const contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
+      scope.organizationId,
+      Number(projectId),
+      {
+        moduleCode: scope.moduleCode,
+        regulatorBody: scope.regulatorBody,
+        submissionType: scope.submissionType,
+      }
+    );
+    const contradictionCount = contradictionContext.unresolvedCount;
+    const contradictionBlockingCount = contradictionContext.blockingCount;
+    const overlayActiveCount = contradictionContext.overlayActiveCount;
 
     const parts: string[] = [];
     if (baseStatus.summary !== 'No pending decisions') {

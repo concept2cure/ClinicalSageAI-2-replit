@@ -160,18 +160,19 @@ interface SignRoute {
 const ROUTES: SignRoute[] = [
   {
     name: 'IRB approval', mount: '/api/irb', router: irbRouter, path: '/api/irb/submissions/5/reviews',
-    act: { reviewType: 'full_board', outcome: 'approved', reason: REASON }, target: 'irb-submission:5',
-    notASignature: { act: { reviewType: 'full_board', outcome: 'deferred', reason: REASON }, command: 'resolve' },
+    // A determination carries the board's own date (it was stamped as today).
+    act: { reviewType: 'full_board', outcome: 'approved', determinationDate: '2026-10-01', reason: REASON }, target: 'irb-submission:5',
+    notASignature: { act: { reviewType: 'full_board', outcome: 'deferred', determinationDate: '2026-10-01', reason: REASON }, command: 'resolve' },
   },
   {
     name: 'IACUC approval', mount: '/api/iacuc', router: iacucRouter, path: '/api/iacuc/protocols/5/reviews',
-    act: { reviewType: 'full_committee_review', outcome: 'approved', reason: REASON }, target: 'iacuc-protocol:5',
-    notASignature: { act: { reviewType: 'full_committee_review', outcome: 'tabled', reason: REASON }, command: 'resolve' },
+    act: { reviewType: 'full_committee_review', reviewerCount: 9, outcome: 'approved', determinationDate: '2026-10-01', reason: REASON }, target: 'iacuc-protocol:5',
+    notASignature: { act: { reviewType: 'full_committee_review', reviewerCount: 9, outcome: 'tabled', determinationDate: '2026-10-01', reason: REASON }, command: 'resolve' },
   },
   {
     name: 'IBC approval', mount: '/api/ibc', router: ibcRouter, path: '/api/ibc/registrations/5/reviews',
-    act: { outcome: 'approved', reason: REASON }, target: 'ibc-registration:5',
-    notASignature: { act: { outcome: 'tabled', reason: REASON }, command: 'resolve' },
+    act: { outcome: 'approved', determinationDate: '2026-10-01', reason: REASON }, target: 'ibc-registration:5',
+    notASignature: { act: { outcome: 'tabled', determinationDate: '2026-10-01', reason: REASON }, command: 'resolve' },
   },
   {
     name: 'RIM label recorded as approved', mount: '/api/rim', router: rimRouter, path: '/api/rim/products/5/labels',

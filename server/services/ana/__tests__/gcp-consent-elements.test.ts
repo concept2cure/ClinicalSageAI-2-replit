@@ -19,8 +19,10 @@ import { adviseGcp, reviewInformedConsent, listGcpDomains } from '../gcp-consent
 const ids = (xs: Array<{ id: string }>) => xs.map((x) => x.id);
 
 describe('the required elements of 21 CFR 50.25', () => {
-  it('checks the ClinicalTrials.gov statement (50.25(c)) as required', () => {
-    const r = reviewInformedConsent('This research study is voluntary.');
+  it('checks the ClinicalTrials.gov statement (50.25(c)) as required for an applicable clinical trial', () => {
+    // Since 2026-10-15 it is required only for an ACT; unknown ACT status is a
+    // stated question (tests/regulatory/informed-consent-elements.test.ts).
+    const r = reviewInformedConsent('This research study is voluntary.', { applicableClinicalTrial: true });
     expect(ids(r.missingRequired)).toContain('clinicaltrials_gov');
     const withIt = reviewInformedConsent(
       'A description of this clinical trial will be available on http://www.ClinicalTrials.gov, as required by U.S. Law.',

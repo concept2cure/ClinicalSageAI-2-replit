@@ -174,6 +174,7 @@ import {
   prefetchRouteIntelligenceContext,
   resolveProjectIdFromBody,
 } from '../../services/ana-ri/chat-context-builder.js';
+import { withStatedDocumentType } from '../../services/ana-ri/open-document.js';
 import { invokedAppHints, invokedAppPins } from '../../services/ana-ri/invoked-apps-block.js';
 import {
   sendError,
@@ -1284,7 +1285,7 @@ export function mountStreamRoute(router: Router): void {
         projectId: streamProjectId,
         projectIdNumber: streamProjectIdNumber,
         organizationId: orgId,
-        authoringContext: streamAuthoringContext,
+        authoringContext: withStatedDocumentType(streamAuthoringContext, document_context),
         userId: typeof userId === 'number' ? userId : Number(userId) || null,
         targetAgency:
           typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,

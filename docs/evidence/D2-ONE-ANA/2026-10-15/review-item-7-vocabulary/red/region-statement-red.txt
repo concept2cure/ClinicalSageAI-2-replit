@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: the chosen region is stated in full > states the chosen region's summary and line under the select, and follows the choice 450ms
+   → expected 'Each region states platform support f…' to contain 'EU (EMA): Flat Module 1, no transmit …'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: the chosen region is stated in full > states the chosen region's summary and line under the select, and follows the choice
+AssertionError: expected 'Each region states platform support f…' to contain 'EU (EMA): Flat Module 1, no transmit …'
+
+Expected: "EU (EMA): Flat Module 1, no transmit channel. Built as a flat Module 1; the EMA gateway adapter refuses."
+Received: "Each region states platform support for that market and application type."
+
+ ❯ client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx:50:20
+     48|     fireEvent.change(region, { target: { value: 'eu' } });
+     49|     const desc = () => document.getElementById(region.getAttribute('ar…
+     50|     expect(desc()).toContain('EU (EMA): Flat Module 1, no transmit cha…
+       |                    ^
+     51|     fireEvent.change(region, { target: { value: 'fda' } });
+     52|     expect(desc()).toContain('FDA (US): Not offered: an MAA is not an …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  04:22:00
+   Duration  1.79s (transform 277ms, setup 160ms, import 389ms, tests 455ms, environment 578ms)
+

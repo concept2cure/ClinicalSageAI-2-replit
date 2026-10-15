@@ -19,7 +19,7 @@
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
 import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
-import { checkSectionFigures, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
+import { checkSectionFigures, figureSpansInContent, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
 import { checkSectionClaims, type ClaimsExcerpt, type SectionClaimsCheck } from './section-claims-check';
 import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
@@ -383,7 +383,13 @@ function draftedSectionSeeds(input: CreateDocumentFromDraftInput, contents: stri
     code: section.code, title: section.title, content: contents[i], orderIndex: i,
     changeReason: options?.verifiedImport?.reason ?? CHANGE_REASON[provenance.source],
     metadata: { provenance, drafted: true, ...(workflowImport ? { workflowSourceOrigin: workflowImport.sectionOrigins.find(origin => origin.code === section.code) ?? null } : {}) },
-    contributors, lineage: { machineDraft: machine ? { authorId } : null },
+    contributors,
+    lineage: {
+      machineDraft: machine ? { authorId } : null,
+      // Read when the section is written, after the sources were verified (S5c).
+      figureSpans: () => figureSpansInContent(contents[i],
+        provenance.projectSourceReferences?.find(r => r.sectionCode === section.code)?.figures),
+    },
   }));
 }
 

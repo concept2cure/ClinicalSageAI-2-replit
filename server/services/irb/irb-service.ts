@@ -23,6 +23,25 @@ interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
+/**
+ * The board's determination date, as recorded by the board — required.
+ *
+ * A missing date was stamped as the day the record was entered, and the
+ * approval date and the continuing-review expiration were derived from it: an
+ * approval entered a week late expired a week late (2026-10-15).
+ */
+function requireDeterminationDate(
+  value: string | null | undefined,
+  Err: new (code: 'BAD_INPUT', message: string) => Error,
+): string {
+  const v = typeof value === 'string' ? value.trim() : '';
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00Z`) : null;
+  if (!d || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) {
+    throw new Err('BAD_INPUT', 'determinationDate is required, as the date the board made the determination (YYYY-MM-DD).');
+  }
+  return v;
+}
+
 export class IrbError extends Error {
   constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT', message: string) {
     super(message);
@@ -176,7 +195,7 @@ export async function recordReviewTx(
   input: { reviewType: IrbReviewType; outcome: 'approved' | 'modifications_required' | 'deferred' | 'disapproved'; conditions?: string | null; determinationDate?: string | null },
 ): Promise<{ reviewId: number; expirationDate: string | null; provenanceLinkId: number | null }> {
   const submission = await getSubmission(client, orgId, submissionId);
-  const determinationDate = input.determinationDate ?? new Date().toISOString().slice(0, 10);
+  const determinationDate = requireDeterminationDate(input.determinationDate, IrbError);
   const { rows } = await client.query(
     `INSERT INTO irb_reviews (organization_id, irb_submission_id, review_type, outcome, conditions, determination_date, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
@@ -223,11 +242,16 @@ export async function addSiteTx(client: Queryable, orgId: number, userId: number
 }
 
 export async function addConsentDocumentTx(client: Queryable, orgId: number, userId: number, submissionId: number, input: { documentName: string; version?: string }): Promise<{ id: number }> {
+  // The version is the consent form's own; a missing one was recorded as
+  // '1.0' (2026-10-15).
+  if (!input.version || !input.version.trim()) {
+    throw new IrbError('BAD_INPUT', 'version is required: the version the consent document carries.');
+  }
   await getSubmission(client, orgId, submissionId);
   const { rows } = await client.query(
     `INSERT INTO irb_consent_documents (organization_id, irb_submission_id, document_name, version, status, created_by)
      VALUES ($1,$2,$3,$4,'draft',$5) RETURNING id`,
-    [orgId, submissionId, input.documentName, input.version ?? '1.0', userId],
+    [orgId, submissionId, input.documentName, input.version.trim(), userId],
   );
   return { id: Number(rows[0].id) };
 }

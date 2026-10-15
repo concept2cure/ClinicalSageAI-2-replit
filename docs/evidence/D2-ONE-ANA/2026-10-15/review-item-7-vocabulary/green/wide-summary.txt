@@ -1,0 +1,5 @@
+      Tests  2 failed | 7907 passed | 1 skipped (7910)
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+
+[exited with code 0]

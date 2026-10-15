@@ -91,7 +91,7 @@ describe('a read that fails', () => {
     // empty project with no critical issues.
     // The task stores are the work view's four (unified-work-view.ts).
     h.failing = new Set([
-      'projects', 'concept2cure_artifacts', 'regulatory_audit_logs',
+      'projects', 'concept2cure_artifacts', 'regulatory_audit_logs', 'coauthor_validation_history',
       'project_tasks', 'c2c_project_work_items', 'estar_submissions', 'unified_tasks',
     ]);
     h.executeFails = true;

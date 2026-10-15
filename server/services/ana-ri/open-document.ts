@@ -196,6 +196,23 @@ export function renderOpenDocumentBlock(result: OpenDocumentResult): string {
   return `${body}\nAnswer for this document type. Where the section in front of you has its own requirements, those are given separately.`;
 }
 
+/**
+ * The authoring context the open-document read sees: the turn's pack, plus a
+ * type the surface stated in `document_context` (useAnaChat, from
+ * surfaceContext.documentType) when the pack names none. Still only a stated
+ * type — resolveOpenDocument accepts it only as a registry id.
+ */
+export function withStatedDocumentType(
+  authoringContext: Record<string, unknown> | undefined,
+  documentContext: unknown,
+): Record<string, unknown> | undefined {
+  const stated = documentContext && typeof documentContext === 'object'
+    ? (documentContext as Record<string, unknown>).documentType
+    : undefined;
+  if (typeof stated !== 'string' || authoringContext?.documentType) return authoringContext;
+  return { ...(authoringContext ?? {}), documentType: stated };
+}
+
 /** What the route prefetch returns about the open document. */
 export interface OpenDocumentTurnFields {
   /** The open document's type and outline ('' when no type is known or stated). */

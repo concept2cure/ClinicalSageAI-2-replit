@@ -310,6 +310,40 @@ function reviewClock(f: DeviceFilingRow): string {
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
+/** What the create says. A market added to the project says what was recorded, and why (Part 11
+ *  review, 2026-10-15): the reason is in the project's audit record. A refusal of the add by role
+ *  says who may add one. */
+function newSubmissionNotice(ok: boolean, inProject: boolean, v: Record<string, string>, r: { status?: number; error?: string | null }): Notice {
+  const what = `${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}`;
+  if (ok && inProject) {
+    return { tone: 'ok', text: `Market added to the project — ${what}. Recorded on the project with your reason: "${(v.reason ?? '').trim()}".` };
+  }
+  if (ok) return { tone: 'ok', text: `Submission created — ${what}.` };
+  if (inProject && r.status === 403) {
+    return { tone: 'err', text: "Market not added — only this project's lead or an organization manager can add a market to it." };
+  }
+  return { tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` };
+}
+
+/** The create request: with a project open, a market of that project (F22) through
+ *  the project's route, for the stated reason; else the organisation's create. */
+function postNewSubmission(
+  openProgramId: string | null,
+  programme: { id: string; title?: string | null; code?: string | null },
+  v: Record<string, string>,
+) {
+  const title = (v.title ?? '').trim();
+  if (openProgramId) {
+    return mutateVerbatim<{ submissionId?: number }>('POST', `/api/c2c/projects/${openProgramId}/markets`, {
+      title, applicationType: v.applicationType, agency: v.primaryRegion, clientType: v.clientType, reason: (v.reason ?? '').trim(),
+    });
+  }
+  return mutateVerbatim<SubRow>('POST', '/api/submissions', {
+    title, programId: programme.id, productName: programme.title || programme.code || undefined,
+    applicationType: v.applicationType, clientType: v.clientType, primaryRegion: v.primaryRegion,
+  });
+}
+
 /** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
 const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
 
@@ -657,6 +691,9 @@ export function SubmissionCenter({
      filing's "Open in Submission Center"). Read once on mount; opened against
      the rows the server returned, after the reset above, never guessed. */
   const [navParams] = React.useState(() => consumeNavParams('submission-center'));
+  /* F15: Respond opens the Sequences tab with followUp 'response', and the next
+     sequence's type starts there. Only a follow-up type the server takes. */
+  const navFollowUp = (FOLLOW_UP_SEQ_TYPES as readonly string[]).includes(navParams?.followUp ?? '') ? navParams?.followUp ?? null : null;
   const [navTarget] = React.useState(() =>
     navParams ? readSubmissionNavTarget({ submissionId: navParams.submissionId, sequenceId: navParams.sequenceId, ws: navParams.ws }) : null);
   const navMiss = useOpenOnNavTarget(navTarget, {
@@ -710,27 +747,20 @@ export function SubmissionCenter({
        one and then drop the id, so a submission created here had no project
        and reached one only by a product-name match. The server refuses a
        programme of another organization (404). */
-    const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
-      title: (v.title ?? '').trim(),
-      programId: programme.id,
-      productName: programme.title || programme.code || undefined,
-      applicationType: v.applicationType,
-      clientType: v.clientType,
-      primaryRegion: v.primaryRegion,
-    });
+    /* With a project open the submission is a market of that project (F22):
+       the project's own route writes its regional modules, the market and the
+       submission together, for the stated reason. */
+    const r = await postNewSubmission(openProgramId, programme, v);
     setCreating(false);
-    if (r.data && (r.data as { id?: unknown }).id != null) {
+    const created = r.data as { id?: unknown; submissionId?: unknown } | null | undefined;
+    const ok = !!created && (created.id ?? created.submissionId) != null;
+    if (ok) {
       setNewOpen(false);
       // Re-read rather than appending a client-built row: what appears is the
       // record the server created.
       setSubsBump((b) => b + 1);
-      setNotice({
-        tone: 'ok',
-        text: `Submission created — ${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}.`,
-      });
-    } else {
-      setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
     }
+    setNotice(newSubmissionNotice(ok, !!openProgramId, v, r));
   };
 
   /**
@@ -767,7 +797,7 @@ export function SubmissionCenter({
   /* A follow-up sequence (WO-9 Click 6). Its number follows the highest in the
      submission's own region — numbering restarts per region — and its type is
      the author's to state; the server's enum, less 'original', which is 0000. */
-  const [nextSeqType, setNextSeqType] = React.useState<string>('amendment');
+  const [nextSeqType, setNextSeqType] = React.useState<string>(navFollowUp ?? 'amendment');
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two

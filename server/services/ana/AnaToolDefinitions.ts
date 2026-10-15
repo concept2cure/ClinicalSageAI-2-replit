@@ -1399,7 +1399,7 @@ export const CHECK_SUBMISSION_STATUS: AnaTool = {
 export const GET_SUBMISSION_ACK: AnaTool = {
   name: 'get_submission_ack',
   description:
-    "Download the latest acknowledgment for a transmittal as a text summary. Includes the gateway's transmission id, current status, ack timestamp, and (when present) the raw acknowledgment payload. Use when the user wants to inspect the receipt or attach it to the audit trail.",
+    "Download the latest acknowledgment for a transmittal. `provenance` says what it is: 'agency' is the agency's own response stored verbatim (an FDA AS2 MDN); 'platform-record' is this platform's summary of its transmittal row and is not evidence the agency received anything — say so, and never call it a receipt. `receivedAt` is null when no acknowledgement time was recorded. Includes the gateway's transmission id and status.",
   input_schema: {
     type: 'object',
     properties: { transmittal_id: { type: 'number' } },

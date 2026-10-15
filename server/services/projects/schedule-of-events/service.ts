@@ -893,12 +893,22 @@ export async function reviewScheduleHealth(params: {
 }
 
 function buildAnaNarrative(health: ScheduleHealth): string {
+  /* "Your program is on track." was said of a schedule with no milestones, or
+     none with a target date (2026-10-15). It is said of what was assessed. */
   const verdict =
-    health.overallStatus === 'on_track'
-      ? 'Your program is on track.'
-      : health.overallStatus === 'at_risk'
-        ? 'Your program needs attention.'
-        : 'Your program is off track — critical milestones have slipped.';
+    health.overallStatus === 'not_assessed'
+      ? health.total === 0
+        ? 'The schedule has no milestones, so it cannot be assessed.'
+        : 'No open milestone has a target date, so the schedule cannot be assessed.'
+      : health.overallStatus === 'on_track'
+        ? health.undated > 0
+          ? 'The milestones with target dates are on track.'
+          : 'Your program is on track.'
+        : health.overallStatus === 'at_risk'
+          ? 'Your program needs attention.'
+          : health.milestones.some((m) => m.nextStatus === 'slipped' && m.isCritical)
+            ? 'Your program is off track — critical milestones have slipped.'
+            : 'Your program is off track — milestones have slipped.';
   return `${verdict} ${health.summary} Last reviewed ${new Date(health.assessedAt).toISOString().slice(0, 16).replace('T', ' ')}Z by AnA.`;
 }
 

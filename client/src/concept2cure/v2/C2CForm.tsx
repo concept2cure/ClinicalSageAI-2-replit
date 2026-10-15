@@ -15,6 +15,8 @@ import { useDialog } from './useDialog';
 export interface C2CFormFieldOption {
   value: string;
   label: string;
+  /** Listed, so the person sees it exists, and not choosable (e.g. a market not offered). */
+  disabled?: boolean;
 }
 
 export interface C2CFormField {
@@ -211,7 +213,7 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormPr
             const val = typeof o === 'object' ? o.value : o;
             const lab = typeof o === 'object' ? o.label : o;
             return (
-              <option key={val} value={val}>
+              <option key={val} value={val} disabled={typeof o === 'object' && o.disabled === true}>
                 {lab}
               </option>
             );

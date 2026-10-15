@@ -5,7 +5,7 @@
  * number or a date does not count.
  */
 import { describe, expect, it } from 'vitest';
-import { checkSectionFigures, FINDINGS_KEPT } from '../draft-figure-check';
+import { checkSectionFigures, figureSpansInContent, FINDINGS_KEPT } from '../draft-figure-check';
 
 const CSR = [
   'CLINICAL STUDY REPORT BX-301-02 (data cut-off 2024-12-31).',
@@ -55,5 +55,36 @@ describe('checkSectionFigures', () => {
     expect(out.checked).toBe(FINDINGS_KEPT + 5);
     expect(out.figures).toHaveLength(FINDINGS_KEPT);
     expect(out.truncated).toBe(true);
+  });
+});
+
+describe('figureSpansInContent (S5c)', () => {
+  const doc = SOURCE.documentId;
+  const found = (text: string, offset: number | null = 3) =>
+    ({ text, kind: 'percent' as const, status: 'found' as const, source: { documentId: doc, contentHash: SOURCE.contentHash, offset } });
+  const check = (figures: Array<ReturnType<typeof found> | { text: string; kind: 'percent'; status: 'unverified' }>) =>
+    ({ checked: figures.length, found: figures.length, unverified: 0, truncated: false, figures });
+
+  it('places a found figure at its characters in the stored content, with the source locator', () => {
+    const content = '<p>The response rate was <strong>47%</strong> overall.</p>';
+    const [span] = figureSpansInContent(content, check([found('47%', 812)]));
+    expect(content.slice(span.charStart, span.charEnd)).toBe('47%');
+    expect(span).toMatchObject({ vaultDocumentId: doc, contentHash: SOURCE.contentHash, sourceLocator: 'offset:812' });
+  });
+
+  it('never places a figure inside a tag or an attribute', () => {
+    const content = '<table style="width: 47%"><tr><td>Rate 47%</td></tr></table>';
+    const [span] = figureSpansInContent(content, check([found('47%')]));
+    expect(span.charStart).toBe(content.lastIndexOf('47%'));
+  });
+
+  it('takes repeated figures in document order, and leaves out what it cannot place or was not found', () => {
+    const content = '<p>47% then 47%.</p>';
+    const spans = figureSpansInContent(content, check([found('47%'), found('47%'), found('99%'), { text: '12%', kind: 'percent', status: 'unverified' }]));
+    expect(spans.map((s) => s.charStart)).toEqual([content.indexOf('47%'), content.lastIndexOf('47%')]);
+  });
+
+  it('a found figure with no confirmed offset names the document and no position', () => {
+    expect(figureSpansInContent('<p>47%</p>', check([found('47%', null)]))[0].sourceLocator).toBeNull();
   });
 });

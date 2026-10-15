@@ -103,7 +103,7 @@ export interface MarketSupport {
   /** True when the gate checks this region's Module 1 against a region profile. */
   regionProfile: boolean;
   channel: { state: ChannelState; detail: string };
-  /** The short statement: "Structured Module 1", "Flat Module 1, no channel", "No outline, no channel",
+  /** The short statement: "Structured Module 1", "Flat Module 1, no transmit channel", "No outline, no transmit channel",
    *  "Outline only, no package" (a device filing), "Not supported", "Not offered". */
   summary: string;
   /** The sentence a market row says (FILING_SPINE.md §3, "Market row says"). */
@@ -482,11 +482,13 @@ function pmdaV4RequiredFrom(code: CanonicalRegion, asOf: string): string | null 
 function lineFor(outline: MarketSupport['outline'], ch: JudgedChannel, pmdaFrom: string | null): string {
   if (pmdaFrom) return `New applications blocked: eCTD v4.0 required from ${pmdaFrom}`;
   if (outline.state === 'outline') return channelLine(ch);
-  return `No outline; ${NO_CHANNEL_STATES.has(ch.state) ? 'no channel' : channelLine(ch)}`;
+  return `No outline; ${NO_CHANNEL_STATES.has(ch.state) ? 'no transmit channel' : channelLine(ch)}`;
 }
 
 function summaryFor(outline: MarketSupport['outline'], shape: Module1Shape, ch: JudgedChannel): string {
-  const noChannel = NO_CHANNEL_STATES.has(ch.state) ? ', no channel' : '';
+  // "no transmit channel", not "no channel": the review's microcopy lens read
+  // the bare word as ambiguous (filing-spine design review, item 7, 2026-10-15).
+  const noChannel = NO_CHANNEL_STATES.has(ch.state) ? ', no transmit channel' : '';
   return outline.state === 'outline' ? `${MODULE1_LABEL[shape]}${noChannel}` : `No outline${noChannel}`;
 }
 
