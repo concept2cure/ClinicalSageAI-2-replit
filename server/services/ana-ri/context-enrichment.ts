@@ -14,7 +14,7 @@
  */
 
 import { pool } from '../../db.js';
-import { computeReadinessScore, type ReadinessContext } from '../intelligence/readiness-scoring-engine.js';
+import { computeReadinessScore, describeReadiness, type ReadinessContext } from '../intelligence/readiness-scoring-engine.js';
 import { type RecommendationContext } from '../intelligence/recommendation-engine.js';
 import { generateNextActions } from '../intelligence/next-best-action-engine.js';
 import { getProjectSignals } from '../intelligence/rim.js';
@@ -482,8 +482,9 @@ async function enrichWithReadiness(projectId: ProjectRowId, orgId?: number): Pro
       const gapLines = score.gaps.slice(0, 8).map(g =>
         `- **[${g.severity.toUpperCase()}]** ${g.module}: ${g.description} _(${g.remediation})_`
       ).join('\n');
+      // A dimension no assessment measured is null: "not measured", not "—/100" (2026-10-15).
       const dimLines = Object.entries(score.dimensions || {}).map(([k, v]: [string, unknown]) =>
-        `| ${k} | ${typeof v === 'number' ? v : (v && typeof v === 'object' && 'score' in v ? (v as Record<string, unknown>).score : '—')}/100 |`
+        `| ${k} | ${typeof v === 'number' ? `${v}/100` : v && typeof v === 'object' && 'score' in v ? `${String((v as Record<string, unknown>).score)}/100` : 'not measured'} |`
       ).join('\n');
 
       /* This block used to render, unconditionally:
@@ -515,7 +516,7 @@ async function enrichWithReadiness(projectId: ProjectRowId, orgId?: number): Pro
           : `**No readiness assessment is on record for this program.** Do not state an ` +
             `approval probability, a review-time estimate or a deficiency count — none has been computed.`;
 
-      return `\n\n## Live Readiness Assessment\n**Overall Score: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}\n\n${outlook}\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.`;
+      return `\n\n## Live Readiness Assessment\n**${describeReadiness(score)}** | Trend: ${score.trend?.direction || 'not determined'}\n\n${outlook}\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.`;
     } catch (e: unknown) {
       logger.warn('Live readiness failed, falling back to memory', { error: e instanceof Error ? e.message : 'unknown error' });
     }
@@ -560,10 +561,11 @@ async function enrichWithRecommendations(projectId: ProjectRowId, orgId?: number
       };
       const actionSet = await generateNextActions(ctx, 8);
       const actionLines = actionSet.actions.slice(0, 8).map((a, i) =>
-        `${i + 1}. **${a.title}** [${a.urgency}/${a.impactEstimate}] — ${a.description}${a.effortEstimate ? ` (${a.effortEstimate})` : ''}`
+        // 2026-10-15: printed `[urgency/impact]`; impact is not estimated by any engine (null).
+        `${i + 1}. **${a.title}** [${a.urgency}] — ${a.description}${a.effortEstimate ? ` (${a.effortEstimate})` : ''}`
       ).join('\n');
 
-      return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency and impact.\n\n${actionLines || 'No actions generated.'}${feedbackNote}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
+      return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency.\n\n${actionLines || 'No actions generated.'}${feedbackNote}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
     } catch (e: unknown) {
       console.warn('[enrichment] Live recommendations failed, falling back to memory:', e instanceof Error ? e.message : 'unknown error');
     }
@@ -668,7 +670,7 @@ async function enrichWithSignals(projectId: ProjectRowId, orgId?: number): Promi
           .filter(([, count]) => Number(count) > 0)
           .map(([risk, count]) => `- **${risk}**: ${count}`)
           .join('\n');
-        return `\n\n## RIM Intelligence Signals (Live)\n**${summary.totalSignals} signals** accumulated for this project.\n\nTrend: **${summary.overallTrend}** (${summary.trendConfidence}, n=${summary.trendSampleSize})\nAverage score: **${summary.averageScore}**\nTop patterns: ${summary.topPatternIds.slice(0, 6).join(', ') || 'none'}\n\n### By risk\n${byRisk || '- none'}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
+        return `\n\n## RIM Intelligence Signals (Live)\n**${summary.totalSignals} signals** accumulated for this project.\n\nTrend: **${summary.overallTrend ?? 'not determined'}** (${summary.trendConfidence}, n=${summary.trendSampleSize})\nMean signal score: **${summary.averageScore ?? 'none recorded'}** (not a readiness figure)\nTop patterns: ${summary.topPatternIds.slice(0, 6).join(', ') || 'none'}\n\n### By risk\n${byRisk || '- none'}\n\nSummarize patterns and recurring risks. Report a trend only where one is determined above; never derive readiness from the mean signal score.`;
       }
     } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
       // Fall through to memory
