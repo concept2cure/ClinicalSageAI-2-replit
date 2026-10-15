@@ -5,8 +5,10 @@
  * A pure, closed-form regulatory-science knowledge engine for the
  * immunogenicity assessment of therapeutic protein products. Every function
  * is deterministic: identical input always yields identical output. There is
- * NO LLM, NO network, NO database, and NO import from any other service. All
- * content is hardcoded, citation-backed reference data and decision logic.
+ * NO LLM, NO network and NO database. The one import is ComputationRefusal,
+ * thrown when a required input is missing or a stated one cannot be used, so
+ * that AnA relays it as needs_parameters. All content is hardcoded,
+ * citation-backed reference data and decision logic.
  *
  * Grounding references (cited inline throughout):
  *  - FDA (Jan 2019) "Immunogenicity Testing of Therapeutic Protein Products —
@@ -33,6 +35,8 @@
  *
  * @module server/services/immunogenicity/immunogenicity-knowledge
  */
+
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
 
 /* ════════════════════════════════════════════════════════════════════════
  * SECTION 0 — SHARED TYPES, ENUMS, AND REFERENCE TABLES
@@ -71,6 +75,15 @@ export const RISK_SCORE_BANDS: ScoreBand[] = [
   { tier: 'high', minScore: 67, maxScore: 101, label: 'High immunogenicity concern' },
 ];
 
+/** What the risk score is. Carried in every assessImmunogenicityRisk result. */
+const RISK_METHODOLOGY =
+  'Platform heuristic, not an FDA/EMA scale. FDA 2014 and EMA 2017 name the factors, and each factorCitation ' +
+  'cites the guidance for the factor only. The weights, the 0–100 score and the tier bands (low < ' +
+  `${RISK_SCORE_BANDS[1].minScore} ≤ moderate < ${RISK_SCORE_BANDS[2].minScore} ≤ high) are this platform's own ` +
+  'and come from no guidance. No score or tier is given until every factor is stated.';
+
+const RISK_TIERS: RiskTier[] = RISK_SCORE_BANDS.map((b: ScoreBand) => b.tier);
+
 /** Resolve a normalized 0–100 score to a risk tier deterministically. */
 function scoreToTier(score: number): RiskTier {
   const clamped = score < 0 ? 0 : score > 100 ? 100 : score;
@@ -98,6 +111,42 @@ function maxSeverity(a: SeverityLevel, b: SeverityLevel): SeverityLevel {
 function round(value: number, decimals: number): number {
   const factor = Math.pow(10, decimals);
   return Math.round((value + Number.EPSILON) * factor) / factor;
+}
+
+function shown(value: unknown): string {
+  return typeof value === 'number' ? String(value) : JSON.stringify(value);
+}
+
+/**
+ * A stated enum input, or undefined when it was not stated (null counts as not
+ * stated). A value outside the vocabulary is refused, never scored as a guess.
+ */
+function statedOneOf<T extends string>(field: string, value: unknown, allowed: readonly T[]): T | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'string' && (allowed as readonly string[]).includes(value)) return value as T;
+  throw new ComputationRefusal(
+    'invalid_input',
+    `${field} must be one of ${allowed.join(', ')} (got ${shown(value)}). Leave it out if it is not known.`,
+    field,
+  );
+}
+
+/** A stated boolean input, or undefined when it was not stated. Absent is not false. */
+function statedBoolean(field: string, value: unknown): boolean | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'boolean') return value;
+  throw new ComputationRefusal(
+    'invalid_input',
+    `${field} must be true or false (got ${shown(value)}). Leave it out if it is not known.`,
+    field,
+  );
+}
+
+/** A stated finite number that satisfies `ok`, or undefined when it was not stated. */
+function statedNumber(field: string, value: unknown, ok: (n: number) => boolean, rule: string): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number' && Number.isFinite(value) && ok(value)) return value;
+  throw new ComputationRefusal('invalid_input', `${field} must be ${rule} (got ${shown(value)}).`, field);
 }
 
 /** Canonical citations reused across the engine. */
@@ -241,6 +290,11 @@ export type DoseFrequency = 'single' | 'intermittent' | 'chronic_weekly' | 'chro
 /** Patient immune status. */
 export type ImmuneStatus = 'immunocompetent' | 'immunosuppressed' | 'autoimmune' | 'mixed';
 
+const FOREIGNNESS_VALUES: Foreignness[] = ['fully_human', 'humanized', 'chimeric', 'non_human'];
+const AGGREGATION_LEVELS: AggregationLevel[] = ['low', 'moderate', 'high'];
+const GLYCOSYLATION_STATUSES: GlycosylationStatus[] = ['human_like', 'non_human_glycans', 'aglycosylated', 'not_applicable'];
+const IMMUNE_STATUSES: ImmuneStatus[] = ['immunocompetent', 'immunosuppressed', 'autoimmune', 'mixed'];
+
 export interface ImmunogenicityRiskParams {
   /** Therapeutic-protein product class. */
   productType: ProductType;
@@ -278,9 +332,20 @@ export interface RiskFactorContribution {
   factor: string;
   category: 'product' | 'patient_treatment';
   observation: string;
+  /** This platform's heuristic weight for the observation. No guidance sets it. */
   scoreContribution: number;
+  weightBasis: 'platform_heuristic';
   rationale: string;
-  citation: Citation;
+  /** The guidance that names this as an immunogenicity factor. It does not set or endorse the weight. */
+  factorCitation: Citation;
+}
+
+/** A risk factor whose input was not stated. It is neither scored nor assumed. */
+export interface NotAssessedFactor {
+  factor: string;
+  /** The input that would settle it. */
+  input: keyof ImmunogenicityRiskParams;
+  category: RiskFactorContribution['category'];
 }
 
 export interface Mitigation {
@@ -299,12 +364,18 @@ export interface RequiredStudy {
 export interface ImmunogenicityRiskResult {
   drugName: string;
   productType: ProductType;
-  overallTier: RiskTier;
-  riskScore: number;
+  /** 'undetermined' while any factor in notAssessed is unstated. */
+  overallTier: RiskTier | 'undetermined';
+  /** 0–100 platform-heuristic score (see methodology); null while any factor is not assessed. */
+  riskScore: number | null;
   bandLabel: string;
+  /** What the score and the tier are: a platform heuristic, not an FDA/EMA scale. */
+  methodology: string;
   factorContributions: RiskFactorContribution[];
-  productRiskTier: RiskTier;
-  patientTreatmentRiskTier: RiskTier;
+  notAssessed: NotAssessedFactor[];
+  /** Sum of the heuristic weights in each category; null while a factor in it is not assessed. */
+  productFactorScore: number | null;
+  patientTreatmentFactorScore: number | null;
   mitigations: Mitigation[];
   requiredStudies: RequiredStudy[];
   keyConcerns: string[];
@@ -383,16 +454,10 @@ const PRODUCT_FOREIGNNESS: ForeignnessDescriptor[] = [
   },
 ];
 
-function foreignnessDescriptor(productType: ProductType): ForeignnessDescriptor {
-  for (const d of PRODUCT_FOREIGNNESS) {
-    if (d.productType === productType) return d;
-  }
-  return {
-    productType,
-    foreignness: 'humanized',
-    baseScore: 12,
-    note: 'Unrecognized product type; default moderate sequence-foreignness assumption applied.',
-  };
+function foreignnessDescriptor(productType: unknown): ForeignnessDescriptor | undefined {
+  // 2026-10-15: an unrecognized product type used to get a "default moderate
+  // sequence-foreignness assumption" (12). The caller now refuses it.
+  return PRODUCT_FOREIGNNESS.find((d: ForeignnessDescriptor) => d.productType === productType);
 }
 
 interface RouteDescriptor {
@@ -417,12 +482,10 @@ const ROUTE_RISK: RouteDescriptor[] = [
   { route: 'oral', score: 2, note: 'Oral route — oral tolerance mechanisms and degradation reduce systemic ADA.' },
 ];
 
-function routeDescriptor(route: Route | undefined): RouteDescriptor {
-  if (!route) return { route: 'intravenous', score: 4, note: 'Route unspecified — IV assumed.' };
-  for (const d of ROUTE_RISK) {
-    if (d.route === route) return d;
-  }
-  return { route, score: 6, note: 'Unrecognized route — moderate assumption applied.' };
+function routeDescriptor(route: Route | undefined): RouteDescriptor | undefined {
+  // 2026-10-15: an unstated route used to be scored as IV ("IV assumed") and an
+  // unrecognized one as a "moderate assumption" (6). Neither was stated.
+  return ROUTE_RISK.find((d: RouteDescriptor) => d.route === route);
 }
 
 interface FrequencyDescriptor {
@@ -444,12 +507,10 @@ const FREQUENCY_RISK: FrequencyDescriptor[] = [
   { frequency: 'continuous', score: 7, note: 'Continuous infusion — sustained exposure but high/persistent levels can be tolerogenic (high-zone tolerance).' },
 ];
 
-function frequencyDescriptor(freq: DoseFrequency | undefined): FrequencyDescriptor {
-  if (!freq) return { frequency: 'intermittent', score: 6, note: 'Frequency unspecified — intermittent assumed.' };
-  for (const d of FREQUENCY_RISK) {
-    if (d.frequency === freq) return d;
-  }
-  return { frequency: freq, score: 6, note: 'Unrecognized frequency — moderate assumption applied.' };
+function frequencyDescriptor(freq: DoseFrequency | undefined): FrequencyDescriptor | undefined {
+  // 2026-10-15: an unstated frequency used to be scored as intermittent and an
+  // unrecognized one as a "moderate assumption" (6). Neither was stated.
+  return FREQUENCY_RISK.find((d: FrequencyDescriptor) => d.frequency === freq);
 }
 
 /**
@@ -464,23 +525,58 @@ function frequencyDescriptor(freq: DoseFrequency | undefined): FrequencyDescript
 export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): ImmunogenicityRiskResult {
   const drugName = params.drugName ?? '(unnamed product)';
   const contributions: RiskFactorContribution[] = [];
+  const notAssessed: NotAssessedFactor[] = [];
   const mitigations: Mitigation[] = [];
   const requiredStudies: RequiredStudy[] = [];
   const keyConcerns: string[] = [];
 
-  // ── Product factor: sequence foreignness ────────────────────────────────
+  // 2026-10-15: every unstated factor used to be scored as its most favourable
+  // value (aggregation low, human-like glycans, IV, intermittent,
+  // immunocompetent; absent booleans as 0), so productType alone came back
+  // tier LOW, score 18, with the NAb assay dropped. An unstated factor is now
+  // listed in notAssessed and leaves the tier undetermined. A stated value the
+  // engine cannot score is refused.
+  const productTypes = PRODUCT_FOREIGNNESS.map((d: ForeignnessDescriptor) => d.productType).join(', ');
+  if (params.productType === undefined || params.productType === null) {
+    throw new ComputationRefusal('missing_input', `productType is required (one of ${productTypes}).`, 'productType');
+  }
   const fd = foreignnessDescriptor(params.productType);
-  const foreignness = params.foreignness ?? fd.foreignness;
+  if (!fd) {
+    throw new ComputationRefusal(
+      'invalid_input',
+      `productType must be one of ${productTypes} (got ${shown(params.productType)}).`,
+      'productType',
+    );
+  }
+  const statedForeignness = statedOneOf('foreignness', params.foreignness, FOREIGNNESS_VALUES);
+  const hasEndogenous = statedBoolean('hasEndogenousCounterpart', params.hasEndogenousCounterpart);
+  const endogenousNonRedundant = statedBoolean('endogenousNonRedundant', params.endogenousNonRedundant);
+  const agg = statedOneOf('aggregationLevel', params.aggregationLevel, AGGREGATION_LEVELS);
+  const glyco = statedOneOf('glycosylation', params.glycosylation, GLYCOSYLATION_STATUSES);
+  const impurities = statedBoolean('hasImmunogenicImpurities', params.hasImmunogenicImpurities);
+  const formulation = statedBoolean('formulationRisk', params.formulationRisk);
+  const rd = routeDescriptor(
+    statedOneOf('route', params.route, ROUTE_RISK.map((d: RouteDescriptor) => d.route)),
+  );
+  const freqD = frequencyDescriptor(
+    statedOneOf('doseFrequency', params.doseFrequency, FREQUENCY_RISK.map((d: FrequencyDescriptor) => d.frequency)),
+  );
+  const immune = statedOneOf('immuneStatus', params.immuneStatus, IMMUNE_STATUSES);
+  const concomitant = statedBoolean('concomitantImmunosuppression', params.concomitantImmunosuppression);
+
+  // ── Product factor: sequence foreignness ────────────────────────────────
+  const foreignness = statedForeignness ?? fd.foreignness;
   let foreignnessScore = fd.baseScore;
-  if (params.foreignness === 'non_human') foreignnessScore = Math.max(foreignnessScore, 24);
-  if (params.foreignness === 'fully_human') foreignnessScore = Math.min(foreignnessScore, 8);
+  if (statedForeignness === 'non_human') foreignnessScore = Math.max(foreignnessScore, 24);
+  if (statedForeignness === 'fully_human') foreignnessScore = Math.min(foreignnessScore, 8);
   contributions.push({
     factor: 'Sequence foreignness',
     category: 'product',
-    observation: `${params.productType} (${foreignness})`,
+    observation: `${fd.productType} (${foreignness})`,
     scoreContribution: foreignnessScore,
+    weightBasis: 'platform_heuristic',
     rationale: fd.note,
-    citation: CITATIONS.FDA_2014_FACTORS,
+    factorCitation: CITATIONS.FDA_2014_FACTORS,
   });
   if (foreignness === 'non_human' || foreignness === 'chimeric') {
     mitigations.push({
@@ -491,21 +587,39 @@ export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): Immu
   }
 
   // ── Product factor: endogenous counterpart / cross-reactivity ───────────
-  if (params.hasEndogenousCounterpart) {
-    const nonRedundant = params.endogenousNonRedundant === true;
-    const score = nonRedundant ? 18 : 10;
+  if (hasEndogenous === undefined) {
+    notAssessed.push({ factor: 'Endogenous counterpart', input: 'hasEndogenousCounterpart', category: 'product' });
+  } else if (!hasEndogenous) {
     contributions.push({
       factor: 'Endogenous counterpart',
       category: 'product',
-      observation: nonRedundant
-        ? 'Product has a non-redundant endogenous human counterpart'
-        : 'Product has an endogenous human counterpart',
-      scoreContribution: score,
-      rationale: nonRedundant
-        ? 'ADA cross-reacting with a non-redundant endogenous protein can neutralize an essential physiological function (e.g., anti-EPO causing pure red cell aplasia) — the most severe immunogenicity consequence.'
-        : 'ADA may cross-react with the endogenous counterpart; assess for neutralization of native function.',
-      citation: CITATIONS.FDA_2014_CONSEQUENCES,
+      observation: 'No endogenous human counterpart (stated)',
+      scoreContribution: 0,
+      weightBasis: 'platform_heuristic',
+      rationale: 'With no endogenous counterpart, there is no native protein for ADA to cross-react with.',
+      factorCitation: CITATIONS.FDA_2014_CONSEQUENCES,
     });
+  } else {
+    const nonRedundant = endogenousNonRedundant === true;
+    // The weight is 18 or 10 by redundancy, so an unstated answer is not
+    // read as redundant.
+    if (endogenousNonRedundant === undefined) {
+      notAssessed.push({ factor: 'Endogenous counterpart', input: 'endogenousNonRedundant', category: 'product' });
+    } else {
+      contributions.push({
+        factor: 'Endogenous counterpart',
+        category: 'product',
+        observation: nonRedundant
+          ? 'Product has a non-redundant endogenous human counterpart'
+          : 'Product has an endogenous human counterpart',
+        scoreContribution: nonRedundant ? 18 : 10,
+        weightBasis: 'platform_heuristic',
+        rationale: nonRedundant
+          ? 'ADA cross-reacting with a non-redundant endogenous protein can neutralize an essential physiological function (e.g., anti-EPO causing pure red cell aplasia) — the most severe immunogenicity consequence.'
+          : 'ADA may cross-react with the endogenous counterpart; assess for neutralization of native function.',
+        factorCitation: CITATIONS.FDA_2014_CONSEQUENCES,
+      });
+    }
     keyConcerns.push(
       nonRedundant
         ? 'Cross-reactive neutralization of a non-redundant endogenous protein is possible — design assays to detect ADA that bind the endogenous molecule and monitor for deficiency syndromes.'
@@ -519,164 +633,236 @@ export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): Immu
   }
 
   // ── Product factor: aggregation ─────────────────────────────────────────
-  const agg = params.aggregationLevel ?? 'low';
-  const aggScore = agg === 'high' ? 16 : agg === 'moderate' ? 9 : 2;
-  contributions.push({
-    factor: 'Aggregation / particle burden',
-    category: 'product',
-    observation: `Aggregation level: ${agg}`,
-    scoreContribution: aggScore,
-    rationale:
-      'Protein aggregates and subvisible particles present repetitive, multivalent arrays of epitopes that can cross-link B-cell receptors and break tolerance — one of the strongest product-intrinsic immunogenicity risk factors (FDA 2014 Section III).',
-    citation: CITATIONS.FDA_2014_FACTORS,
-  });
-  if (agg !== 'low') {
-    mitigations.push({
-      target: 'Aggregation',
-      action: 'Minimize aggregates via formulation/process optimization; characterize subvisible particles (USP <787>/<788>, MFI, HIAC) and submicron particles; set tight aggregate acceptance criteria and stability controls.',
-      citation: CITATIONS.FDA_2014_FACTORS,
+  if (agg === undefined) {
+    notAssessed.push({ factor: 'Aggregation / particle burden', input: 'aggregationLevel', category: 'product' });
+  } else {
+    const aggScore = agg === 'high' ? 16 : agg === 'moderate' ? 9 : 2;
+    contributions.push({
+      factor: 'Aggregation / particle burden',
+      category: 'product',
+      observation: `Aggregation level: ${agg}`,
+      scoreContribution: aggScore,
+      weightBasis: 'platform_heuristic',
+      rationale:
+        'Protein aggregates and subvisible particles present repetitive, multivalent arrays of epitopes that can cross-link B-cell receptors and break tolerance — one of the strongest product-intrinsic immunogenicity risk factors (FDA 2014 Section III).',
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
     });
-    keyConcerns.push('Aggregate/particle content is a recognized immunogenicity driver and must be controlled and monitored across shelf life.');
+    if (agg !== 'low') {
+      mitigations.push({
+        target: 'Aggregation',
+        action: 'Minimize aggregates via formulation/process optimization; characterize subvisible particles (USP <787>/<788>, MFI, HIAC) and submicron particles; set tight aggregate acceptance criteria and stability controls.',
+        citation: CITATIONS.FDA_2014_FACTORS,
+      });
+      keyConcerns.push('Aggregate/particle content is a recognized immunogenicity driver and must be controlled and monitored across shelf life.');
+    }
   }
 
   // ── Product factor: glycosylation ───────────────────────────────────────
-  const glyco = params.glycosylation ?? 'human_like';
-  let glycoScore = 0;
-  let glycoNote = 'Human-like glycosylation; low glycan-related immunogenicity.';
-  if (glyco === 'non_human_glycans') {
-    glycoScore = 12;
-    glycoNote = 'Non-human glycans (e.g., galactose-α-1,3-galactose, N-glycolylneuraminic acid) can be recognized by pre-existing antibodies and trigger hypersensitivity (e.g., cetuximab α-gal reactions).';
-  } else if (glyco === 'aglycosylated') {
-    glycoScore = 4;
-    glycoNote = 'Aglycosylated protein; altered effector function but limited glycan-related ADA risk.';
-  }
-  contributions.push({
-    factor: 'Glycosylation',
-    category: 'product',
-    observation: `Glycosylation status: ${glyco}`,
-    scoreContribution: glycoScore,
-    rationale: glycoNote,
-    citation: CITATIONS.FDA_2014_FACTORS,
-  });
-  if (glyco === 'non_human_glycans') {
-    mitigations.push({
-      target: 'Non-human glycans',
-      action: 'Use a glyco-engineered or human/humanized cell line, characterize α-gal/NGNA content, and assess pre-existing anti-glycan antibodies in the target population.',
-      citation: CITATIONS.FDA_2014_FACTORS,
+  if (glyco === undefined) {
+    notAssessed.push({ factor: 'Glycosylation', input: 'glycosylation', category: 'product' });
+  } else {
+    let glycoScore = 0;
+    let glycoNote = 'Human-like glycosylation; low glycan-related immunogenicity.';
+    if (glyco === 'non_human_glycans') {
+      glycoScore = 12;
+      glycoNote = 'Non-human glycans (e.g., galactose-α-1,3-galactose, N-glycolylneuraminic acid) can be recognized by pre-existing antibodies and trigger hypersensitivity (e.g., cetuximab α-gal reactions).';
+    } else if (glyco === 'aglycosylated') {
+      glycoScore = 4;
+      glycoNote = 'Aglycosylated protein; altered effector function but limited glycan-related ADA risk.';
+    } else if (glyco === 'not_applicable') {
+      // 2026-10-15: this used to read "Human-like glycosylation" too.
+      glycoNote = 'Glycosylation does not apply to this product.';
+    }
+    contributions.push({
+      factor: 'Glycosylation',
+      category: 'product',
+      observation: `Glycosylation status: ${glyco}`,
+      scoreContribution: glycoScore,
+      weightBasis: 'platform_heuristic',
+      rationale: glycoNote,
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
     });
-    keyConcerns.push('Non-human glycans may elicit hypersensitivity via pre-existing antibodies; characterize and minimize.');
+    if (glyco === 'non_human_glycans') {
+      mitigations.push({
+        target: 'Non-human glycans',
+        action: 'Use a glyco-engineered or human/humanized cell line, characterize α-gal/NGNA content, and assess pre-existing anti-glycan antibodies in the target population.',
+        citation: CITATIONS.FDA_2014_FACTORS,
+      });
+      keyConcerns.push('Non-human glycans may elicit hypersensitivity via pre-existing antibodies; characterize and minimize.');
+    }
   }
 
   // ── Product factor: impurities ──────────────────────────────────────────
-  if (params.hasImmunogenicImpurities) {
+  if (impurities === undefined) {
+    notAssessed.push({ factor: 'Process-related impurities', input: 'hasImmunogenicImpurities', category: 'product' });
+  } else if (impurities) {
     contributions.push({
       factor: 'Process-related impurities',
       category: 'product',
       observation: 'Process-related impurities present (HCP, DNA, leachables)',
       scoreContribution: 9,
+      weightBasis: 'platform_heuristic',
       rationale:
         'Host-cell proteins, residual DNA, and leachables can act as adjuvants (danger signals) that enhance the adaptive response to the therapeutic protein (FDA 2014 Section III).',
-      citation: CITATIONS.FDA_2014_FACTORS,
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
     });
     mitigations.push({
       target: 'Impurities',
       action: 'Tighten downstream purification, monitor HCP/DNA/leachables with orthogonal methods, and qualify the container-closure system for leachables.',
       citation: CITATIONS.FDA_2014_FACTORS,
     });
+  } else {
+    contributions.push({
+      factor: 'Process-related impurities',
+      category: 'product',
+      observation: 'No immunogenic process-related impurities (stated)',
+      scoreContribution: 0,
+      weightBasis: 'platform_heuristic',
+      rationale: 'Stated absent, so no adjuvant effect from host-cell protein, DNA or leachables is weighed.',
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
+    });
   }
 
   // ── Product factor: formulation ─────────────────────────────────────────
-  if (params.formulationRisk) {
+  if (formulation === undefined) {
+    notAssessed.push({ factor: 'Formulation', input: 'formulationRisk', category: 'product' });
+  } else if (formulation) {
     contributions.push({
       factor: 'Formulation',
       category: 'product',
       observation: 'Formulation susceptible to particle formation / adjuvant-like components',
       scoreContribution: 7,
+      weightBasis: 'platform_heuristic',
       rationale:
         'Surfactant (polysorbate) degradation, silicone-oil microdroplets, and freeze–thaw stress can generate immunogenic particles; certain excipients can act as adjuvants (FDA 2014 Section III).',
-      citation: CITATIONS.FDA_2014_FACTORS,
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
     });
     mitigations.push({
       target: 'Formulation',
       action: 'Optimize surfactant level and grade, control silicone-oil in prefilled syringes, and confirm particle stability under stress/shipping conditions.',
       citation: CITATIONS.FDA_2014_FACTORS,
     });
+  } else {
+    contributions.push({
+      factor: 'Formulation',
+      category: 'product',
+      observation: 'Formulation not prone to particle formation or adjuvant-like components (stated)',
+      scoreContribution: 0,
+      weightBasis: 'platform_heuristic',
+      rationale: 'Stated not at risk, so no formulation-driven particle or adjuvant effect is weighed.',
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
+    });
   }
 
   // ── Patient/treatment factor: route ─────────────────────────────────────
-  const rd = routeDescriptor(params.route);
-  contributions.push({
-    factor: 'Route of administration',
-    category: 'patient_treatment',
-    observation: `Route: ${rd.route}`,
-    scoreContribution: rd.score,
-    rationale: rd.note,
-    citation: CITATIONS.FDA_2014_FACTORS,
-  });
-  if (rd.route === 'subcutaneous') {
-    keyConcerns.push('Subcutaneous administration is the highest-risk route; ensure robust ADA monitoring.');
+  if (!rd) {
+    notAssessed.push({ factor: 'Route of administration', input: 'route', category: 'patient_treatment' });
+  } else {
+    contributions.push({
+      factor: 'Route of administration',
+      category: 'patient_treatment',
+      observation: `Route: ${rd.route}`,
+      scoreContribution: rd.score,
+      weightBasis: 'platform_heuristic',
+      rationale: rd.note,
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
+    });
+    if (rd.route === 'subcutaneous') {
+      keyConcerns.push('Subcutaneous administration is the highest-risk route; ensure robust ADA monitoring.');
+    }
   }
 
   // ── Patient/treatment factor: dose frequency ────────────────────────────
-  const freqD = frequencyDescriptor(params.doseFrequency);
-  contributions.push({
-    factor: 'Dose frequency / duration',
-    category: 'patient_treatment',
-    observation: `Frequency: ${freqD.frequency}`,
-    scoreContribution: freqD.score,
-    rationale: freqD.note,
-    citation: CITATIONS.FDA_2014_FACTORS,
-  });
+  if (!freqD) {
+    notAssessed.push({ factor: 'Dose frequency / duration', input: 'doseFrequency', category: 'patient_treatment' });
+  } else {
+    contributions.push({
+      factor: 'Dose frequency / duration',
+      category: 'patient_treatment',
+      observation: `Frequency: ${freqD.frequency}`,
+      scoreContribution: freqD.score,
+      weightBasis: 'platform_heuristic',
+      rationale: freqD.note,
+      factorCitation: CITATIONS.FDA_2014_FACTORS,
+    });
+  }
 
   // ── Patient/treatment factor: immune status ─────────────────────────────
-  const immune = params.immuneStatus ?? 'immunocompetent';
-  let immuneScore = 0;
-  let immuneNote = 'Immunocompetent population — standard responsiveness.';
-  if (immune === 'autoimmune') {
-    immuneScore = 8;
-    immuneNote = 'Autoimmune populations have a dysregulated, primed immune system and may show higher ADA incidence.';
-  } else if (immune === 'immunosuppressed') {
-    immuneScore = -6;
-    immuneNote = 'Immunosuppressed populations generally show reduced ADA incidence (a mitigating factor).';
-  } else if (immune === 'mixed') {
-    immuneScore = 3;
-    immuneNote = 'Mixed population — variable responsiveness; size studies for the most responsive subset.';
+  if (immune === undefined) {
+    notAssessed.push({ factor: 'Patient immune status', input: 'immuneStatus', category: 'patient_treatment' });
+  } else {
+    let immuneScore = 0;
+    let immuneNote = 'Immunocompetent population — standard responsiveness.';
+    if (immune === 'autoimmune') {
+      immuneScore = 8;
+      immuneNote = 'Autoimmune populations have a dysregulated, primed immune system and may show higher ADA incidence.';
+    } else if (immune === 'immunosuppressed') {
+      immuneScore = -6;
+      immuneNote = 'Immunosuppressed populations generally show reduced ADA incidence (a mitigating factor).';
+    } else if (immune === 'mixed') {
+      immuneScore = 3;
+      immuneNote = 'Mixed population — variable responsiveness; size studies for the most responsive subset.';
+    }
+    contributions.push({
+      factor: 'Patient immune status',
+      category: 'patient_treatment',
+      observation: `Immune status: ${immune}`,
+      scoreContribution: immuneScore,
+      weightBasis: 'platform_heuristic',
+      rationale: immuneNote,
+      factorCitation: CITATIONS.FDA_2014_RISKBASED,
+    });
   }
-  contributions.push({
-    factor: 'Patient immune status',
-    category: 'patient_treatment',
-    observation: `Immune status: ${immune}`,
-    scoreContribution: immuneScore,
-    rationale: immuneNote,
-    citation: CITATIONS.FDA_2014_RISKBASED,
-  });
 
   // ── Patient/treatment factor: concomitant immunosuppression ─────────────
-  if (params.concomitantImmunosuppression) {
+  if (concomitant === undefined) {
+    notAssessed.push({
+      factor: 'Concomitant immunosuppression',
+      input: 'concomitantImmunosuppression',
+      category: 'patient_treatment',
+    });
+  } else if (concomitant) {
     contributions.push({
       factor: 'Concomitant immunosuppression',
       category: 'patient_treatment',
       observation: 'Regimen includes concomitant immunosuppression',
       scoreContribution: -5,
+      weightBasis: 'platform_heuristic',
       rationale:
         'Concomitant immunosuppressants (e.g., methotrexate with TNF inhibitors) demonstrably reduce ADA incidence and are a recognized mitigation.',
-      citation: CITATIONS.FDA_2014_RISKBASED,
+      factorCitation: CITATIONS.FDA_2014_RISKBASED,
+    });
+  } else {
+    contributions.push({
+      factor: 'Concomitant immunosuppression',
+      category: 'patient_treatment',
+      observation: 'No concomitant immunosuppression in the regimen (stated)',
+      scoreContribution: 0,
+      weightBasis: 'platform_heuristic',
+      rationale: 'Stated absent, so no ADA-reducing effect of an immunosuppressant is weighed.',
+      factorCitation: CITATIONS.FDA_2014_RISKBASED,
     });
   }
 
   // ── Aggregate scoring ────────────────────────────────────────────────────
+  // 2026-10-15: each category used to get its own tier from the 0–100 bands,
+  // the patient/treatment sum after an undocumented +30. Those weights sum to
+  // −7…31, so that tier could never leave 'moderate' (nor 'low' without the
+  // offset). The category sums are reported instead.
   let productScoreSum = 0;
   let patientScoreSum = 0;
   for (const c of contributions) {
     if (c.category === 'product') productScoreSum += c.scoreContribution;
     else patientScoreSum += c.scoreContribution;
   }
-  const productTier = scoreToTier(Math.max(0, Math.min(100, productScoreSum)));
-  const patientTier = scoreToTier(Math.max(0, Math.min(100, patientScoreSum + 30)));
+  const categoryAssessed = (category: NotAssessedFactor['category']): boolean =>
+    !notAssessed.some((n: NotAssessedFactor) => n.category === category);
+  const productFactorScore = categoryAssessed('product') ? productScoreSum : null;
+  const patientTreatmentFactorScore = categoryAssessed('patient_treatment') ? patientScoreSum : null;
 
-  const rawTotal = productScoreSum + patientScoreSum;
-  const riskScore = Math.max(0, Math.min(100, rawTotal));
-  const overallTier = scoreToTier(riskScore);
+  const riskScore =
+    notAssessed.length === 0 ? round(Math.max(0, Math.min(100, productScoreSum + patientScoreSum)), 0) : null;
+  const overallTier: RiskTier | 'undetermined' = riskScore === null ? 'undetermined' : scoreToTier(riskScore);
 
   // ── Required studies driven by overall tier ─────────────────────────────
   requiredStudies.push({
@@ -685,13 +871,21 @@ export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): Immu
     rationale: 'A validated multi-tiered ADA detection strategy is expected for all therapeutic protein products (FDA 2019).',
     citation: CITATIONS.FDA_2019_TIERS,
   });
-  if (overallTier !== 'low' || params.hasEndogenousCounterpart) {
+  if (overallTier !== 'low' || hasEndogenous === true) {
     requiredStudies.push({
       study: 'Neutralizing antibody (NAb) assay',
       timing: 'Phase 2/3; triggered for confirmed ADA-positive samples',
-      rationale: 'Moderate/high-risk products and products with an endogenous counterpart require characterization of neutralizing capacity (FDA 2019 Section VI).',
+      rationale:
+        overallTier === 'undetermined' && hasEndogenous !== true
+          ? 'The overall tier is undetermined (see notAssessed), so a low tier, the only case in which this assessment omits the NAb assay, has not been established (FDA 2019 Section VI).'
+          : 'Moderate/high-risk products and products with an endogenous counterpart require characterization of neutralizing capacity (FDA 2019 Section VI).',
       citation: CITATIONS.FDA_2019_NAB,
     });
+  }
+  if (overallTier === 'undetermined') {
+    keyConcerns.push(
+      'The overall tier is undetermined until every factor in notAssessed is stated. Until then it is open whether the high-tier elements (ADA characterization; immunogenicity risk-management plan) apply.',
+    );
   }
   if (overallTier === 'high') {
     requiredStudies.push({
@@ -731,28 +925,34 @@ export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): Immu
     CITATIONS.ICH_S6R1,
   ]);
 
+  const tally = `${requiredStudies.length} study element(s) recommended; ${mitigations.length} mitigation(s) identified.`;
   const summary =
-    `${drugName}: overall immunogenicity risk is ${overallTier.toUpperCase()} ` +
-    `(score ${round(riskScore, 0)}/100; product factors ${productTier}, patient/treatment factors ${patientTier}). ` +
-    `Dominant drivers: ${contributions
-      .slice()
-      .sort((a: RiskFactorContribution, b: RiskFactorContribution) => b.scoreContribution - a.scoreContribution)
-      .slice(0, 3)
-      .map((c: RiskFactorContribution) => c.factor)
-      .join(', ')}. ` +
-    `${requiredStudies.length} study element(s) recommended; ${mitigations.length} mitigation(s) identified.`;
+    riskScore === null
+      ? `${drugName}: overall immunogenicity risk tier is UNDETERMINED: ${notAssessed.length} factor input(s) not stated ` +
+        `(${notAssessed.map((n: NotAssessedFactor) => n.input).join(', ')}), so no score is computed. ${tally}`
+      : `${drugName}: overall immunogenicity risk tier is ${overallTier.toUpperCase()} ` +
+        `(platform-heuristic score ${riskScore}/100, not an FDA/EMA scale; product factors ${productScoreSum}, ` +
+        `patient/treatment factors ${patientScoreSum}). ` +
+        `Dominant drivers: ${contributions
+          .slice()
+          .sort((a: RiskFactorContribution, b: RiskFactorContribution) => b.scoreContribution - a.scoreContribution)
+          .slice(0, 3)
+          .map((c: RiskFactorContribution) => c.factor)
+          .join(', ')}. ${tally}`;
 
   const band = RISK_SCORE_BANDS.find((b: ScoreBand) => overallTier === b.tier);
 
   return {
     drugName,
-    productType: params.productType,
+    productType: fd.productType,
     overallTier,
-    riskScore: round(riskScore, 0),
-    bandLabel: band ? band.label : overallTier,
+    riskScore,
+    bandLabel: band ? band.label : 'Undetermined: not every risk factor was stated',
+    methodology: RISK_METHODOLOGY,
     factorContributions: contributions,
-    productRiskTier: productTier,
-    patientTreatmentRiskTier: patientTier,
+    notAssessed,
+    productFactorScore,
+    patientTreatmentFactorScore,
     mitigations,
     requiredStudies,
     keyConcerns,
@@ -825,8 +1025,10 @@ export interface CutPointSpec {
 }
 
 export interface DrugToleranceSpec {
-  expectedCirculatingDrug_ug_per_mL: number;
-  recommendedDrugTolerance_ug_per_mL: number;
+  /** null when the expected circulating drug level was not stated. */
+  expectedCirculatingDrug_ug_per_mL: number | null;
+  /** null when the expected circulating drug level was not stated. */
+  recommendedDrugTolerance_ug_per_mL: number | null;
   approach: string[];
   citation: Citation;
 }
@@ -891,6 +1093,19 @@ function platformDescriptor(p: AssayPlatform): PlatformDescriptor {
     if (d.platform === p) return d;
   }
   return PLATFORM_LIBRARY[0];
+}
+
+/**
+ * The stated expected drug level and the drug tolerance it calls for, at or
+ * above the highest expected concentration at the ADA sampling time (FDA
+ * expects a low positive-control ADA to be detected in its presence).
+ * 2026-10-15: an unstated level used to be reported as 0 µg/mL with a
+ * recommended drug tolerance of 0. Both are null until the level is stated.
+ */
+function drugToleranceFigures(value: unknown): { expected: number | null; recommended: number | null } {
+  const expected = statedNumber('expectedCirculatingDrug_ug_per_mL', value, (n: number) => n >= 0, 'a concentration of 0 µg/mL or more');
+  if (expected === undefined) return { expected: null, recommended: null };
+  return { expected, recommended: expected > 0 ? round(expected * 1.0, 3) : 0 };
 }
 
 /**
@@ -997,11 +1212,9 @@ export function designADAAssayStrategy(params: ADAAssayStrategyParams): ADAAssay
   ];
 
   // ── Drug tolerance ──────────────────────────────────────────────────────
-  const expectedDrug = params.expectedCirculatingDrug_ug_per_mL ?? 0;
-  // Recommend drug tolerance at or above the highest expected drug
-  // concentration at the ADA sampling time; FDA expects the assay to detect a
-  // low positive-control ADA in the presence of that drug level.
-  const recommendedTol = expectedDrug > 0 ? round(expectedDrug * 1.0, 3) : 0;
+  const { expected: expectedDrug, recommended: recommendedTol } = drugToleranceFigures(
+    params.expectedCirculatingDrug_ug_per_mL,
+  );
   const tolApproach: string[] = [
     'Demonstrate the assay detects the low positive control (≈100 ng/mL surrogate ADA) in the presence of the highest drug concentration expected at the ADA sampling time.',
     'If drug interference exceeds tolerance, apply acid-dissociation (low-pH treatment) followed by neutralization to free ADA from drug–ADA complexes.',
@@ -1057,7 +1270,7 @@ export function designADAAssayStrategy(params: ADAAssayStrategyParams): ADAAssay
     `${drugName}: recommended ${recommended} multi-tiered ADA strategy (screening → confirmatory → titer → NAb). ` +
     `Screening cut point at ~5% false-positive (mean + 1.645·SD); confirmatory at ~1%. ` +
     `Target sensitivity ≤ ${targetSensitivity} ng/mL. ` +
-    (expectedDrug > 0
+    (expectedDrug !== null && expectedDrug > 0
       ? `Drug tolerance to ≥ ${recommendedTol} µg/mL with acid-dissociation if exceeded.`
       : 'Define drug tolerance once the expected circulating drug concentration at sampling is known.');
 
@@ -1110,8 +1323,10 @@ export interface ClinicalImpactParams {
 
 export interface ImpactDomain {
   domain: string;
-  present: boolean;
-  severity: SeverityLevel;
+  /** null: not assessed, because the input that decides it was not stated. */
+  present: boolean | null;
+  /** 'undetermined' when the domain, or the detail that sets its grade, was not stated. */
+  severity: SeverityLevel | 'undetermined';
   description: string;
   citation: Citation;
 }
@@ -1124,8 +1339,11 @@ export interface LabelingImplication {
 
 export interface ClinicalImpactResult {
   drugName: string;
-  overallSeverity: SeverityLevel;
+  /** 'undetermined' while a domain is ungraded, unless one is already 'critical' (the top of the scale). */
+  overallSeverity: SeverityLevel | 'undetermined';
   domains: ImpactDomain[];
+  /** Inputs that were not stated, each with the domain it leaves ungraded. */
+  notAssessed: Array<{ domain: string; input: keyof ClinicalImpactParams }>;
   labelingImplications: LabelingImplication[];
   monitoringRecommendations: string[];
   citations: Citation[];
@@ -1141,48 +1359,75 @@ export interface ClinicalImpactResult {
 export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParams): ClinicalImpactResult {
   const drugName = params.drugName ?? '(unnamed product)';
   const domains: ImpactDomain[] = [];
+  const notAssessed: ClinicalImpactResult['notAssessed'] = [];
   const labeling: LabelingImplication[] = [];
   const monitoring: string[] = [];
-  let overall: SeverityLevel = 'none';
+
+  // 2026-10-15: each domain used to be `present = input === true`, so {} came
+  // back NONE with "No endogenous cross-reactivity expected/observed", and a
+  // PK impact, hypersensitivity or cross-reactivity whose grading detail was
+  // unstated was graded as if that detail were the milder one. An unstated
+  // input now leaves its domain ungraded and is listed in notAssessed.
+  const pkImpact = statedBoolean('pkImpact', params.pkImpact);
+  const frac = statedNumber(
+    'exposureReductionFraction',
+    params.exposureReductionFraction,
+    (n: number) => n >= 0 && n <= 1,
+    'a fraction from 0 to 1',
+  );
+  const efficacyLoss = statedBoolean('neutralizingEfficacyLoss', params.neutralizingEfficacyLoss);
+  const hypersensitivity = statedBoolean('hypersensitivity', params.hypersensitivity);
+  const igeMediated = statedBoolean('igeMediated', params.igeMediated);
+  const crossReactivity = statedBoolean('endogenousCrossReactivity', params.endogenousCrossReactivity);
+  const lifeSustaining = statedBoolean('endogenousLifeSustaining', params.endogenousLifeSustaining);
 
   // ── Domain 1: PK impact ─────────────────────────────────────────────────
   {
-    const present = params.pkImpact === true;
-    const frac = params.exposureReductionFraction ?? 0;
-    let severity: SeverityLevel = 'none';
-    if (present) {
+    const domain = 'Pharmacokinetic (altered exposure)';
+    let severity: ImpactDomain['severity'] = 'none';
+    let description =
+      'No ADA-related PK impact reported. Monitor exposure in ADA-positive subjects to detect emerging impact.';
+    if (pkImpact === undefined) {
+      severity = 'undetermined';
+      description =
+        'Not assessed: pkImpact was not stated. Monitor exposure in ADA-positive subjects to detect emerging impact.';
+      notAssessed.push({ domain, input: 'pkImpact' });
+    } else if (pkImpact && frac === undefined) {
+      severity = 'undetermined';
+      description =
+        'ADA alter drug PK (typically increased clearance / lower trough), but the magnitude (exposureReductionFraction) was not stated, so the impact is not graded. Sustained exposure loss can precede and predict efficacy loss.';
+      notAssessed.push({ domain, input: 'exposureReductionFraction' });
+    } else if (pkImpact && frac !== undefined) {
       severity = frac >= 0.5 ? 'high' : frac >= 0.2 ? 'moderate' : 'low';
+      description = `ADA alter drug PK (typically increased clearance / lower trough)${frac > 0 ? `; estimated exposure reduction ≈ ${round(frac * 100, 0)}%` : ''}. Sustained exposure loss can precede and predict efficacy loss.`;
     }
-    domains.push({
-      domain: 'Pharmacokinetic (altered exposure)',
-      present,
-      severity,
-      description: present
-        ? `ADA alter drug PK (typically increased clearance / lower trough)${frac > 0 ? `; estimated exposure reduction ≈ ${round(frac * 100, 0)}%` : ''}. Sustained exposure loss can precede and predict efficacy loss.`
-        : 'No ADA-related PK impact reported. Monitor exposure in ADA-positive subjects to detect emerging impact.',
-      citation: CITATIONS.FDA_2014_CONSEQUENCES,
-    });
-    overall = maxSeverity(overall, severity);
-    if (present) {
+    domains.push({ domain, present: pkImpact ?? null, severity, description, citation: CITATIONS.FDA_2014_CONSEQUENCES });
+    if (pkImpact) {
       monitoring.push('Perform integrated PK–ADA analysis (trough concentrations stratified by ADA status and titer).');
     }
   }
 
   // ── Domain 2: Efficacy / neutralization ─────────────────────────────────
   {
-    const present = params.neutralizingEfficacyLoss === true;
-    let severity: SeverityLevel = present ? 'high' : 'none';
+    const domain = 'Efficacy (neutralization / loss of response)';
+    const present = efficacyLoss === true;
+    let severity: ImpactDomain['severity'] = present ? 'high' : 'none';
     if (present && (params.persistentADA || params.highTiter)) severity = 'high';
+    if (efficacyLoss === undefined) {
+      severity = 'undetermined';
+      notAssessed.push({ domain, input: 'neutralizingEfficacyLoss' });
+    }
     domains.push({
-      domain: 'Efficacy (neutralization / loss of response)',
-      present,
+      domain,
+      present: efficacyLoss ?? null,
       severity,
       description: present
         ? 'Neutralizing ADA reduce or abolish the drug\'s pharmacological activity, causing secondary loss of efficacy. Confirm with a validated NAb assay and correlate to clinical endpoints.'
-        : 'No neutralization-related efficacy loss reported. NAb assessment should still be available for confirmed-positive subjects.',
+        : efficacyLoss === undefined
+          ? 'Not assessed: neutralizingEfficacyLoss was not stated. NAb assessment should be available for confirmed-positive subjects.'
+          : 'No neutralization-related efficacy loss reported. NAb assessment should still be available for confirmed-positive subjects.',
       citation: CITATIONS.FDA_2014_CONSEQUENCES,
     });
-    overall = maxSeverity(overall, severity);
     if (present) {
       monitoring.push('Confirm neutralizing capacity (NAb assay) and correlate with primary efficacy endpoint over time.');
       labeling.push({
@@ -1195,30 +1440,42 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
 
   // ── Domain 3: Safety / hypersensitivity ─────────────────────────────────
   {
-    const present = params.hypersensitivity === true || params.igeMediated === true;
-    let severity: SeverityLevel = 'none';
-    if (present) {
-      severity = params.igeMediated ? 'critical' : 'high';
+    const domain = 'Safety (hypersensitivity / infusion reactions / anaphylaxis)';
+    // IgE-mediated reactions are hypersensitivity reactions: either stated true
+    // makes the domain present; hypersensitivity stated false makes it absent.
+    const present: boolean | null =
+      hypersensitivity === true || igeMediated === true ? true : hypersensitivity === false ? false : null;
+    let severity: ImpactDomain['severity'] = 'none';
+    let description = 'No hypersensitivity reactions reported. Maintain standard infusion-reaction surveillance.';
+    if (present === null) {
+      severity = 'undetermined';
+      description = 'Not assessed: hypersensitivity was not stated. Maintain standard infusion-reaction surveillance.';
+      notAssessed.push({ domain, input: 'hypersensitivity' });
+    } else if (present && igeMediated === true) {
+      severity = 'critical';
+      description =
+        'IgE-mediated (Type I) hypersensitivity raises the risk of anaphylaxis — the most acute immunogenicity safety concern; requires immediate-onset reaction preparedness.';
+    } else if (present && igeMediated === false) {
+      severity = 'high';
+      description =
+        'Hypersensitivity / infusion reactions (non-IgE, e.g., immune-complex / cytokine-mediated) require monitoring, premedication strategies, and reaction management.';
+    } else if (present) {
+      severity = 'undetermined';
+      description =
+        'Hypersensitivity / infusion reactions reported, but whether they are IgE-mediated (Type I) was not stated, so they are not graded: high if not IgE-mediated, critical (anaphylaxis risk) if IgE-mediated.';
+      notAssessed.push({ domain, input: 'igeMediated' });
     }
-    domains.push({
-      domain: 'Safety (hypersensitivity / infusion reactions / anaphylaxis)',
-      present,
-      severity,
-      description: present
-        ? (params.igeMediated
-          ? 'IgE-mediated (Type I) hypersensitivity raises the risk of anaphylaxis — the most acute immunogenicity safety concern; requires immediate-onset reaction preparedness.'
-          : 'Hypersensitivity / infusion reactions (non-IgE, e.g., immune-complex / cytokine-mediated) require monitoring, premedication strategies, and reaction management.')
-        : 'No hypersensitivity reactions reported. Maintain standard infusion-reaction surveillance.',
-      citation: CITATIONS.FDA_2014_CONSEQUENCES,
-    });
-    overall = maxSeverity(overall, severity);
+    domains.push({ domain, present, severity, description, citation: CITATIONS.FDA_2014_CONSEQUENCES });
     if (present) {
       monitoring.push('Implement hypersensitivity surveillance; for suspected Type I reactions assess drug-specific IgE and tryptase.');
       labeling.push({
         section: 'WARNINGS AND PRECAUTIONS',
-        recommendation: params.igeMediated
-          ? 'Include an anaphylaxis/hypersensitivity warning with administration-setting and monitoring requirements; consider Boxed Warning if severe reactions are frequent.'
-          : 'Include hypersensitivity/infusion-reaction precautions with monitoring and management guidance.',
+        recommendation:
+          igeMediated === true
+            ? 'Include an anaphylaxis/hypersensitivity warning with administration-setting and monitoring requirements; consider Boxed Warning if severe reactions are frequent.'
+            : igeMediated === false
+              ? 'Include hypersensitivity/infusion-reaction precautions with monitoring and management guidance.'
+              : 'Include hypersensitivity/infusion-reaction precautions with monitoring and management guidance. Whether an anaphylaxis warning is needed depends on IgE mediation, which was not stated.',
         citation: CITATIONS.FDA_2014_CONSEQUENCES,
       });
     }
@@ -1226,23 +1483,32 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
 
   // ── Domain 4: Cross-reactivity to endogenous protein ────────────────────
   {
-    const present = params.endogenousCrossReactivity === true;
-    let severity: SeverityLevel = 'none';
-    if (present) {
-      severity = params.endogenousLifeSustaining ? 'critical' : 'high';
+    const domain = 'Cross-reactivity with endogenous counterpart';
+    const present = crossReactivity === true;
+    let severity: ImpactDomain['severity'] = 'none';
+    let description = 'No endogenous cross-reactivity reported.';
+    if (crossReactivity === undefined) {
+      severity = 'undetermined';
+      description = 'Not assessed: endogenousCrossReactivity was not stated.';
+      notAssessed.push({ domain, input: 'endogenousCrossReactivity' });
+    } else if (present && lifeSustaining === undefined) {
+      severity = 'undetermined';
+      description =
+        'ADA cross-react with an endogenous counterpart, but whether it is life-sustaining was not stated, so this is not graded: high if not, critical if it is (e.g., anti-EPO pure red cell aplasia). Assess for neutralization of native function and resulting deficiency.';
+      notAssessed.push({ domain, input: 'endogenousLifeSustaining' });
+    } else if (present) {
+      severity = lifeSustaining ? 'critical' : 'high';
+      description = lifeSustaining
+        ? 'ADA cross-react with a non-redundant, life-sustaining endogenous protein, risking a deficiency syndrome (e.g., anti-EPO pure red cell aplasia, anti-TPO thrombocytopenia) — the most severe immunogenicity outcome.'
+        : 'ADA cross-react with an endogenous counterpart; assess for neutralization of native function and resulting deficiency.';
     }
     domains.push({
-      domain: 'Cross-reactivity with endogenous counterpart',
-      present,
+      domain,
+      present: crossReactivity ?? null,
       severity,
-      description: present
-        ? (params.endogenousLifeSustaining
-          ? 'ADA cross-react with a non-redundant, life-sustaining endogenous protein, risking a deficiency syndrome (e.g., anti-EPO pure red cell aplasia, anti-TPO thrombocytopenia) — the most severe immunogenicity outcome.'
-          : 'ADA cross-react with an endogenous counterpart; assess for neutralization of native function and resulting deficiency.')
-        : 'No endogenous cross-reactivity expected/observed.',
+      description,
       citation: CITATIONS.FDA_2014_CONSEQUENCES,
     });
-    overall = maxSeverity(overall, severity);
     if (present) {
       monitoring.push('Monitor for the corresponding endogenous-protein deficiency syndrome and assess NAb against the endogenous molecule.');
       labeling.push({
@@ -1252,6 +1518,14 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
       });
     }
   }
+
+  // 'critical' is the top of the scale, so no ungraded domain can raise it.
+  let graded: SeverityLevel = 'none';
+  for (const d of domains) {
+    if (d.severity !== 'undetermined') graded = maxSeverity(graded, d.severity);
+  }
+  const overall: ClinicalImpactResult['overallSeverity'] =
+    domains.some((d: ImpactDomain) => d.severity === 'undetermined') && graded !== 'critical' ? 'undetermined' : graded;
 
   // ── Benefit-risk modulation for life-threatening indications ─────────────
   if (params.lifeThreateningIndication && overall !== 'critical') {
@@ -1272,18 +1546,22 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
     CITATIONS.FDA_2019_NAB,
   ]);
 
-  const presentDomains = domains.filter((d: ImpactDomain) => d.present).map((d: ImpactDomain) => d.domain);
+  const presentDomains = domains.filter((d: ImpactDomain) => d.present === true).map((d: ImpactDomain) => d.domain);
   const summary =
     `${drugName}: overall clinical-impact severity is ${overall.toUpperCase()}. ` +
-    (presentDomains.length > 0
-      ? `Affected domain(s): ${presentDomains.join('; ')}. `
-      : 'No clinical-impact domains currently flagged. ') +
+    (presentDomains.length > 0 ? `Affected domain(s): ${presentDomains.join('; ')}. ` : '') +
+    (notAssessed.length > 0
+      ? `Not assessed (input not stated): ${notAssessed.map((n) => n.input).join(', ')}. `
+      : presentDomains.length === 0
+        ? 'All four domains were stated absent. '
+        : '') +
     `${labeling.length} labeling implication(s) and ${monitoring.length} monitoring recommendation(s) generated.`;
 
   return {
     drugName,
     overallSeverity: overall,
     domains,
+    notAssessed,
     labelingImplications: labeling,
     monitoringRecommendations: monitoring,
     citations,
@@ -1492,6 +1770,15 @@ export interface SamplingTimepoint {
   citation: Citation;
 }
 
+/** The inputs a sampling plan was not given, each with the value it used. */
+export interface SamplingAssumptions {
+  riskTier?: RiskTier;
+  doseFrequency?: DoseFrequency;
+  treatmentDuration_weeks?: number;
+  drawVolume_mL?: number;
+  endogenousNonRedundant?: boolean;
+}
+
 export interface ImmunogenicitySamplingResult {
   drugName: string;
   washout_days: number;
@@ -1499,9 +1786,68 @@ export interface ImmunogenicitySamplingResult {
   timepoints: SamplingTimepoint[];
   totalNominalDraws: number;
   totalBloodVolume_mL: number;
+  /** Empty when every input was stated. */
+  assumed: SamplingAssumptions;
   samplingPrinciples: string[];
   citations: Citation[];
   summary: string;
+}
+
+/** What a sampling plan uses for an input that was not stated; each use is echoed in `assumed`. */
+const SAMPLING_DEFAULTS: Required<SamplingAssumptions> = {
+  riskTier: 'moderate',
+  doseFrequency: 'intermittent',
+  treatmentDuration_weeks: 12,
+  drawVolume_mL: 5,
+  endogenousNonRedundant: false,
+};
+
+interface SamplingInputs {
+  halfLife: number;
+  riskTier: RiskTier;
+  freq: DoseFrequency;
+  duration: number;
+  drawVol: number;
+  endogenousNonRedundant: boolean;
+  assumed: SamplingAssumptions;
+}
+
+/**
+ * 2026-10-15: a missing, zero, negative or non-numeric half-life used to
+ * become 1 day, and a washout, follow-up and schedule were computed from it
+ * and stated as fact; the other defaults were applied without saying so. The
+ * half-life is now required, and each defaulted input is echoed in `assumed`.
+ */
+function samplingInputs(params: ImmunogenicitySamplingParams): SamplingInputs {
+  const halfLife = statedNumber('halfLife_days', params.halfLife_days, (n: number) => n > 0, 'a positive number of days');
+  if (halfLife === undefined) {
+    throw new ComputationRefusal(
+      'missing_input',
+      'halfLife_days is required: the terminal elimination half-life in days sets the washout (5 half-lives) and the follow-up.',
+      'halfLife_days',
+    );
+  }
+  const frequencies = FREQUENCY_RISK.map((d: FrequencyDescriptor) => d.frequency);
+  const riskTier = statedOneOf('riskTier', params.riskTier, RISK_TIERS);
+  const freq = statedOneOf('doseFrequency', params.doseFrequency, frequencies);
+  const duration = statedNumber('treatmentDuration_weeks', params.treatmentDuration_weeks, (n: number) => n >= 0, '0 weeks or more');
+  const drawVol = statedNumber('drawVolume_mL', params.drawVolume_mL, (n: number) => n > 0, 'a positive volume in mL');
+  const endogenousNonRedundant = statedBoolean('endogenousNonRedundant', params.endogenousNonRedundant);
+  const assumed: SamplingAssumptions = {};
+  if (riskTier === undefined) assumed.riskTier = SAMPLING_DEFAULTS.riskTier;
+  if (freq === undefined) assumed.doseFrequency = SAMPLING_DEFAULTS.doseFrequency;
+  if (duration === undefined) assumed.treatmentDuration_weeks = SAMPLING_DEFAULTS.treatmentDuration_weeks;
+  if (drawVol === undefined) assumed.drawVolume_mL = SAMPLING_DEFAULTS.drawVolume_mL;
+  if (endogenousNonRedundant === undefined) assumed.endogenousNonRedundant = SAMPLING_DEFAULTS.endogenousNonRedundant;
+  return {
+    halfLife,
+    riskTier: riskTier ?? SAMPLING_DEFAULTS.riskTier,
+    freq: freq ?? SAMPLING_DEFAULTS.doseFrequency,
+    duration: duration ?? SAMPLING_DEFAULTS.treatmentDuration_weeks,
+    drawVol: drawVol ?? SAMPLING_DEFAULTS.drawVolume_mL,
+    endogenousNonRedundant: endogenousNonRedundant ?? SAMPLING_DEFAULTS.endogenousNonRedundant,
+    assumed,
+  };
 }
 
 /**
@@ -1513,11 +1859,7 @@ export interface ImmunogenicitySamplingResult {
  */
 export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams): ImmunogenicitySamplingResult {
   const drugName = params.drugName ?? '(unnamed product)';
-  const halfLife = params.halfLife_days > 0 ? params.halfLife_days : 1;
-  const riskTier = params.riskTier ?? 'moderate';
-  const drawVol = params.drawVolume_mL ?? 5;
-  const freq = params.doseFrequency ?? 'intermittent';
-  const duration = params.treatmentDuration_weeks ?? 12;
+  const { halfLife, riskTier, freq, duration, drawVol, endogenousNonRedundant, assumed } = samplingInputs(params);
 
   // Washout = 5 half-lives (the time for drug to clear so trough sampling
   // minimizes drug interference). FDA 2019 Section V.D / sampling rationale.
@@ -1528,7 +1870,7 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
   // and persistent responses.
   let followUp = washout;
   if (riskTier === 'high') followUp = Math.max(followUp, round(8 * halfLife, 1));
-  if (params.endogenousNonRedundant) followUp = Math.max(followUp, round(12 * halfLife, 1));
+  if (endogenousNonRedundant) followUp = Math.max(followUp, round(12 * halfLife, 1));
   // Floor and ceiling: at least ~28 days for any biologic, capped guidance note.
   followUp = Math.max(followUp, 28);
 
@@ -1573,11 +1915,11 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
     purpose: 'Detect ADA that were masked by drug during treatment and assess early persistence; resolves false-negatives from drug interference.',
     citation: CITATIONS.FDA_2019_DRUGTOL,
   });
-  if (riskTier !== 'low' || params.endogenousNonRedundant) {
+  if (riskTier !== 'low' || endogenousNonRedundant) {
     timepoints.push({
       label: 'Follow-up 2 (extended)',
       timing: `≈ ${followUp} days after the last dose`,
-      relativeToDose: `${riskTier === 'high' ? '≥ 8' : params.endogenousNonRedundant ? '≥ 12' : '≥ 5'} half-lives post-last-dose`,
+      relativeToDose: `${riskTier === 'high' ? '≥ 8' : endogenousNonRedundant ? '≥ 12' : '≥ 5'} half-lives post-last-dose`,
       purpose: 'Characterize persistence vs transience of ADA and capture delayed cross-reactive responses (critical for non-redundant endogenous counterparts).',
       citation: CITATIONS.EMA_2017,
     });
@@ -1586,7 +1928,7 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
   const totalDraws = 1 + onTreatmentCount + 1 + (timepoints.length - 3);
   // Recompute precisely from constructed timepoints (on-treatment is one row
   // representing onTreatmentCount draws).
-  const nominalDraws = 1 /*baseline*/ + onTreatmentCount + 1 /*EOT*/ + (riskTier !== 'low' || params.endogenousNonRedundant ? 2 : 1);
+  const nominalDraws = 1 /*baseline*/ + onTreatmentCount + 1 /*EOT*/ + (riskTier !== 'low' || endogenousNonRedundant ? 2 : 1);
   const totalVolume = round(nominalDraws * drawVol, 1);
 
   const samplingPrinciples: string[] = [
@@ -1609,7 +1951,12 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
   const summary =
     `${drugName}: sampling plan with ${nominalDraws} nominal ADA draws (≈ ${totalVolume} mL total at ${drawVol} mL/draw). ` +
     `Washout/trough basis = ${washout} days (5×t½ of ${halfLife} d); follow-up extends to ≈ ${followUp} days. ` +
-    `Schedule: baseline → ${onTreatmentCount} on-treatment (trough) → EOT → ${riskTier !== 'low' || params.endogenousNonRedundant ? '2' : '1'} follow-up.`;
+    `Schedule: baseline → ${onTreatmentCount} on-treatment (trough) → EOT → ${riskTier !== 'low' || endogenousNonRedundant ? '2' : '1'} follow-up.` +
+    (Object.keys(assumed).length > 0
+      ? ` Assumed (not stated): ${Object.entries(assumed)
+        .map(([input, value]: [string, unknown]) => `${input} = ${String(value)}`)
+        .join(', ')}.`
+      : '');
 
   // touch totalDraws to avoid unused (kept for parity); use nominalDraws below
   void totalDraws;
@@ -1621,6 +1968,7 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
     timepoints,
     totalNominalDraws: nominalDraws,
     totalBloodVolume_mL: totalVolume,
+    assumed,
     samplingPrinciples,
     citations,
     summary,
