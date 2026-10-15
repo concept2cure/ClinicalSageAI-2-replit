@@ -37,3 +37,16 @@ Typecheck clean; `ci:eslint-ratchet:since HEAD` no change; `ci:launch-scope`,
 
 The editor side (the market's group in the outline, starting its sections in
 its own copy) is the next slice.
+
+## Security review of the server slice (same day)
+
+A read-only security lens on 77ac97d85 found nothing high or medium. Two low items, applied:
+
+- A market's copy could be seeded from an org template, whose sections are of any code. It is now refused: 400 `MARKET_DOCUMENT_TEMPLATE`, nothing created. The test failed first while the check sat after the template lookup, which refuses an unknown template; the check now runs before anything is read.
+- The home binding chose the filing by agency alone. It now also reads the scope, `COALESCE(filing_scope, 'home') = 'home'`.
+
+Left as is, with the reason:
+- Two creates racing on one market document: `recordAliasesTx` demotes the loser to unbound with its stated reason. This is the home path's existing behaviour.
+- A malformed id gets the store-unreachable reason. Nothing is written either way.
+
+The `ci:sql-interpolation` baseline moves 2 counts from `server/routes/c2c/documents.ts` (6 → 4) to `server/services/c2c/document-outline.ts` (2). These are the same two fixed fragments (`rulePackProvenanceSelectSql('rp')` and `sectionHasContentSql('content')`), moved with the outline read. No value is interpolated.

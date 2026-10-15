@@ -109,11 +109,13 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
   // superseded one. Only its home agency or a harmonised fallback (2026-10-15,
   // FILING_SPINE F22): an added market's document of the same class carries
   // the market's agency and holds only its regional modules, so it is never
-  // the home filing.
+  // the home filing. Its scope is read too (2026-10-15, F22b), so the rule
+  // does not rest on the agency alone.
   const doc = await db.query<{ id: string }>(
     `SELECT id
        FROM c2c_documents
       WHERE project_id = $1 AND org_id = $2 AND doc_type = $3 AND agency = ANY($4::text[])
+        AND COALESCE(to_jsonb(c2c_documents)->>'filing_scope', 'home') = 'home'
       ORDER BY created_at DESC
       LIMIT 1`,
     [projectId, orgId, klass.docType, [klass.agency, ...AGENCY_FALLBACKS]],

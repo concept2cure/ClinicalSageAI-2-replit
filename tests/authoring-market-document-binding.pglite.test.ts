@@ -120,6 +120,16 @@ describe("authoring a market's own part of the filing (F22b)", () => {
       expect((await q(`SELECT count(*)::int AS n FROM authoring_documents`))[0].n).toBe(before);
     }, T);
 
+  it("a market's copy starts without a template, and nothing is created", async () => {
+    const before = (await q(`SELECT count(*)::int AS n FROM authoring_documents`))[0].n;
+    const res = await as(request(app).post('/api/authoring/docs')).send({
+      title: 'EU Module 1', module: 'M1', client_program_id: NDA, c2c_document_id: 'doc_ema', template_id: 'org-template-1',
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('MARKET_DOCUMENT_TEMPLATE');
+    expect((await q(`SELECT count(*)::int AS n FROM authoring_documents`))[0].n).toBe(before);
+  }, T);
+
   it("refuses a common section in the market's copy, and creates nothing", async () => {
     const res = await as(request(app).post('/api/authoring/sections')).send({ doc_id: emaDocId, code: '2.5', title: 'Clinical overview', content: '' });
     expect(res.status).toBe(409);

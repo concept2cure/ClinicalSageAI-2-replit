@@ -467,6 +467,22 @@ async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Refu
   return null;
 }
 
+/**
+ * What a create refuses before anything is read: a project the organization
+ * does not own, and a market's copy seeded from a template. A template seeds
+ * the sections it carries, of any code; a market's copy holds only its Module 1
+ * and 3.2.R (security review, 2026-10-15).
+ */
+async function refuseStart(ctx: CreateContext, input: CreateDocumentInput): Promise<Refusal | null> {
+  const programRefusal = await refuseProgramAnchor(ctx, input.client_program_id);
+  if (programRefusal) return programRefusal;
+  if (!input.c2c_document_id || !input.template_id) return null;
+  return {
+    kind: 'refused', status: 400, code: 'MARKET_DOCUMENT_TEMPLATE',
+    error: "A market's document starts without a template: it holds only that market's Module 1 and 3.2.R. Nothing was created.",
+  };
+}
+
 const programIdOf = (v: unknown): string | null => (v ? String(v) : null);
 
 /**
@@ -491,8 +507,8 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
 
   if (!title) return { kind: 'refused', status: 400, error: 'Document title is required' };
 
-  const programRefusal = await refuseProgramAnchor(ctx, client_program_id);
-  if (programRefusal) return programRefusal;
+  const startRefusal = await refuseStart(ctx, input);
+  if (startRefusal) return startRefusal;
 
   const builtin = template_id ? await getBuiltinAuthoringTemplate(String(template_id)) : undefined;
   const templateRefusal = await refuseBuiltinTemplateStart(ctx, input, builtin);
