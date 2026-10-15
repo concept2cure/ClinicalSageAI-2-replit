@@ -541,7 +541,7 @@ export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
 export const ADVISE_GCP: AnaTool = {
   name: 'advise_gcp',
   description:
-    'Good Clinical Practice (ICH E6(R2)) advisor: returns the GCP principles or a specific ' +
+    'Good Clinical Practice (ICH E6(R3)) advisor: returns the GCP principles or a specific ' +
     'responsibility domain (sponsor, investigator, IRB/IEC) with the key obligations and citation. ' +
     'Use when briefing teams on GCP roles or preparing for inspection readiness.',
   input_schema: {
@@ -555,9 +555,9 @@ export const ADVISE_GCP: AnaTool = {
 export const REVIEW_INFORMED_CONSENT: AnaTool = {
   name: 'review_informed_consent',
   description:
-    'QC an informed-consent form draft for the required elements of informed consent (ICH E6(R2) §4.8 ' +
+    'QC an informed-consent form draft for the required elements of informed consent (ICH E6(R3) Annex 1 §2.8 ' +
     'and 21 CFR 50.25 / 45 CFR 46.116): flags missing required and when-appropriate elements with their ' +
-    'citation and returns a completeness score. Cue-based and advisory — IRB/EC review is authoritative.',
+    'citation, and counts the required elements found in the wording (not a compliance score). Cue-based and advisory — IRB/EC review is authoritative.',
   input_schema: {
     type: 'object',
     properties: {
