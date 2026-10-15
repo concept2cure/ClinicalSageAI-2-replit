@@ -110,22 +110,14 @@ CREATE POLICY rls_select ON table FOR SELECT
 - Record hash for tamper detection
 - DELETE/TRUNCATE revoked - true immutability
 
-### 6. Test Scenarios (Migration 055)
-**Organizations Seeded:**
-- CardioTech Medical Devices Inc. (DEVICE_MANUFACTURER)
-- DiagnoSure Labs Inc. (IVD_DIAGNOSTICS)
-- NeuroBio Therapeutics (BIO_PHARMA_SPONSOR)
-- Stanford University Medical Center (ACADEMIC_INSTITUTION)
-- GlobalTrials CRO (CRO_PARTNER)
-
-**Submissions Created:**
-- **510(k)** - CardioGuard Pro (Implantable Cardiac Defibrillator)
-- **EUA** - DiagnoSure SARS-CoV-2 Rapid Test
-- **IND** - NeuroBio NB-401 (Neuroplastin Modulator) with 3 sequences
-- **IDE** - Stanford Neural Interface Study
-
-**CRO Relationship:**
-- NeuroBio (Sponsor) → GlobalTrials (CRO) - Active contract with full permissions
+### 6. Test Scenarios (Migrations 055–056) — removed 2026-10-15
+`055_gcc_test_scenarios.sql` seeded invented organisations, users with signing
+authority, submissions and documents; `056_gcc_test_runner.sql` was a psql test
+suite that, among other things, wrote a test event into `audit.event_log`.
+`scripts/db/install-fresh.mjs` applies every `*_gcc_*.sql`, and `db:provision`
+runs it against production, so both reached production databases. They are
+deleted, as is the demo-organisation seed that was section H of 051. The
+schema contracts under `tests/schema-contract/` test this tree against PGlite.
 
 ## Running Migrations
 
@@ -148,10 +140,6 @@ psql $DATABASE_URL -f db/migrations/051_gcc_multi_tenant_identity.sql
 psql $DATABASE_URL -f db/migrations/052_gcc_ectd_v4_cou_graph.sql
 psql $DATABASE_URL -f db/migrations/053_gcc_rls_policies.sql
 psql $DATABASE_URL -f db/migrations/054_gcc_part11_audit.sql
-psql $DATABASE_URL -f db/migrations/055_gcc_test_scenarios.sql
-
-# Run test suite
-psql $DATABASE_URL -f db/migrations/056_gcc_test_runner.sql
 ```
 
 ## API Integration Points
@@ -234,8 +222,6 @@ SELECT * FROM ectd_v4.get_submission_tree('submission-unit-uuid'::UUID);
 | 052 | `052_gcc_ectd_v4_cou_graph.sql` | eCTD v4.0 CoU Graph |
 | 053 | `053_gcc_rls_policies.sql` | RLS Policies |
 | 054 | `054_gcc_part11_audit.sql` | Part 11 Audit Trail |
-| 055 | `055_gcc_test_scenarios.sql` | Test Data |
-| 056 | `056_gcc_test_runner.sql` | Test Suite |
 | - | `run_concept2cure_migrations.js` | Node.js Runner |
 | - | `run_ectd_v4_migrations.sh` | Shell Runner |
 
