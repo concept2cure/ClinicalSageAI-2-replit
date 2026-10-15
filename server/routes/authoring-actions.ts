@@ -1554,7 +1554,9 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
         gapAnalysis: gapAnalysis ? {
           completeness: gapAnalysis.completeness,
           gaps: (gapAnalysis.gaps || []).slice(0, 5),
-          criticalGaps: gapAnalysis.critical_gaps || [],
+          // The count summarizeRequirementCoverage holds, or null when none is
+          // recorded. Was `critical_gaps || []`: a recorded 0 read as an empty list.
+          criticalGaps: typeof gapAnalysis.critical_gaps === 'number' ? gapAnalysis.critical_gaps : null,
         } : null,
         context: { projectId, sectionCode },
       });

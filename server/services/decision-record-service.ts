@@ -467,7 +467,7 @@ export class DecisionRecordService {
       };
       const triggerType = triggerMap[input.actionState];
       if (triggerType) {
-        this.propagateDecisionChange(record, triggerType as any, input.reason).catch(err => {
+        this.propagateDecisionChange(record, triggerType as any, performedBy, input.reason).catch(err => {
           log.warn('Decision propagation failed (non-blocking)', {
             error: err instanceof Error ? err.message : String(err),
           });
@@ -481,6 +481,7 @@ export class DecisionRecordService {
   private async propagateDecisionChange(
     decision: DecisionRecord,
     triggerType: string,
+    performedBy: string,
     reason?: string
   ): Promise<void> {
     try {
@@ -493,6 +494,9 @@ export class DecisionRecordService {
         sourceId: decision.id,
         sourceLabel: decision.title,
         reason: reason ?? `Decision transitioned to ${decision.actionState}`,
+        // The person who transitioned it (2026-10-15: unstated, so the cascade
+        // was logged as the reactive-dependency machine actor).
+        triggeredBy: performedBy,
       });
     } catch {
       // Silently skip if tables don't exist yet
