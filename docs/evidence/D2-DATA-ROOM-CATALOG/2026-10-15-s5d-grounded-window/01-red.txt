@@ -1,0 +1,480 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-15T04:45:53.087Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-15T04:45:57.516Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:45:57.517Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-15T04:45:57.517Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains current, project-verified source references in saved provenance and CREATE audit metadata
+{
+  "timestamp": "2026-10-15T04:46:08.614Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5a050da6-a5bc-43ee-9ba3-9a67fd093cdd by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > checks each figure of the section against the cited source: found with where, or unverified and said (S5a)
+{
+  "timestamp": "2026-10-15T04:46:08.764Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 852da2ac-61bf-4253-92ee-cd60acf5c3ee by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains current, project-verified source references in saved provenance and CREATE audit metadata 883ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > records each found figure as derived lineage to the cited Vault version, and retires it when the figure moves (S5c)
+{
+  "timestamp": "2026-10-15T04:46:08.877Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 380b34b9-0968-49e7-8a55-846d3e3c02d6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > checks each figure of the section against the cited source: found with where, or unverified and said (S5a) 129ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > records each found figure as derived lineage to the cited Vault version, and retires it when the figure moves (S5c) 124ms
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > saves a reference whose excerpt starts inside the document, and every offset is the document's own (S5d) 16ms
+   → {"error":"sections[0]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts"}: expected undefined to be true // Object.is equality
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses an excerpt longer than 12,000 characters wherever it starts, and saves nothing 8ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains the original legacy NULL-organization source as a no-write admission refusal 46ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000002 before creating anything 35ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000003 before creating anything 38ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000001 before creating anything 46ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a failed-extraction catalog record without creating a document 65ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a stale-extraction catalog record without creating a document 73ms
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+{
+  "timestamp": "2026-10-15T04:46:09.302Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Test embedding unavailable"
+  }
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-15T04:46:09.410Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cd1e1d6a-c43c-4642-95be-56df87d44615 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-15T04:46:09.427Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cd1e1d6a-c43c-4642-95be-56df87d44615 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-15T04:46:09.442Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cd1e1d6a-c43c-4642-95be-56df87d44615 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied 29ms
+   → expected undefined to be 'ddddddddddddddddddddddddddddddddddddd…' // Object.is equality
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows 83ms
+   → expected { ok: false, …(2) } to match object { ok: false, …(1) }
+(5 matching properties omitted from actual)
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > is in the tool catalog the model sees 1ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses verbatim without an open project, and writes nothing 6ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a project another organization owns as "no project" — never a cross-tenant write 3ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-15T04:46:09.512Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 455f64c5-11a4-452a-a03d-fa23bf899386 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-15T04:46:09.526Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 455f64c5-11a4-452a-a03d-fa23bf899386 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-15T04:46:09.541Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 455f64c5-11a4-452a-a03d-fa23bf899386 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist 96ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor 96ms
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message
+{
+  "timestamp": "2026-10-15T04:46:09.595Z",
+  "level": "error",
+  "message": "[draft-authoring-document-tool] draft_authoring_document failed",
+  "context": {
+    "err": "relation \"authoring_sections\" does not exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-15T04:46:09.639Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d58f7cfb-eb70-4e9e-9de1-7fb451796ad5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-15T04:46:09.655Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d58f7cfb-eb70-4e9e-9de1-7fb451796ad5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-15T04:46:09.672Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d58f7cfb-eb70-4e9e-9de1-7fb451796ad5 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a legacy project whose anchor names another organization’s program, and writes nothing (PF-04 P2) 6ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message 41ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: an unchanged eligible source still saves through the registered tool
+{
+  "timestamp": "2026-10-15T04:46:09.762Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3e032475-ce48-4877-a5be-124d1e2f8110 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program) 88ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses malformed input as an error the model can read, not a crash 4ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: an unchanged eligible source still saves through the registered tool 86ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > refuses when normal remove_data commits immediately before authoring connect, without any authoring writes 221ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: a source already withdrawn by normal apply refuses with zero authoring writes 164ms
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+{
+  "timestamp": "2026-10-15T04:46:11.494Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:46:11.497Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+{
+  "timestamp": "2026-10-15T04:46:11.497Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs 1160ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > never calls records without selected IDs and labels absence unassessed 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection undefined 3ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "raw client text" 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > requires a resolved open project rather than organization-wide evidence 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > refuses another project before retrieving its extracted text 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source null 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"missing","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":null} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"status":"extraction_failed"}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null},"disposition":"supersede"} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null},"disposition":"remove_data"} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects version change between metadata and content reads 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > honestly bounds excerpts and preserves OCR/withdrawal caveats 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > does not silently drop selected sources when the total text budget is exhausted 1ms
+ × server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > grounds a section in the stretch its terms name, deep in the document, and the span says where (S5d) 7ms
+   → expected undefined to be 'relevant' // Object.is equality
+ × server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > keeps the opening, and says so, when the section names nothing the document holds 5ms
+   → expected { …(12) } to match object { basis: 'opening', …(1) }
+(11 matching properties omitted from actual)
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > a section against the documents it cites > reports the conflict a figure check cannot see, and cites both sides 268ms
+ × server/services/authoring/__tests__/section-claims-check.test.ts > a section against the documents it cites > reports a source offset in the document, not in an excerpt that starts inside it (S5d) 37ms
+   → expected +0 to be 500 // Object.is equality
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > a section against the documents it cites > never says "consistent" as a verdict, and counts what it compared 13ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > a section against the documents it cites > declines a pair whose frames differ, with the reason, and never calls it a conflict 35ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > a section against the documents it cites > reports nothing compared as nothing compared, not as agreement 6ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > a section against the documents it cites > keeps the counts complete when it truncates the detail 78ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > the role a document plays, from the platform’s own identifiers > reads the CTD section a section or a catalogued document carries 1ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > the role a document plays, from the platform’s own identifiers > reads the document type when no CTD section is recorded 2ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > the role a document plays, from the platform’s own identifiers > fails closed on anything it does not recognise, so no role convention binds 2ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > the check is on the path a draft already takes > runs where the figure check runs, over the excerpts the save already verified 1ms
+ ✓ server/services/authoring/__tests__/section-claims-check.test.ts > the check is on the path a draft already takes > gives the engine the role of each cited document, from the record 1ms
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-15T04:46:13.799Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:46:13.801Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-15T04:46:13.801Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-15T04:46:14.113Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps only identity/version/span, never caller qualification or source text 4ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references null 2ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references undefined 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"file_9_chat","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"missing","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":-1,"end":10,"totalChars":20}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":10,"end":10,"totalChars":20}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":5,"end":12006,"totalChars":20000}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":-1,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":21,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":12001,"totalChars":20000}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":1.5,"totalChars":20}} 0ms
+ × server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps an excerpt that starts inside the document, the stretch a section needs (S5d) 6ms
+   → Invalid source excerpt span
+ × server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > counts the budget by excerpt length, wherever the excerpts start 1ms
+   → Invalid source excerpt span
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses aggregate excerpt budget overflow 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > retains source references but strips fabricated document-level verified provenance 2ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references rather than silently dropping them on parse 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/draft-source-window.test.ts [ server/services/ana/__tests__/draft-source-window.test.ts ]
+Error: Cannot find module '../draft-source-window' imported from /home/user/ClinicalSageAI-2-replit/server/services/ana/__tests__/draft-source-window.test.ts
+ ❯ server/services/ana/__tests__/draft-source-window.test.ts:7:1
+      5|  */
+      6| import { describe, expect, it } from 'vitest';
+      7| import { chooseSourceWindow, sectionTerms } from '../draft-source-wind…
+       | ^
+      8|
+      9| const filler = (n: number) => 'Front matter, table of contents and adm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps an excerpt that starts inside the document, the stretch a section needs (S5d)
+Error: Invalid source excerpt span
+ ❯ parseReference server/services/authoring/draft-source-references.ts:20:109
+     18|       typeof ref.contentHash !== 'string' || !/^[0-9a-f]{64}$/i.test(r…
+     19|   if (span.start !== 0 || !Number.isSafeInteger(span.end) || !Number.i…
+     20|       Number(span.end) < 1 || Number(span.end) > 12000 || Number(span.…
+       |                                                                                                             ^
+     21|   return { documentId: ref.documentId.toLowerCase(), contentHash: ref.…
+     22|     span: { start: 0, end: Number(span.end), totalChars: Number(span.t…
+ ❯ parseDraftSourceReferences server/services/authoring/draft-source-references.ts:28:20
+ ❯ server/services/authoring/__tests__/draft-source-references.test.ts:22:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > counts the budget by excerpt length, wherever the excerpts start
+Error: Invalid source excerpt span
+ ❯ parseReference server/services/authoring/draft-source-references.ts:20:109
+     18|       typeof ref.contentHash !== 'string' || !/^[0-9a-f]{64}$/i.test(r…
+     19|   if (span.start !== 0 || !Number.isSafeInteger(span.end) || !Number.i…
+     20|       Number(span.end) < 1 || Number(span.end) > 12000 || Number(span.…
+       |                                                                                                             ^
+     21|   return { documentId: ref.documentId.toLowerCase(), contentHash: ref.…
+     22|     span: { start: 0, end: Number(span.end), totalChars: Number(span.t…
+ ❯ parseDraftSourceReferences server/services/authoring/draft-source-references.ts:28:20
+ ❯ server/services/authoring/__tests__/draft-source-references.test.ts:29:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/authoring/__tests__/section-claims-check.test.ts > a section against the documents it cites > reports a source offset in the document, not in an excerpt that starts inside it (S5d)
+AssertionError: expected +0 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 0
+
+ ❯ server/services/authoring/__tests__/section-claims-check.test.ts:60:51
+     58|     const at0 = checkSectionClaims('2.7.4', section, [excerpt(CSR_SAFE…
+     59|     const at500 = checkSectionClaims('2.7.4', section, [excerpt(CSR_SA…
+     60|     expect(at500.source.start - at0.source.start).toBe(500);
+       |                                                   ^
+     61|     expect(at500.source.end - at0.source.end).toBe(500);
+     62|     // The section's own offsets do not move.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > saves a reference whose excerpt starts inside the document, and every offset is the document's own (S5d)
+AssertionError: {"error":"sections[0]: invalid sourceReferences; retain the document IDs, hashes and spans from the batch source receipts"}: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:230:44
+    228|       content: '<p>The endpoint was observed in 30 subjects.</p>', sou…
+    229|     { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: reque…
+    230|     expect(out.saved, JSON.stringify(out)).toBe(true);
+       |                                            ^
+    231|     const ref = out.projectSourceReferences[0];
+    232|     expect(ref.sources[0]).toMatchObject({ span: { start, end: SOURCE_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+AssertionError: expected undefined to be 'ddddddddddddddddddddddddddddddddddddd…' // Object.is equality
+
+- Expected:
+"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:291:44
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "refusal": StringContaining "has a newer version than the one you read",
++   "refusal": "This source is no longer eligible for catalog changes. Review its current source status. Nothing was saved.",
+  }
+
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:317:23
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > grounds a section in the stretch its terms name, deep in the document, and the span says where (S5d)
+AssertionError: expected undefined to be 'relevant' // Object.is equality
+
+- Expected:
+"relevant"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/draft-project-sources.test.ts:82:23
+     80|     const result = await loadDraftProjectSources([id], ctx, 'efficacy …
+     81|     const src = result.sources[0];
+     82|     expect(src.basis).toBe('relevant');
+       |                       ^
+     83|     expect(src.span.start).toBeGreaterThan(0);
+     84|     expect(src.text).toContain('improved by 120 mL');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > keeps the opening, and says so, when the section names nothing the document holds
+AssertionError: expected { …(12) } to match object { basis: 'opening', …(1) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,6 @@
+  {
+-   "basis": "opening",
+    "span": {
+      "end": 12000,
+      "start": 0,
+      "totalChars": 18000,
+    },
+
+ ❯ server/services/ana/__tests__/draft-project-sources.test.ts:93:17
+     91|     mocks.load.mockResolvedValue({ ...doc(), extractedText: 'x '.repea…
+     92|     const src = (await loadDraftProjectSources([id], ctx, 'pharmacokin…
+     93|     expect(src).toMatchObject({ basis: 'opening', span: { start: 0, en…
+       |                 ^
+     94|   });
+     95| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  8 failed | 68 passed (76)
+   Start at  04:45:47
+   Duration  28.33s (transform 11.24s, setup 234ms, import 18.67s, tests 8.07s, environment 1ms)
+
