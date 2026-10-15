@@ -6,7 +6,7 @@
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs
  * render live backend data through DataGate (honest loading / error / empty
- * states), with the kit fixtures reachable only in explicit sample mode. The
+ * states). The
  * drawer is a preview surface — "Open in editor" hands off to the existing
  * route.
  */
@@ -147,9 +147,7 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
 
   const selected = events.find((e) => e.id === selectedId) || filtered[0];
 
-  /* Fixtures carry a synthesized chain and no `chain` field, so they count as
-     chained — they are only ever reachable through the explicit sample-mode
-     boundary, where the surface is already labelled as sample content. */
+  /* A row counts as unchained only when the feed marks it `chain: 'unchained'`. */
   const unchainedCount = events.filter((e) => e.chain === 'unchained').length;
 
   /* Rows whose recorded action this client has no category for. The kind
@@ -1155,17 +1153,9 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
   const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
-  // Live backend data (audit / correspondence / approvals); fixtures only in
-  // explicit sample mode, honest empty states otherwise.
+  // Live backend data (audit / correspondence / approvals), honest empty
+  // states otherwise.
   const data = usePathwayTabsData(pathway, programId);
-  /* Sample content handed to DataGate's `sample` prop — rendered solely when
-     the user has switched sample mode on, and always under the standing banner.
-     CORRESPONDENCE ONLY. The audit and approvals bundles were a synthesized
-     Part 11 hash-chain and a set of fabricated signed approvals; they are
-     deleted, and `PathwayTabsBundle` no longer declares the fields, so a
-     `sample={fixtures.audit}` here is now a compile error rather than a
-     judgement call. Those two panes render live rows or an honest empty. */
-  const fixtures = PATHWAY_TABS_DATA[pathway];
   // Async-seed the dossier store (Files tree + drawer) from the real backend.
   const dossier = useDossierHydration(pathway, programId);
 
@@ -1267,7 +1257,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 /* Kept verbatim: it is the honest half of the old copy, and on
                    a governed surface "we did not quietly show you something
                    else instead" is worth saying. */
-                message="Sample evidence has not been substituted."
+                message="Nothing else has been shown in its place."
                 retry={dossier.refresh}
                 testId="dossier-unavailable"
               />
@@ -1293,7 +1283,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 testId="dossier-empty"
               />
             )}
-            {(dossier.status === 'live-data' || dossier.status === 'sample') && (
+            {dossier.status === 'live-data' && (
               <FilesTreePane
                 key={`ftp-${pathway}-${dossier.version}`}
                 pathway={pathway}

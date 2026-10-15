@@ -61,7 +61,6 @@ export interface RouteRegistrationContext {
   app: Express;
   pool: Pool;
   experimentalRoutesEnabled: boolean;
-  demoRoutesEnabled: boolean;
   testRoutesEnabled: boolean;
 }
 
@@ -84,7 +83,7 @@ export async function registerPreStartRoutes(
   ctx: RouteRegistrationContext,
   aiCircuitBreaker: CircuitBreakerMiddleware
 ): Promise<void> {
-  const { app, pool, experimentalRoutesEnabled, demoRoutesEnabled, testRoutesEnabled } = ctx;
+  const { app, pool, experimentalRoutesEnabled, testRoutesEnabled } = ctx;
   const inlineCtx = { app, pool };
 
   // Platform: /api/auth, /api/v1/auth, /api/users, /api/user, legacy auth
@@ -129,7 +128,6 @@ export async function registerPreStartRoutes(
     pool,
     isStaticDataEnabled,
     mountStaticBusinessDataGuard: buildStaticBusinessDataGuard(app),
-    DEMO_ROUTES_ENABLED: demoRoutesEnabled,
     EXPERIMENTAL_ROUTES_ENABLED: experimentalRoutesEnabled,
   });
 

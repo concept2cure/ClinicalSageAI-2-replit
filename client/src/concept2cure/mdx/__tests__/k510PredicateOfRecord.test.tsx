@@ -26,7 +26,6 @@ import { render, cleanup, waitFor, fireEvent, screen } from '@testing-library/re
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { K510Surface, reseedSelection } from '../surfaces/K510Surface';
-import { setSampleMode } from '../lib/sampleMode';
 import type { Program } from '../data/programs';
 
 const PROGRAM: Program = {
@@ -137,7 +136,6 @@ function wrap(ui: React.ReactElement) {
 
 afterEach(() => {
   cleanup();
-  setSampleMode(false);
   vi.unstubAllGlobals();
 });
 
@@ -269,11 +267,10 @@ describe('example rows are never claimable', () => {
      That property now holds more strongly: the example rows are gone. They
      paired real clearances with an invented match score against the sponsor's
      device, and nothing on screen said they were examples; the only marking
-     was that tooltip. So the check becomes that sample mode, which used to
-     summon them, produces no candidate row at all — and therefore no control
-     that could claim one. */
-  it('offers no example K-number to claim, even with sample mode on', async () => {
-    setSampleMode(true);
+     was that tooltip. So the check became that sample mode, which used to
+     summon them, produced no candidate row at all; sample mode is gone too
+     (2026-10-14), so the surface has no path to an example K-number. */
+  it('offers no example K-number to claim', async () => {
     const puts = stubApi({ shadowDown: false, candidates: [] });
     const { container } = wrap(<K510Surface program={PROGRAM} onAskAna={() => {}} />);
 

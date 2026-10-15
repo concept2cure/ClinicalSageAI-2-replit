@@ -128,7 +128,6 @@ async function productionApp(): Promise<express.Express> {
     pool: {} as never,
     isStaticDataEnabled: () => false,
     mountStaticBusinessDataGuard: () => undefined,
-    DEMO_ROUTES_ENABLED: false,
     EXPERIMENTAL_ROUTES_ENABLED: false,
   });
   app.use('/api/mdx', mdxQmsRouter);

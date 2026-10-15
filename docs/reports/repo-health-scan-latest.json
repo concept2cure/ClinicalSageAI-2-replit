@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-14T22:34:51.695Z",
+  "generatedAt": "2026-10-15T02:38:35.235Z",
   "git": {
-    "sha": "d58e7944ddd0265de07dc3861c7937a24ec3652b",
+    "sha": "33f8382b4dff368f193e047357b11222b94fe874",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2381,7 +2381,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 104883
+        "bytes": 106683
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2587,7 +2587,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2221
+        "lines": 2254
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2626,12 +2626,12 @@
         "lines": 2119
       },
       {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 2097
-      },
-      {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
         "lines": 2095
+      },
+      {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2091
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2698,6 +2698,10 @@
         "lines": 1936
       },
       {
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1932
+      },
+      {
         "file": "server/routes/submissions.ts",
         "lines": 1930
       },
@@ -2728,10 +2732,6 @@
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
-      },
-      {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1857
       },
       {
         "file": "server/routes/ivdr-routes.ts",
@@ -2826,16 +2826,16 @@
         "lines": 1629
       },
       {
-        "file": "shared/navigation/surface-actions.ts",
-        "lines": 1627
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1626
       },
       {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
+      },
+      {
+        "file": "shared/navigation/surface-actions.ts",
+        "lines": 1615
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",

@@ -814,18 +814,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Inconsistency board ──
-  {
-    id: 'inconsistency.set-regulator',
-    surfaceId: 'inconsistency',
-    label: 'Switch the regulator overlay',
-    description:
-      'On the inconsistency board, switch the FDA/EMA overlay — a client-side re-scoring of the same findings; the applied detail restates the gate verdict under the new overlay. Scans, resolutions, and assumption revaluations stay governed human acts.',
-    params: [
-      { name: 'regulator', required: true, description: 'The regulator overlay to apply.', enum: ['FDA', 'EMA'] },
-    ],
-  },
-
   // ── Capability catalog ──
   {
     id: 'intelligence-catalog.filter',

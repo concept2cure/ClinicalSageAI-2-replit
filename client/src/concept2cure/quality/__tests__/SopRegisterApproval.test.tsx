@@ -30,7 +30,6 @@ const H = vi.hoisted(() => ({
   trainRows: [] as unknown[] | null,
   trainError: null as string | null,
   trainRefresh: vi.fn(),
-  sample: false,
   apiRequest: vi.fn(),
   refresh: vi.fn(),
   signed: null as unknown,
@@ -50,10 +49,6 @@ vi.mock('../hooks', () => ({
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
-}));
-vi.mock('../../mdx/lib/useSampleRows', () => ({
-  useSampleRows: <T,>(live: T[] | null) => (live ?? []) as T[],
-  useShowingSample: () => H.sample,
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
 vi.mock('@/lib/queryClient', () => ({
@@ -95,7 +90,6 @@ beforeEach(() => {
   H.trainRows = [];
   H.trainError = null;
   H.trainRefresh.mockReset();
-  H.sample = false;
   H.apiRequest.mockReset();
   H.refresh.mockReset();
   H.signed = null;
@@ -150,12 +144,6 @@ describe('SopRegister — approval is a signature taken here', () => {
     expect(H.signed).toBeNull();
   });
 
-  it('cannot approve a sample row', () => {
-    H.sample = true;
-    renderRegister();
-    const btn = screen.getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-  });
 });
 
 /* QA walk 2026-10-08 (J8): a draft row offered Approve, whose dialog said
@@ -197,13 +185,6 @@ describe('SopRegister — a draft is sent for review before it can be approved',
     fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/changes only through a revision/));
     expect(H.refresh).not.toHaveBeenCalled();
-  });
-
-  it('cannot send a sample row for review', () => {
-    H.docs = [DRAFT_ROW];
-    H.sample = true;
-    renderRegister();
-    expect((screen.getByRole('button', { name: /Send for review/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
 

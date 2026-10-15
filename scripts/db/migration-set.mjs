@@ -3206,6 +3206,12 @@ export const C2C_MIGRATION_FILES = [
   // columns or policies change. D2 onboarding browser validation evidence:
   // docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/report-index-repair.md.
   'migrations/20261014_immutable_report_tenant_index.sql',
+  // complaints.patient_harm / severity_assessment lose their 'none' / 'minor'
+  // defaults (2026-10-15): the intake triage computed "no MDR" from a harm
+  // nobody assessed. Companion to the in-place amendment of the overlay-only
+  // creator migrations/20260504_capa_mdr.sql; conditional on the live default,
+  // creates nothing, so it sits anywhere above the final pair.
+  'migrations/20261015_complaint_assessment_no_default.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
