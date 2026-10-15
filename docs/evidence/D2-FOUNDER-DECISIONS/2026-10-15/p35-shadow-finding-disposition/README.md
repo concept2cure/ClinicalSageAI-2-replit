@@ -129,3 +129,18 @@ How failure shows: a refusal shows the server's words ("Finding #N was not close
 2. **The Dispatch tab does not list dispositioned criticals.** P-35 asks that "the readiness view names who closed each critical and how". The Shadow review tab does this per finding, but the dispatch-readiness answer does not carry dispositioned criticals. The assessor could expose them (for example with `withShadowFindingDispositions` over the sequence's runs), and `DispatchWorkspace` would render the same `FindingDispositionNote`.
 3. A disposition does not lapse when the leaves change later. P-35 does not ask for this. The signature binds the leaf manifest when it is checked at the act and again under the lock.
 4. The `SC_FIND_STATUS` chip still reads "Accepted" rather than "Risk accepted"; the note beside it says "Risk accepted by …". The finding status `waived` still has no writer and is not used by this act.
+
+## On integration, same day: a closure stands only while its signature is in force
+
+Open item 1 above (a revoked disposition signature did not reopen the finding for the gate) was a hole, and a second one was behind it. The finding could not be closed again either: only `status = 'open'` was disposable. So a revoked closure would have blocked dispatch forever, with nothing able to clear it. One rule now applies everywhere (`closureStands` in `shadow-finding-disposition.ts`): a closed critical counts as closed only while its status is a disposition and the signature that closed it is in force.
+
+- **The gate.** `criticalsStandingOpen` is the assessor's count. The assessor's own drizzle count is deleted. It counts every open critical and every closed one whose closure no longer stands. The structural gate names each reopened critical by finding and signature (`reopenedCriticalSentence`), in `gate`, `freezeGate` and `dispatchGateOnSigning`.
+- **The offer and the act.** Such a critical is offered again, and the reason says why. The act's UPDATE compare-and-sets on the status and closing signature it judged. A finding re-closed since it was judged is zero rows. The earlier closure stays on the audit chain.
+- **The read and the screen.** Each row carries `standsOpen`. The Shadow review tab offers on it, shows the chip as Open, and the note says "so it blocks dispatch again".
+- **Harnesses.** Seven test harnesses each hand-wrote the Shadow Review tables, and none had the 2026-10-15 columns. They now use one `SHADOW_REVIEW_PGLITE_DDL` (`createIndPgliteDb({ shadowReview: true })`). `server/db/__tests__/shadow-review-pglite-ddl.contract.test.ts` holds it to the deploy path's migrations column for column; mutation H1 shows it failing. The waiver suite, the NDA journey and the lineage walk apply `20261015b`.
+- `reopen/green.txt`:
+  - the P-35 suite, 16/16, three new cases;
+  - the client suite, 11/11, one new case;
+  - the DDL contract, 2/2;
+  - regression: 68 files, 909 tests.
+- `reopen/mutations.txt`: R1, R2, R3b, R4, C1, C2 and H1 each fail their case, and every file was restored byte-identical. R3 is kept with a note: its failures are an unbound-parameter SQL error, and R3b is the real test of the compare-and-set.

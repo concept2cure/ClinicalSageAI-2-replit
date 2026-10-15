@@ -43,7 +43,14 @@ import {
   waiveShadowReview,
   precheckGovernedStep,
 } from '../../submission-service/submission-service';
-import { shadowFindingDisposable, withShadowFindingDispositions } from '../shadow-finding-disposition';
+import {
+  criticalsStandingOpen,
+  reopenedCriticalSentence,
+  shadowFindingDisposable,
+  shadowFindingDispositionUpdate,
+  withShadowFindingDispositions,
+} from '../shadow-finding-disposition';
+import { assessSequenceDispatchReadiness } from '../assess-dispatch-readiness';
 import { evaluateShadowPresenceWithWaiver } from '../shadow-review-waiver';
 import { evaluateDispatchGate, mergeDispatchGates } from '../dispatch-gate';
 import { getShadowReviewFindings } from '../../shadow-review/shadow-review-service';
@@ -159,14 +166,8 @@ const findingRow = async (id: number) =>
     [id],
   )).rows[0] as { status: string; disposition_signature_action_id: string | null; disposed_by: number | null; disposed_at: unknown; disposition_reason: string | null };
 
-/** The dispatch assessor's count, word for word (assess-dispatch-readiness countOpenShadowCriticals). */
-const openCriticals = async (seq: number) =>
-  Number((await q(
-    `SELECT count(*)::int AS n FROM shadow_review_findings f JOIN shadow_review_runs r ON f.run_id = r.id
-      WHERE r.sequence_id = $1 AND f.organization_id = $2 AND f.severity = 'critical' AND f.status = 'open'
-        AND f.deleted_at IS NULL AND r.deleted_at IS NULL`,
-    [seq, ORG],
-  )).rows[0].n);
+/** The dispatch assessor's count: the one it calls (criticalsStandingOpen). */
+const openCriticals = async (seq: number) => (await criticalsStandingOpen(queryable, { sequenceId: seq, organizationId: ORG })).count;
 /** The assessor's completed-run count (countCompletedShadowRuns). */
 const completedRuns = async (seq: number) =>
   Number((await q(
@@ -219,14 +220,13 @@ describe('the migration', () => {
 });
 
 describe('the count this suite reads is the assessor\'s', () => {
-  it('countOpenShadowCriticals still counts severity critical AND status open, so a dispositioned critical leaves it', () => {
+  it('the assessor counts through criticalsStandingOpen, and keeps no count of its own beside it', () => {
     const src = fs.readFileSync(path.resolve(__dirname, '../assess-dispatch-readiness.ts'), 'utf8');
-    const start = src.indexOf('async function countOpenShadowCriticals(');
-    expect(start, 'the assessor no longer has countOpenShadowCriticals; re-point openCriticals above').toBeGreaterThan(-1);
-    const body = src.slice(start, src.indexOf('\n}\n', start));
-    expect(body).toContain("eq(shadowReviewFindings.severity, 'critical')");
-    expect(body).toContain("eq(shadowReviewFindings.status, 'open')");
-    expect(body).toContain('isNull(shadowReviewRuns.deletedAt)');
+    expect(src, 'the assessor no longer calls criticalsStandingOpen; re-point openCriticals above').toMatch(
+      /const shadowCriticals = await criticalsStandingOpen\(/,
+    );
+    expect(src).toContain('unacknowledgedShadowCriticals = shadowCriticals.count');
+    expect(src).not.toContain('countOpenShadowCriticals');
   });
 });
 
@@ -477,5 +477,78 @@ describe('a disposition signature is used once, and is its own act', () => {
       expect(await signatureRow(sig)).toMatchObject({ is_valid: true, verification_status: 'valid' });
     }
     expect((await findingRow(crit)).status).toBe('open');
+  });
+});
+
+describe('a closure stands only while its signature is in force', () => {
+  const revoke = (actionId: string) =>
+    q(`UPDATE electronic_signatures SET is_valid = false, verification_status = 'revoked' WHERE (signature_manifest::jsonb ->> 'actionId') = $1`, [actionId]);
+  const assess = (seq: number) => assessSequenceDispatchReadiness({ sequenceId: seq, organizationId: ORG });
+
+  it('a revoked closing signature reopens the critical for the gate, the offer and the read; a new signature closes it again', async () => {
+    const seq = await makeSequence();
+    const r1 = await run(seq, 'complete', 2);
+    const crit = await finding(r1);
+    const first = await signFor(seq, crit, 'accepted');
+    await dispose(seq, crit, 'accepted', first);
+    expect(await openCriticals(seq)).toBe(0);
+    const closedVerdict = await assess(seq);
+    expect(closedVerdict.unacknowledgedShadowCriticals).toBe(0);
+
+    await revoke(first);
+    const standing = await criticalsStandingOpen(queryable, { sequenceId: seq, organizationId: ORG });
+    expect(standing).toEqual({ count: 1, reopened: [{ findingId: crit, status: 'accepted', signatureActionId: first }] });
+    // The real dispatch verdict: counted, and said by finding and signature, in every governed step's verdict.
+    const reopened = await assess(seq);
+    expect(reopened.unacknowledgedShadowCriticals).toBe(1);
+    const sentence = reopenedCriticalSentence({ findingId: crit, status: 'accepted', signatureActionId: first });
+    for (const verdict of [reopened.gate, reopened.freezeGate, reopened.dispatchGateOnSigning]) {
+      expect(verdict.cleared).toBe(false);
+      expect(verdict.blockers).toContain(sentence);
+    }
+    expect(reopened.gates.find((g) => g.key === 'structural')?.blockers).toContain(sentence);
+
+    // Offered again, by the act's own rule, saying why.
+    const offer = await shadowFindingDisposable(queryable, { sequenceId: seq, organizationId: ORG, findingId: crit });
+    expect(offer.offered).toEqual(['accepted']);
+    expect(offer.reason).toContain(sentence);
+    const [read] = (await withShadowFindingDispositions(queryable, { organizationId: ORG, runId: r1 }, await getShadowReviewFindings(r1, ctx)))
+      .filter((f) => f.id === crit);
+    expect(read).toMatchObject({ standsOpen: true, dispositionsOffered: ['accepted'], disposition: { signatureState: 'revoked' } });
+
+    // The revoked signature closes nothing again; a new one does.
+    expect(await outcome(dispose(seq, crit, 'accepted', first))).toMatchObject({ code: 'GOVERNED_REQUIRED' });
+    const second = await signFor(seq, crit, 'accepted');
+    await dispose(seq, crit, 'accepted', second);
+    expect(await findingRow(crit)).toMatchObject({ status: 'accepted', disposition_signature_action_id: second });
+    expect(await openCriticals(seq)).toBe(0);
+    expect((await assess(seq)).gate.blockers).not.toContain(sentence);
+    // The first closure stays on the chain.
+    expect((await auditRowsNaming(first)).map((r) => r.action)).toContain('SHADOW_FINDING_DISPOSITIONED');
+  });
+
+  it('a closure with no signature on record, or a status nothing signed, does not hold a critical closed', async () => {
+    const seq = await makeSequence();
+    const r1 = await run(seq, 'complete', 2);
+    const unsigned = await finding(r1);
+    const waived = await finding(r1);
+    await q(`UPDATE shadow_review_findings SET status = 'accepted' WHERE id = $1`, [unsigned]);
+    await q(`UPDATE shadow_review_findings SET status = 'waived' WHERE id = $1`, [waived]);
+    const standing = await criticalsStandingOpen(queryable, { sequenceId: seq, organizationId: ORG });
+    expect(standing.count).toBe(2);
+    expect(standing.reopened.map((r) => r.findingId)).toEqual([unsigned, waived]);
+    expect(reopenedCriticalSentence(standing.reopened[0])).toMatch(/with no signature on record, so it blocks dispatch again/);
+  });
+
+  it('the act changes only the row it judged: a finding re-closed since is zero rows', async () => {
+    const seq = await makeSequence();
+    const r1 = await run(seq, 'complete', 2);
+    const crit = await finding(r1);
+    await dispose(seq, crit, 'accepted', await signFor(seq, crit, 'accepted'));
+    const stale = shadowFindingDispositionUpdate({
+      sequenceId: seq, organizationId: ORG, signerId: SIGNER, findingId: crit, disposition: 'accepted',
+      signatureActionId: 'p35-stale', reason: ACCEPT_REASON, judged: { status: 'open', signatureActionId: null },
+    });
+    expect((await q(stale.text, stale.params)).rows).toEqual([]);
   });
 });

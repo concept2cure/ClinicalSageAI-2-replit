@@ -85,7 +85,7 @@ async function zipOf(bundlePath: string) {
 }
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
   holder.db = harness.db;
   holder.pglite = harness.pglite;
   await harness.pglite.exec(`
@@ -344,16 +344,6 @@ async function seedUnreadableWithdrawals() {
     CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS shadow_review_runs (
-      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
-      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
-      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS shadow_review_findings (
-      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
-      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
     );
     INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROGRAM}', ${ORG});
     -- On file in the vault, but its bytes never reached the storage provider.

@@ -111,13 +111,16 @@ export interface ShadowFindingDisposability {
   laterCompletedRunId: number | null;
   /** Why these are offered, or why none is, as one calm sentence. */
   reason: string;
+  /** The finding's status and closing signature as judged: the act's
+   *  compare-and-set holds both, so it changes only the row that was judged. */
+  judged?: { status: string; signatureActionId: string | null };
 }
 
-type FindingAt = { id: number; run_id: number; severity: string; status: string };
+type FindingAt = { id: number; run_id: number; severity: string; status: string; disposition_signature_action_id?: string | null };
 
 /** A finding of a non-deleted run of THIS sequence, in this organization. */
 const FINDING_OF_SEQUENCE = `
-  SELECT f.id, f.run_id, f.severity, f.status
+  SELECT f.id, f.run_id, f.severity, f.status, f.disposition_signature_action_id
     FROM shadow_review_findings f
     JOIN shadow_review_runs r ON r.id = f.run_id AND r.organization_id = f.organization_id AND r.deleted_at IS NULL
    WHERE f.id = $1 AND f.organization_id = $2 AND f.deleted_at IS NULL AND r.sequence_id = $3`;
@@ -142,10 +145,32 @@ async function laterCompletedRun(q: DispositionQueryable, runId: number, organiz
   return row ? Number(row.id) : null;
 }
 
-/** The verdict on one finding, given whether a later completed run exists. Pure. */
-function findingDisposability(f: FindingAt, laterRunId: number | null): ShadowFindingDisposability {
+/**
+ * Does a closed finding's closure still stand? Only when its status is one of
+ * the dispositions and the signature that closed it is in force. A revoked,
+ * superseded or missing signature does not hold a critical closed, and nor
+ * does a status nothing signed (the column's vocabulary also has 'waived',
+ * which no act writes). The one rule the gate, the offer and the read apply.
+ */
+function closureStands(status: string, sig: SignatureRow | undefined): boolean {
+  return isShadowFindingDisposition(status) && sig !== undefined && !isSignatureWithdrawn(sig);
+}
+
+/** Why a closed critical blocks again, as the dispatch gate says it. */
+export function reopenedCriticalSentence(r: { findingId: number; status: string; signatureActionId: string | null }): string {
+  const under = r.signatureActionId ? `under signature ${r.signatureActionId}, which is no longer in force` : 'with no signature on record';
+  return (
+    `Critical Shadow Review finding #${r.findingId} was closed as ${r.status} ${under}, so it blocks dispatch again. ` +
+    'Close it again under a new signature.'
+  );
+}
+
+/** The verdict on one finding, given whether a later completed run exists and
+ *  whether a closure it carries still stands. Pure. */
+function findingDisposability(f: FindingAt, laterRunId: number | null, standsClosed: boolean): ShadowFindingDisposability {
   const findingId = Number(f.id);
   const runId = Number(f.run_id);
+  const judged = { status: f.status, signatureActionId: f.disposition_signature_action_id ?? null };
   const none = (reason: string): ShadowFindingDisposability => ({ findingId, runId, offered: [], laterCompletedRunId: laterRunId, reason });
   if (f.severity !== 'critical') {
     return none(
@@ -153,23 +178,63 @@ function findingDisposability(f: FindingAt, laterRunId: number | null): ShadowFi
         'open critical finding is closed by signature.',
     );
   }
-  if (f.status !== 'open') {
+  if (f.status !== 'open' && standsClosed) {
     return none(`Finding #${findingId} is already ${f.status}, so there is nothing left to close.`);
   }
+  // Open, or closed under a signature no longer in force: it blocks, and may be closed again.
+  const again = f.status === 'open' ? '' : `${reopenedCriticalSentence({ findingId, ...judged })} `;
   if (laterRunId === null) {
     return {
-      findingId, runId, offered: ['accepted'], laterCompletedRunId: null,
+      findingId, runId, offered: ['accepted'], laterCompletedRunId: null, judged,
       reason:
-        `Critical finding #${findingId} may be closed as risk accepted. It can be marked fixed only after a Shadow Review ` +
+        `${again}Critical finding #${findingId} may be closed as risk accepted. It can be marked fixed only after a Shadow Review ` +
         `completes on this sequence after run #${runId}, where it was found.`,
     };
   }
   return {
-    findingId, runId, offered: ['accepted', 'fixed'], laterCompletedRunId: laterRunId,
+    findingId, runId, offered: ['accepted', 'fixed'], laterCompletedRunId: laterRunId, judged,
     reason:
-      `Critical finding #${findingId} may be closed as risk accepted, or as fixed: Shadow Review run #${laterRunId} ` +
+      `${again}Critical finding #${findingId} may be closed as risk accepted, or as fixed: Shadow Review run #${laterRunId} ` +
       `completed after run #${runId}, where it was found.`,
   };
+}
+
+/** Whether a finding row's closure stands, reading its closing signature. */
+async function standsClosed(q: DispositionQueryable, organizationId: number, f: Pick<FindingAt, 'status' | 'disposition_signature_action_id'>): Promise<boolean> {
+  if (f.status === 'open') return false;
+  const actionId = f.disposition_signature_action_id ?? null;
+  return closureStands(f.status, actionId ? await signatureOf(q, organizationId, actionId) : undefined);
+}
+
+/**
+ * The critical findings of a sequence that block dispatch: every open one, and
+ * every closed one whose closure no longer stands (closureStands), named so
+ * the gate can say why it blocks again. This is the dispatch assessor's count
+ * (P-35): a closure is a signature, and a signature taken out of force closes
+ * nothing. Throws on a failed read — the assessor's caller answers, never a
+ * count of zero standing in for "could not tell".
+ */
+export async function criticalsStandingOpen(
+  q: DispositionQueryable,
+  params: { sequenceId: number; organizationId: number },
+): Promise<{ count: number; reopened: Array<{ findingId: number; status: string; signatureActionId: string | null }> }> {
+  const rows = (await q.query(
+    `SELECT f.id, f.status, f.disposition_signature_action_id
+       FROM shadow_review_findings f
+       JOIN shadow_review_runs r ON r.id = f.run_id AND r.organization_id = f.organization_id AND r.deleted_at IS NULL
+      WHERE r.sequence_id = $1 AND f.organization_id = $2 AND f.severity = 'critical' AND f.deleted_at IS NULL
+      ORDER BY f.id`,
+    [params.sequenceId, params.organizationId],
+  )).rows as Array<{ id: number; status: string; disposition_signature_action_id: string | null }>;
+  let count = 0;
+  const reopened: Array<{ findingId: number; status: string; signatureActionId: string | null }> = [];
+  for (const f of rows) {
+    if (f.status === 'open') { count += 1; continue; }
+    if (await standsClosed(q, params.organizationId, f)) continue;
+    count += 1;
+    reopened.push({ findingId: Number(f.id), status: f.status, signatureActionId: f.disposition_signature_action_id ?? null });
+  }
+  return { count, reopened };
 }
 
 /**
@@ -189,7 +254,7 @@ export async function shadowFindingDisposable(
       reason: `Finding #${findingId} is not a finding of a Shadow Review run of this sequence, so it cannot be closed here.`,
     };
   }
-  return findingDisposability(f, await laterCompletedRun(q, Number(f.run_id), organizationId));
+  return findingDisposability(f, await laterCompletedRun(q, Number(f.run_id), organizationId), await standsClosed(q, organizationId, f));
 }
 
 /** Why closing the finding this way is refused, given what is offered, or null. Pure. */
@@ -245,9 +310,12 @@ export async function dispositionSignatureReason(
 
 /**
  * The finding's disposition columns, and its status, as one compare-and-set
- * UPDATE: only an open critical finding of a non-deleted run of this sequence
- * changes, so a finding closed, deleted or moved since it was judged is zero
- * rows, never a second disposition.
+ * UPDATE on the status and closing signature it was judged with: an open
+ * critical, or one closed under a signature no longer in force (closureStands),
+ * of a non-deleted run of this sequence. A finding closed, re-closed, deleted
+ * or moved since it was judged is zero rows, never a second disposition. The
+ * earlier closure stays on the audit chain (its SHADOW_FINDING_DISPOSITIONED
+ * row) and its signature row; the finding carries the one that stands.
  */
 export function shadowFindingDispositionUpdate(p: {
   sequenceId: number;
@@ -257,16 +325,21 @@ export function shadowFindingDispositionUpdate(p: {
   disposition: ShadowFindingDisposition;
   signatureActionId: string;
   reason: string;
+  judged: { status: string; signatureActionId: string | null };
 }): { text: string; params: unknown[] } {
   return {
     text: `UPDATE shadow_review_findings f
               SET status = $1, disposition_signature_action_id = $2, disposed_by = $3, disposed_at = now(),
                   disposition_reason = $4, updated_at = now()
-            WHERE f.id = $5 AND f.organization_id = $6 AND f.severity = 'critical' AND f.status = 'open' AND f.deleted_at IS NULL
+            WHERE f.id = $5 AND f.organization_id = $6 AND f.severity = 'critical' AND f.deleted_at IS NULL
+              AND f.status = $8 AND f.disposition_signature_action_id IS NOT DISTINCT FROM $9::text
               AND EXISTS (SELECT 1 FROM shadow_review_runs r
                            WHERE r.id = f.run_id AND r.sequence_id = $7 AND r.organization_id = f.organization_id AND r.deleted_at IS NULL)
            RETURNING f.id`,
-    params: [p.disposition, p.signatureActionId, p.signerId, p.reason, p.findingId, p.organizationId, p.sequenceId],
+    params: [
+      p.disposition, p.signatureActionId, p.signerId, p.reason, p.findingId, p.organizationId, p.sequenceId,
+      p.judged.status, p.judged.signatureActionId,
+    ],
   };
 }
 
@@ -356,6 +429,8 @@ export type FindingWithDisposition<T> = T & {
   dispositionsOffered: ShadowFindingDisposition[];
   /** The completed run after this run that 'fixed' would rest on, or null. */
   laterCompletedRunId: number | null;
+  /** A critical that blocks dispatch: open, or closed under a signature no longer in force. */
+  standsOpen: boolean;
 };
 
 /**
@@ -369,20 +444,23 @@ export async function withShadowFindingDispositions<T extends FindingRowIn>(
   params: { organizationId: number; runId: number },
   rows: T[],
 ): Promise<Array<FindingWithDisposition<T>>> {
-  const anyOpenCritical = rows.some((r) => r.severity === 'critical' && r.status === 'open');
+  const views = await Promise.all(rows.map((row) => dispositionView(q, params.organizationId, row)));
+  // The closure rule (closureStands), read from the view: a closed critical stands closed only under a signature in force.
+  const closed = rows.map((row, i) => row.status !== 'open' && views[i]?.signatureState === 'in-force');
+  const anyOpenCritical = rows.some((r, i) => r.severity === 'critical' && !closed[i]);
   const laterRunId = anyOpenCritical ? await laterCompletedRun(q, params.runId, params.organizationId) : null;
-  const out: Array<FindingWithDisposition<T>> = [];
-  for (const row of rows) {
+  return rows.map((row, i) => {
     const offered = findingDisposability(
-      { id: row.id, run_id: row.runId, severity: row.severity, status: row.status },
+      { id: row.id, run_id: row.runId, severity: row.severity, status: row.status, disposition_signature_action_id: row.dispositionSignatureActionId ?? null },
       laterRunId,
+      closed[i],
     ).offered;
-    out.push({
+    return {
       ...row,
-      disposition: await dispositionView(q, params.organizationId, row),
+      disposition: views[i],
       dispositionsOffered: offered,
       laterCompletedRunId: offered.length ? laterRunId : null,
-    });
-  }
-  return out;
+      standsOpen: row.severity === 'critical' && !closed[i],
+    };
+  });
 }

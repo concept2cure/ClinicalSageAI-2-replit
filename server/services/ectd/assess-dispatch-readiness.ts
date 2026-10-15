@@ -37,9 +37,10 @@
 
 import { ruleView, DISPATCH_GATE_RULE_IDS, type RuleView } from './validation-rule-corpus';
 import { and, eq, isNull, lt, sql } from 'drizzle-orm';
-import { db, pool } from '../../db';
+import { db } from '../../db';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
-import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
+import { shadowReviewRuns } from '../../../shared/schema/shadow-review';
 // P-34: the presence gate reads the sequence's signed Shadow Review waiver.
 import {
   evaluateShadowPresenceWithWaiver,
@@ -48,6 +49,8 @@ import {
   type ShadowReviewWaivability,
   type ShadowReviewWaiverStatus,
 } from './shadow-review-waiver';
+// P-35: a closed critical stands closed only under a signature in force.
+import { criticalsStandingOpen, reopenedCriticalSentence } from './shadow-finding-disposition';
 // P-33: the IND gate's checks, carried into this assessment.
 import { appendReadinessFindings, assessIndProgram, isUsIndApplication, module3CrossReferencesOf, readCrossReferenceRegister, type CrossReferenceRead, type IndProgramView } from './ind-program-findings';
 import {
@@ -625,29 +628,6 @@ async function countCompletedShadowRuns(
 }
 
 /**
- * Open CRITICAL Shadow Review findings for a sequence (server truth).
- * Extracted from assessSequenceDispatchReadiness unchanged, for the same
- * reason as countCompletedShadowRuns, when P-33 added the IND program to it.
- */
-async function countOpenShadowCriticals(sequenceId: number, organizationId: number): Promise<number> {
-  const [{ value: criticalCount }] = await db
-    .select({ value: sql<number>`count(*)::int` })
-    .from(shadowReviewFindings)
-    .innerJoin(shadowReviewRuns, eq(shadowReviewFindings.runId, shadowReviewRuns.id))
-    .where(
-      and(
-        eq(shadowReviewRuns.sequenceId, sequenceId),
-        eq(shadowReviewFindings.organizationId, organizationId),
-        eq(shadowReviewFindings.severity, 'critical'),
-        eq(shadowReviewFindings.status, 'open'),
-        isNull(shadowReviewFindings.deletedAt),
-        isNull(shadowReviewRuns.deletedAt)
-      )
-    );
-  return criticalCount ?? 0;
-}
-
-/**
  * Flatten a region profile's Module-1 tree to the section codes marked required
  * for this application type.
  *
@@ -787,9 +767,10 @@ export async function originalModule3Requirement(
  * Assess whether a sequence is clear to dispatch, computing every gate input from
  * server-side truth. Throws if the sequence is not found in the tenant.
  */
-/** The pool, as the waiver module's reads take it. */
+/** The database every other read here uses, as the waiver and disposition
+ *  modules' reads take it (text and $n parameters). */
 function asWaiverQueryable(): { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> } {
-  return { query: async (text, params) => ({ rows: (await pool.query(text, params as unknown[])).rows }) };
+  return queryableFromDrizzle(db);
 }
 
 /** Is a waiver offered now? shadowReviewWaivable throws on a failed read; here
@@ -895,8 +876,11 @@ export async function assessSequenceDispatchReadiness(
   });
   if (indProgram) appendReadinessFindings(readiness, indProgram.findings);
 
-  // 4. Open CRITICAL Shadow Review findings for this sequence (server truth).
-  const unacknowledgedShadowCriticals = await countOpenShadowCriticals(sequenceId, organizationId);
+  // 4. CRITICAL Shadow Review findings that block (server truth): every open
+  //    one, and (P-35) every one closed under a signature no longer in force —
+  //    a revoked closure closes nothing (criticalsStandingOpen).
+  const shadowCriticals = await criticalsStandingOpen(asWaiverQueryable(), { sequenceId, organizationId });
+  const unacknowledgedShadowCriticals = shadowCriticals.count;
 
   // 4b. Has this sequence ever been Shadow-Reviewed? See countCompletedShadowRuns.
   const shadowReviewRunCount = await countCompletedShadowRuns(sequenceId, organizationId);
@@ -934,6 +918,8 @@ export async function assessSequenceDispatchReadiness(
       unacknowledgedShadowCriticals,
     }),
     evaluateReleaseApprovalGate(readiness.releaseBlockers),
+    // Why a critical that was closed blocks again, by finding and signature.
+    { cleared: shadowCriticals.reopened.length === 0, blockers: shadowCriticals.reopened.map(reopenedCriticalSentence) },
   );
 
   // 6b. Never-Shadow-Reviewed is not clean, it is UNASSESSED. A sequence with

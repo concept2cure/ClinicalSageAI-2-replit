@@ -1978,7 +1978,11 @@ async function applyShadowFindingDisposition(
   }
 
   const runId = Number(offered.runId);
-  const update = shadowFindingDispositionUpdate({ ...scope, signerId: ctx.userId, disposition, signatureActionId, reason });
+  // Compare-and-set on what was judged: an open critical, or one whose closing
+  // signature is no longer in force and so blocks again (closureStands).
+  const judged = offered.judged;
+  if (!judged) throw new SubmissionError('SHADOW_FINDING_NOT_DISPOSABLE', offered.reason);
+  const update = shadowFindingDispositionUpdate({ ...scope, signerId: ctx.userId, disposition, signatureActionId, reason, judged });
   await applySequenceChangeWithAudit(
     {
       underLock: (client) =>
@@ -1994,7 +1998,7 @@ async function applyShadowFindingDisposition(
         }),
       text: update.text,
       params: update.params,
-      noRowsRefusal: `Finding #${findingId} is no longer an open critical finding of this sequence, so nothing was closed.`,
+      noRowsRefusal: `Finding #${findingId} changed while this disposition was being recorded (it was closed, deleted or moved), so nothing was closed.`,
     },
     {
       organizationId: ctx.organizationId,

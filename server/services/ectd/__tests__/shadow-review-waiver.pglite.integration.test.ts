@@ -165,6 +165,8 @@ beforeAll(async () => {
   `);
   await h.pglite.exec(migration('migrations/20260604_shadow_review.sql'));
   await h.pglite.exec(migration('migrations/20261015_shadow_review_waiver.sql'));
+  // The dispatch assessor reads who closed each critical (P-35).
+  await h.pglite.exec(migration('migrations/20261015b_shadow_finding_disposition.sql'));
 }, 120_000);
 afterAll(async () => { await h.close(); });
 

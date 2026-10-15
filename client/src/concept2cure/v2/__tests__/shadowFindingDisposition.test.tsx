@@ -183,6 +183,27 @@ describe('Shadow review tab — what is offered on which finding', () => {
     expect(text()).not.toMatch(/resolved by (the )?AI|AI[- ]resolved|auto(matically)?[- ]resolved|cleared by (a later )?review/i);
   });
 
+  it('a critical closed under a signature since revoked reads as open again, says why, and is offered as the server says', async () => {
+    const reopened = {
+      ...F_FIXED, title: 'Toxicology summary missing', id: 404, standsOpen: true,
+      dispositionsOffered: ['accepted', 'fixed'], laterCompletedRunId: 95,
+    };
+    serve(undefined, { oldFindings: [F_OLD, F_CLOSED, reopened] });
+    render(<ShadowReviewWorkspace seq={SEQ} onDisposition={vi.fn()} />);
+    fireEvent.click(await screen.findByRole('button', { name: '#91' }));
+    await screen.findByText(reopened.title);
+    const row = rowOf(reopened.title);
+    await within(row).findByRole('button', { name: ACCEPT });
+    expect(within(row).getByRole('button', { name: FIX })).toBeTruthy();
+    expect(row.textContent).toMatch(/has since been revoked, so it blocks dispatch again/);
+    // Not shown as closed: the status reads Open, never Fixed.
+    expect(row.textContent).toContain('Open');
+    expect(row.textContent).not.toMatch(/\bFixed\b(?! by)/);
+    // A closure in force stays closed and offers nothing.
+    expect(within(rowOf(F_CLOSED.title)).queryAllByRole('button')).toHaveLength(0);
+    expect(rowOf(F_CLOSED.title).textContent).toContain('Accepted');
+  });
+
   it('nothing is offered to the sequence author, and the screen says why', async () => {
     serve(undefined, { signer: 'author' });
     render(<ShadowReviewWorkspace seq={SEQ} onDisposition={vi.fn()} />);

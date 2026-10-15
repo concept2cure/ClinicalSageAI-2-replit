@@ -65,6 +65,9 @@ export interface ShadowFindingRow {
   status: string; // open|accepted|fixed|waived (SC_FIND_STATUS)
   disposition?: FindingDispositionView | null;
   dispositionsOffered?: string[];
+  /** The server's word: this critical blocks dispatch — open, or closed under a
+   *  signature no longer in force. Absent on an older server. */
+  standsOpen?: boolean;
   /** The completed run after this finding's run that 'fixed' rests on. */
   laterCompletedRunId?: number | null;
 }
@@ -149,9 +152,15 @@ export async function submitFindingDisposition(
 
 const isDisposition = (v: unknown): v is FindingDisposition => v === 'accepted' || v === 'fixed';
 
-/** What the server offers on this finding: only on an open critical, only what it named. */
+/** Does this critical block dispatch? The server says (`standsOpen`); an older
+ *  server that does not say is read by its status. */
+function standsOpen(f: ShadowFindingRow): boolean {
+  return f.severity === 'critical' && (typeof f.standsOpen === 'boolean' ? f.standsOpen : f.status === 'open');
+}
+
+/** What the server offers on this finding: only on a critical that blocks, only what it named. */
 function offeredOn(f: ShadowFindingRow): FindingDisposition[] {
-  if (f.severity !== 'critical' || f.status !== 'open' || !Array.isArray(f.dispositionsOffered)) return [];
+  if (!standsOpen(f) || !Array.isArray(f.dispositionsOffered)) return [];
   return f.dispositionsOffered.filter(isDisposition);
 }
 
@@ -178,8 +187,8 @@ export function FindingDispositionNote({ finding }: { finding: ShadowFindingRow 
   return (
     <span className="sp-row-s" data-finding-disposition={d.disposition}>
       {dispositionSentence({ ...d, disposition: d.disposition })}
-      {d.signatureState === 'revoked' && <> The signature it was closed under has since been revoked.</>}
-      {d.signatureState === 'not-found' && <> No signature record was found for this disposition.</>}
+      {d.signatureState === 'revoked' && <> The signature it was closed under has since been revoked, so it blocks dispatch again.</>}
+      {d.signatureState === 'not-found' && <> No signature record was found for this disposition, so it blocks dispatch again.</>}
     </span>
   );
 }
@@ -278,7 +287,8 @@ export function ShadowFindingList({
               {onDisposition && canSign && <FindingDispositionControls finding={f} onDisposition={onDisposition} />}
             </span>
             <span className="sc-cap sp-q-s">{f.dimension}</span>
-            <Chip map={SC_FIND_STATUS} k={f.status} />
+            {/* A closure that no longer stands is not shown as closed. */}
+            <Chip map={SC_FIND_STATUS} k={f.status !== 'open' && standsOpen(f) ? 'open' : f.status} />
           </div>
         ))}
       </div>

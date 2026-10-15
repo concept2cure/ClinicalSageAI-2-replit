@@ -113,7 +113,7 @@ function makeApp() {
 let app: express.Express;
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true });
+  harness = await createIndPgliteDb({ submissionCore: true, shadowReview: true });
   holder.db = harness.db;
   // P-33: the dispatch-gate, snapshot, cockpit and drift routes answer from
   // assessSequenceDispatchReadiness, which reads Shadow Review state (as in
@@ -121,18 +121,6 @@ beforeAll(async () => {
   // signature lookup is left real: with no store here it reads `undetermined`,
   // which blocks — these tests pin shapes, and the verdict itself is pinned by
   // dispatch-verdict-parity.pglite.test.ts.
-  await harness.pglite.exec(`
-    CREATE TABLE IF NOT EXISTS shadow_review_runs (
-      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
-      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
-      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS shadow_review_findings (
-      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
-      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-  `);
   app = makeApp();
   // Seed: one IND submission with a filed annual sequence (org 1).
   const sub = await createSubmission(
