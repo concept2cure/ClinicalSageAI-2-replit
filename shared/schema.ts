@@ -5326,7 +5326,10 @@ export const croStudies = pgTable(
     csoAssignments: json('cso_assignments'), // Clinical Study Operations assignments
     timeline: json('timeline'), // Study milestones and timelines
     riskAssessment: json('risk_assessment'), // Risk factors and mitigation
-    complianceStatus: text('compliance_status').default('compliant').notNull(), // compliant, minor_deviation, major_deviation, critical
+    // compliant, minor_deviation, major_deviation, critical — or null: not
+    // assessed. It was NOT NULL DEFAULT 'compliant', so every new study read
+    // 'compliant' with nothing assessed (2026-10-15).
+    complianceStatus: text('compliance_status'),
     notes: text('notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
