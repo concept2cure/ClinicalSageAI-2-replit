@@ -227,7 +227,7 @@ export const REGISTER_ANIMAL_COHORT: AnaTool = {
 export const REVIEW_IACUC_PROTOCOL: AnaTool = {
   name: 'review_iacuc_protocol',
   description:
-    "Run the deterministic IACUC completeness gate on a protocol (read-only): text present for the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status (undetermined when no approval date is recorded). Returns cited findings, the checks run and a risk level; medium means a major finding is open. Use to tell the user what is missing before committee review.",
+    "Run the deterministic IACUC completeness gate on a protocol (read-only): text present for the 3 Rs, category-D analgesia / category-E justification, animal numbers, plus continuing-review/expiration status. The expiry is the expiration date on record (reviewStatus.expirationSource 'recorded'), else approval + 3 years, labelled 'computed'; with neither date it is undetermined ('none'). Say which when you state it. Returns cited findings, the checks run and a risk level; medium means a major finding is open. Use to tell the user what is missing before committee review.",
   input_schema: {
     type: 'object',
     properties: { protocol_id: { type: 'number' } },
@@ -288,7 +288,7 @@ export const REVIEW_IRB_SUBMISSION: AnaTool = {
 export const CREATE_IBC_REGISTRATION: AnaTool = {
   name: 'create_ibc_registration',
   description:
-    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Omit nih_guidelines_section and involves_human_gene_transfer unless the user has stated them: omitted is recorded as not recorded. Returns the registration id and whether convened IBC review is required (true, false, or null when that cannot be determined yet). Governed + audited, org-scoped.",
+    "Open an IBC biosafety registration (NIH Guidelines / BMBL) for recombinant or synthetic nucleic acid work — the clearance modality-heavy CGT/mRNA programs need. biosafety_level is the declared containment (BSL-1..4); nih_guidelines_section is the experiment category (III-A..III-F/exempt). Omit biosafety_level, involves_recombinant_dna, nih_guidelines_section and involves_human_gene_transfer unless the user has stated them: omitted is recorded as not recorded (no level declared), never as BSL-1 or no. Returns the registration id and whether convened IBC review is required (true, false, or null when that cannot be determined yet). Governed + audited, org-scoped.",
   input_schema: {
     type: 'object',
     properties: {
@@ -301,7 +301,7 @@ export const CREATE_IBC_REGISTRATION: AnaTool = {
       involves_human_gene_transfer: { type: 'boolean' },
       reason: STATED_REASON_INPUT,
     },
-    required: ['registration_number', 'title', 'biosafety_level'],
+    required: ['registration_number', 'title'],
   },
 };
 
@@ -325,7 +325,7 @@ export const ADD_BIOLOGICAL_AGENT: AnaTool = {
 export const REVIEW_IBC_REGISTRATION: AnaTool = {
   name: 'review_ibc_registration',
   description:
-    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings, the checks run and those not assessed (no agents, an unrecorded section or gene-transfer answer), and a risk level; highestRequiredBsl and the expiry are null when they cannot be derived.",
+    "Run the deterministic IBC containment gate on a registration (read-only): does the declared BSL meet the highest containment its agents require, are agents at the right level for their risk group, and does the work need convened IBC review — plus annual-review expiration. Returns cited findings, the checks run and those not assessed (no agents, an undeclared BSL, an unrecorded section or gene-transfer answer), and a risk level; highestRequiredBsl is null when it cannot be derived. The expiry is the expiration date on record (expiration.expirationSource 'recorded'), else approval + 1 year, labelled 'computed'; with neither date it is undetermined ('none'). Say which when you state it.",
   input_schema: {
     type: 'object',
     properties: { registration_id: { type: 'number' } },

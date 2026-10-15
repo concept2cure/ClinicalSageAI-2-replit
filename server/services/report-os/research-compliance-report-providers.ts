@@ -27,16 +27,41 @@ export { UnsupportedReportClientScope } from './client-scope';
 
 const now = () => new Date().toISOString();
 
-/** Count rows grouped by a column → { value: count }. Org-scoped, excludes soft-deleted. */
-async function groupedCount(query: typeof pool.query, table: string, col: string, orgId: number, extra = ''): Promise<{ total: number; byCol: Record<string, number> }> {
+/** Count rows grouped by a column → { value: count }. Org-scoped, excludes soft-deleted.
+ *  A NULL value counts under `nullKey`; it was keyed "null" (2026-10-15). The
+ *  `extra` predicate it replaced had no caller. */
+async function groupedCount(query: typeof pool.query, table: string, col: string, orgId: number, nullKey = 'not_recorded'): Promise<{ total: number; byCol: Record<string, number> }> {
   const { rows } = await query(
-    `SELECT ${col} AS k, count(*)::int AS n FROM ${table} WHERE organization_id = $1 AND deleted_at IS NULL ${extra} GROUP BY ${col}`,
+    `SELECT ${col} AS k, count(*)::int AS n FROM ${table} WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY ${col}`,
     [orgId],
   );
   const byCol: Record<string, number> = {};
   let total = 0;
-  for (const r of rows) { byCol[String(r.k)] = r.n; total += r.n; }
+  for (const r of rows) { byCol[r.k == null ? nullKey : String(r.k)] = r.n; total += r.n; }
   return { total, byCol };
+}
+
+/**
+ * Approved IACUC protocols expiring within 90 days or expired. The expiry is the
+ * one on record, else approval + 3 years (PHS Policy IV.C.5 de novo), counted
+ * apart as computed; an approval with neither date is counted as not determined.
+ * 2026-10-15: the approve path stopped storing a computed expiry, and approvals
+ * with none on record dropped out of expiringOrExpired.
+ */
+async function iacucExpiry(query: typeof pool.query, orgId: number) {
+  const { rows } = await query(
+    `SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,
+            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,
+            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined
+       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'`,
+    [orgId],
+  );
+  const { n, computed, undetermined } = rows[0] as { n: number; computed: number; undetermined: number };
+  return {
+    expiringOrExpired: n,
+    expiringOrExpiredByExpirySource: { recorded: n - computed, computed_approval_plus_3_years: computed },
+    approvedExpiryNotDetermined: undetermined,
+  };
 }
 
 /**
@@ -68,7 +93,7 @@ export async function computeDomainReport(reportTypeId: string, orgId: number, o
     queries.push({ query: text, parameters, rows: response.rows });
     return response;
   }) as typeof pool.query;
-  const countBy = (table: string, column: string, organizationId: number, extra = '') => groupedCount(query, table, column, organizationId, extra);
+  const countBy = (table: string, column: string, organizationId: number, nullKey?: string) => groupedCount(query, table, column, organizationId, nullKey);
   const result = (provider: string, total: number, summary: Record<string, unknown>, blocker?: string): DomainReportResult => {
     const tables = [...new Set(queries.flatMap((q) => [...q.query.matchAll(/(?:FROM|JOIN)\s+([a-z_]+)/gi)].map((m) => m[1])))];
     const atoms: InsightAtomRef[] = tables.map((sourceTable) => ({ sourceTable, transformation: 'aggregation' }));
@@ -91,8 +116,7 @@ export async function computeDomainReport(reportTypeId: string, orgId: number, o
     }
     case 'iacuc.protocol_register': {
       const p = await countBy('iacuc_protocols', 'status', orgId);
-      const expiring = (await query(`SELECT count(*)::int n FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved' AND expiration_date < CURRENT_DATE + INTERVAL '90 days'`, [orgId])).rows[0].n;
-      return result('iacuc_protocols', p.total, { protocols: p.total, byStatus: p.byCol, expiringOrExpired: expiring });
+      return result('iacuc_protocols', p.total, { protocols: p.total, byStatus: p.byCol, ...(await iacucExpiry(query, orgId)) });
     }
     case 'irb.submission_register': {
       const s = await countBy('irb_submissions', 'status', orgId);
@@ -101,7 +125,7 @@ export async function computeDomainReport(reportTypeId: string, orgId: number, o
     }
     case 'ibc.registration_register': {
       const s = await countBy('ibc_registrations', 'status', orgId);
-      const b = await countBy('ibc_registrations', 'biosafety_level', orgId);
+      const b = await countBy('ibc_registrations', 'biosafety_level', orgId, 'not_declared');
       return result('ibc_registrations', s.total, { registrations: s.total, byStatus: s.byCol, byBsl: b.byCol });
     }
     case 'nonclinical.study_send_register': {
