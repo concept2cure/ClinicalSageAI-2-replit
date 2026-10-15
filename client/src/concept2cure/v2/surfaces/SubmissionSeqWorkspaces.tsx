@@ -32,6 +32,7 @@ import { I } from '../icons';
 import { AnaActivity } from '../AnaActivity';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
+import { RecordHistory } from '../RecordHistory';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk } from './filingTarget';
@@ -876,6 +877,9 @@ export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
             <BuilderSources onNav={onNav} />
           </>
         ) : null}
+        {/* Who created the submission and every placement in this sequence,
+            from the ledger (filing-spine review item 3). Re-read after a write. */}
+        <RecordHistory key={bump} path={`/api/submissions/sequences/${seq.id}/history`} subject="sequence" testId="sc-sequence-history" reasonTestId="sc-history-reason" />
       </div>
     </div>
   );
