@@ -1,3 +1,28 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Assumption registry, decision records, contradiction engine,
+--          regulator overlays and consequence paths.
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+-- =============================================================================
+-- AMENDED IN PLACE 2026-10-15 (D2) — decision_records.confidence_level is
+-- nullable, with no default.
+--
+-- It was `TEXT NOT NULL ... DEFAULT 'moderate'`. Nothing writes a confidence
+-- a decider stated: decision-record-service defaulted every record to
+-- 'moderate', and decision-lifecycle-service wrote 'high' for a decision with
+-- more than two source signals and 'moderate' otherwise — a count, not a
+-- confidence. A confidence nobody stated is now null.
+--
+-- RULE 1: this file is in C2C_MIGRATION_FILES and re-executes on every
+-- deploy. The CREATE TABLE below is amended for databases where the table
+-- does not exist yet; the conditional block after it relaxes the column on
+-- databases provisioned before. Relaxing a constraint removes no object and
+-- discards no data; nothing on any applier re-imposes it.
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Migration: Assumption Registry + Decision Records + Contradiction Engine + Overlays
 -- Date: 2026-03-23
@@ -133,10 +158,10 @@ CREATE TABLE IF NOT EXISTS decision_records (
   recommendation_summary TEXT NOT NULL,
   recommendation_rationale TEXT,
 
-  -- Confidence
-  confidence_level TEXT NOT NULL CHECK (confidence_level IN (
+  -- Confidence, as the decider stated it; null when nobody did (2026-10-15)
+  confidence_level TEXT CHECK (confidence_level IN (
     'definitive', 'high', 'moderate', 'low', 'speculative'
-  )) DEFAULT 'moderate',
+  )),
   evidence_basis TEXT CHECK (evidence_basis IN (
     'rules_based', 'validation_based', 'ai_inferred', 'expert_judgment', 'precedent_based'
   )),
@@ -173,6 +198,22 @@ CREATE TABLE IF NOT EXISTS decision_records (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 2026-10-15 (see the header): on a database provisioned before, the column
+-- loses its NOT NULL and its 'moderate' default. Conditional, every deploy.
+DO $decision_confidence$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = current_schema() AND table_name = 'decision_records'
+       AND column_name = 'confidence_level'
+       AND (is_nullable = 'NO' OR column_default IS NOT NULL)
+  ) THEN
+    ALTER TABLE decision_records ALTER COLUMN confidence_level DROP NOT NULL;
+    ALTER TABLE decision_records ALTER COLUMN confidence_level DROP DEFAULT;
+  END IF;
+END
+$decision_confidence$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PART 4: CONTRADICTION FINDINGS
