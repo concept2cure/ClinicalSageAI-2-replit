@@ -298,6 +298,30 @@ export async function computeReadinessScore(
   };
 }
 
+/**
+ * ── 2026-10-15: a readiness figure only where an assessment measured one ────
+ * Without a recorded assessment, overallScore is document completeness alone,
+ * and consumers presented it as readiness ("Ready — readiness score 75",
+ * "Readiness: 75/100"). A caller showing a readiness figure takes it from
+ * here: null unless a dimension beyond completeness was measured. overallScore
+ * stays a number for callers that label it with scoreBasis themselves.
+ */
+export function readinessFigure(score: ReadinessScore): number | null {
+  return score.scoreBasis.measured.some(d => d !== 'completeness') ? score.overallScore : null;
+}
+
+/** One line saying what the figure is and which dimensions were not assessed. */
+export function describeReadiness(score: ReadinessScore): string {
+  const names = score.scoreBasis.notMeasured;
+  const notAssessed =
+    names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names.join('');
+  const tail = notAssessed ? `; ${notAssessed} not assessed` : '';
+  const figure = readinessFigure(score);
+  return figure === null
+    ? `Readiness not assessed — document completeness ${score.dimensions.completeness}% (document status only)${tail}`
+    : `Readiness ${figure}/100 from the recorded assessment${tail}`;
+}
+
 const DIMENSION_WEIGHTS: Readonly<Record<ReadinessDimensionName, number>> = {
   completeness: 0.35,
   quality: 0.25,

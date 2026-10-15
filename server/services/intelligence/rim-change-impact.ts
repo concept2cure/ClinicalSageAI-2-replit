@@ -122,11 +122,14 @@ export function enrichChangeImpact(
   const persistingIssues = detectPersistingIssues(sectionHistory);
 
   for (const issue of persistingIssues) {
+    // 2026-10-15: titled "Unresolved: …" and ended "It remains unresolved." —
+    // nothing checked the latest run or any resolution, and this history is
+    // the process's working memory, not the record.
     insights.push({
       type: 'persisting_issue',
       severity: issue.riskLevel === 'critical' ? 'critical' : 'high',
-      title: `Unresolved: ${issue.action}`,
-      detail: `This issue was first flagged on ${new Date(issue.firstSeen).toLocaleDateString()} and has appeared in ${issue.occurrences} evaluation(s). It remains unresolved.`,
+      title: `Flagged in ${issue.occurrences} runs: ${issue.action}`,
+      detail: `Flagged in ${issue.occurrences} evaluation runs held in working memory, first on ${issue.firstSeen.slice(0, 10)} and last on ${issue.lastSeen.slice(0, 10)}; resolution not checked.`,
       confidence: issue.occurrences >= 3 ? 'high' : 'moderate',
       signalCount: issue.occurrences,
       firstSeen: issue.firstSeen,
@@ -158,13 +161,14 @@ const SECTION_TREND_THRESHOLD = 8;
 
 function computeSectionTrend(
   signals: IntelligenceSignal[],
-): { trend: 'improving' | 'stable' | 'declining'; confidence: TrendConfidence; sampleSize: number } {
+): { trend: 'improving' | 'stable' | 'declining' | null; confidence: TrendConfidence; sampleSize: number } {
   // Only use judgment signals for trend (stable scoring definition)
   const judgmentSignals = signals.filter(s => s.type === 'judgment');
   const sampleSize = judgmentSignals.length;
 
+  // Too few to tell: no trend (2026-10-15: this answered 'stable').
   if (sampleSize < MIN_SECTION_TREND_SAMPLE) {
-    return { trend: 'stable', confidence: 'insufficient', sampleSize };
+    return { trend: null, confidence: 'insufficient', sampleSize };
   }
 
   const midpoint = Math.floor(sampleSize / 2);

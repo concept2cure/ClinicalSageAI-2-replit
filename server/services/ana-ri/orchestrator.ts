@@ -43,7 +43,9 @@ import {
   type LearnedInsight,
   type ReadinessContext,
   type IntelligenceUpdatePayload,
+  type SignalSummary,
 } from '../intelligence/index.js';
+import { describeReadiness } from '../intelligence/readiness-scoring-engine.js';
 import { getGateway } from '../ai-gateway/index.js';
 import { sectionIdentityLine } from '../ind/ctd/index.js';
 import { statedTypeLine } from './open-document.js';
@@ -725,6 +727,37 @@ The injected blocks above are where your foresight comes from: a risk in the int
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * The signal block of the RIM preload. 2026-10-15: it printed "Trend: stable"
+ * with too little data to tell, and an "Average score" that averaged the
+ * invented scores of every artifact edit and feedback click.
+ */
+function formatSignalSummaryBlock(summary: SignalSummary): string {
+  const riskLines = Object.entries(summary.byRiskLevel)
+    .filter(([, count]) => Number(count) > 0)
+    .map(([risk, count]) => `- ${risk}: ${count}`)
+    .join('\n');
+  const patternLine =
+    summary.topPatternIds.length > 0
+      ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
+      : 'Top patterns: none captured yet';
+  const trendLine =
+    summary.overallTrend === null
+      ? `Trend: not determined (${summary.trendConfidence} data, n=${summary.trendSampleSize})`
+      : `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})`;
+  const meanLine =
+    summary.averageScore === null
+      ? 'Mean signal score: none recorded'
+      : `Mean signal score: ${summary.averageScore} (model scores and severity-mapped pattern scores; not a readiness figure)`;
+  return (
+    `**${summary.totalSignals} intelligence signals**\n` +
+    `${trendLine}\n` +
+    `${meanLine}\n` +
+    `${patternLine}\n` +
+    `Risk distribution:\n${riskLines || '- none'}`
+  );
+}
+
+/**
  * Pre-fetch RIM intelligence context for injection into the orchestrator.
  *
  * Call this in the async route layer BEFORE calling `orchestrate()`, then
@@ -762,8 +795,10 @@ export async function preloadRIMContext(
               `- [${g.severity.toUpperCase()}] ${g.module}: ${g.description}`,
           )
           .join('\n');
+        // 2026-10-15: printed "Readiness: {overallScore}/100", which without a
+        // recorded assessment is document completeness alone.
         parts.push(
-          `**Readiness: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}` +
+          `**${describeReadiness(score)}** | Trend: ${score.trend?.direction || 'unknown'}` +
             (gapLines ? `\nTop gaps:\n${gapLines}` : ''),
         );
       } catch (e: unknown) {
@@ -779,21 +814,7 @@ export async function preloadRIMContext(
       try {
       const summary = getProjectSignals(organizationId, Number(projectId));
       if (summary && summary.totalSignals > 0) {
-        const riskLines = Object.entries(summary.byRiskLevel)
-          .filter(([, count]) => Number(count) > 0)
-          .map(([risk, count]) => `- ${risk}: ${count}`)
-          .join('\n');
-        const patternLine =
-          summary.topPatternIds.length > 0
-            ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
-            : 'Top patterns: none captured yet';
-        parts.push(
-          `**${summary.totalSignals} intelligence signals**\n` +
-          `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})\n` +
-          `Average score: ${summary.averageScore}\n` +
-          `${patternLine}\n` +
-          `Risk distribution:\n${riskLines || '- none'}`,
-        );
+        parts.push(formatSignalSummaryBlock(summary));
       }
       } catch (e: unknown) {
         console.warn(
@@ -806,7 +827,7 @@ export async function preloadRIMContext(
     if (parts.length === 0) return '';
 
     return (
-      `## REGULATORY INTELLIGENCE CONTEXT (cite as [Readiness: section at score%] or [Signal: type — description])\n` +
+      `## REGULATORY INTELLIGENCE CONTEXT (cite a readiness score as [Readiness: section at score%] only where one is given below; cite a signal as [Signal: type — description])\n` +
       parts.join('\n\n') +
       `\n\nUse this intelligence to inform your response. Flag sections with low readiness. When citing readiness scores or signals, use the Evidence Citation Protocol format.`
     );
@@ -1724,7 +1745,7 @@ export async function extractThreadIntelligence(
     payload.learnedInsights = extracted.insights.map(i => ({
       insight: i,
       source: 'ana-thread-extraction',
-      confidence: 0.7,
+      confidence: null, // was 0.7, a constant shown to AnA as "confidence: 70%"
       extractedAt: now,
     }));
   }
@@ -1858,7 +1879,9 @@ function formatProjectIntelligenceBlock(
     parts.push('');
     parts.push('### Learned Insights');
     for (const i of topInsights) {
-      parts.push(`- ${i.insight} (source: ${i.source}, confidence: ${Math.round((i.confidence ?? 0) * 100)}%)`);
+      // 2026-10-15: a missing confidence printed as "confidence: 0%".
+      const conf = i.confidence == null ? '' : `, confidence: ${Math.round(i.confidence * 100)}%`;
+      parts.push(`- ${i.insight} (source: ${i.source}${conf})`);
     }
     if (insights.length > maxInsights) {
       parts.push(`- ... and ${insights.length - maxInsights} more`);

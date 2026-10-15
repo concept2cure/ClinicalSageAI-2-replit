@@ -4347,9 +4347,11 @@ export async function runRIMScan(
         runStatus: assessment.run.status,
         verdict: assessment.rimVerdict,
       },
-      message: `RIM assessment complete. Score: ${assessment.rimScore ?? 'N/A'}/100 — ${
-        assessment.rimVerdict
-      }. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${
+      // 2026-10-15: a null score printed "Score: N/A/100"; the verdict names
+      // what was not assessed.
+      message: `RIM assessment complete. ${
+        assessment.rimScore === null ? 'No RIM score' : `Score: ${assessment.rimScore}/100`
+      } — ${assessment.rimVerdict}. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${
         assessment.topActions?.length || 0
       } recommended action(s).`,
     };

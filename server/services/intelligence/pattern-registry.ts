@@ -94,8 +94,17 @@ export interface RegulatoryPattern {
 export interface PatternMatch {
   readonly patternId: string;
   readonly matchedText: string;
+  /** The trigger phrase found in the text (a case-insensitive substring hit). */
+  readonly matchedPhrase: string;
   readonly matchLocation: string; // section or field reference
-  readonly matchConfidence: number; // 0-100
+  /**
+   * NOT computed for this match: the pattern's hand-set seed value (80-95,
+   * uncalibrated), copied here. A substring hit carries no match probability.
+   * Kept as a number for the pre-mortem tools that still read it; RIM signals
+   * no longer file it as a confidence (2026-10-15). See matchConfidenceBasis.
+   */
+  readonly matchConfidence: number;
+  readonly matchConfidenceBasis: 'pattern_seed_value';
   readonly pattern: RegulatoryPattern;
 }
 
@@ -504,8 +513,10 @@ class PatternRegistryImpl {
           matches.push({
             patternId: pattern.id,
             matchedText,
+            matchedPhrase: phrase,
             matchLocation: location,
             matchConfidence: pattern.confidence,
+            matchConfidenceBasis: 'pattern_seed_value',
             pattern,
           });
 
@@ -689,7 +700,7 @@ export async function persistPatternRegistry(
       }),
       sourceDocumentName: 'rim-pattern-registry',
       sourceDocumentType: 'system',
-      confidenceScore: 1,
+      confidenceScore: null, // was 1: an export of the registry, not a scored finding
       importanceLevel: 'high',
       extractedBy: 'system',
     });
@@ -858,7 +869,7 @@ export async function nominateCandidatePattern(params: {
       }),
       sourceDocumentName: 'rim-pattern-nomination',
       sourceDocumentType: 'system',
-      confidenceScore: 0.5,
+      confidenceScore: null, // was 0.5: a candidate awaiting review has no confidence
       importanceLevel: 'medium',
       extractedBy: 'system',
     } as any);

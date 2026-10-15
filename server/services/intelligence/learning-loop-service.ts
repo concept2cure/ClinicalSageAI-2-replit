@@ -21,6 +21,7 @@
 
 import { db } from '../../db.js';
 import { eq, and, desc } from 'drizzle-orm';
+import { getOrCreateProfile } from './project-intelligence-service.js';
 import {
   projectIntelligenceProfiles,
   projectMemoryEntries,
@@ -56,6 +57,12 @@ export interface SignalReliability {
    * confirmed.
    */
   readonly reliabilityIndex: number | null;
+  /**
+   * What the index is: the system's inference from the user's accept / edit /
+   * reject of the artifact the signals were about — not a verified accuracy.
+   * 2026-10-15: unlabelled, and its entries were stored as user-verified.
+   */
+  readonly basis?: 'inferred_from_user_feedback';
 }
 
 export interface FeedbackSummary {
@@ -91,21 +98,13 @@ export interface FeedbackSummary {
 export async function recordFeedback(
   feedback: RecommendationFeedback,
 ): Promise<void> {
-  // Get or create profile
-  const [profile] = await db
-    .select({ id: projectIntelligenceProfiles.id })
-    .from(projectIntelligenceProfiles)
-    .where(and(
-      eq(projectIntelligenceProfiles.projectId, feedback.projectId),
-      eq(projectIntelligenceProfiles.organizationId, feedback.organizationId),
-    ))
-    .limit(1);
-
-  if (!profile) return;
+  // 2026-10-15: with no profile this returned without storing anything, and
+  // the route still answered {success: true}. The profile holds the entry.
+  const profileId = await getOrCreateProfile(feedback.projectId, feedback.organizationId);
 
   // Store as a memory entry
   const values: Record<string, unknown> = {
-    projectProfileId: profile.id,
+    projectProfileId: profileId,
     projectId: feedback.projectId,
     organizationId: feedback.organizationId,
     category: 'recommendation_feedback',
@@ -135,103 +134,83 @@ export async function recordFeedback(
 
   // If dismissed, record a learned insight to avoid similar recommendations
   if (feedback.action === 'dismissed' && feedback.userComment) {
-    await recordDismissalPattern(feedback, profile.id);
+    await recordDismissalPattern(feedback, profileId);
   }
 }
 
 /**
- * Get feedback summary for a project.
+ * Get feedback summary for a project. A failed read rejects: it used to
+ * resolve to a zeroed summary ("0 feedback, 0 % acceptance") (2026-10-15).
  */
 export async function getFeedbackSummary(
   projectId: number,
   organizationId: number,
 ): Promise<FeedbackSummary> {
-  try {
-    const rows = await db
-      .select({
-        content: projectMemoryEntries.content,
-        subcategory: projectMemoryEntries.subcategory,
-      })
-      .from(projectMemoryEntries)
-      .where(and(
-        eq(projectMemoryEntries.projectId, projectId),
-        eq(projectMemoryEntries.organizationId, organizationId),
-        eq(projectMemoryEntries.category, 'recommendation_feedback'),
-        eq(projectMemoryEntries.status, 'active'),
-      ))
-      .orderBy(desc(projectMemoryEntries.createdAt))
-      .limit(100);
+  const rows = await db
+    .select({
+      content: projectMemoryEntries.content,
+      subcategory: projectMemoryEntries.subcategory,
+    })
+    .from(projectMemoryEntries)
+    .where(and(
+      eq(projectMemoryEntries.projectId, projectId),
+      eq(projectMemoryEntries.organizationId, organizationId),
+      eq(projectMemoryEntries.category, 'recommendation_feedback'),
+      eq(projectMemoryEntries.status, 'active'),
+    ))
+    .orderBy(desc(projectMemoryEntries.createdAt))
+    .limit(100);
 
-    let accepted = 0;
-    let dismissed = 0;
-    let resolved = 0;
-    let overridden = 0;
-    let totalTime = 0;
-    let timeCount = 0;
-    const dismissedTypes = new Map<string, number>();
+  let accepted = 0;
+  let dismissed = 0;
+  let resolved = 0;
+  let overridden = 0;
+  let totalTime = 0;
+  let timeCount = 0;
+  const dismissedTypes = new Map<string, number>();
 
-    for (const row of rows) {
-      try {
-        const data = JSON.parse(row.content);
-        switch (data.action) {
-          case 'accepted': accepted++; break;
-          case 'dismissed': dismissed++; break;
-          case 'resolved': resolved++; break;
-          case 'overridden': overridden++; break;
-        }
-        if (data.timeToAction) {
-          totalTime += data.timeToAction;
-          timeCount++;
-        }
-        if (data.action === 'dismissed' && row.subcategory) {
-          dismissedTypes.set(row.subcategory, (dismissedTypes.get(row.subcategory) ?? 0) + 1);
-        }
-      } catch {
-        // Skip malformed entries
+  for (const row of rows) {
+    try {
+      const data = JSON.parse(row.content);
+      switch (data.action) {
+        case 'accepted': accepted++; break;
+        case 'dismissed': dismissed++; break;
+        case 'resolved': resolved++; break;
+        case 'overridden': overridden++; break;
       }
+      if (data.timeToAction) {
+        totalTime += data.timeToAction;
+        timeCount++;
+      }
+      if (data.action === 'dismissed' && row.subcategory) {
+        dismissedTypes.set(row.subcategory, (dismissedTypes.get(row.subcategory) ?? 0) + 1);
+      }
+    } catch {
+      // Skip malformed entries
     }
-
-    const total = accepted + dismissed + resolved + overridden;
-
-    const topDismissedTypes = Array.from(dismissedTypes.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([type, count]) => ({ type, count }));
-
-    const signalReliability = await getSignalReliability(projectId, organizationId);
-
-    return {
-      totalFeedback: total,
-      accepted,
-      dismissed,
-      resolved,
-      overridden,
-      acceptanceRate: total > 0 ? Math.round(((accepted + resolved) / total) * 100) : 0,
-      resolutionRate: total > 0 ? Math.round((resolved / total) * 100) : 0,
-      averageTimeToAction: timeCount > 0 ? Math.round(totalTime / timeCount) : null,
-      topDismissedTypes,
-      signalReliability,
-    };
-  } catch {
-    return {
-      totalFeedback: 0,
-      accepted: 0,
-      dismissed: 0,
-      resolved: 0,
-      overridden: 0,
-      acceptanceRate: 0,
-      resolutionRate: 0,
-      averageTimeToAction: null,
-      topDismissedTypes: [],
-      signalReliability: {
-        validated: 0,
-        partiallyValidated: 0,
-        disputed: 0,
-        totalValidations: 0,
-        reliabilityIndex: null,
-      },
-    };
   }
+
+  const total = accepted + dismissed + resolved + overridden;
+
+  const topDismissedTypes = Array.from(dismissedTypes.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([type, count]) => ({ type, count }));
+
+  const signalReliability = await getSignalReliability(projectId, organizationId);
+
+  return {
+    totalFeedback: total,
+    accepted,
+    dismissed,
+    resolved,
+    overridden,
+    acceptanceRate: total > 0 ? Math.round(((accepted + resolved) / total) * 100) : 0,
+    resolutionRate: total > 0 ? Math.round((resolved / total) * 100) : 0,
+    averageTimeToAction: timeCount > 0 ? Math.round(totalTime / timeCount) : null,
+    topDismissedTypes,
+    signalReliability,
+  };
 }
 
 /**
@@ -254,72 +233,71 @@ export async function getSignalReliability(
     disputed: 0,
     totalValidations: 0,
     reliabilityIndex: null,
+    basis: 'inferred_from_user_feedback',
   };
 
-  try {
-    const rows = await db
-      .select({
-        subcategory: projectMemoryEntries.subcategory,
-        content: projectMemoryEntries.content,
-      })
-      .from(projectMemoryEntries)
-      .where(and(
-        eq(projectMemoryEntries.projectId, projectId),
-        eq(projectMemoryEntries.organizationId, organizationId),
-        eq(projectMemoryEntries.category, 'intelligence_signal_validation'),
-        eq(projectMemoryEntries.status, 'active'),
-      ))
-      .orderBy(desc(projectMemoryEntries.createdAt))
-      .limit(200);
+  // A failed read rejects; it used to return `empty`, i.e. "no validations" (2026-10-15).
+  const rows = await db
+    .select({
+      subcategory: projectMemoryEntries.subcategory,
+      content: projectMemoryEntries.content,
+    })
+    .from(projectMemoryEntries)
+    .where(and(
+      eq(projectMemoryEntries.projectId, projectId),
+      eq(projectMemoryEntries.organizationId, organizationId),
+      eq(projectMemoryEntries.category, 'intelligence_signal_validation'),
+      eq(projectMemoryEntries.status, 'active'),
+    ))
+    .orderBy(desc(projectMemoryEntries.createdAt))
+    .limit(200);
 
-    if (rows.length === 0) return empty;
+  if (rows.length === 0) return empty;
 
-    let validated = 0;
-    let partiallyValidated = 0;
-    let disputed = 0;
-    let signalCount = 0;
+  let validated = 0;
+  let partiallyValidated = 0;
+  let disputed = 0;
+  let signalCount = 0;
 
-    for (const row of rows) {
-      let verdict: string | undefined;
-      let linkedSignalCount = 1;
-      try {
-        const data = JSON.parse(row.content);
-        verdict = data.verdict;
-        if (Array.isArray(data.signalIds)) {
-          linkedSignalCount = Math.max(1, data.signalIds.length);
-        }
-      } catch {
-        continue;
+  for (const row of rows) {
+    let verdict: string | undefined;
+    let linkedSignalCount = 1;
+    try {
+      const data = JSON.parse(row.content);
+      verdict = data.verdict;
+      if (Array.isArray(data.signalIds)) {
+        linkedSignalCount = Math.max(1, data.signalIds.length);
       }
-
-      // Weight by the number of signals each validation covers so a single
-      // feedback event that validated 10 signals counts more than one that
-      // validated a single signal.
-      switch (verdict) {
-        case 'validated': validated += linkedSignalCount; break;
-        case 'partially_validated': partiallyValidated += linkedSignalCount; break;
-        case 'disputed': disputed += linkedSignalCount; break;
-      }
-      signalCount += linkedSignalCount;
+    } catch {
+      continue;
     }
 
-    if (signalCount === 0) return empty;
-
-    const reliabilityIndex =
-      (validated + partiallyValidated * 0.5) / signalCount;
-
-    return {
-      validated,
-      partiallyValidated,
-      disputed,
-      totalValidations: signalCount,
-      reliabilityIndex: Number.isFinite(reliabilityIndex)
-        ? Math.max(0, Math.min(1, reliabilityIndex))
-        : null,
-    };
-  } catch {
-    return empty;
+    // Weight by the number of signals each validation covers so a single
+    // feedback event that validated 10 signals counts more than one that
+    // validated a single signal.
+    switch (verdict) {
+      case 'validated': validated += linkedSignalCount; break;
+      case 'partially_validated': partiallyValidated += linkedSignalCount; break;
+      case 'disputed': disputed += linkedSignalCount; break;
+    }
+    signalCount += linkedSignalCount;
   }
+
+  if (signalCount === 0) return empty;
+
+  const reliabilityIndex =
+    (validated + partiallyValidated * 0.5) / signalCount;
+
+  return {
+    validated,
+    partiallyValidated,
+    disputed,
+    totalValidations: signalCount,
+    reliabilityIndex: Number.isFinite(reliabilityIndex)
+      ? Math.max(0, Math.min(1, reliabilityIndex))
+      : null,
+    basis: 'inferred_from_user_feedback',
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -483,9 +461,12 @@ export async function linkFeedbackToRecentSignals(params: {
       }),
       sourceDocumentName: null,
       sourceDocumentType: 'system',
-      confidenceScore: 1.0,
+      // 2026-10-15: written as isVerifiedByUser true at confidence 1.0. The
+      // verdict is this function's inference from the user's action on the
+      // artifact, not something the user verified about these signals.
+      confidenceScore: null,
       importanceLevel: verdict === 'disputed' ? 'high' : 'medium',
-      isVerifiedByUser: true,
+      isVerifiedByUser: false,
       status: 'active',
       extractedBy: 'learning_loop',
     } as any);
@@ -516,10 +497,11 @@ async function recordDismissalPattern(
 
   const existing = Array.isArray(profile.learnedInsights) ? profile.learnedInsights as unknown as Array<Record<string, unknown>> : [];
 
+  // The user's own words, stored as such: no confidence (it was 0.95).
   const newInsight = {
     insight: `User dismissed ${feedback.recommendationType} recommendation: "${feedback.userComment}"`,
     source: 'user_feedback',
-    confidence: 0.95,
+    confidence: null,
     extractedAt: new Date().toISOString(),
   };
 

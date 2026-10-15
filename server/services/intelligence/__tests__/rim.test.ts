@@ -22,6 +22,9 @@ import {
   generateJudgmentReport,
   JUDGMENT_FRAMEWORK_VERSION,
 } from '../judgment-framework.js';
+import type { ReadinessScore } from '../readiness-scoring-engine.js';
+import type { EvidenceChain } from '../evidence-confidence-model.js';
+import type { RecommendationType } from '../recommendation-engine.js';
 
 import {
   patternRegistry,
@@ -74,12 +77,43 @@ const TEST_PROJECT = 88888;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('JudgmentFramework', () => {
+  // 2026-10-15: these cases used readiness: null, whose unmeasured dimensions
+  // the framework scored as 50 at a constant confidence. They now use inputs
+  // that were measured; judgment-unmeasured-is-not-assessed.test.ts pins the
+  // unmeasured case.
+  const MEASURED: ReadinessScore = {
+    overallScore: 76,
+    dimensions: { completeness: 70, quality: 80, consistency: 80, compliance: 75 },
+    moduleBreakdown: [],
+    gaps: [],
+    trend: { direction: 'unknown', delta: null, dataPoints: 0 },
+    predictions: { approvalProbability: null, estimatedReviewDays: null, estimatedDeficiencies: 2, basis: 'twin_assessment' },
+    scoreBasis: { source: 'twin_assessment', measured: ['completeness', 'quality', 'consistency', 'compliance'], notMeasured: [] },
+    scoredAt: '2026-10-15T00:00:00.000Z',
+  };
+  const STRONG_CHAIN: EvidenceChain = {
+    primarySource: { sourceType: 'document_state', sourceId: 'd1', sourceTitle: 'Protocol', relevance: 1 },
+    supportingSources: [],
+    confidenceBasis: 'rules_based',
+    confidenceScore: null,
+    chainStrength: 'strong',
+  };
+  const ALL_CHECKED: RecommendationType[] = [
+    'incomplete_section', 'validation_failure', 'quality_gap', 'cross_reference_issue',
+    'compliance_gap', 'evidence_gap',
+  ];
+
   it('evaluateEvidenceSufficiency returns valid JudgmentScore', () => {
-    const score = evaluateEvidenceSufficiency(null, [], []);
+    const empty = evaluateEvidenceSufficiency(null, [], []);
+    expect(empty.verdict).toBe('not_assessed');
+    expect(empty.score).toBeNull();
+    expect(empty.notAssessed.length).toBeGreaterThan(0);
+
+    const score = evaluateEvidenceSufficiency(MEASURED, [], []);
     expect(score.model).toBe('evidence_sufficiency');
     expect(score.score).toBeGreaterThanOrEqual(0);
     expect(score.score).toBeLessThanOrEqual(100);
-    expect(score.confidence).toBeGreaterThan(0);
+    expect(score.confidence).toBeNull(); // rules-based: no confidence is computed
     expect(score.basis).toBe('rules_based');
     expect(score.verdict).toBeDefined();
     expect(score.factors.length).toBeGreaterThan(0);
@@ -87,12 +121,12 @@ describe('JudgmentFramework', () => {
   });
 
   it('evaluateDefensibility penalizes critical gaps', () => {
-    const noGaps = evaluateDefensibility(null, [], []);
-    const withGaps = evaluateDefensibility(null, [
+    const noGaps = evaluateDefensibility(MEASURED, [], []);
+    const withGaps = evaluateDefensibility(MEASURED, [
       { id: 'g1', module: 'test', description: 'critical gap', severity: 'critical', remediation: 'fix it', estimatedEffortHours: null },
       { id: 'g2', module: 'test', description: 'critical gap 2', severity: 'critical', remediation: 'fix it too', estimatedEffortHours: null },
     ], []);
-    expect(withGaps.score).toBeLessThan(noGaps.score);
+    expect(withGaps.score).toBeLessThan(noGaps.score as number);
     expect(withGaps.findings.length).toBe(2);
     expect(withGaps.findings[0].severity).toBe('critical');
   });
@@ -104,34 +138,41 @@ describe('JudgmentFramework', () => {
     );
     expect(report.frameworkVersion).toBe(JUDGMENT_FRAMEWORK_VERSION);
     expect(report.scores.length).toBe(6); // 5 component + 1 submission risk
-    expect(report.overallRisk).toBeGreaterThanOrEqual(0);
-    expect(report.overallVerdict).toBeDefined();
+    expect(report.overallRisk).toBeNull(); // nothing measured: no composite
+    expect(report.overallVerdict).toBe('not_assessed');
     expect(report.generatedAt).toBeTruthy();
   });
 
   it('submission risk verdict reflects component scores', () => {
     const report = generateJudgmentReport(
       { organizationId: 1, projectId: 1 },
-      { readiness: null, gaps: [], recommendations: [], evidenceChains: [] },
+      {
+        readiness: MEASURED,
+        gaps: [],
+        recommendations: [],
+        assessedRecommendationTypes: ALL_CHECKED,
+        evidenceChains: [STRONG_CHAIN],
+      },
     );
     const submissionRisk = report.scores.find(s => s.model === 'submission_risk');
     expect(submissionRisk).toBeDefined();
     expect(submissionRisk!.factors.length).toBe(5); // one per component model
   });
 
-  it('signalReliability lowers confidence when historical accuracy is poor', () => {
-    const baseline = generateJudgmentReport(
-      { organizationId: 1, projectId: 1 },
-      { readiness: null, gaps: [], recommendations: [], evidenceChains: [] },
-    );
+  it('signalReliability never invents a confidence and never moves a score', () => {
+    const measured = {
+      readiness: MEASURED,
+      gaps: [],
+      recommendations: [],
+      assessedRecommendationTypes: ALL_CHECKED,
+      evidenceChains: [STRONG_CHAIN],
+    };
+    const baseline = generateJudgmentReport({ organizationId: 1, projectId: 1 }, measured);
 
     const lowReliability = generateJudgmentReport(
       { organizationId: 1, projectId: 1 },
       {
-        readiness: null,
-        gaps: [],
-        recommendations: [],
-        evidenceChains: [],
+        ...measured,
         signalReliability: {
           validated: 1,
           partiallyValidated: 0,
@@ -145,10 +186,7 @@ describe('JudgmentFramework', () => {
     const highReliability = generateJudgmentReport(
       { organizationId: 1, projectId: 1 },
       {
-        readiness: null,
-        gaps: [],
-        recommendations: [],
-        evidenceChains: [],
+        ...measured,
         signalReliability: {
           validated: 10,
           partiallyValidated: 0,
@@ -159,15 +197,19 @@ describe('JudgmentFramework', () => {
       },
     );
 
-    // Every model's confidence should drop under low reliability, hold under high.
+    // 2026-10-15: this pinned reliability scaling the constant confidences
+    // (80/40, 75/35 …). Rules-based models compute none, so reliability has
+    // nothing to scale and must not make one up.
     for (let i = 0; i < baseline.scores.length; i++) {
-      expect(lowReliability.scores[i].confidence).toBeLessThan(baseline.scores[i].confidence);
-      expect(highReliability.scores[i].confidence).toBe(baseline.scores[i].confidence);
+      expect(baseline.scores[i].confidence).toBeNull();
+      expect(lowReliability.scores[i].confidence).toBeNull();
+      expect(highReliability.scores[i].confidence).toBeNull();
     }
 
     // Scores themselves (the underlying verdict) must NOT shift based on
-    // reliability — only our confidence in them does.
+    // reliability.
     for (let i = 0; i < baseline.scores.length; i++) {
+      expect(baseline.scores[i].score).not.toBeNull();
       expect(lowReliability.scores[i].score).toBe(baseline.scores[i].score);
       expect(lowReliability.scores[i].verdict).toBe(baseline.scores[i].verdict);
     }
@@ -393,7 +435,12 @@ describe('TrendDetection', () => {
 
   it('trend output includes confidence and sampleSize fields (Task 7)', () => {
     const summary = getSignalSummary(TEST_ORG, TEST_PROJECT);
-    expect(summary.overallTrend).toMatch(/improving|stable|declining/);
+    // 2026-10-15: with too little data the trend is null, not 'stable'.
+    if (summary.trendConfidence === 'insufficient') {
+      expect(summary.overallTrend).toBeNull();
+    } else {
+      expect(summary.overallTrend).toMatch(/improving|stable|declining/);
+    }
     expect(summary.trendConfidence).toMatch(/high|moderate|low|insufficient/);
     expect(typeof summary.trendSampleSize).toBe('number');
   });
