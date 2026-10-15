@@ -33,47 +33,41 @@
  *  - Shankar et al. (2014) AAPS J — neutralizing antibody assay
  *    recommendations.
  *
+ * The shared types, citations and input helpers are in
+ * ./immunogenicity-reference and the comparability tool in
+ * ./immunogenicity-comparability (split out on 2026-10-15 for size); both are
+ * re-exported here.
+ *
  * @module server/services/immunogenicity/immunogenicity-knowledge
  */
 
 import { ComputationRefusal } from '../ana-biostats/computation-engine';
+import {
+  CITATIONS,
+  RISK_SCORE_BANDS,
+  dedupeCitations,
+  maxSeverity,
+  round,
+  scoreToTier,
+  shown,
+  statedBoolean,
+  statedNumber,
+  statedOneOf,
+  type Citation,
+  type RiskTier,
+  type ScoreBand,
+  type SeverityLevel,
+} from './immunogenicity-reference';
 
-/* ════════════════════════════════════════════════════════════════════════
- * SECTION 0 — SHARED TYPES, ENUMS, AND REFERENCE TABLES
- * ════════════════════════════════════════════════════════════════════════ */
-
-/** Ordinal risk tiers used across the engine. */
-export type RiskTier = 'low' | 'moderate' | 'high';
-
-/** Severity scale for clinical-impact classification. */
-export type SeverityLevel = 'none' | 'low' | 'moderate' | 'high' | 'critical';
-
-/** A regulatory citation with the issuing body and a specific locator. */
-export interface Citation {
-  authority: string;
-  document: string;
-  locator: string;
-}
-
-/** Numeric → tier mapping descriptor (documentation of thresholds). */
-export interface ScoreBand {
-  tier: RiskTier;
-  minScore: number;
-  maxScore: number;
-  label: string;
-}
-
-/**
- * Risk score is normalized 0–100. Bands are inclusive of min, exclusive of
- * max except the top band. These bands are an internal deterministic scale;
- * they are NOT a regulatory threshold but a structured way of aggregating the
- * qualitative risk factors enumerated in FDA 2014 Section III and EMA 2017.
- */
-export const RISK_SCORE_BANDS: ScoreBand[] = [
-  { tier: 'low', minScore: 0, maxScore: 34, label: 'Low immunogenicity concern' },
-  { tier: 'moderate', minScore: 34, maxScore: 67, label: 'Moderate immunogenicity concern' },
-  { tier: 'high', minScore: 67, maxScore: 101, label: 'High immunogenicity concern' },
-];
+export { CITATIONS, RISK_SCORE_BANDS } from './immunogenicity-reference';
+export type { Citation, RiskTier, ScoreBand, SeverityLevel } from './immunogenicity-reference';
+export { assessImmunogenicityComparability } from './immunogenicity-comparability';
+export type {
+  ChangeImpact,
+  ComparabilityContext,
+  ComparabilityParams,
+  ComparabilityResult,
+} from './immunogenicity-comparability';
 
 /** What the risk score is. Carried in every assessImmunogenicityRisk result. */
 const RISK_METHODOLOGY =
@@ -83,173 +77,6 @@ const RISK_METHODOLOGY =
   'and come from no guidance. No score or tier is given until every factor is stated.';
 
 const RISK_TIERS: RiskTier[] = RISK_SCORE_BANDS.map((b: ScoreBand) => b.tier);
-
-/** Resolve a normalized 0–100 score to a risk tier deterministically. */
-function scoreToTier(score: number): RiskTier {
-  const clamped = score < 0 ? 0 : score > 100 ? 100 : score;
-  for (const band of RISK_SCORE_BANDS) {
-    if (clamped >= band.minScore && clamped < band.maxScore) {
-      return band.tier;
-    }
-  }
-  return 'high';
-}
-
-/** Combine two tiers, returning the more severe of the two. */
-function maxTier(a: RiskTier, b: RiskTier): RiskTier {
-  const order: RiskTier[] = ['low', 'moderate', 'high'];
-  return order.indexOf(a) >= order.indexOf(b) ? a : b;
-}
-
-/** Combine two severities, returning the more severe of the two. */
-function maxSeverity(a: SeverityLevel, b: SeverityLevel): SeverityLevel {
-  const order: SeverityLevel[] = ['none', 'low', 'moderate', 'high', 'critical'];
-  return order.indexOf(a) >= order.indexOf(b) ? a : b;
-}
-
-/** Round to a fixed number of decimals deterministically. */
-function round(value: number, decimals: number): number {
-  const factor = Math.pow(10, decimals);
-  return Math.round((value + Number.EPSILON) * factor) / factor;
-}
-
-function shown(value: unknown): string {
-  return typeof value === 'number' ? String(value) : JSON.stringify(value);
-}
-
-/**
- * A stated enum input, or undefined when it was not stated (null counts as not
- * stated). A value outside the vocabulary is refused, never scored as a guess.
- */
-function statedOneOf<T extends string>(field: string, value: unknown, allowed: readonly T[]): T | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'string' && (allowed as readonly string[]).includes(value)) return value as T;
-  throw new ComputationRefusal(
-    'invalid_input',
-    `${field} must be one of ${allowed.join(', ')} (got ${shown(value)}). Leave it out if it is not known.`,
-    field,
-  );
-}
-
-/** A stated boolean input, or undefined when it was not stated. Absent is not false. */
-function statedBoolean(field: string, value: unknown): boolean | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'boolean') return value;
-  throw new ComputationRefusal(
-    'invalid_input',
-    `${field} must be true or false (got ${shown(value)}). Leave it out if it is not known.`,
-    field,
-  );
-}
-
-/** A stated finite number that satisfies `ok`, or undefined when it was not stated. */
-function statedNumber(field: string, value: unknown, ok: (n: number) => boolean, rule: string): number | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'number' && Number.isFinite(value) && ok(value)) return value;
-  throw new ComputationRefusal('invalid_input', `${field} must be ${rule} (got ${shown(value)}).`, field);
-}
-
-/** Canonical citations reused across the engine. */
-export const CITATIONS: Record<string, Citation> = {
-  FDA_2019: {
-    authority: 'FDA',
-    document:
-      'Immunogenicity Testing of Therapeutic Protein Products — Developing and Validating Assays for Anti-Drug Antibody Detection (Jan 2019)',
-    locator: 'Guidance for Industry',
-  },
-  FDA_2019_TIERS: {
-    authority: 'FDA',
-    document: 'Immunogenicity Testing of Therapeutic Protein Products (Jan 2019)',
-    locator: 'Section IV — Tiered Approach (Screening, Confirmatory, Titer, NAb)',
-  },
-  FDA_2019_CUTPOINT: {
-    authority: 'FDA',
-    document: 'Immunogenicity Testing of Therapeutic Protein Products (Jan 2019)',
-    locator: 'Section V.A — Screening Cut Point (5% false-positive rate)',
-  },
-  FDA_2019_SENSITIVITY: {
-    authority: 'FDA',
-    document: 'Immunogenicity Testing of Therapeutic Protein Products (Jan 2019)',
-    locator: 'Section V.C — Assay Sensitivity (target ≤ 100 ng/mL)',
-  },
-  FDA_2019_DRUGTOL: {
-    authority: 'FDA',
-    document: 'Immunogenicity Testing of Therapeutic Protein Products (Jan 2019)',
-    locator: 'Section V.D — Drug Tolerance',
-  },
-  FDA_2019_NAB: {
-    authority: 'FDA',
-    document: 'Immunogenicity Testing of Therapeutic Protein Products (Jan 2019)',
-    locator: 'Section VI — Neutralizing Antibody Assays',
-  },
-  FDA_2014: {
-    authority: 'FDA',
-    document: 'Immunogenicity Assessment for Therapeutic Protein Products (Aug 2014)',
-    locator: 'Guidance for Industry',
-  },
-  FDA_2014_FACTORS: {
-    authority: 'FDA',
-    document: 'Immunogenicity Assessment for Therapeutic Protein Products (Aug 2014)',
-    locator: 'Section III — Factors That Can Affect Immunogenicity',
-  },
-  FDA_2014_CONSEQUENCES: {
-    authority: 'FDA',
-    document: 'Immunogenicity Assessment for Therapeutic Protein Products (Aug 2014)',
-    locator: 'Section II — Clinical Consequences of Immune Responses',
-  },
-  FDA_2014_RISKBASED: {
-    authority: 'FDA',
-    document: 'Immunogenicity Assessment for Therapeutic Protein Products (Aug 2014)',
-    locator: 'Section IV — Risk-Based Approach to Immunogenicity Evaluation',
-  },
-  EMA_2017: {
-    authority: 'EMA',
-    document:
-      'Guideline on Immunogenicity Assessment of Therapeutic Proteins (EMEA/CHMP/BMWP/14327/2006 Rev 1, 2017)',
-    locator: 'Risk-based immunogenicity programme',
-  },
-  EMA_MABS: {
-    authority: 'EMA',
-    document:
-      'Guideline on Immunogenicity Assessment of Monoclonal Antibodies for In Vivo Clinical Use (EMA/CHMP/BMWP/86289/2010)',
-    locator: 'Monoclonal antibody-specific considerations',
-  },
-  USP_1106: {
-    authority: 'USP',
-    document: 'General Chapter <1106> Immunogenicity Assays — Design and Validation (ADA detection)',
-    locator: 'Cut-point, sensitivity, specificity, precision',
-  },
-  USP_1106_1: {
-    authority: 'USP',
-    document: 'General Chapter <1106.1> Neutralizing Antibody Assay Design and Validation',
-    locator: 'Cell-based vs competitive ligand-binding NAb assays',
-  },
-  ICH_S6R1: {
-    authority: 'ICH',
-    document: 'ICH S6(R1) Preclinical Safety Evaluation of Biotechnology-Derived Pharmaceuticals (2011)',
-    locator: 'Immunogenicity and limitations of animal immunogenicity data',
-  },
-  ICH_Q5E: {
-    authority: 'ICH',
-    document: 'ICH Q5E Comparability of Biotechnological/Biological Products (2004)',
-    locator: 'Comparability after manufacturing changes',
-  },
-  FDA_BIOSIM: {
-    authority: 'FDA',
-    document: 'Scientific Considerations in Demonstrating Biosimilarity to a Reference Product (2015)',
-    locator: 'Immunogenicity comparison for biosimilars',
-  },
-  SHANKAR_2008: {
-    authority: 'Shankar et al.',
-    document: 'Recommendations for the validation of immunoassays used for ADA detection (J Pharm Biomed Anal 2008)',
-    locator: 'Cut-point statistics (mean + 1.645·SD)',
-  },
-  SHANKAR_2014: {
-    authority: 'Shankar et al.',
-    document: 'Assessment and reporting of clinical immunogenicity — NAb assay recommendations (AAPS J 2014)',
-    locator: 'Neutralizing antibody assay format selection',
-  },
-};
 
 /* ════════════════════════════════════════════════════════════════════════
  * SECTION 1 — assessImmunogenicityRisk
@@ -959,19 +786,6 @@ export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): Immu
     citations,
     summary,
   };
-}
-
-function dedupeCitations(list: Citation[]): Citation[] {
-  const seen: Record<string, boolean> = {};
-  const out: Citation[] = [];
-  for (const c of list) {
-    const key = `${c.authority}|${c.document}|${c.locator}`;
-    if (!seen[key]) {
-      seen[key] = true;
-      out.push(c);
-    }
-  }
-  return out;
 }
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -2009,167 +1823,4 @@ function onTreatmentTimingDescription(freq: DoseFrequency, durationWeeks: number
   }
   const interval = round(durationWeeks / (count + 1), 1);
   return `Approximately ${count} on-treatment draws at roughly every ${interval} week(s) across the ${durationWeeks}-week treatment period, each at trough.`;
-}
-
-/* ════════════════════════════════════════════════════════════════════════
- * SECTION 6 — assessImmunogenicityComparability
- * ════════════════════════════════════════════════════════════════════════ */
-
-/** Context that triggers a comparability assessment. */
-export type ComparabilityContext = 'biosimilar' | 'manufacturing_change' | 'formulation_change' | 'site_transfer' | 'scale_up';
-
-/** Categorization of the change's potential impact on immunogenicity. */
-export type ChangeImpact = 'minor' | 'moderate' | 'major';
-
-export interface ComparabilityParams {
-  /** What triggered the comparability evaluation. */
-  context: ComparabilityContext;
-  /** Whether analytical/structural comparability (primary structure, PTMs,
-   *  charge variants, aggregates) was demonstrated. */
-  analyticalComparable?: boolean;
-  /** Whether the change could alter aggregate/particle levels. */
-  affectsAggregation?: boolean;
-  /** Whether the change could alter glycosylation/PTMs. */
-  affectsGlycosylation?: boolean;
-  /** Whether the change affects the formulation / container-closure
-   *  (leachables, particles). */
-  affectsFormulation?: boolean;
-  /** Whether new or different process-related impurities are introduced. */
-  affectsImpurities?: boolean;
-  /** The product's intrinsic immunogenicity risk tier. */
-  productRiskTier?: RiskTier;
-  /** For biosimilars: whether a comparative clinical immunogenicity study is
-   *  planned (typically required unless justified). */
-  comparativeClinicalStudyPlanned?: boolean;
-  /** Free-text drug name (echoed). */
-  drugName?: string;
-}
-
-export interface ComparabilityResult {
-  drugName: string;
-  context: ComparabilityContext;
-  changeImpact: ChangeImpact;
-  clinicalImmunogenicityStudyRequired: boolean;
-  studyRecommendation: string;
-  analyticalExpectations: string[];
-  bridgingDataNeeds: string[];
-  riskFactorsTriggered: string[];
-  decisionRationale: string;
-  citations: Citation[];
-  summary: string;
-}
-
-/**
- * assessImmunogenicityComparability — Assesses immunogenicity comparability
- * after a manufacturing/formulation change (ICH Q5E) or for a biosimilar
- * (FDA 2015 biosimilarity considerations / EMA 2017). Determines whether a
- * comparative clinical immunogenicity study is warranted and what analytical
- * and bridging data are needed.
- */
-export function assessImmunogenicityComparability(params: ComparabilityParams): ComparabilityResult {
-  const drugName = params.drugName ?? '(unnamed product)';
-  const analyticalComparable = params.analyticalComparable ?? false;
-  const productRisk = params.productRiskTier ?? 'moderate';
-
-  const triggered: string[] = [];
-  if (params.affectsAggregation) triggered.push('Change may alter aggregate/subvisible-particle levels (a primary immunogenicity driver).');
-  if (params.affectsGlycosylation) triggered.push('Change may alter glycosylation/PTMs (potential new glycan epitopes / effector-function shifts).');
-  if (params.affectsFormulation) triggered.push('Change affects formulation or container-closure (leachables, silicone oil, particle formation).');
-  if (params.affectsImpurities) triggered.push('Change may introduce new or different process-related impurities (potential adjuvant effect).');
-  if (!analyticalComparable) triggered.push('Analytical/structural comparability not yet demonstrated.');
-
-  // ── Determine change impact ─────────────────────────────────────────────
-  let impact: ChangeImpact = 'minor';
-  const triggerCount = triggered.length;
-  if (params.context === 'biosimilar') {
-    impact = 'major'; // biosimilars carry an inherent immunogenicity comparison expectation
-  } else if (!analyticalComparable || triggerCount >= 2) {
-    impact = 'major';
-  } else if (triggerCount === 1) {
-    impact = 'moderate';
-  }
-  // High-risk products escalate the impact one level (capped at major).
-  if (productRisk === 'high' && impact === 'moderate') impact = 'major';
-  if (productRisk === 'high' && impact === 'minor') impact = 'moderate';
-
-  // ── Clinical study determination ────────────────────────────────────────
-  let clinicalRequired: boolean;
-  let studyRecommendation: string;
-  let rationale: string;
-
-  if (params.context === 'biosimilar') {
-    clinicalRequired = params.comparativeClinicalStudyPlanned ?? true;
-    studyRecommendation = clinicalRequired
-      ? 'Conduct a comparative clinical immunogenicity study (biosimilar vs reference product) with a pre-specified margin on ADA/NAb incidence, unless a robust analytical and clinical-pharmacology data package justifies a waiver. Include a single-switch evaluation where the totality-of-evidence approach requires it.'
-      : 'A standalone comparative clinical immunogenicity study is not planned; justification must rest on a strong analytical similarity package plus comparative PK/PD immunogenicity data (totality-of-evidence).';
-    rationale =
-      'For a biosimilar, immunogenicity comparability is a core element of the totality-of-the-evidence demonstration of biosimilarity; comparative immunogenicity assessment is expected (FDA 2015; EMA 2017), typically as a head-to-head comparison using a single validated assay applied to both products.';
-  } else {
-    // Manufacturing/formulation change under ICH Q5E.
-    if (impact === 'major') {
-      clinicalRequired = true;
-      studyRecommendation =
-        'Analytical comparability alone is insufficient. Generate comparative immunogenicity data — at minimum bridging non-clinical and PK/immunogenicity data, and a clinical immunogenicity comparison (pre- vs post-change) when residual uncertainty remains, especially for moderate/high-risk products.';
-      rationale =
-        'Under ICH Q5E, when a manufacturing change has a meaningful potential to affect immunogenicity-relevant quality attributes (aggregates, glycosylation, impurities, formulation) and analytical comparability is uncertain, additional non-clinical and/or clinical immunogenicity data are required to conclude comparability.';
-    } else if (impact === 'moderate') {
-      clinicalRequired = false;
-      studyRecommendation =
-        'Demonstrate comparability primarily through enhanced analytical characterization focused on immunogenicity-relevant attributes; supplement with bridging immunogenicity data if residual risk remains. A dedicated clinical immunogenicity study may be avoidable if analytical comparability is robust.';
-      rationale =
-        'Under ICH Q5E, a change with a single immunogenicity-relevant trigger and otherwise comparable analytics can often be supported analytically, with clinical immunogenicity data reserved for residual uncertainty.';
-    } else {
-      clinicalRequired = false;
-      studyRecommendation =
-        'Comparability can be concluded on the basis of analytical/structural comparability of immunogenicity-relevant quality attributes; no dedicated clinical immunogenicity study is anticipated.';
-      rationale =
-        'Under ICH Q5E, a low-impact change with demonstrated analytical comparability and no immunogenicity-relevant triggers does not warrant a dedicated clinical immunogenicity study.';
-    }
-  }
-
-  const analyticalExpectations: string[] = [
-    'Primary structure and post-translational modification comparison (sequence, disulfides, glycosylation, deamidation/oxidation).',
-    'Higher-order structure (HOS) comparison (e.g., circular dichroism, DSC, HDX-MS, NMR fingerprinting).',
-    'Aggregate and subvisible/submicron particle comparison (SEC-MALS, AUC, MFI, HIAC, nanoparticle tracking).',
-    'Charge-variant and size-variant profiles (cIEF/icIEF, CE-SDS).',
-    'Process-related impurity comparison (HCP, residual DNA, leachables).',
-    'Binding and potency comparison reflecting the mechanism of action.',
-  ];
-
-  const bridgingDataNeeds: string[] = [
-    'A single, validated ADA assay applied to pre- and post-change (or biosimilar and reference) samples to avoid assay-driven differences.',
-    'Comparable cut points, sensitivity, drug tolerance, and specificity across the compared products.',
-    'NAb comparison where neutralization is clinically relevant.',
-    'PK/PD bridging data interpreted alongside immunogenicity to detect exposure-mediated effects.',
-  ];
-
-  if (params.context === 'biosimilar') {
-    bridgingDataNeeds.push('Demonstrate the assay equally detects ADA against both the biosimilar and the reference product (assay capable of detecting antibodies to both).');
-  }
-
-  const citations: Citation[] = dedupeCitations(
-    params.context === 'biosimilar'
-      ? [CITATIONS.FDA_BIOSIM, CITATIONS.EMA_2017, CITATIONS.ICH_Q5E, CITATIONS.FDA_2019_TIERS]
-      : [CITATIONS.ICH_Q5E, CITATIONS.FDA_2014_RISKBASED, CITATIONS.EMA_2017, CITATIONS.FDA_2019_TIERS],
-  );
-
-  const summary =
-    `${drugName}: ${params.context.replace(/_/g, ' ')} immunogenicity comparability — change impact ${impact.toUpperCase()}. ` +
-    `Comparative clinical immunogenicity study ${clinicalRequired ? 'IS' : 'is NOT'} recommended. ` +
-    `${triggered.length} immunogenicity-relevant trigger(s) identified. ` +
-    `Demonstration rests on ${analyticalComparable ? 'demonstrated' : 'pending'} analytical comparability${params.context === 'biosimilar' ? ' within a totality-of-evidence approach' : ' under ICH Q5E'}.`;
-
-  return {
-    drugName,
-    context: params.context,
-    changeImpact: impact,
-    clinicalImmunogenicityStudyRequired: clinicalRequired,
-    studyRecommendation,
-    analyticalExpectations,
-    bridgingDataNeeds,
-    riskFactorsTriggered: triggered,
-    decisionRationale: rationale,
-    citations,
-    summary,
-  };
 }
