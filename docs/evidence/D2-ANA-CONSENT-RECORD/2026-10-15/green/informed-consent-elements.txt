@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/regulatory/informed-consent-elements.test.ts > the record > cites only paragraphs that exist: 50.25(a)(1)–(8), (b)(1)–(6), (c) 5ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > the record > FDA and Common Rule element sets differ only by the Common Rule-only elements and 50.25(c) 3ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > design_informed_consent reads the record > cites no 21 CFR 50.25(b) paragraph past (b)(6); the biospecimen elements are 45 CFR 46.116(c)(7)–(9) 1ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > design_informed_consent reads the record > holds the same required FDA elements the consent review checks 1ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > design_informed_consent reads the record > asks whether the trial is an applicable clinical trial rather than assuming it from the study type 1ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > review_informed_consent does not call 50.25(c) missing when it may not apply > with ACT status unknown, the ClinicalTrials.gov statement is a question, not a missing element 2ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > review_informed_consent does not call 50.25(c) missing when it may not apply > for an applicable clinical trial it is required 2ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > what the IND auditor and the protocol question flow tell clients > the IND auditor lists the 50.25(a) elements in their order, with the research statement and 50.25(c) 1ms
+ ✓ tests/regulatory/informed-consent-elements.test.ts > what the IND auditor and the protocol question flow tell clients > the protocol flow states the required elements from the record 1ms
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > checks the ClinicalTrials.gov statement (50.25(c)) as required for an applicable clinical trial 4ms
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > checks termination by the investigator (b)(2) and the consequences of withdrawing (b)(4) 1ms
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > does not credit confidentiality from the word "records": it looks for FDA inspection of the records 1ms
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > does not credit the research statement from the word "study" alone 0ms
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > reports counts of what the wording shows, not a percentage of compliance 0ms
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the GCP guideline in force > cites ICH E6(R3), not the superseded E6(R2) 1ms
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > adviseGcp > resolves the sponsor domain via alias (rbm) with citation 2ms
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > adviseGcp > returns all domains when none specified 1ms
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > reviewInformedConsent > flags missing required elements and scores a sparse consent 2ms
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > reviewInformedConsent > scores a complete consent at 100% required 1ms
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > reviewInformedConsent > lists the catalog of domains and consent elements 1ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  04:56:42
+   Duration  993ms (transform 207ms, setup 124ms, import 172ms, tests 46ms, environment 0ms)
+

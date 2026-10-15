@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > has exactly the canonical headings, in order 9ms
+   → expected [ 'Table of Contents', …(7) ] to deeply equal [ '1. Summary', …(5) ]
+ × tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > cites the outline basis (ICH E6(R3) Appendix A), labelled as recall 1ms
+   → expected 'ICH E6(R3) (GCP) ICH M4S / M4E (noncl…' to match /ICH E6\(R3\) Appendix A/
+ × tests/regulatory/ib-one-outline.test.ts > the legacy IND IB template > renders the canonical headings and files at M1 1.14.4.1 7ms
+   → Cannot find module '/server/routes/concept2cure-ib-template' imported from /home/user/ClinicalSageAI-2-replit/tests/regulatory/ib-one-outline.test.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > has exactly the canonical headings, in order
+AssertionError: expected [ 'Table of Contents', …(7) ] to deeply equal [ '1. Summary', …(5) ]
+
+- Expected
++ Received
+
+  [
++   "Table of Contents",
+    "1. Summary",
+    "2. Introduction",
+-   "3. Physical, Chemical and Pharmaceutical Properties and Formulation",
++   "3. Physical, Chemical, and Pharmaceutical Properties",
+    "4. Nonclinical Studies",
+    "5. Effects in Humans",
+    "6. Summary of Data and Guidance for the Investigator",
++   "References",
+  ]
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:26:49
+     24|
+     25|   it('has exactly the canonical headings, in order', () => {
+     26|     expect(chat.sections.map((s) => s.heading)).toEqual(canonicalHeadi…
+       |                                                 ^
+     27|   });
+     28|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the IB AnA drafts in chat is the platform's one IB outline > cites the outline basis (ICH E6(R3) Appendix A), labelled as recall
+AssertionError: expected 'ICH E6(R3) (GCP) ICH M4S / M4E (noncl…' to match /ICH E6\(R3\) Appendix A/
+
+- Expected:
+/ICH E6\(R3\) Appendix A/
+
++ Received:
+"ICH E6(R3) (GCP) ICH M4S / M4E (nonclinical / clinical sections) 21 CFR 312.23(a)(5)"
+
+ ❯ tests/regulatory/ib-one-outline.test.ts:30:49
+     28|
+     29|   it('cites the outline basis (ICH E6(R3) Appendix A), labelled as rec…
+     30|     expect(chat.regulatoryReferences.join(' ')).toMatch(/ICH E6\(R3\) …
+       |                                                 ^
+     31|     expect(chat.regulatoryReferences.join(' ')).toMatch(/recall/);
+     32|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/regulatory/ib-one-outline.test.ts > the legacy IND IB template > renders the canonical headings and files at M1 1.14.4.1
+Error: Cannot find module '/server/routes/concept2cure-ib-template' imported from /home/user/ClinicalSageAI-2-replit/tests/regulatory/ib-one-outline.test.ts
+ ❯ tests/regulatory/ib-one-outline.test.ts:37:34
+     35| describe('the legacy IND IB template', () => {
+     36|   it('renders the canonical headings and files at M1 1.14.4.1', async …
+     37|     const { legacyIbTemplate } = await import('../../server/routes/con…
+       |                                  ^
+     38|     const t = legacyIbTemplate();
+     39|     for (const h of canonicalHeadings) expect(t.content).toContain(`##…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  05:20:15
+   Duration  1.40s (transform 902ms, setup 88ms, import 968ms, tests 22ms, environment 0ms)
+
