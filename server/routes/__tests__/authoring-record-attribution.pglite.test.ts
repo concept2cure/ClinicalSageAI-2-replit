@@ -24,12 +24,13 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
-import type express from 'express';
+import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { SignJWT } from 'jose';
 
 import { createJourneyDb, assertNoSchemaGaps, extractTableDdl, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHOR, ORG, OTHER_ORG, JWT_SECRET, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { AUTHORING_REVIEW_BINDING_BASIS } from '@shared/authoring/peer-review';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, ORG, OTHER_ORG, JWT_SECRET, mint, makeApp, asToken } from './_authoring-canvas-fixture';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../db', () => ({
@@ -47,6 +48,9 @@ const COLLEAGUE = { id: '11', organizationId: ORG, email: 'colleague@canvas.exam
 /** The organization's QA manager: an audit reader (owner/admin/manager, DP-18),
  *  but not a global authoring admin, and holding no grant on the documents. */
 const QA_ADMIN = { id: '12', organizationId: ORG, email: 'qa@canvas.example', name: 'Quinn QA', role: 'manager' };
+/** The independent reviewer the author asks (404e94efc: an author no longer
+ *  records a verdict on their own document; a verdict needs an assignment). */
+const REVIEWER = { id: '13', organizationId: ORG, email: 'rae@canvas.example', name: 'Rae Reviewer' };
 
 /** A token carrying a role claim, as the product issues one; the fixture's mint carries none. */
 async function mintWithRole(u: typeof QA_ADMIN): Promise<string> {
@@ -60,6 +64,28 @@ async function mintWithRole(u: typeof QA_ADMIN): Promise<string> {
 let jdb: JourneyDb;
 let app: express.Express;
 let author: (r: request.Test) => request.Test;
+let reviewer: (r: request.Test) => request.Test;
+/** The router with the request's own connection, which the bound peer-review
+ *  service runs its transaction on (requestConnectable), as production supplies it. */
+let reviewApp: express.Express;
+
+/** The author asks REVIEWER (granting the Reviewer role), and REVIEWER sends a
+ *  verdict bound to the saved review context it read (404e94efc). */
+async function reviewByReviewer(docId: string, body: { review_status: string; review_comments?: string }) {
+  const ask = await author(request(reviewApp).post(`/api/authoring/documents/${docId}/request-review`)).send({
+    reviewers: [{ id: REVIEWER.id, name: REVIEWER.name }],
+  });
+  expect(ask.status, JSON.stringify(ask.body)).toBe(200);
+  const read = await reviewer(request(reviewApp).get(`/api/authoring/documents/${docId}/reviews`));
+  expect(read.status, JSON.stringify(read.body)).toBe(200);
+  const context = read.body.reviewContext;
+  expect(context.canReview, JSON.stringify(context)).toBe(true);
+  return reviewer(request(reviewApp).post(`/api/authoring/documents/${docId}/review`)).send({
+    ...body,
+    expected: { reviewId: context.myReview.reviewId, requestedAt: context.myReview.requestedAt,
+      snapshotHash: context.snapshotHash, bindingBasis: AUTHORING_REVIEW_BINDING_BASIS },
+  });
+}
 
 async function rows<R>(sql: string, params: unknown[] = []): Promise<R[]> {
   return (await jdb.pool.query(sql, params)).rows as R[];
@@ -112,7 +138,11 @@ beforeAll(async () => {
     // unified_tasks: a verdict looks up its reviewer's open review task on the
     // document to complete it on the same transaction (wave 2D). The deployed
     // database has the table; this one needs it to say the same.
-    prereqSql: `${PREREQ}\n${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks'])}`,
+    // AUTHORING_ACCESS_DDL and payment_status: the current account, organization
+    // and posture the bound peer-review service reads for every reviewer (404e94efc).
+    prereqSql: `${PREREQ}\n${AUTHORING_ACCESS_DDL}
+      ALTER TABLE organizations ADD COLUMN payment_status text NOT NULL DEFAULT 'active';
+      ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks'])}`,
     migrations: [
       // The authoring subsystem unit, in the durable applier's order.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
@@ -133,17 +163,27 @@ beforeAll(async () => {
     testOnlySql: `
       INSERT INTO users (id, name, email) VALUES
         (${COLLEAGUE.id}, '${COLLEAGUE.name}', '${COLLEAGUE.email}'),
-        (${QA_ADMIN.id}, '${QA_ADMIN.name}', '${QA_ADMIN.email}');
+        (${QA_ADMIN.id}, '${QA_ADMIN.name}', '${QA_ADMIN.email}'),
+        (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}');
       INSERT INTO organization_users (organization_id, user_id, role) VALUES
         (${ORG}, ${COLLEAGUE.id}, 'member'),
-        (${ORG}, ${QA_ADMIN.id}, 'manager');
+        (${ORG}, ${QA_ADMIN.id}, 'manager'),
+        (${ORG}, ${REVIEWER.id}, 'member');
     `,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
   author = asToken(await mint(AUTHOR));
+  reviewer = asToken(await mint(REVIEWER));
   const { default: router } = await import('../authoring.router');
   app = makeApp(router);
+  const pinned = express.Router();
+  pinned.use((req, _res, next) => {
+    req.dbClient = { query: async (text: string, params?: unknown[]) => jdb.pool.query(text, params) } as typeof req.dbClient;
+    next();
+  });
+  pinned.use(router);
+  reviewApp = makeApp(pinned);
 }, T);
 
 afterAll(async () => {
@@ -196,27 +236,27 @@ describe('2 — the acts the legacy wrapper wrote carry the real actor, and no i
   it('a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason', async () => {
     const { docId } = await seedDoc();
     const why = 'Section 2.5.4 cites the wrong SAP version.';
-    const res = await author(request(app).post(`/api/authoring/documents/${docId}/review`)).send({
+    const res = await reviewByReviewer(docId, {
       review_status: 'changes_requested',
       review_comments: why,
     });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
 
     const { trail, chain } = await recordOf(docId, 'document_reviewed');
-    expect(trail).toMatchObject({ actor_id: AUTHOR.id, change_reason: why });
-    expect(chain).toEqual([{ actor_id: Number(AUTHOR.id), user_id: Number(AUTHOR.id), reason: why }]);
+    expect(trail).toMatchObject({ actor_id: REVIEWER.id, change_reason: why });
+    expect(chain).toEqual([{ actor_id: Number(REVIEWER.id), user_id: Number(REVIEWER.id), reason: why }]);
   }, T);
 
   it('an approval with no comment: the actor, and no reason at all', async () => {
     const { docId } = await seedDoc();
-    const res = await author(request(app).post(`/api/authoring/documents/${docId}/review`)).send({
+    const res = await reviewByReviewer(docId, {
       review_status: 'approved',
     });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
 
     const { trail, chain } = await recordOf(docId, 'document_reviewed');
-    expect(trail).toMatchObject({ actor_id: AUTHOR.id, change_reason: null });
-    expect(chain).toEqual([{ actor_id: Number(AUTHOR.id), user_id: Number(AUTHOR.id), reason: null }]);
+    expect(trail).toMatchObject({ actor_id: REVIEWER.id, change_reason: null });
+    expect(chain).toEqual([{ actor_id: Number(REVIEWER.id), user_id: Number(REVIEWER.id), reason: null }]);
   }, T);
 
   it('no row anywhere carries the reason "Legacy audit event"', async () => {

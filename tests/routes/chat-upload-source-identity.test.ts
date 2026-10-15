@@ -26,6 +26,7 @@ const {
   mockFindSourceByChecksum,
   mockFindSupersededCandidate,
   mockCreateSupersedingSource,
+  mockProcessCapturedSource,
 } = vi.hoisted(() => ({
   mockResolveGovernedContext: vi.fn(),
   mockPoolQuery: vi.fn(),
@@ -34,6 +35,7 @@ const {
   mockFindSourceByChecksum: vi.fn(),
   mockFindSupersededCandidate: vi.fn(),
   mockCreateSupersedingSource: vi.fn(),
+  mockProcessCapturedSource: vi.fn(),
 }));
 
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
@@ -67,6 +69,16 @@ vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.servi
   findSupersededCandidate: mockFindSupersededCandidate,
   createSupersedingSource: mockCreateSupersedingSource,
 }));
+
+// Since 9c266724f the capture records its source `pending` and the bound Data
+// Room processor commits the text on it (processCapturedSource). That processor
+// is proven on PostgreSQL (tests/db/data-room-processing.dbtest.ts) and its
+// route contract in server/routes/__tests__/chat-upload-durability.test.ts;
+// here it is the seam the route hands the bytes to, and nothing else is stubbed.
+vi.mock('../../server/services/clinical-regulatory-evidence/data-room-processing.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../server/services/clinical-regulatory-evidence/data-room-processing.js')>();
+  return { ...actual, processCapturedSource: mockProcessCapturedSource };
+});
 
 // The chat router pulls a large graph; stub what the upload path never reaches.
 vi.mock('../../server/services/chat-thread-helpers.js', () => ({
@@ -171,6 +183,7 @@ beforeEach(() => {
   // takes the createSource path (createSupersedingSource stays unused).
   mockFindSupersededCandidate.mockResolvedValue(null);
   mockCreateSupersedingSource.mockResolvedValue({ source: { id: 4242 } });
+  mockProcessCapturedSource.mockResolvedValue({ ok: true, processed: true, status: 'completed' });
 });
 
 /** regulatory_programs as the database holds it: `uuid` is org 5's project. */
@@ -221,12 +234,22 @@ describe('chat upload → canonical source identity', () => {
     expect(payload(res).status).toBe('ready');
   });
 
-  it('records that the document was stored and read, not left pending', async () => {
-    await runUpload();
+  it('records that the document was stored, and hands what it read to the processor that commits it', async () => {
+    // Capture is durable; the derived text is `pending` until the bound
+    // processor commits it on this source (9c266724f), and the answer calls the
+    // file readable only once it has.
+    const res = await runUpload({ content: 'enrollment data' });
     const [, params] = mockCreateSource.mock.calls[0];
     expect(params.ingestionStatus).toBe('ingested');
-    expect(params.extractionStatus).toBe('extracted');
+    expect(params.extractionStatus).toBe('pending');
     expect(params.provenance.extractionMethod).toBe('utf8');
+    expect(mockProcessCapturedSource).toHaveBeenCalledTimes(1);
+    expect(mockProcessCapturedSource).toHaveBeenCalledWith(5, 4242, expect.objectContaining({
+      bytes: Buffer.from('enrollment data', 'utf8'), fileName: 'protocol.txt', mimeType: 'text/plain',
+      programId: null, expectedWorkspaceId: 12,
+      preExtracted: expect.objectContaining({ text: 'enrollment data' }),
+    }));
+    expect(payload(res).dataRoom).toMatchObject({ recorded: true, readable: true });
   });
 
   it('carries the upload back to its bytes and its file_uploads row', async () => {
@@ -325,7 +348,9 @@ describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)
       clientProgramId: '11111111-1111-4111-8111-111111111111',
       clientWorkspaceId: null,
     });
-    expect(payload(res).dataRoom).toEqual({ recorded: true });
+    expect(payload(res).dataRoom).toEqual({
+      recorded: true, readable: true, processing: { ok: true, processed: true, status: 'completed' },
+    });
   });
 
   it('a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)', async () => {

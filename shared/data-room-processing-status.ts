@@ -99,6 +99,12 @@ export function sourceReadView(source: DataRoomReadableSource, readableLabel = '
   const processing = source.processing == null ? null : isDataRoomProcessingSummary(source.processing) ? source.processing : invalidSummary();
   const snapshot = { ...source, processing };
   if (source.textAvailable === true) {
+    /* keep_data: the original file was withdrawn and its extracted text kept.
+       It still reads, but never as plainly "Read" — the original is gone, and
+       a reader citing it must know (2c2417d7a; ana-retrieval-spec.md:114). */
+    if (source.disposition === 'keep_data') {
+      return { label: 'Data retained · original unavailable', tone: 'muted', detail: readableProcessingDetail(snapshot) };
+    }
     const label = source.extractionMethod?.includes('ocr') ? `${readableLabel} via OCR` : readableLabel;
     return { label, tone: 'ok', detail: readableProcessingDetail(snapshot) };
   }

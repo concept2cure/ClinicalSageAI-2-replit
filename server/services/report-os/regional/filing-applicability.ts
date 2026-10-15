@@ -74,13 +74,25 @@ export function readRecordedRegionalFiling(raw: unknown): RegionalFilingContext 
     continuingLifecycle: typeof applicationNumber === 'string' && Boolean(applicationNumber.trim()),
   } };
 }
-const refusal = (availabilityState: Exclude<RegionalAvailabilityState, 'available'>, reasonCode: string, availabilityReason: string): RegionalFilingApplicability => ({ availabilityState, runnable: false, reasonCode, availabilityReason });
-/** Missing/declaration drift/current kind or market are distinct, closed states. */
-export function regionalFilingApplicability(typeId: string, declared: { region?: string | null; label?: string | null }, context: RegionalFilingContext): RegionalFilingApplicability {
+type RegionalRefusal = Extract<RegionalFilingApplicability, { runnable: false }>;
+const refusal = (availabilityState: Exclude<RegionalAvailabilityState, 'available'>, reasonCode: string, availabilityReason: string): RegionalRefusal => ({ availabilityState, runnable: false, reasonCode, availabilityReason });
+/** The type's own declaration against its binding, before any program record is
+ * read: a drifted or unmodeled type is refused without reading tenant metadata,
+ * and a failed metadata read cannot displace this refusal (precedence of the
+ * engine's assertTypeMarket before 2026-10-14; restored 2026-10-15). */
+export function regionalDeclarationRefusal(typeId: string, declared: { region?: string | null; label?: string | null }): RegionalRefusal | null {
   const binding = REGIONAL_FILING_TYPES[typeId];
   if (!binding) return refusal('not-applicable', 'REGIONAL_FILING_NOT_MODELED', `No market readiness is computed for ${typeId}.`);
   const label = declared.label ?? typeId;
   if (REGION_TO_JURISDICTION[declared.region ?? ''] !== binding.jurisdiction) return refusal('context-unavailable', 'REGIONAL_TYPE_MARKET_INCONSISTENT', `${label} declares region ${declared.region ?? 'none'}, which is not the ${binding.jurisdiction} Module 1 record this assessment reads. No market readiness was assessed.`);
+  return null;
+}
+/** Missing/declaration drift/current kind or market are distinct, closed states. */
+export function regionalFilingApplicability(typeId: string, declared: { region?: string | null; label?: string | null }, context: RegionalFilingContext): RegionalFilingApplicability {
+  const declaration = regionalDeclarationRefusal(typeId, declared);
+  if (declaration) return declaration;
+  const binding = REGIONAL_FILING_TYPES[typeId];
+  const label = declared.label ?? typeId;
   if (context.state !== 'recorded') return refusal(context.state, context.reasonCode, context.availabilityReason);
   const ctx = context.filing;
   if (!ctx.kind || !ctx.jurisdiction) {
