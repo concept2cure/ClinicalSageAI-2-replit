@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T03:01:28.464Z",
+  "generatedAt": "2026-10-15T03:59:15.781Z",
   "git": {
-    "sha": "596c6042b8305be223fb8f692d80881b8422ce7c",
+    "sha": "fb127f46390d444e979914f592572cbbf58b74d8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2380,8 +2380,8 @@
         "bytes": 108308
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 106683
+        "file": "server/routes/submissions.ts",
+        "bytes": 103970
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2392,8 +2392,8 @@
         "bytes": 103227
       },
       {
-        "file": "server/routes/submissions.ts",
-        "bytes": 102929
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 102117
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2586,10 +2586,6 @@
         "lines": 2278
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2254
-      },
-      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2207
       },
@@ -2618,12 +2614,16 @@
         "lines": 2155
       },
       {
-        "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 2123
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2139
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2119
+        "lines": 2123
+      },
+      {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 2123
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2690,6 +2690,10 @@
         "lines": 1984
       },
       {
+        "file": "server/routes/submissions.ts",
+        "lines": 1949
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1942
       },
@@ -2700,10 +2704,6 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1932
-      },
-      {
-        "file": "server/routes/submissions.ts",
-        "lines": 1930
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",

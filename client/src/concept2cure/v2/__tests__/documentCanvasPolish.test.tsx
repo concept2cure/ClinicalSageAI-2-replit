@@ -331,7 +331,7 @@ describe('the canvas stylesheet — motion', () => {
   /** A cubic-bezier eases out when it never leaves [0,1] (no overshoot, no
       wind-up), comes to rest (flat exit tangent), and is front-loaded — more
       than half the distance is covered in the first half of the time. The
-      canonical --ease, cubic-bezier(0.4, 0, 0.2, 1), is; ease-in, a symmetric
+      canonical --ease, cubic-bezier(0, 0, 0.2, 1) since 2026-10-15, is; ease-in, a symmetric
       ease-in-out and every spring or bounce are not. */
   function bezierEasesOut([x1, y1, x2, y2]: number[]): boolean {
     if ([x1, y1, x2, y2].some(n => !Number.isFinite(n))) return false;
