@@ -133,12 +133,66 @@ interface ComparisonItem {
 }
 
 export interface RiskAnalysisResult {
-  overallRisk: 'low' | 'medium' | 'high' | 'critical';
-  riskScore: number;
+  /**
+   * 'not_assessed' when none of the three sources could be read. Each read
+   * swallowed its failure and answered "none found", so an analysis that read
+   * nothing reported 'low', score 0, "No risk factors identified" (2026-10-15).
+   */
+  overallRisk: 'low' | 'medium' | 'high' | 'critical' | 'not_assessed';
+  riskScore: number | null;
   factors: RiskFactor[];
   historicalObjections: HistoricalObjection[];
   mitigationStrategies: string[];
   safetySignals: SafetySignalSummary[];
+  /** What each source answered: read, or why it was not. */
+  sources: Record<'adversarialPrecedents' | 'safetySignals' | 'toxicPredicates', SourceStatus>;
+}
+
+/** 'read', or why a source was not: it failed, or it does not apply. */
+export type SourceStatus = 'read' | { notRead: string };
+
+/** A source's answer, or the reason there is none. */
+type SourceRead<T> = { ran: true; value: T } | { ran: false; reason: string };
+
+const statusOf = (r: SourceRead<unknown>): SourceStatus => (r.ran ? 'read' : { notRead: r.reason });
+
+/** Risk factors from the safety signals and toxic predicates found. */
+function signalFactors(safetySignals: SafetySignalSummary[], toxicCount: number): RiskFactor[] {
+  const factors: RiskFactor[] = [];
+  if (safetySignals.length > 0) {
+    factors.push({
+      category: 'Safety Signal History',
+      description: `${safetySignals.length} safety signal(s) found in similar devices (recalls, MDR reports, warnings)`,
+      severity: safetySignals.some(s => s.severity > 0.7) ? 'critical' : 'high',
+      precedentCount: safetySignals.length,
+      mitigation:
+        'Include comprehensive safety data addressing known signal patterns in your submission',
+    });
+  }
+  if (toxicCount > 0) {
+    factors.push({
+      category: 'Toxic Predicate Risk',
+      description: `${toxicCount} predicate(s) in this product code have safety concerns`,
+      severity: 'high',
+      precedentCount: toxicCount,
+      mitigation: 'Avoid toxic predicates. Select predicates with clean safety history.',
+    });
+  }
+  return factors;
+}
+
+/** Overall risk from the factors' severities. */
+function scoreFactors(factors: RiskFactor[]): {
+  riskScore: number;
+  overallRisk: Exclude<RiskAnalysisResult['overallRisk'], 'not_assessed'>;
+} {
+  const severityWeights = { low: 1, medium: 2, high: 3, critical: 4 };
+  const totalWeight = factors.reduce((sum, f) => sum + severityWeights[f.severity], 0);
+  const avgWeight = factors.length > 0 ? totalWeight / factors.length : 0;
+  const riskScore = Math.min(avgWeight / 4, 1);
+  const overallRisk =
+    riskScore >= 0.75 ? 'critical' : riskScore >= 0.5 ? 'high' : riskScore >= 0.25 ? 'medium' : 'low';
+  return { riskScore, overallRisk };
 }
 
 interface RiskFactor {
@@ -155,7 +209,6 @@ interface HistoricalObjection {
   failureMode: string;
   therapeuticArea: string;
   submissionType: string;
-  similarity: number;
 }
 
 interface SafetySignalSummary {
@@ -565,7 +618,9 @@ export class PrecedentEngine {
       fdaComments: null,
       fdaQuestions: [],
       riskFactors: [],
-      similarityScore: 0.5, // structured match on product code / device name
+      // A structured match on product code / device name has no similarity
+      // to report; it was 0.5, which the board showed as a 50% match.
+      similarityScore: undefined,
       sourceType: 'FDA_510k',
       confidenceScore: 1.0,
     }));
@@ -573,10 +628,19 @@ export class PrecedentEngine {
     return { records, registry: { consulted: true, available: true, resultCount: records.length } };
   }
 
+  /** Objections for the corpus search, where a failed read adds none. */
   private async searchAdversarialPrecedents(
     input: PrecedentSearchInput,
     limit: number
   ): Promise<HistoricalObjection[]> {
+    const read = await this.readAdversarialPrecedents(input, limit);
+    return read.ran ? read.value : [];
+  }
+
+  private async readAdversarialPrecedents(
+    input: PrecedentSearchInput,
+    limit: number
+  ): Promise<SourceRead<HistoricalObjection[]>> {
     const conditions: string[] = [];
     const params: any[] = [];
     let paramIdx = 1;
@@ -602,17 +666,19 @@ export class PrecedentEngine {
         [...params, limit]
       );
 
-      return result.rows.map(row => ({
-        question: row.historical_question,
-        agency: row.agency_code,
-        failureMode: row.failure_mode,
-        therapeuticArea: row.therapeutic_area || '',
-        submissionType: row.submission_type || '',
-        similarity: 0.7,
-      }));
+      return {
+        ran: true,
+        value: result.rows.map(row => ({
+          question: row.historical_question,
+          agency: row.agency_code,
+          failureMode: row.failure_mode,
+          therapeuticArea: row.therapeutic_area || '',
+          submissionType: row.submission_type || '',
+        })),
+      };
     } catch (err: any) {
       log.warn(`Adversarial precedent search failed: ${err.message}`);
-      return [];
+      return { ran: false, reason: 'the historical-objection store could not be read' };
     }
   }
 
@@ -810,7 +876,8 @@ export class PrecedentEngine {
     const factors: RiskFactor[] = [];
 
     // 1. Check adversarial precedents for historical FDA objections
-    const objections = await this.searchAdversarialPrecedents(input, 20);
+    const adversarial = await this.readAdversarialPrecedents(input, 20);
+    const objections = adversarial.ran ? adversarial.value : [];
     const objectionGroups = new Map<string, HistoricalObjection[]>();
     for (const o of objections) {
       const group = objectionGroups.get(o.failureMode) || [];
@@ -836,46 +903,32 @@ export class PrecedentEngine {
     }
 
     // 2. Check safety signals for related devices
-    const safetySignals = await this.getSafetySignals(input);
-
-    if (safetySignals.length > 0) {
-      factors.push({
-        category: 'Safety Signal History',
-        description: `${safetySignals.length} safety signal(s) found in similar devices (recalls, MDR reports, warnings)`,
-        severity: safetySignals.some(s => s.severity > 0.7) ? 'critical' : 'high',
-        precedentCount: safetySignals.length,
-        mitigation:
-          'Include comprehensive safety data addressing known signal patterns in your submission',
-      });
-    }
-
+    const safety = await this.readSafetySignals(input);
+    const safetySignals = safety.ran ? safety.value : [];
     // 3. Check predicate lineage for toxic predicates
-    if (['510(k)', '510k'].includes(input.submissionType) && input.productCode) {
-      const toxicCount = await this.checkToxicPredicates(input.productCode);
-      if (toxicCount > 0) {
-        factors.push({
-          category: 'Toxic Predicate Risk',
-          description: `${toxicCount} predicate(s) in this product code have safety concerns`,
-          severity: 'high',
-          precedentCount: toxicCount,
-          mitigation: 'Avoid toxic predicates. Select predicates with clean safety history.',
-        });
-      }
+    const toxic = await this.readToxicPredicatesFor(input);
+    factors.push(...signalFactors(safetySignals, toxic.ran ? toxic.value : 0));
+
+    const sources = {
+      adversarialPrecedents: statusOf(adversarial),
+      safetySignals: statusOf(safety),
+      toxicPredicates: statusOf(toxic),
+    };
+    // Nothing read is not "low risk": it is no assessment.
+    if (!adversarial.ran && !safety.ran && !toxic.ran) {
+      return {
+        overallRisk: 'not_assessed',
+        riskScore: null,
+        factors: [],
+        historicalObjections: [],
+        mitigationStrategies: [],
+        safetySignals: [],
+        sources,
+      };
     }
 
-    // Calculate overall risk
-    const severityWeights = { low: 1, medium: 2, high: 3, critical: 4 };
-    const totalWeight = factors.reduce((sum, f) => sum + severityWeights[f.severity], 0);
-    const avgWeight = factors.length > 0 ? totalWeight / factors.length : 0;
-    const riskScore = Math.min(avgWeight / 4, 1);
-    const overallRisk: RiskAnalysisResult['overallRisk'] =
-      riskScore >= 0.75
-        ? 'critical'
-        : riskScore >= 0.5
-          ? 'high'
-          : riskScore >= 0.25
-            ? 'medium'
-            : 'low';
+    // Calculate overall risk over the sources that were read
+    const { riskScore, overallRisk } = scoreFactors(factors);
 
     // Generate mitigation strategies
     const mitigationStrategies = factors
@@ -890,6 +943,7 @@ export class PrecedentEngine {
       historicalObjections: objections.slice(0, 10),
       mitigationStrategies,
       safetySignals,
+      sources,
     };
   }
 
@@ -1264,7 +1318,7 @@ export class PrecedentEngine {
     return null;
   }
 
-  private async getSafetySignals(input: PrecedentSearchInput): Promise<SafetySignalSummary[]> {
+  private async readSafetySignals(input: PrecedentSearchInput): Promise<SourceRead<SafetySignalSummary[]>> {
     try {
       const conditions: string[] = [];
       const params: any[] = [];
@@ -1279,7 +1333,7 @@ export class PrecedentEngine {
         params.push(`%${input.deviceName}%`);
       }
 
-      if (conditions.length === 0) return [];
+      if (conditions.length === 0) return { ran: false, reason: 'no product code or device name to match on' };
 
       const result = await pool.query(
         `SELECT s.*, c.device_name
@@ -1291,28 +1345,40 @@ export class PrecedentEngine {
         params
       );
 
-      return result.rows.map(row => ({
-        kNumber: row.k_number,
-        deviceName: row.device_name,
-        signalType: row.signal_type,
-        severity: row.severity_score,
-        description: row.description || '',
-      }));
+      return {
+        ran: true,
+        value: result.rows.map(row => ({
+          kNumber: row.k_number,
+          deviceName: row.device_name,
+          signalType: row.signal_type,
+          severity: row.severity_score,
+          description: row.description || '',
+        })),
+      };
     } catch (err: any) {
       log.warn(`Safety signal query failed: ${err.message}`);
-      return [];
+      return { ran: false, reason: 'the predicate safety-signal store could not be read' };
     }
   }
 
-  private async checkToxicPredicates(productCode: string): Promise<number> {
+  /** Toxic predicates, for a 510(k) with a product code; not applicable otherwise. */
+  private async readToxicPredicatesFor(input: PrecedentSearchInput): Promise<SourceRead<number>> {
+    if (!['510(k)', '510k'].includes(input.submissionType) || !input.productCode) {
+      return { ran: false, reason: 'applies to a 510(k) with a product code' };
+    }
+    return this.readToxicPredicates(input.productCode);
+  }
+
+  private async readToxicPredicates(productCode: string): Promise<SourceRead<number>> {
     try {
       const result = await pool.query(
         `SELECT COUNT(*) as count FROM predicate.toxic_predicates WHERE product_code = $1`,
         [productCode]
       );
-      return parseInt(result.rows[0]?.count || '0', 10);
-    } catch {
-      return 0;
+      return { ran: true, value: parseInt(result.rows[0]?.count || '0', 10) };
+    } catch (err: any) {
+      log.warn(`Toxic predicate query failed: ${err.message}`);
+      return { ran: false, reason: 'the toxic-predicate store could not be read' };
     }
   }
 

@@ -177,6 +177,8 @@ function mapResult(p: SearchRow): PrecedentResultDTO {
 }
 
 function mapRisk(r: RiskResult): RiskAnalysisDTO {
+  // No source could be read: the surface's "not assessed" state, not score 0.
+  if (r.overallRisk === 'not_assessed' || r.riskScore === null) return emptyRisk();
   return {
     overall: r.overallRisk,
     score: typeof r.riskScore === 'number' ? r.riskScore : 0,

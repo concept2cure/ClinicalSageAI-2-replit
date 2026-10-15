@@ -1382,6 +1382,18 @@ registerTool({
         deviceClass: params.deviceClass,
       });
 
+      if (analysis.overallRisk === 'not_assessed' || analysis.riskScore === null) {
+        // Every source failed or did not apply: no assessment, not "LOW, 0%".
+        const why = Object.values(analysis.sources)
+          .map((s) => (s === 'read' ? '' : s.notRead))
+          .filter(Boolean)
+          .join('; ');
+        return {
+          ok: false,
+          artifact: null,
+          message: { role: 'assistant', content: `Risk analysis not assessed — no source could be read (${why}).` },
+        };
+      }
       const riskEmoji = { low: '🟢', medium: '🟡', high: '🟠', critical: '🔴' };
       const factorList = analysis.factors
         .map(
