@@ -8,7 +8,7 @@ import {
   USDA_PAIN_CATEGORIES,
   recommendReviewType,
   evaluateProtocolCompleteness,
-  reviewStatus,
+  approvalReviewStatus,
   addYears,
   type ProtocolCompletenessInput,
 } from '../iacuc-logic';
@@ -62,21 +62,23 @@ describe('evaluateProtocolCompleteness', () => {
   });
 });
 
-describe('reviewStatus / addYears', () => {
+describe('approvalReviewStatus / addYears', () => {
   it('adds years correctly', () => {
     expect(addYears('2023-06-10', 3)).toBe('2026-06-10');
   });
   it('expires a protocol 3 years after approval', () => {
-    const r = reviewStatus('2023-01-01', '2026-06-10');
+    const r = approvalReviewStatus('2023-01-01', '2026-06-10');
     expect(r.expirationDate).toBe('2026-01-01');
     expect(r.expired).toBe(true);
   });
   it('flags annual continuing review due within the 3-year window', () => {
-    const r = reviewStatus('2025-01-01', '2026-06-10');
+    const r = approvalReviewStatus('2025-01-01', '2026-06-10');
     expect(r.expired).toBe(false);
     expect(r.annualReviewDue).toBe(true);
   });
-  it('returns nulls for an unapproved protocol', () => {
-    expect(reviewStatus(null, '2026-06-10')).toEqual({ expirationDate: null, expired: false, annualReviewDue: false });
+  it('is undetermined for an unapproved protocol', () => {
+    // 2026-10-15: this pinned the removed reviewStatus wrapper's
+    // `expired: false, annualReviewDue: false` for a protocol nobody dated.
+    expect(approvalReviewStatus(null, '2026-06-10')).toMatchObject({ undetermined: true, expirationDate: null, expired: null, annualReviewDue: null });
   });
 });

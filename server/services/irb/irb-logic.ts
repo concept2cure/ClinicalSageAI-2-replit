@@ -156,7 +156,9 @@ function tally(checks: Array<[string, CheckOutcome]>): { findings: IrbFinding[];
  *
  * @deprecated Two booleans cannot say "unknown": an unrecorded review type or
  * approval date comes back "not required, not expired". Use `lifecycleStatus`
- * (./lifecycle.ts). Kept for protocol-portfolio-logic.ts only (2026-10-15).
+ * (./lifecycle.ts). No production code imports it since 2026-10-15 (the
+ * protocol portfolio reads lifecycleStatus); only irb-logic.test.ts and
+ * lifecycle.test.ts do, and it is deleted with their cases.
  */
 export function continuingReviewStatus(reviewType: IrbReviewType | null, approvalDate: string | null, today: string): {
   continuingReviewRequired: boolean;

@@ -10814,6 +10814,40 @@ function convenedReviewText(convened: boolean | null): string {
   return convened ? '; requires convened IBC review' : '';
 }
 
+const BIOSAFETY_LEVELS = ['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'] as const;
+
+/** The declared containment as stated, null when not stated, or a refusal outside BSL-1..4. */
+function statedBsl(v: unknown): { level: (typeof BIOSAFETY_LEVELS)[number] | null } | { error: string } {
+  if (v == null) return { level: null };
+  const level = BIOSAFETY_LEVELS.find((l) => l === v);
+  return level
+    ? { level }
+    : { error: `biosafety_level, when stated, must be a valid biosafety_level (${BIOSAFETY_LEVELS.join(', ')}); omit it while no level is declared.` };
+}
+
+/**
+ * An IACUC/IBC expiry, saying where the date came from. The review tools stated
+ * a date they computed from the approval date as the expiry, and never read the
+ * one on record (2026-10-15). "On record", not "set by the committee": rows
+ * approved before then hold a computed date that cannot be told apart.
+ */
+function expiryText(e: { expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean }, computedAs: string): string {
+  const whose = e.expirationSource === 'recorded' ? 'on record' : `computed as ${computedAs}; no expiration is on record`;
+  return `${e.expirationDate} (${whose})${e.expired ? ', expired' : ''}`;
+}
+
+type IacucReviewStatusShape =
+  | { undetermined: true; reason: string }
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null };
+
+function iacucReviewStatusText(rs: IacucReviewStatusShape): string {
+  if (rs.undetermined) return ` Review status: ${rs.reason}`;
+  const annual = rs.annualReviewDue === null
+    ? '; whether annual review is due is not determined: no approval date is recorded'
+    : rs.annualReviewDue ? '; annual review due' : '';
+  return ` Expiry: ${expiryText(rs, 'approval + 3 years')}${annual}.`;
+}
+
 registerToolHandler('review_financial_disclosure', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
   const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
@@ -11034,11 +11068,10 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
   try {
     const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
     const gate = evaluateProtocolCompleteness(inp);
-    // Undetermined without an approval date; reviewStatus said "not expired" (2026-10-15).
-    const rs = approvalReviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
-    const review = rs.undetermined
-      ? ` Review status: ${rs.reason}`
-      : ` De novo review due by ${rs.expirationDate}${rs.expired ? ' (expired)' : ''}${rs.annualReviewDue ? '; annual review due' : ''}.`;
+    // Undetermined without an approval date; reviewStatus said "not expired". The
+    // committee's recorded expiration wins over approval + 3 years (2026-10-15).
+    const rs = approvalReviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10), inp.expirationDate);
+    const review = iacucReviewStatusText(rs);
     return JSON.stringify({
       ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, reviewStatus: rs,
       message: (gate.riskLevel === 'high'
@@ -11184,13 +11217,13 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ibc_registration requires tenant + user context.' });
   const registrationNumber = typeof input.registration_number === 'string' ? input.registration_number.trim() : '';
   const title = typeof input.title === 'string' ? input.title.trim() : '';
-  const biosafetyLevel = typeof input.biosafety_level === 'string' ? input.biosafety_level : '';
-  if (!registrationNumber || !title || !['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'].includes(biosafetyLevel)) {
-    return JSON.stringify({ error: 'registration_number, title, and a valid biosafety_level are required.' });
-  }
-  // An unstated section or gene-transfer answer stays NULL (not recorded). They
-  // were written as 'not_applicable' / false, so convened review read as not
-  // required (2026-10-15).
+  if (!registrationNumber || !title) return JSON.stringify({ error: 'registration_number and title are required.' });
+  // An unstated section, gene-transfer or recombinant-DNA answer, or containment
+  // level, stays NULL (not recorded). The answers were written as
+  // 'not_applicable' / false, so convened review read as not required, and a
+  // level had to be supplied to open a registration at all (2026-10-15).
+  const bsl = statedBsl(input.biosafety_level);
+  if ('error' in bsl) return JSON.stringify({ error: bsl.error });
   const stated = statedNihSection(input.nih_guidelines_section);
   if ('error' in stated) return JSON.stringify({ error: stated.error });
   const section = stated.section;
@@ -11205,20 +11238,21 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
-      registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
+      registrationNumber, title, biosafetyLevel: bsl.level,
       nihGuidelinesSection: section,
       submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
-      involvesRecombinantDna: input.involves_recombinant_dna === true,
+      involvesRecombinantDna: statedBoolean(input.involves_recombinant_dna),
       involvesHumanGeneTransfer: geneTransfer,
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
       target: `ibc-registration:${id}`, reason,
-      payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
+      payload: { biosafetyLevel: bsl.level }, domain: 'ibc', surface: 'ana',
     });
     await client.query('COMMIT');
     const convened = requiresConvenedReview(section, geneTransfer);
-    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convenedReviewText(convened)}.` });
+    const level = bsl.level ? `at ${bsl.level}` : 'with no containment level declared';
+    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) ${level}${convenedReviewText(convened)}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `create_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -11274,9 +11308,10 @@ registerToolHandler('review_ibc_registration', async (input, ctx) => {
     const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
     const gate = evaluateContainment(inp);
     // highestRequiredBsl is null with no agents, and the expiry undetermined
-    // with no approval date; they were 'BSL-1' and "not expired" (2026-10-15).
-    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10));
-    const expiry = exp.undetermined ? ` Expiry: ${exp.reason}` : ` Expiry: ${exp.expirationDate}${exp.expired ? ' (expired)' : ''}.`;
+    // with no approval date; they were 'BSL-1' and "not expired". The
+    // committee's recorded expiration wins over approval + 1 year (2026-10-15).
+    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10), inp.expirationDate);
+    const expiry = exp.undetermined ? ` Expiry: ${exp.reason}` : ` Expiry: ${expiryText(exp, 'approval + 1 year')}.`;
     return JSON.stringify({
       ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, notAssessed: gate.notAssessed,
       highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
