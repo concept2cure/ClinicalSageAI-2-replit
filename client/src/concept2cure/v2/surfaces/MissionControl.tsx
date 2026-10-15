@@ -92,8 +92,10 @@ const EXPEDITED = [
 const EXPEDITED_LABEL: Record<string, string> = Object.fromEntries(EXPEDITED);
 
 interface Readiness {
-  readiness: Record<string, number>;
-  overallConfidence: number;
+  /** Each a share of the program's own records; null when it has none of that kind. */
+  readiness: Record<string, number | null>;
+  /** Dimensions nothing on the platform measures, named instead of scored. */
+  notMeasured?: string[];
   summary: Record<string, number>;
   blockers: Array<{ type: string; message: string; severity: string }>;
   nextActions: Array<{ action: string; target: string; priority: string; reason: string }>;
@@ -424,9 +426,7 @@ export function MissionControl(_props: SurfaceViewProps) {
       };
     }
     return {
-      summary:
-        `Mission Control, program "${selected.name}"` +
-        (readiness.state === 'ready' && readiness.data ? ` at ${readiness.data.overallConfidence}% overall readiness.` : '.'),
+      summary: `Mission Control, program "${selected.name}".`,
       facts: {
         programId: selected.id,
         programName: selected.name,
@@ -438,7 +438,9 @@ export function MissionControl(_props: SurfaceViewProps) {
         // the read is still in flight or failed (UNKNOWN), never a false 0/[]
         // that reads as "assessed and found clear." Each of readiness / artifacts
         // / risks / stale is an independent Load, so each is checked separately.
-        overallConfidence: readiness.state === 'ready' ? (readiness.data?.overallConfidence ?? null) : null,
+        // The measured dimensions only — the server no longer computes an
+        // "overall confidence" (it weighted four figures nothing measured).
+        readiness: readiness.state === 'ready' ? Object.fromEntries(readinessRows) : null,
         readinessLoaded: readiness.state === 'ready',
         blockers: readiness.state === 'ready' ? asArray<any>(readiness.data?.blockers).map(b => `${b.severity}: ${b.message}`) : null,
         nextActions: readiness.state === 'ready' ? asArray<any>(readiness.data?.nextActions).map(a => `${a.action} — ${a.target}`) : null,
@@ -453,7 +455,7 @@ export function MissionControl(_props: SurfaceViewProps) {
         'Explain what is blocking this program',
       ],
     };
-  }, [selected, selectedModality, programs.state, programs.data, readiness.state, readiness.data, artifacts.state, artifacts.data, risks.state, risks.data, stale.state, stale.data]);
+  }, [selected, selectedModality, programs.state, programs.data, readiness.state, readiness.data, readinessRows, artifacts.state, artifacts.data, risks.state, risks.data, stale.state, stale.data]);
 
   usePublishSurfaceContext('mission-control', anaContext);
 
@@ -654,11 +656,6 @@ export function MissionControl(_props: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h">
               <span className="t">Readiness — {selected.name}</span>
-              {readiness.state === 'ready' && readiness.data && (
-                <span className={'rd-chip tone-' + scoreTone(readiness.data.overallConfidence)}>
-                  {readiness.data.overallConfidence}% overall confidence
-                </span>
-              )}
             </div>
             <div className="pj-card-b">
               {readiness.state === 'loading' ? (
@@ -669,12 +666,17 @@ export function MissionControl(_props: SurfaceViewProps) {
                 // of them means the program is in trouble.
                 <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load readiness" hint={readiness.error} />
               ) : readinessRows.length === 0 ? (
-                <EmptyState icon={I.activity} title="No readiness signal yet" hint="Readiness is derived from artifacts, evidence, reviews, risks and dependencies. Add any of them and the score appears." />
+                <EmptyState icon={I.activity} title="No readiness signal yet" hint="Readiness is measured from the program’s artifacts, evidence, reviews and dependencies. Add any of them and its figures appear." />
               ) : (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: '12px 20px' }}>
                     {readinessRows.map(([k, v]) => <ScoreBar key={k} label={humanize(k)} value={v} />)}
                   </div>
+                  {asArray<string>(readiness.data?.notMeasured).length > 0 && (
+                    <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-300, #6b6963)' }}>
+                      Not measured: {asArray<string>(readiness.data?.notMeasured).map(humanize).join(', ')}.
+                    </p>
+                  )}
 
                   {Array.isArray(readiness.data?.blockers) && readiness.data!.blockers.length > 0 && (
                     <div style={{ marginTop: 16 }}>

@@ -118,8 +118,10 @@ async function logProvenance(
       previousState: details?.prev,
       newState: details?.next,
     });
-  } catch {
-    // Non-blocking provenance logging
+  } catch (err) {
+    // Non-blocking, but not silent: a mutation whose provenance row failed is
+    // logged as such instead of passing for one that has it (2026-10-15).
+    logger.error('provenance row not written', { entityType, entityId, action, err });
   }
 }
 
@@ -293,15 +295,8 @@ router.post('/programs/:programId/destinations', async (req: Request, res: Respo
       programId,
       organizationId: orgId,
       status: req.body.status || 'planned',
-      readinessArtifact: 0,
-      readinessEvidence: 0,
-      readinessReview: 0,
-      readinessApproval: 0,
-      readinessConsistency: 0,
-      readinessRouteFit: 0,
-      readinessAuthority: 0,
-      readinessCompliance: 0,
-      readinessTimeline: 0,
+      // Nine readiness fields were stored here as 0 and nothing ever computed
+      // or read them: a stored "0% ready" nobody measured (removed 2026-10-15).
     };
 
     const dest = await store.insert(orgId, 'destination', req.body.destinationType || 'Destination', data);
@@ -1094,23 +1089,17 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
     const risks = await store.query(orgId, 'risk', (r: any) => r.programId === programId);
     const deps = await store.query(orgId, 'dependency', (d: any) => d.programId === programId);
     const decisions = await store.query(orgId, 'decision', (d: any) => d.programId === programId);
-    const provenance = await store.query(orgId, 'provenance', (p: any) => p.programId === programId);
 
-    const totalArts = arts.length || 1;
     const completedArts = arts.filter((a: any) =>
       ['approved', 'locked', 'exported'].includes(a.lifecycleState),
     ).length;
-    const draftingArts = arts.filter((a: any) => a.lifecycleState === 'drafting').length;
-    const reviewArts = arts.filter((a: any) => a.lifecycleState === 'in-review').length;
     const approvedArts = arts.filter((a: any) =>
       ['approved', 'locked'].includes(a.lifecycleState),
     ).length;
 
-    const totalEvidence = evidence.length || 1;
     const strongEvidence = evidence.filter((e: any) => e.strengthLevel === 'strong').length;
     const moderateEvidence = evidence.filter((e: any) => e.strengthLevel === 'moderate').length;
 
-    const totalReviews = reviews.length || 1;
     const completedReviews = reviews.filter((r: any) => r.status === 'approved').length;
 
     const openRisks = risks.filter(
@@ -1122,39 +1111,41 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
 
     const staleDeps = deps.filter((d: any) => d.isStale).length;
 
+    /* Each figure is a share of this program's own records, or null when it
+       has none of that kind to measure. Until 2026-10-15 four of the nine
+       dimensions measured nothing — routeFit was a constant 70,
+       complianceIntegrity 85 or 50 by whether any provenance row existed,
+       authorityConfidence and timelineConfidence 100 less invented per-risk
+       penalties — the rest divided by `length || 1` and gave invented partial
+       credit (a draft 0.5, a moderate evidence node 0.6), and a weighted
+       "overall confidence" of all nine read 66% for a program with no
+       records. The unmeasured ones are named, not scored. */
+    const share = (n: number, of: number) => (of > 0 ? Math.round((n / of) * 100) : null);
     const readiness = {
-      artifactCompleteness: Math.round(
-        ((completedArts + draftingArts * 0.5 + reviewArts * 0.7) / totalArts) * 100,
-      ),
-      evidenceAdequacy: Math.round(
-        ((strongEvidence * 1.0 + moderateEvidence * 0.6) / totalEvidence) * 100,
-      ),
-      reviewMaturity: Math.round((completedReviews / totalReviews) * 100),
-      approvalMaturity: Math.round((approvedArts / totalArts) * 100),
-      consistencyIntegrity: Math.max(0, 100 - staleDeps * 15),
-      routeFit: 70,
-      authorityConfidence: Math.max(0, 100 - criticalRisks * 25 - openRisks * 5),
-      complianceIntegrity: provenance.length > 0 ? 85 : 50,
-      timelineConfidence: Math.max(0, 100 - openRisks * 8),
+      /** approved, locked or exported */
+      artifactCompleteness: share(completedArts, arts.length),
+      /** approved or locked */
+      approvalMaturity: share(approvedArts, arts.length),
+      /** rated strong */
+      evidenceAdequacy: share(strongEvidence, evidence.length),
+      /** review cycles approved */
+      reviewMaturity: share(completedReviews, reviews.length),
+      /** dependencies not stale */
+      consistencyIntegrity: share(deps.length - staleDeps, deps.length),
     };
-
-    const weights = [0.15, 0.15, 0.12, 0.12, 0.1, 0.1, 0.1, 0.08, 0.08];
-    const values = Object.values(readiness);
-    const overallConfidence = Math.round(
-      values.reduce((sum, v, i) => sum + v * weights[i], 0),
-    );
+    const notMeasured = ['routeFit', 'authorityConfidence', 'complianceIntegrity', 'timelineConfidence'];
 
     const blockers = [];
-    if (readiness.evidenceAdequacy < 50)
+    if (readiness.evidenceAdequacy !== null && readiness.evidenceAdequacy < 50)
       blockers.push({
         type: 'evidence-gap',
-        message: `Evidence adequacy at ${readiness.evidenceAdequacy}% — weak evidence chains detected`,
+        message: `${strongEvidence} of ${evidence.length} evidence nodes rated strong`,
         severity: 'high',
       });
-    if (readiness.approvalMaturity < 30)
+    if (readiness.approvalMaturity !== null && readiness.approvalMaturity < 30)
       blockers.push({
         type: 'approval-gap',
-        message: `Only ${approvedArts}/${totalArts} artifacts approved`,
+        message: `Only ${approvedArts}/${arts.length} artifacts approved`,
         severity: 'medium',
       });
     if (staleDeps > 0)
@@ -1200,12 +1191,13 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
     res.json({
       data: {
         readiness,
-        overallConfidence,
+        notMeasured,
         summary: {
           totalArtifacts: arts.length,
           completedArtifacts: completedArts,
           totalEvidence: evidence.length,
           strongEvidence,
+          moderateEvidence,
           totalReviews: reviews.length,
           completedReviews,
           openRisks,

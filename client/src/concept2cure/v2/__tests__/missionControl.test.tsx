@@ -51,14 +51,13 @@ const PROGRAMS = [
 
 const READINESS = {
   readiness: {
-    artifactCompleteness: 62, evidenceAdequacy: 41, reviewMaturity: 80,
-    approvalMaturity: 25, consistencyIntegrity: 85, routeFit: 70,
-    authorityConfidence: 45, complianceIntegrity: 85, timelineConfidence: 76,
+    artifactCompleteness: 62, evidenceAdequacy: 41, reviewMaturity: null,
+    approvalMaturity: 25, consistencyIntegrity: 85,
   },
-  overallConfidence: 61,
+  notMeasured: ['routeFit', 'authorityConfidence', 'complianceIntegrity', 'timelineConfidence'],
   summary: { totalArtifacts: 8, openRisks: 3, criticalRisks: 1, staleDependencies: 1 },
   blockers: [
-    { type: 'evidence-gap', message: 'Evidence adequacy at 41% — weak evidence chains detected', severity: 'high' },
+    { type: 'evidence-gap', message: '7 of 17 evidence nodes rated strong', severity: 'high' },
     { type: 'critical-risks', message: '1 critical risk(s) unresolved', severity: 'critical' },
   ],
   nextActions: [
@@ -90,19 +89,20 @@ describe('Mission Control — reads the real program engine', () => {
     expect(apiRequest.mock.calls.some(c => c[1] === '/api/mission-control/programs')).toBe(true);
   });
 
-  it('renders the SERVER’s readiness, and does not recompute it', async () => {
+  it('renders the SERVER’s measured readiness, names what is not measured, and invents no overall', async () => {
     render(<MissionControl {...props()} />);
-    // 61 is the server's weighted overall. The nine dimensions average to 58.8,
-    // so a browser-side recomputation would show a different number — asserting
-    // 61 specifically is what pins that the server owns the weighting.
-    expect(await screen.findByText(/61% overall confidence/)).toBeTruthy();
-    expect(screen.getByText('Artifact completeness')).toBeTruthy();
+    expect(await screen.findByText('Artifact completeness')).toBeTruthy();
     expect(screen.getByText('41%')).toBeTruthy();
+    // A dimension with nothing to measure is not drawn as a score, 0% or otherwise.
+    expect(screen.queryByText('Review maturity')).toBeNull();
+    expect(screen.getByText(/Not measured: Route fit, Authority confidence, Compliance integrity, Timeline confidence/)).toBeTruthy();
+    // The server stopped weighting figures nothing measured into an "overall confidence".
+    expect(screen.queryByText(/overall confidence/i)).toBeNull();
   });
 
   it('shows the blockers and next actions the engine derived', async () => {
     render(<MissionControl {...props()} />);
-    expect(await screen.findByText(/weak evidence chains detected/)).toBeTruthy();
+    expect(await screen.findByText(/7 of 17 evidence nodes rated strong/)).toBeTruthy();
     expect(screen.getByText(/1 critical risk\(s\) unresolved/)).toBeTruthy();
     expect(screen.getByText(/Module 2.5 Clinical Overview/)).toBeTruthy();
   });
@@ -128,7 +128,7 @@ describe('Mission Control — reads the real program engine', () => {
     // send must render an empty state, never throw.
     apiRequest.mockImplementation(async (_m: string, url: string) => {
       if (url.endsWith('/programs')) return ok(PROGRAMS);
-      if (url.endsWith('/readiness')) return ok({ overallConfidence: 0 });
+      if (url.endsWith('/readiness')) return ok({ notMeasured: [] });
       return ok([]);
     });
     render(<MissionControl {...props()} />);
@@ -207,7 +207,7 @@ describe('Mission Control — reads the real program engine', () => {
 
   it('the selected program states its regulatory frame, derived from modality', async () => {
     render(<MissionControl {...props()} />);
-    await screen.findByText(/61% overall confidence/);
+    await screen.findByText('Artifact completeness');
     // The chip is the stored fact; the line is DERIVED by
     // shared/regulatory/modality.ts — CDER (not CBER: mAbs transferred in
     // 2003), the 351(a) default pathway with its PDUFA fee, and the CMC core.
@@ -217,7 +217,7 @@ describe('Mission Control — reads the real program engine', () => {
 
   it('a program with no modality renders no frame rather than a guessed one', async () => {
     render(<MissionControl {...props()} />);
-    await screen.findByText(/61% overall confidence/);
+    await screen.findByText('Artifact completeness');
     fireEvent.click(screen.getByRole('button', { name: /C2C-202/ }));
     await waitFor(() => {
       expect(screen.queryByText('Monoclonal antibody')).toBeNull();
