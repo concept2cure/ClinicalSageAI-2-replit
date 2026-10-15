@@ -638,6 +638,9 @@ export function SubmissionCenter({
      filing's "Open in Submission Center"). Read once on mount; opened against
      the rows the server returned, after the reset above, never guessed. */
   const [navParams] = React.useState(() => consumeNavParams('submission-center'));
+  /* F15: Respond opens the Sequences tab with followUp 'response', and the next
+     sequence's type starts there. Only a follow-up type the server takes. */
+  const navFollowUp = (FOLLOW_UP_SEQ_TYPES as readonly string[]).includes(navParams?.followUp ?? '') ? navParams?.followUp ?? null : null;
   const [navTarget] = React.useState(() =>
     navParams ? readSubmissionNavTarget({ submissionId: navParams.submissionId, sequenceId: navParams.sequenceId, ws: navParams.ws }) : null);
   const navMiss = useOpenOnNavTarget(navTarget, {
@@ -748,7 +751,7 @@ export function SubmissionCenter({
   /* A follow-up sequence (WO-9 Click 6). Its number follows the highest in the
      submission's own region — numbering restarts per region — and its type is
      the author's to state; the server's enum, less 'original', which is 0000. */
-  const [nextSeqType, setNextSeqType] = React.useState<string>('amendment');
+  const [nextSeqType, setNextSeqType] = React.useState<string>(navFollowUp ?? 'amendment');
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
