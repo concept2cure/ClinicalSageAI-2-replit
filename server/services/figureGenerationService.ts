@@ -34,7 +34,9 @@ export interface FigureSpec {
   generatedContent: string; // Mermaid/SVG/ChartJS spec
   generatedFormat: 'mermaid' | 'chartjs' | 'svg' | 'html-table' | 'text-description';
   metadata: FigureMetadata;
-  confidence: number; // 0-1 confidence in data accuracy
+  // 2026-10-15: `confidence` ("0-1 confidence in data accuracy") is gone. It was
+  // scored from the output's syntax; nothing checked a datum. Each source now
+  // records how many of its rows the model was given (FigureDataSource).
   auditTrail: FigureAuditEntry[];
 }
 
@@ -64,6 +66,10 @@ export interface FigureDataSource {
   sourceId?: string;
   sourceName: string;
   dataPoints?: Record<string, unknown>[];
+  /** Rows this source supplied. */
+  rowsSupplied: number;
+  /** Whole rows of it the drafting model was given (the prompt has a size budget). */
+  rowsSentToModel: number;
   extractedAt?: string;
 }
 
@@ -272,6 +278,31 @@ function hasDataPoints(sources: Array<{ data: Record<string, unknown>[] }>): boo
   return sources.some(src => Array.isArray(src.data) && src.data.length > 0);
 }
 
+/** Characters of serialized rows each source may put in the drafting prompt. */
+const PROMPT_ROWS_CHAR_BUDGET = 3000;
+
+const NO_ROW_FITS: FigureGenerationResult = {
+  success: false,
+  error: `No source row fits in the drafting prompt (${PROMPT_ROWS_CHAR_BUDGET} characters per source), so no figure was generated.`,
+};
+
+/**
+ * The whole rows of one source that fit the prompt budget, in order. 2026-10-15:
+ * the serialized rows were cut at 3000 characters, so the model could see a
+ * fragment of a row and nothing recorded how many rows it saw.
+ */
+function rowsThatFit(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  const fit: Record<string, unknown>[] = [];
+  let used = 2; // the enclosing []
+  for (const row of rows) {
+    const cost = JSON.stringify(row).length + (fit.length > 0 ? 1 : 0);
+    if (used + cost > PROMPT_ROWS_CHAR_BUDGET) break;
+    fit.push(row);
+    used += cost;
+  }
+  return fit;
+}
+
 /**
  * Generate a regulatory-grade figure using AI.
  */
@@ -294,6 +325,10 @@ export async function generateFigure(
 
     if (!hasDataPoints(sourceData)) return NO_SOURCE_DATA;
 
+    // The rows the model is given: whole rows within the budget, per source.
+    const promptRows = sourceData.map(s => rowsThatFit(s.data));
+    if (!promptRows.some(rows => rows.length > 0)) return NO_ROW_FITS;
+
     // 2. Get figure type config
     const typeConfig = FIGURE_TYPE_CONFIG[request.figureType] || FIGURE_TYPE_CONFIG.custom;
     const format = request.preferences?.format || typeConfig.preferredFormat;
@@ -306,7 +341,7 @@ export async function generateFigure(
 
     // 4. Build the prompt
     const systemPrompt = buildFigureSystemPrompt(format, request.figureType);
-    const userPrompt = buildFigureUserPrompt(request, typeConfig, sourceData, format, figureNumber);
+    const userPrompt = buildFigureUserPrompt(request, sourceData, promptRows, format, figureNumber);
 
     // 5. Draft the figure. document_drafting: only a model approved for
     // high-risk regulatory drafting serves it. It defaulted to gpt-4o as a
@@ -339,11 +374,13 @@ export async function generateFigure(
       title: request.title,
       figureType: request.figureType,
       description: request.description,
-      sourceData: sourceData.map(s => ({
+      sourceData: sourceData.map((s, i) => ({
         sourceType: s.type as FigureDataSource['sourceType'],
         sourceId: s.id,
         sourceName: s.name,
         dataPoints: s.data,
+        rowsSupplied: s.data.length,
+        rowsSentToModel: promptRows[i].length,
         extractedAt: new Date().toISOString(),
       })),
       regulatoryContext: request.targetSection,
@@ -358,7 +395,6 @@ export async function generateFigure(
         modelUsed: model,
         tokensUsed,
       },
-      confidence: computeFigureConfidence(sourceData, content),
       auditTrail: [
         {
           action: 'generated',
@@ -534,16 +570,21 @@ async function resolveSourceData(
 
 async function getNextFigureNumber(projectId: number, sectionCode: string): Promise<string> {
   try {
+    // An untargeted figure is stored with no sectionCode and numbered under
+    // 'general'. 2026-10-15: the count matched 'general' only, so it was always
+    // 0 and every untargeted figure was "Figure general-1".
     const result = await pool.query(
       `SELECT COUNT(*) as count FROM concept2cure_artifacts
        WHERE project_id = $1 AND metadata->>'artifactType' = 'figure'
-         AND metadata->>'sectionCode' = $2`,
+         AND COALESCE(metadata->>'sectionCode', 'general') = $2`,
       [projectId, sectionCode]
     );
     const count = parseInt(result.rows[0]?.count || '0', 10) + 1;
     return `Figure ${sectionCode}-${count}`;
-  } catch {
-    return `Figure ${sectionCode}-1`;
+  } catch (error) {
+    // 2026-10-15: answered `Figure ${sectionCode}-1`, a number nobody assigned.
+    console.error('[FigureService] Could not count existing figures:', error);
+    throw new Error('The figure number could not be assigned because the existing figures could not be read, so no figure was generated.', { cause: error });
   }
 }
 
@@ -580,15 +621,20 @@ Rules:
 
 function buildFigureUserPrompt(
   request: FigureGenerationRequest,
-  typeConfig: (typeof FIGURE_TYPE_CONFIG)[FigureType],
   sourceData: Array<{ id: string; name: string; type: string; data: Record<string, unknown>[] }>,
+  promptRows: Record<string, unknown>[][],
   format: string,
   figureNumber: string
 ): string {
-  const dataSection =
-    sourceData.length > 0
-      ? `\n\nSource Data:\n${sourceData.map(s => `- ${s.name} (${s.type}): ${JSON.stringify(s.data).slice(0, 3000)}`).join('\n')}`
-      : '\n\nNo source data provided — generate a representative template with clear [DATA PLACEHOLDER] markers.';
+  // Whole rows only, and the model is told when it sees a subset. The
+  // no-source-data "representative template" branch is gone: generateFigure
+  // refuses before reaching here without data.
+  const dataSection = `\n\nSource Data:\n${sourceData
+    .map((s, i) => {
+      const subset = promptRows[i].length < s.data.length ? ` (first ${promptRows[i].length} of ${s.data.length} rows)` : '';
+      return `- ${s.name} (${s.type})${subset}: ${JSON.stringify(promptRows[i])}`;
+    })
+    .join('\n')}`;
 
   return `Generate: ${figureNumber} — ${request.title}
 Type: ${request.figureType}
@@ -596,24 +642,12 @@ Format: ${format}
 Description: ${request.description}${request.targetSection ? `\nTarget Section: ${request.targetSection}` : ''}${dataSection}`;
 }
 
-function computeFigureConfidence(
-  sourceData: Array<{ id: string; name: string; type: string; data: Record<string, unknown>[] }>,
-  content: string
-): number {
-  let confidence = 0.5; // Base confidence
-
-  // Higher confidence with actual source data
-  if (sourceData.length > 0) confidence += 0.2;
-  if (sourceData.some(s => s.data && s.data.length > 0)) confidence += 0.15;
-
-  // Lower confidence for placeholders
-  if (content.includes('PLACEHOLDER') || content.includes('DATA NEEDED')) confidence -= 0.2;
-
-  // Higher confidence for structured output
-  if (content.includes('{') || content.includes('graph') || content.includes('<svg'))
-    confidence += 0.1;
-
-  return Math.max(0, Math.min(1, confidence));
+/** Rows supplied and rows sent to the model, summed over the figure's sources. */
+function rowCounts(figure: FigureSpec): { rowsSupplied: number; rowsSentToModel: number } {
+  return figure.sourceData.reduce(
+    (n, s) => ({ rowsSupplied: n.rowsSupplied + s.rowsSupplied, rowsSentToModel: n.rowsSentToModel + s.rowsSentToModel }),
+    { rowsSupplied: 0, rowsSentToModel: 0 }
+  );
 }
 
 async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest): Promise<void> {
@@ -649,8 +683,12 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
           figureType: figure.figureType,
           generatedFormat: figure.generatedFormat,
           sectionCode: figure.regulatoryContext,
-          confidence: figure.confidence,
-          sourceData: figure.sourceData.map(s => ({ id: s.sourceId, name: s.sourceName })),
+          sourceData: figure.sourceData.map(s => ({
+            id: s.sourceId,
+            name: s.sourceName,
+            rowsSupplied: s.rowsSupplied,
+            rowsSentToModel: s.rowsSentToModel,
+          })),
           ...figure.metadata,
         }),
       ]
@@ -665,7 +703,7 @@ async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest)
       details: {
         figureId: figure.id,
         figureType: figure.figureType,
-        confidence: figure.confidence,
+        ...rowCounts(figure),
         sourceIds: figure.sourceData.map(s => s.sourceId),
       },
       backendService: 'figureGenerationService',
@@ -693,7 +731,7 @@ async function logFigureGeneration(
       figureType: figure.figureType,
       generatedFormat: figure.generatedFormat,
       sectionCode: figure.regulatoryContext,
-      confidence: figure.confidence,
+      ...rowCounts(figure),
       durationMs,
       model: figure.metadata.modelUsed,
     },

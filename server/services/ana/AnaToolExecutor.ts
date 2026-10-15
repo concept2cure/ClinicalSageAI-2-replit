@@ -12509,10 +12509,17 @@ registerToolHandler('find_grant_opportunities', async (input, ctx) => {
       externalId: m.externalId, title: m.title, fitScore: m.fitScore, eligible: m.eligible,
       daysToDeadline: m.daysToDeadline, keywordHits: m.keywordHits, reasons: m.reasons,
     }));
-    const strong = result.matches.filter((m) => m.fitScore >= 70).length;
+    // 2026-10-15: this counted every fit >= 70 as strong, including results whose
+    // eligibility was never checked; the service counts only checked ones.
+    const strong = result.strongMatches;
+    const failedFetches = result.hydrationFailures > 0
+      ? ` ${result.hydrationFailures} of ${result.hydrationAttempted} Grants.gov detail fetches failed; those are scored on search fields only.`
+      : '';
     return JSON.stringify({
-      ok: true, scored: result.scored, strongMatches: strong, profileUsed: result.profileUsed, matches: top,
-      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70). Record promising ones with record_grant_opportunity.`,
+      ok: true, scored: result.scored, strongMatches: strong, eligibilityNotChecked: result.eligibilityNotChecked,
+      hydrationAttempted: result.hydrationAttempted, hydrationFailures: result.hydrationFailures,
+      profileUsed: result.profileUsed, matches: top,
+      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70, eligibility confirmed). Eligibility was not checked for ${result.eligibilityNotChecked} (eligible: null; each match's reasons say why).${failedFetches} Record promising ones with record_grant_opportunity.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `find_grant_opportunities failed: ${err instanceof Error ? err.message : String(err)}` });
