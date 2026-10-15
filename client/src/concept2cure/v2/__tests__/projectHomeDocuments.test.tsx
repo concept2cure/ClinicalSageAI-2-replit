@@ -57,6 +57,9 @@ const WORKSTREAMS = [
 const source = (id: number, title: string, extractionStatus: string) => ({
   id, title, checksum: `sha-${id}`, ingestionStatus: 'ingested', extractionStatus, createdAt: '2026-10-01T09:00:00Z',
   mimeType: 'application/pdf', fileSize: 1000, artifactId: null, origin: 'chat_upload', extractionMethod: 'pdf-text',
+  // The fields GET /:id/sources answers (shapeSource). Grounding requires each
+  // to be positively true; an absent one is unknown, and unknown never grounds.
+  isCurrent: true, dataEligible: true, disposition: null, textAvailable: extractionStatus === 'extracted',
 });
 
 type Opts = { docs?: () => Response; program?: Record<string, unknown>; sources?: () => Response };
