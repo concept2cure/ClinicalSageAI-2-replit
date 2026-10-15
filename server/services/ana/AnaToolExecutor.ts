@@ -10484,16 +10484,25 @@ registerToolHandler('validate_udi', async (input) => {
 });
 
 registerToolHandler('get_electrical_standards', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: each fact was
+  // read `=== true`, so one left out answered "IEC 60601 does not apply" or dropped its
+  // collateral. Unstated stays unstated (the engine names it); a fact that is not true
+  // or false is refused, naming it.
+  const FACTS = ['electricallyPowered', 'hasAlarms', 'closedLoopControl', 'homeUse', 'emsUse', 'hasParticularStandard'] as const;
+  const unreadable = FACTS.filter((k) => input[k] !== undefined && input[k] !== null && typeof input[k] !== 'boolean');
+  if (unreadable.length > 0) {
+    return JSON.stringify({ error: `${unreadable.join(', ')} must be true or false; leave out a fact that is not known.` });
+  }
+  const fact = (k: (typeof FACTS)[number]): boolean | undefined => (typeof input[k] === 'boolean' ? (input[k] as boolean) : undefined);
   try {
     const { applicableElectricalStandards } = await import('../market-specs/electrical-safety.js');
     return JSON.stringify({ ok: true, ...applicableElectricalStandards({
-      electricallyPowered: input.electricallyPowered === true,
-      hasAlarms: input.hasAlarms === true,
-      closedLoopControl: input.closedLoopControl === true,
-      homeUse: input.homeUse === true,
-      emsUse: input.emsUse === true,
-      hasParticularStandard: input.hasParticularStandard === true,
+      electricallyPowered: fact('electricallyPowered'),
+      hasAlarms: fact('hasAlarms'),
+      closedLoopControl: fact('closedLoopControl'),
+      homeUse: fact('homeUse'),
+      emsUse: fact('emsUse'),
+      hasParticularStandard: fact('hasParticularStandard'),
     }) });
   } catch (err) {
     return JSON.stringify({ error: `get_electrical_standards failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -10501,11 +10510,21 @@ registerToolHandler('get_electrical_standards', async (input) => {
 });
 
 registerToolHandler('get_sterilization_requirements', async (input) => {
-  // Pure reference + rule logic — no tenant context required.
+  // Pure reference + rule logic — no tenant context required. 2026-10-15: `sterile` was
+  // read `=== true`, so one left out answered "not supplied sterile — does not apply",
+  // and an unknown method read as unspecified. Unstated stays unstated; a value that
+  // cannot be read is refused, naming it.
   try {
-    const { sterilizationRequirements } = await import('../market-specs/sterilization.js');
+    const { sterilizationRequirements, STERILIZATION_METHODS } = await import('../market-specs/sterilization.js');
+    const methods: string[] = [...STERILIZATION_METHODS.map((m) => m.id), 'unknown'];
+    const unreadable: string[] = [];
+    if (input.sterile !== undefined && input.sterile !== null && typeof input.sterile !== 'boolean') unreadable.push('sterile must be true or false');
+    if (input.method !== undefined && input.method !== null && !methods.includes(String(input.method))) {
+      unreadable.push(`method '${String(input.method)}' is not one of: ${methods.join(', ')}`);
+    }
+    if (unreadable.length > 0) return JSON.stringify({ error: `${unreadable.join('; ')}.` });
     return JSON.stringify({ ok: true, ...sterilizationRequirements({
-      sterile: input.sterile === true,
+      sterile: typeof input.sterile === 'boolean' ? input.sterile : undefined,
       method: typeof input.method === 'string' ? (input.method as never) : undefined,
     }) });
   } catch (err) {

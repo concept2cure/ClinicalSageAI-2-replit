@@ -952,7 +952,7 @@ const FDA_EMA_DIFFERENCES: FDAvsEMAComparison[] = [
   },
   {
     topic: 'Boxed Warning',
-    fdaApproach: 'Boxed Warning (Black Box) in Highlights and Section 5; specific formatting per 21 CFR 201.57(c)(1)',
+    fdaApproach: 'Boxed Warning in Highlights (21 CFR 201.57(a)(4)) and in the FPI before section 1 (201.57(c)(1))',
     emaApproach: 'No boxed warning concept. Critical safety information in Section 4.4 Special Warnings. Additional monitoring (black triangle) serves different purpose.',
   },
   {

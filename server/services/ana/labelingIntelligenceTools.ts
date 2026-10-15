@@ -36,18 +36,18 @@ const DETERMINISTIC_NOTE =
 
 export const ASSESS_PLR_STRUCTURE: AnaTool = {
   name: 'assess_plr_structure',
+  // 2026-10-15: said it "identifies when a Boxed Warning, REMS, or Medication Guide
+  // section is mandatory"; it takes no REMS or Medication Guide input.
   description:
-    'Assess the required section structure and content elements for FDA Physician ' +
-    'Labeling Rule (PLR) compliant prescribing information. Returns a complete ' +
-    'section-by-section outline per 21 CFR 201.56(d) and 201.57, including ' +
-    'Highlights of Prescribing Information, Full Prescribing Information table of ' +
-    'contents, and all numbered FPI sections (1–17) with required subsections. ' +
-    'Accounts for product-type-specific requirements (biologics BLA supplements, ' +
-    'biosimilar-specific sections, ANDA labeling carve-outs), flags sections ' +
-    'triggered by special populations (pediatric, geriatric, renal/hepatic ' +
-    'impairment), and identifies when a Boxed Warning, REMS, or Medication ' +
-    'Guide section is mandatory. Cites 21 CFR 201.56, 201.57, and relevant ' +
-    'FDA draft/final guidance documents. ' + DETERMINISTIC_NOTE,
+    'Assess the PLR (Physician Labeling Rule) section structure of a US prescribing ' +
+    'information per 21 CFR 201.56(d) and 201.57: Highlights, FPI Contents and FPI ' +
+    'sections 1–17 with required subsections, the 201.57 formatting rules and SPL ' +
+    'requirements. Adds product- and application-type considerations (biologic/' +
+    'biosimilar, ANDA carve-outs, labeling supplements) and Section 8 subsections for ' +
+    'the special populations given. hasBoxedWarning decides whether the Highlights ' +
+    'boxed warning (H.1) is required; the tool takes no REMS or Medication Guide ' +
+    'input and does not say whether either is required. Cites 21 CFR 201.56, 201.57 ' +
+    'and the FDA PLR and SPL guidance. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
