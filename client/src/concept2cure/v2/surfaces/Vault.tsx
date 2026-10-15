@@ -43,6 +43,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
+import { locateVaultDocument, takeVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import '../styles/project-home-v2.css';
 
@@ -1054,6 +1055,28 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
     if (docId) setSel(docId);
   };
+  /* "Open in Vault" after File to Vault names the document it filed
+     (vaultTarget.ts): open on that row, where "Place into submission…" is,
+     instead of the first node. A document this tree does not hold, or one
+     filed under another project, is said, not silently ignored. */
+  const [pendingTarget, setPendingTarget] = useState(() => takeVaultTarget(projectId));
+  const [missingTarget, setMissingTarget] = useState<string | null>(null);
+  const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
+  React.useEffect(() => {
+    if (!pendingTarget || !vault) return;
+    if (pendingTarget.kind === 'here') {
+      const at = locateVaultDocument(tree, pendingTarget.documentId);
+      if (at) {
+        setQ('');
+        setActiveFolder(at.folderId);
+        setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
+        setSel(at.rowId);
+      } else setMissingTarget(pendingTarget.documentId);
+    }
+    setPendingTarget(null);
+  }, [pendingTarget, vault, tree]);
+  // Derived, so a re-read that now holds the document retires the note.
+  const targetMissing = missingTarget !== null && locateVaultDocument(tree, missingTarget) === null;
 
   const findFolder = (
     nodes: (VaultDoc | VaultFolder)[],
@@ -1492,6 +1515,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           }}
         >
           {(downloadNote ?? uploadNote)!.text}
+        </div>
+      )}
+      {targetMissing && (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-missing">
+          The document you just filed is not in this list. Search for it by title.
+        </div>
+      )}
+      {otherProjectTarget && (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-other-project">
+          The document you just filed belongs to another project. Open that project to see it in its Vault.
         </div>
       )}
       {checkInOffers.map(({ file, doc }) => (
