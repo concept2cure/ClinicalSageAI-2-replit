@@ -1117,8 +1117,10 @@ router.get('/taxonomy', async (req: Request, res: Response) => {
     let tierResolved: boolean;
     try {
       const caps = await resolveCapabilities(organizationId);
-      tier = caps.tier;
-      tierResolved = caps.tierResolved === true;
+      // An unread plan is tier null (2026-10-15); it keeps this route's
+      // compatibility value beside tierResolved:false, as the catch does.
+      tier = caps.tier ?? 'standard';
+      tierResolved = caps.tier !== null && caps.tierResolved === true;
     } catch { tier = 'standard'; tierResolved = false; }
     const annotated = filtered.map((row) => {
       const r = row as SegmentFilterableType & { typeId: string; family?: string };

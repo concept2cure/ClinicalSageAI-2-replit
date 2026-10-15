@@ -21440,7 +21440,20 @@ registerToolHandler('get_org_capabilities', async (_input, ctx) => {
   try {
     const { resolveCapabilities } = await import('../entitlements/resolver.js');
     const capabilities = await resolveCapabilities(Number(ctx.organizationId));
-    return JSON.stringify({ ok: true, ...capabilities });
+    // 2026-10-15: an unread layer used to arrive as tier 'standard' or [] with
+    // nothing saying so; each layer that was not read is now named.
+    const notRead = [
+      ...(capabilities.tierResolved ? [] : ['plan tier']),
+      ...(capabilities.togglesResolved ? [] : ['feature toggles']),
+      ...(capabilities.modulesResolved ? [] : ['module subscriptions']),
+    ];
+    return JSON.stringify({
+      ok: true, ...capabilities,
+      ...(notRead.length > 0 ? {
+        notRead,
+        note: `Could not be read: ${notRead.join(', ')}. Nothing unread is shown as granted; say it could not be read, not that it is absent or locked.`,
+      } : {}),
+    });
   } catch (err) {
     return JSON.stringify({ error: `get_org_capabilities failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -21481,19 +21494,27 @@ registerToolHandler('list_report_types', async (input, ctx) => {
     const segFiltered = filterTypesForSegment(typed, segments, persona)
       .filter((t: any) => Array.isArray(t.allowedScopes) && t.allowedScopes.includes(scope));
 
-    let tier: 'free' | 'standard' | 'professional' | 'enterprise' = 'standard';
-    try { tier = (await resolveCapabilities(orgId)).tier; } catch { /* default standard */ }
+    // 2026-10-15: a failed or unread plan used to become 'standard' here and
+    // every type's `entitled` was decided on it. An unread plan decides nothing.
+    let tier: 'free' | 'standard' | 'professional' | 'enterprise' | null = null;
+    try {
+      const caps = await resolveCapabilities(orgId);
+      if (caps.tierResolved !== false) tier = caps.tier;
+    } catch { /* plan not read: tier stays null */ }
 
     const types = segFiltered.map((t: any) => {
-      const d = decideReportEntitlement(t.typeId, t.family, tier);
+      // With tierResolved false the compatibility tier unlocks nothing.
+      const d = decideReportEntitlement(t.typeId, t.family, tier ?? 'standard', tier !== null);
       return {
         typeId: t.typeId, label: t.label, family: t.family,
-        entitled: d.entitled, requiredTier: d.requiredTier,
+        entitled: tier === null ? null : d.entitled, requiredTier: d.requiredTier,
       };
     });
     return JSON.stringify({
-      ok: true, scope, segments, tier, count: types.length, reportTypes: types,
-      note: 'Report types are already filtered to this org segment(s) and annotated with entitlement. AnA narrates these; it never invents a report type or a metric.',
+      ok: true, scope, segments, tier, tierResolved: tier !== null, count: types.length, reportTypes: types,
+      note: tier === null
+        ? 'Report types are already filtered to this org segment(s). The plan could not be read, so no type is shown as entitled or locked (entitled: null); say that rather than offering or refusing one. AnA narrates these; it never invents a report type or a metric.'
+        : 'Report types are already filtered to this org segment(s) and annotated with entitlement. AnA narrates these; it never invents a report type or a metric.',
     });
   } catch (err) {
     return JSON.stringify({ error: `list_report_types failed: ${err instanceof Error ? err.message : String(err)}` });

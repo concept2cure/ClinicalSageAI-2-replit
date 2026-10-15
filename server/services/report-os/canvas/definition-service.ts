@@ -130,6 +130,11 @@ export async function createDefinition(input: CreateDefinitionInput): Promise<Cr
   }
   const known = await fetchKnownTypes(panels.map((p) => p.reportTypeId));
   const caps = await resolveCapabilities(input.organizationId);
+  // 2026-10-15: `tierResolved` was dropped here, so an unread plan was checked
+  // as 'standard' and a canvas of standard panels was saved on it.
+  if (caps.tier === null || caps.tierResolved === false) {
+    throw new Error('Your plan could not be read, so no panel could be checked against it. Nothing was saved.');
+  }
   const issues = validatePanels(panels, known, caps.tier);
   if (issues.length > 0) {
     return { ok: false, issues };
