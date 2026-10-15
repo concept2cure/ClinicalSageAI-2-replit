@@ -465,11 +465,15 @@ export async function buildAnAContext(params: {
     }),
     read('organization name', loadOrganizationName(organizationId || null), null),
     userId && organizationId
-      ? loadUserIntelligence({
-          userId,
-          organizationId,
-          activeProjectId: projectId || undefined,
-        })
+      ? read(
+          'user intelligence',
+          loadUserIntelligence({
+            userId,
+            organizationId,
+            activeProjectId: projectId || undefined,
+          }),
+          null
+        )
       : Promise.resolve(null),
     // Client Intelligence Memory — deep knowledge of the client organization
     organizationId
@@ -497,6 +501,8 @@ export async function buildAnAContext(params: {
         )
       : Promise.resolve(null),
   ]);
+  // The facets user-intelligence could not read (organization profile, projects, …).
+  for (const facet of userIntelligence?.unread ?? []) unread.add(facet);
 
   // Touch the work session so we track what the user is currently doing
   if (userId && organizationId) {
@@ -540,7 +546,8 @@ export async function assembleSystemPrompt(
 
   const parts: string[] = [BASE_SYSTEM_PROMPT];
   const intel = context.userIntelligence;
-  const organizationId = intel?.organization?.id;
+  // The request's organization, read or not: the profile is null when its read failed.
+  const organizationId = intel?.organizationId ?? intel?.organization?.id;
   // Named to the model below. `?? []` covers a context built by hand rather
   // than by buildAnAContext.
   const unread = [...(context.unreadContext ?? [])];
@@ -592,8 +599,8 @@ export async function assembleSystemPrompt(
     parts.push(`
 ## Organization Profile
 - **Organization**: ${org.name}
-- **Industry**: ${org.industryMode}
-- **Tier**: ${org.tier}
+- **Industry**: ${org.industryMode ?? 'not recorded'}
+- **Tier**: ${org.tier ?? 'not recorded'}
 - **Enabled Modules**: ${
       org.enabledModules.length > 0 ? org.enabledModules.join(', ') : 'None configured'
     }
@@ -826,14 +833,18 @@ ${moduleIntel.workflowStages
       }
     }
 
+    // An unread organization profile (named in the notice) leaves its modules
+    // unknown: only the module-agnostic blocks below are selected.
+    const enabledModules = intel.organization?.enabledModules ?? [];
+
     // Cross-cutting intelligence (evidence, safety)
-    const crossCutting = getCrossCuttingIntelligence(intel.organization.enabledModules);
+    const crossCutting = getCrossCuttingIntelligence(enabledModules);
     if (crossCutting) {
       parts.push(crossCutting);
     }
 
     // Instruction Engine — 5-step workflow, Data Room, Dossier Manager, Editor, Narrative
-    const instructionPrompt = assembleInstructionEnginePrompt(intel.organization.enabledModules);
+    const instructionPrompt = assembleInstructionEnginePrompt(enabledModules);
     if (instructionPrompt) {
       parts.push(instructionPrompt);
     }

@@ -1016,9 +1016,11 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       context: {
         projectName: context.project?.name || null,
         submissionType: context.project?.submissionType || submission_type || null,
-        progress: context.project?.progress || null,
-        documentsTotal: context.documents?.totalDocuments || 0,
-        documentsCompleted: context.documents?.completedDocuments || 0,
+        // 2026-10-15: `|| null` turned a recorded 0% into null, and `|| 0` reported
+        // a documents read that did not happen as 0 documents. Unread is null.
+        progress: context.project?.progress ?? null,
+        documentsTotal: context.documents?.totalDocuments ?? null,
+        documentsCompleted: context.documents?.completedDocuments ?? null,
         sectionCode: section_code || null,
       },
       intelligence: {

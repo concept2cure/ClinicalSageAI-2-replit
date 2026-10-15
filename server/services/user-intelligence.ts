@@ -49,10 +49,10 @@ export interface OrganizationProfile {
   id: number;
   name: string;
   slug: string;
-  industryMode: string; // biotech, pharma, cro, medtech, academic
-  tier: string; // free, standard, professional, enterprise
-  maxUsers: number;
-  maxProjects: number;
+  industryMode: string | null; // biotech, pharma, cro, medtech, academic; null when not recorded
+  tier: string | null; // free, standard, professional, enterprise; null when not recorded
+  maxUsers: number | null; // null when not recorded
+  maxProjects: number | null; // null when not recorded
   enabledModules: string[]; // from module_subscriptions
   settings: Record<string, any>;
 }
@@ -60,9 +60,11 @@ export interface OrganizationProfile {
 export interface ProjectSummary {
   id: number;
   name: string;
-  submissionType: string;
+  /** As recorded in the project's metadata; null when none is recorded, never assumed. */
+  submissionType: string | null;
   status: string;
-  progress: number;
+  /** projects.progress as recorded; null when NULL (a recorded 0 stays 0). */
+  progress: number | null;
   phase: string | null;
   therapeuticArea: string | null;
   role: string; // user's role on this project (owner, member)
@@ -107,22 +109,32 @@ export interface RecentActivity {
   createdAt: string;
 }
 
+/**
+ * Every facet below that may be null is null either because there is nothing
+ * recorded (no organization row, no active session) or because its read
+ * failed — and a failed read is named in `unread`. Null is never "none found"
+ * for a facet listed there.
+ */
 export interface UserIntelligence {
   identity: UserIdentity;
-  organization: OrganizationProfile;
-  projects: ProjectSummary[]; // all user's projects across the org
+  /** The organization this was loaded for, whether or not its profile could be read. */
+  organizationId: number;
+  organization: OrganizationProfile | null;
+  projects: ProjectSummary[] | null; // all user's projects across the org
   activeProject: ProjectSummary | null;
   currentSession: WorkSession | null; // what they're doing right now
-  recentSessions: WorkSession[]; // last 5 work sessions
-  workQueue: WorkQueueItem[]; // AI-recommended next tasks
-  recentActivity: RecentActivity[]; // last 10 activities
+  recentSessions: WorkSession[] | null; // last 5 work sessions
+  workQueue: WorkQueueItem[] | null; // AI-recommended next tasks
+  recentActivity: RecentActivity[] | null; // last 10 activities
   conversationMemory: {
     // summary of past AI interactions
     totalConversations: number;
     totalMessages: number;
     lastTopics: string[]; // last 5 things they asked about
     frequentTopics: string[]; // most common query themes
-  };
+  } | null;
+  /** The facets whose read failed, sorted; each is null above. */
+  unread: string[];
   timestamp: string;
 }
 
@@ -176,7 +188,7 @@ async function loadUserIdentity(
     };
   } catch (error) {
     logger.warn('Failed to load identity', { error });
-    return null;
+    throw error;
   }
 }
 
@@ -204,20 +216,22 @@ async function loadOrganizationProfile(
     if (orgResult.rows.length === 0) return null;
 
     const o = orgResult.rows[0];
+    // 2026-10-15: unrecorded values were filled with 'biotech' / 'standard' / 5 / 10,
+    // and AnA was told an organization with no recorded industry is a biotech.
     return {
       id: o.id,
       name: o.name,
       slug: o.slug,
-      industryMode: o.industry_mode || 'biotech',
-      tier: o.tier || 'standard',
-      maxUsers: o.max_users || 5,
-      maxProjects: o.max_projects || 10,
+      industryMode: o.industry_mode || null,
+      tier: o.tier || null,
+      maxUsers: o.max_users ?? null,
+      maxProjects: o.max_projects ?? null,
       enabledModules: modulesResult.rows.map((r: any) => r.module_id),
       settings: o.settings || {},
     };
   } catch (error) {
     logger.warn('Failed to load org profile', { error });
-    return null;
+    throw error;
   }
 }
 
@@ -247,9 +261,11 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
       return {
         id: p.id,
         name: p.name,
-        submissionType: meta.submissionType || meta.submission_type || 'IND',
+        // 2026-10-15: an unrecorded type read 'IND' (detectActiveModule then chose
+        // the IND module) and NULL progress read 0. Unrecorded is null.
+        submissionType: meta.submissionType || meta.submission_type || null,
         status: p.status,
-        progress: p.progress || 0,
+        progress: p.progress ?? null,
         phase: meta.phase || meta.clinicalPhase || null,
         therapeuticArea: meta.therapeuticArea || meta.therapeutic_area || null,
         role: p.user_role,
@@ -258,7 +274,7 @@ async function loadUserProjects(userId: number, organizationId: number): Promise
     });
   } catch (error) {
     logger.warn('Failed to load projects', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -299,7 +315,7 @@ async function loadCurrentSession(userId: number, organizationId: number): Promi
     };
   } catch (error) {
     logger.warn('Failed to load current session', { error });
-    return null;
+    throw error;
   }
 }
 
@@ -337,7 +353,7 @@ async function loadRecentSessions(userId: number, organizationId: number): Promi
     }));
   } catch (error) {
     logger.warn('Failed to load recent sessions', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -377,7 +393,7 @@ async function loadWorkQueue(userId: number, organizationId: number): Promise<Wo
     }));
   } catch (error) {
     logger.warn('Failed to load work queue', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -414,7 +430,7 @@ async function loadRecentActivity(
     }));
   } catch (error) {
     logger.warn('Failed to load activity', { error });
-    return [];
+    throw error;
   }
 }
 
@@ -468,7 +484,7 @@ async function loadConversationMemory(
     };
   } catch (error) {
     logger.warn('Failed to load conversation memory', { error });
-    return { totalConversations: 0, totalMessages: 0, lastTopics: [], frequentTopics: [] };
+    throw error;
   }
 }
 
@@ -481,7 +497,9 @@ async function loadConversationMemory(
  * personalized, context-aware assistant.
  *
  * All sub-queries run in parallel and fail independently, so partial
- * intelligence is still valuable.
+ * intelligence is still valuable — and a facet whose read failed is null and
+ * named in `unread`. A failed identity read fails the whole load: without it
+ * there is no user to describe, and it is not "user not found" (null).
  */
 export async function loadUserIntelligence(params: {
   userId: number;
@@ -489,6 +507,17 @@ export async function loadUserIntelligence(params: {
   activeProjectId?: number;
 }): Promise<UserIntelligence | null> {
   const { userId, organizationId, activeProjectId } = params;
+
+  /* 2026-10-15: each loader caught its own error to null, [] or zero counts,
+     and a failed organization read became an invented 'Unknown Organization'
+     ('biotech', 'standard', 5 users, 10 projects) — so a failed read was
+     indistinguishable from an empty one. */
+  const unread: string[] = [];
+  const facet = <T>(name: string, load: Promise<T>): Promise<T | null> =>
+    load.catch(() => {
+      unread.push(name); // the loader has logged the error
+      return null;
+    });
 
   const [
     identity,
@@ -501,40 +530,32 @@ export async function loadUserIntelligence(params: {
     conversationMemory,
   ] = await Promise.all([
     loadUserIdentity(userId, organizationId),
-    loadOrganizationProfile(organizationId),
-    loadUserProjects(userId, organizationId),
-    loadCurrentSession(userId, organizationId),
-    loadRecentSessions(userId, organizationId),
-    loadWorkQueue(userId, organizationId),
-    loadRecentActivity(userId, organizationId),
-    loadConversationMemory(userId, organizationId),
+    facet('organization profile', loadOrganizationProfile(organizationId)),
+    facet('user projects', loadUserProjects(userId, organizationId)),
+    facet('current work session', loadCurrentSession(userId, organizationId)),
+    facet('recent work sessions', loadRecentSessions(userId, organizationId)),
+    facet('work queue', loadWorkQueue(userId, organizationId)),
+    facet('recent activity', loadRecentActivity(userId, organizationId)),
+    facet('conversation memory', loadConversationMemory(userId, organizationId)),
   ]);
 
   if (!identity) return null;
 
   // Determine active project
+  const readProjects = projects ?? [];
   let activeProject: ProjectSummary | null = null;
   if (activeProjectId) {
-    activeProject = projects.find(p => p.id === activeProjectId) || null;
+    activeProject = readProjects.find(p => p.id === activeProjectId) || null;
   } else if (currentSession?.projectId) {
-    activeProject = projects.find(p => p.id === currentSession.projectId) || null;
-  } else if (projects.length > 0) {
-    activeProject = projects[0]; // Most recently accessed
+    activeProject = readProjects.find(p => p.id === currentSession.projectId) || null;
+  } else if (readProjects.length > 0) {
+    activeProject = readProjects[0]; // Most recently accessed
   }
 
   return {
     identity,
-    organization: organization || {
-      id: organizationId,
-      name: 'Unknown Organization',
-      slug: 'unknown',
-      industryMode: 'biotech',
-      tier: 'standard',
-      maxUsers: 5,
-      maxProjects: 10,
-      enabledModules: [],
-      settings: {},
-    },
+    organizationId,
+    organization,
     projects,
     activeProject,
     currentSession,
@@ -542,6 +563,7 @@ export async function loadUserIntelligence(params: {
     workQueue,
     recentActivity,
     conversationMemory,
+    unread: [...unread].sort(),
     timestamp: new Date().toISOString(),
   };
 }
