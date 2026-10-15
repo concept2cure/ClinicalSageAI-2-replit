@@ -18,7 +18,8 @@
 
 import type { DeviceBlueprint } from './device-blueprint';
 
-export type DimensionStatus = 'ready' | 'partial' | 'not_started' | 'n/a';
+/** 'not_assessed': applicable, and nothing has measured it. Scores 0 and keeps its weight. */
+export type DimensionStatus = 'ready' | 'partial' | 'not_started' | 'not_assessed' | 'n/a';
 
 export interface ScorecardDimension {
   id: string;
@@ -68,13 +69,21 @@ function scoreModule(m: ScorecardInput['evidence'][number]): { score: number; st
   }
   if (m.ready === false) return { score: 0, status: 'not_started' };
   // Applicable but never assessed (no sections supplied).
-  return { score: 0, status: 'not_started' };
+  return { score: 0, status: 'not_assessed' };
 }
 
 /**
  * Compute the weighted readiness scorecard from structured inputs. Pure.
  * Weights: classification 10, required documents 30, evidence modules 60 (split
- * evenly across the applicable+scorable modules).
+ * evenly across the applicable modules).
+ *
+ * An applicable dimension nothing has measured is scored as not assessed: 0,
+ * with its weight kept and a gap naming it. Both the required documents (when
+ * no assessment is passed — the /device/blueprint route and AnA's tool pass
+ * none) and applicable evidence modules with no readiness data used to be
+ * DROPPED and the weights normalised over what was left, so a determined class
+ * and one ready module scored 100, 'ready' (2026-10-15). Readiness is now the
+ * share of the whole that has been shown, not of the part that was looked at.
  */
 export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceReadinessScorecard {
   const dimensions: ScorecardDimension[] = [];
@@ -95,7 +104,7 @@ export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceRe
       : 'Risk classification not yet determined.');
   }
 
-  // Required documents (weight 30) — only when assessed.
+  // Required documents (weight 30).
   if (input.requirements && input.requirements.total > 0) {
     const pct = Math.round((input.requirements.present / input.requirements.total) * 100);
     dimensions.push({
@@ -107,15 +116,27 @@ export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceRe
       detail: `${input.requirements.present}/${input.requirements.total} required documents`,
     });
     if (pct < 100) topGaps.push(`${input.requirements.total - input.requirements.present} required document(s) missing.`);
+  } else {
+    dimensions.push({
+      id: 'required_documents',
+      label: 'Required documents present',
+      weight: 30,
+      score: 0,
+      status: 'not_assessed',
+      detail: 'Not assessed — no document inventory was checked.',
+    });
+    topGaps.push('Required documents not assessed.');
   }
 
-  // Evidence modules (weight 60, split across applicable+scorable modules).
-  const scorable = input.evidence.filter((m) => m.applicable && (m.ready !== undefined || typeof m.present === 'number'));
-  const perModuleWeight = scorable.length > 0 ? 60 / scorable.length : 0;
-  for (const m of scorable) {
+  // Evidence modules (weight 60, split across the applicable modules).
+  const applicable = input.evidence.filter((m) => m.applicable);
+  const perModuleWeight = applicable.length > 0 ? 60 / applicable.length : 0;
+  for (const m of applicable) {
     const { score, status } = scoreModule(m);
     dimensions.push({ id: `evidence:${m.id}`, label: m.label, weight: perModuleWeight, score, status, detail: typeof m.present === 'number' && typeof m.total === 'number' ? `${m.present}/${m.total} sections` : undefined });
-    if (status !== 'ready') topGaps.push(`${m.label} is ${status === 'not_started' ? 'not started' : 'incomplete'}.`);
+    if (status !== 'ready') {
+      topGaps.push(`${m.label} is ${status === 'not_started' ? 'not started' : status === 'not_assessed' ? 'not assessed' : 'incomplete'}.`);
+    }
   }
 
   // Weighted aggregate over the applicable weights.
