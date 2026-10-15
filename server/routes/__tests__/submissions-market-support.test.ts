@@ -54,7 +54,7 @@ describe('GET /api/submissions/market-support', () => {
     expect(res.body.asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(res.body.markets).toHaveLength(12);
     const by = Object.fromEntries(res.body.markets.map((m: { region: string; summary: string }) => [m.region, m.summary]));
-    expect(by.US).toBe('Structured Module 1');
+    expect(by.US).toBe('Module 1 to the agency\'s headings');
     expect(by.CA).toBe('No outline, no transmit channel');
     expect(by.BR).toBe('Not supported');
     expect(db.query).toHaveBeenCalledTimes(1);
@@ -66,7 +66,7 @@ describe('GET /api/submissions/market-support', () => {
     const res = await request(app).get('/api/submissions/market-support?applicationType=maa&market=eu');
     expect(res.status).toBe(200);
     expect(res.body.markets).toHaveLength(1);
-    expect(res.body.markets[0]).toMatchObject({ region: 'EU', summary: 'Flat Module 1, no transmit channel', buildable: false });
+    expect(res.body.markets[0]).toMatchObject({ region: 'EU', summary: 'Module 1 without the agency\'s headings, no transmit channel', buildable: false });
   });
 
   it('refuses a request with no application type', async () => {
