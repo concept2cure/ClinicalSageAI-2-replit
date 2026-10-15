@@ -206,6 +206,8 @@ that mistake, and this record does not repeat it.
 +------------------------------------------------------------------+
 ```
 
+> **Superseded 2026-10-15 (FILING_SPINE F2, F24):** the stage strip below (Plan > Author > Review > File > Submit) is now Project home's five tabs, Evidence, Author, Review, Submit, Respond (`docs/SURFACE_DECISIONS_2026-10-08.md`, "What the filing spine changed"). The rest of the drawing stands.
+
 **A project, 1440px.** Nav and page; no AnA column, no AnA card:
 
 ```
