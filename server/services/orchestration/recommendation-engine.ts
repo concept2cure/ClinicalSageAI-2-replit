@@ -272,7 +272,9 @@ function analyzeValidationFailures(
         targetTitle: v.documentTitle,
         reason: `Validation found ${v.criticalCount} critical and ${v.majorCount} major findings.`,
         evidence: [
-          `Compliance score: ${v.complianceScore}%`,
+          v.complianceScore === null
+            ? 'Compliance score: not computed (the analysis did not cover the whole content)'
+            : `Compliance score: ${v.complianceScore}%`,
           `Critical findings: ${v.criticalCount}`,
           `Major findings: ${v.majorCount}`,
           `Validated at: ${v.validatedAt}`,
@@ -384,6 +386,7 @@ function analyzeWeakContent(
   now: Date
 ): Recommendation[] {
   return payload.validations
+    .flatMap((v) => (v.complianceScore === null ? [] : [{ ...v, complianceScore: v.complianceScore }]))
     .filter((v) => v.complianceScore < 70 && v.complianceScore > 0 && v.criticalCount === 0)
     .map((v) =>
       makeRecommendation({

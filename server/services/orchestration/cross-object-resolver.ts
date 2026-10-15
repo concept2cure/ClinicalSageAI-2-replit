@@ -19,7 +19,10 @@ import {
   concept2cureArtifacts,
   concept2cureConversations,
   regulatoryAuditLogs,
+  coauthorValidationHistory,
+  type CoauthorValidationHistory,
 } from '../../../shared/schema';
+import type { ValidationFinding } from '../../../shared/types/ai-actions';
 import type {
   CrossObjectReasoningPayload,
   ProjectSnapshot,
@@ -295,45 +298,70 @@ async function resolveValidations(
   orgId: number,
   projectId: number
 ): Promise<ValidationSnapshot[]> {
-  // Query audit logs for validation actions to reconstruct validation state
+  /* Each document's validation state is its latest recorded run.
+
+     This read run_validation's audit rows, which carry no result: every run
+     came back valid (a missing isValid read as true) with no findings and a
+     score of 0, so the readiness engine scored compliance 100 off runs that
+     may have found critical issues — and lumen-context-builder gave AnA that
+     figure. It also took the organisation's 50 latest runs before keeping
+     this project's, and every run rather than each document's latest, so a
+     critical finding fixed by a later clean run still raised a blocker. It
+     reads the validation record now (2026-10-15). */
   try {
-    const validationLogs = await db
+    const rows = await db
       .select()
-      .from(regulatoryAuditLogs)
+      .from(coauthorValidationHistory)
       .where(
         and(
-          eq(regulatoryAuditLogs.organizationId, orgId),
-          eq(regulatoryAuditLogs.action, 'run_validation'),
-          eq(regulatoryAuditLogs.entityType, 'ai_action')
+          eq(coauthorValidationHistory.organizationId, orgId),
+          sql`${coauthorValidationHistory.metadata}->>'projectId' = ${String(projectId)}`
         )
       )
-      .orderBy(desc(regulatoryAuditLogs.createdAt))
-      .limit(50);
-
-    return validationLogs
-      .filter((log) => {
-        const newVal = log.newValue as any;
-        return newVal?.projectId === projectId && newVal?.success;
-      })
-      .map((log) => {
-        const newVal = log.newValue as any;
-        const result = newVal?.result || {};
-        const findings = result?.findings || [];
-        return {
-          documentId: newVal?.targetId || 0,
-          documentTitle: result?.documentType || 'Document',
-          isValid: result?.isValid ?? true,
-          complianceScore: result?.complianceScore ?? 0,
-          criticalCount: findings.filter((f: any) => f.severity === 'critical').length,
-          majorCount: findings.filter((f: any) => f.severity === 'major').length,
-          minorCount: findings.filter((f: any) => f.severity === 'minor').length,
-          validatedAt: log.createdAt?.toISOString() || new Date().toISOString(),
-          findings,
-        };
-      });
+      .orderBy(desc(coauthorValidationHistory.performedAt));
+    return latestRunPerTarget(rows);
   } catch (err) {
     throw readFailed('validations', err);
   }
+}
+
+/**
+ * The validations line of the AI summary. A run whose analysis did not cover
+ * the content has no score, and is not averaged in as anything.
+ */
+function validationSummaryLine(validations: ValidationSnapshot[]): string {
+  const totalCritical = validations.reduce((s, v) => s + v.criticalCount, 0);
+  const totalMajor = validations.reduce((s, v) => s + v.majorCount, 0);
+  const scores = validations.flatMap((v) => (v.complianceScore === null ? [] : [v.complianceScore]));
+  const partial = scores.length < validations.length ? ` (${scores.length} of ${validations.length} runs scored)` : '';
+  const avg = scores.length === 0
+    ? 'not computed (no run analysed its whole content)'
+    : `${Math.round(scores.reduce((s, n) => s + n, 0) / scores.length)}%${partial}`;
+  return `Avg compliance: ${avg} | Critical findings: ${totalCritical} | Major: ${totalMajor}`;
+}
+
+/** Each validated target's latest run, from rows newest first. */
+function latestRunPerTarget(rows: CoauthorValidationHistory[]): ValidationSnapshot[] {
+  const latest = new Map<number, ValidationSnapshot>();
+  for (const row of rows) {
+    const meta = (row.metadata ?? {}) as { target?: { id?: unknown } | null; title?: unknown };
+    const documentId = Number(meta.target?.id);
+    // Inline content validated no document.
+    if (!Number.isInteger(documentId) || documentId <= 0 || latest.has(documentId)) continue;
+    const results = (row.validationResults ?? {}) as { isValid?: unknown; findings?: unknown };
+    latest.set(documentId, {
+      documentId,
+      documentTitle: typeof meta.title === 'string' && meta.title ? meta.title : row.module,
+      isValid: results.isValid === true,
+      complianceScore: row.complianceScore ?? null,
+      criticalCount: row.criticalIssues ?? 0,
+      majorCount: row.majorIssues ?? 0,
+      minorCount: row.minorIssues ?? 0,
+      validatedAt: row.performedAt.toISOString(),
+      findings: Array.isArray(results.findings) ? (results.findings as ValidationFinding[]) : [],
+    });
+  }
+  return [...latest.values()];
 }
 
 async function resolveTasks(
@@ -776,13 +804,8 @@ export function summarizePayloadForAI(payload: CrossObjectReasoningPayload): str
 
   // Validation summary
   if (payload.validations.length > 0) {
-    const totalCritical = payload.validations.reduce((s, v) => s + v.criticalCount, 0);
-    const totalMajor = payload.validations.reduce((s, v) => s + v.majorCount, 0);
-    const avgScore = Math.round(
-      payload.validations.reduce((s, v) => s + v.complianceScore, 0) / payload.validations.length
-    );
-    lines.push(`### Validations (${payload.validations.length} runs)`);
-    lines.push(`Avg compliance: ${avgScore}% | Critical findings: ${totalCritical} | Major: ${totalMajor}`);
+    lines.push(`### Validations (latest run of ${payload.validations.length} documents)`);
+    lines.push(validationSummaryLine(payload.validations));
     lines.push('');
   }
 

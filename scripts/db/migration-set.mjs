@@ -3233,6 +3233,12 @@ export const C2C_MIGRATION_FILES = [
   // the home one by name. After 20260528_phase9_document_schema, which creates
   // the table. Additive: column, conditional CHECK, partial unique index.
   'migrations/20261015e_c2c_documents_filing_scope.sql',
+  // coauthor_validation_history.agency becomes nullable (2026-10-15):
+  // run_validation recorded 'FDA' for every run that named no agency, though
+  // its checks are not agency-specific. The table comes from the drizzle
+  // schema (shared/schema.ts, amended alike); conditional on the live
+  // constraint, creates nothing.
+  'migrations/20261015f_coauthor_validation_history_agency_nullable.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

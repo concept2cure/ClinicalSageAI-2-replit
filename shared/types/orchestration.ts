@@ -293,7 +293,8 @@ export interface ValidationSnapshot {
   documentId: number;
   documentTitle: string;
   isValid: boolean;
-  complianceScore: number;
+  /** Null when the run's analysis did not cover the whole content. */
+  complianceScore: number | null;
   criticalCount: number;
   majorCount: number;
   minorCount: number;
@@ -565,8 +566,8 @@ export interface DocumentReadinessItem {
   isRouted: boolean;
   isApproved: boolean;
   isExportReady: boolean;
-  /** Validation state. */
-  validationScore?: number;
+  /** Validation state; null when the latest run computed no score. */
+  validationScore?: number | null;
   criticalFindings: number;
   /** Staleness. */
   lastModified?: string;
