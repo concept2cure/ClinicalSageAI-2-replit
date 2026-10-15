@@ -131,12 +131,7 @@ afterAll(async () => {
   await jdb?.close();
 });
 
-const input = {
-  title: 'Module 2.5 Clinical Overview — AnA draft',
-  module: 'M2',
-  documentType: 'clinical_overview',
-  sections: M25_SECTIONS,
-};
+const input = { title: 'Module 2.5 Clinical Overview — AnA draft', module: 'M2', documentType: 'clinical_overview', sections: M25_SECTIONS };
 
 const SOURCE_ID = '10000000-0000-4000-8000-000000000001';
 const OTHER_SOURCE_ID = '10000000-0000-4000-8000-000000000002';
@@ -295,14 +290,11 @@ describe('project catalog — source-version truth', () => {
       expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
       expect(JSON.stringify(read)).not.toContain('9 of 10');
       // A 'cataloged' record for other bytes is not a studied document: placement refuses before any write.
-      const forceOn = process.env.ANA_DOCUMENT_CATALOG_FORCE_ON;
-      process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
+      vi.stubEnv('ANA_DOCUMENT_CATALOG_FORCE_ON', 'true');
       try {
         const placed = JSON.parse(await getToolHandler('place_project_document')!({ document_id: SOURCE_ID, folder_id: 'module-5', rationale: 'The stale record says CSR.' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
         expect(placed).toMatchObject({ ok: false, refused: true, code: 'SOURCE_VERSION_CHANGED' });
-      } finally {
-        if (forceOn === undefined) delete process.env.ANA_DOCUMENT_CATALOG_FORCE_ON; else process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = forceOn;
-      }
+      } finally { vi.unstubAllEnvs(); }
       const receipts = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.document_read_receipts WHERE document_id=$1', [SOURCE_ID]);
       expect((receipts.rows[0] as { n: number }).n).toBe(0);
       const listing = await listProjectDocuments(requestExecutor, ORG, { userId: Number(AUTHOR.id), programId: PROGRAM });
@@ -313,8 +305,7 @@ describe('project catalog — source-version truth', () => {
       const unchanged = await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) });
       expect(unchanged?.catalog?.contentHash).toBe('d'.repeat(64));
       // completeCatalog wrote nothing: the stored record is the stale one, untouched.
-      const stored = await jdb.pool.query('SELECT content_hash, summary FROM vault.document_catalog WHERE document_id=$1', [SOURCE_ID]);
-      expect(stored.rows).toEqual([{ content_hash: 'd'.repeat(64), summary: 'stale endpoint 9 of 10' }]);
+      expect((await jdb.pool.query('SELECT content_hash, summary FROM vault.document_catalog WHERE document_id=$1', [SOURCE_ID])).rows).toEqual([{ content_hash: 'd'.repeat(64), summary: 'stale endpoint 9 of 10' }]);
       expect(unchanged?.catalog?.summary).toBeNull();
     } finally {
       await jdb.pool.query("UPDATE vault.document_catalog SET content_hash=$1,catalog_status='extracted',char_count=$2,summary=NULL,key_data=NULL WHERE document_id=$3", ['a'.repeat(64), SOURCE_TEXT.length, SOURCE_ID]);
