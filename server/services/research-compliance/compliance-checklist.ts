@@ -22,14 +22,36 @@ export const RULE_VERSION = '2026-06-01';
 export type Region = 'us' | 'eu' | 'other';
 export type FundingSource = 'nih' | 'nsf' | 'barda' | 'dod' | 'industry' | 'internal' | 'other';
 
+const REGIONS: readonly Region[] = ['us', 'eu', 'other'];
+const FUNDING_SOURCES: readonly FundingSource[] = ['nih', 'nsf', 'barda', 'dod', 'industry', 'internal', 'other'];
+const FEDERAL_FUNDING: readonly FundingSource[] = ['nih', 'nsf', 'barda', 'dod'];
+
+/**
+ * The facts a checklist is resolved from. Three-valued: null is "not stated",
+ * which is not "no". 2026-10-15: these were plain booleans and every caller read
+ * an unstated fact as false (funding as 'other', region as 'us'), so a study
+ * nobody described resolved to no approvals and no training.
+ */
 export interface ActivityProfile {
-  involvesHumanSubjects: boolean;
-  involvesAnimals: boolean;
-  involvesRecombinantDNA: boolean;
-  involvesHumanGeneTransfer: boolean;
-  fundingSource: FundingSource;
-  region: Region;
+  involvesHumanSubjects: boolean | null;
+  involvesAnimals: boolean | null;
+  involvesRecombinantDNA: boolean | null;
+  involvesHumanGeneTransfer: boolean | null;
+  fundingSource: FundingSource | null;
+  /** No rule in this RULE_VERSION reads region: the rules cite U.S. federal requirements. */
+  region: Region | null;
 }
+
+export type ProfileFact = keyof ActivityProfile;
+
+const FACT_LABEL: Record<ProfileFact, string> = {
+  involvesHumanSubjects: 'human-subjects involvement',
+  involvesAnimals: 'animal involvement',
+  involvesRecombinantDNA: 'recombinant/synthetic nucleic acid involvement',
+  involvesHumanGeneTransfer: 'human gene transfer involvement',
+  fundingSource: 'funding source',
+  region: 'region',
+};
 
 export type CommitteeApproval = 'IRB' | 'IACUC' | 'IBC';
 
@@ -51,65 +73,175 @@ export interface ChecklistStep {
   basis: string;
 }
 
+/** A committee approval a fact not stated could require: listed, not omitted. */
+export interface UndeterminedApproval {
+  committee: CommitteeApproval;
+  /** The unstated facts that would settle whether it is required. */
+  dependsOn: ProfileFact[];
+  reason: string;
+  citation: string;
+}
+
+/** Training a fact not stated could require: listed, not omitted. */
+export interface UndeterminedTraining extends RequiredTraining {
+  /** The unstated facts that would settle whether it is required. */
+  dependsOn: ProfileFact[];
+  reason: string;
+}
+
 export interface ComplianceChecklist {
   ruleVersion: string;
   requiredApprovals: RequiredApproval[];
   requiredTraining: RequiredTraining[];
+  undeterminedApprovals: UndeterminedApproval[];
+  undeterminedTraining: UndeterminedTraining[];
+  /** Every fact of the profile that was not stated, whether or not a rule reads it. */
+  unstatedFacts: ProfileFact[];
+  /** True only when nothing is undetermined, i.e. the required lists are complete. */
+  determined: boolean;
   steps: ChecklistStep[];
+}
+
+/** A rule's condition under three-valued logic; `holds: null` turns on the facts in `unstated`. */
+interface Condition {
+  holds: boolean | null;
+  unstated: ProfileFact[];
+}
+
+function fact(name: ProfileFact, holds: boolean | null | undefined): Condition {
+  return holds == null ? { holds: null, unstated: [name] } : { holds, unstated: [] };
+}
+
+function anyOf(...cs: Condition[]): Condition {
+  if (cs.some((c) => c.holds === true)) return { holds: true, unstated: [] };
+  if (cs.every((c) => c.holds === false)) return { holds: false, unstated: [] };
+  return { holds: null, unstated: Array.from(new Set(cs.flatMap((c) => c.unstated))) };
+}
+
+function allOf(...cs: Condition[]): Condition {
+  if (cs.some((c) => c.holds === false)) return { holds: false, unstated: [] };
+  if (cs.every((c) => c.holds === true)) return { holds: true, unstated: [] };
+  return { holds: null, unstated: Array.from(new Set(cs.flatMap((c) => c.unstated))) };
+}
+
+function notDetermined(unstated: ProfileFact[], requiredIf: string): string {
+  return `Not determined: ${unstated.map((f) => FACT_LABEL[f]).join(', ')} not stated. Required if ${requiredIf}.`;
 }
 
 /**
  * Resolve the compliance checklist for an activity profile. Deterministic and
  * cited — this is the rule data that "changes when regulations change" (bump
  * RULE_VERSION). Pure.
+ *
+ * A rule whose outcome turns on a fact that was not stated is neither required
+ * nor dropped: it is listed in undeterminedApprovals / undeterminedTraining with
+ * the facts that would settle it. 2026-10-15: such a rule was silently omitted.
  */
 export function resolveComplianceChecklist(p: ActivityProfile): ComplianceChecklist {
   const requiredApprovals: RequiredApproval[] = [];
   const requiredTraining: RequiredTraining[] = [];
+  const undeterminedApprovals: UndeterminedApproval[] = [];
+  const undeterminedTraining: UndeterminedTraining[] = [];
 
-  if (p.involvesHumanSubjects) {
+  const approval = (when: Condition, requiredIf: string, a: RequiredApproval) => {
+    if (when.holds === true) requiredApprovals.push(a);
+    else if (when.holds === null) undeterminedApprovals.push({ committee: a.committee, dependsOn: when.unstated, reason: notDetermined(when.unstated, requiredIf), citation: a.citation });
+  };
+  const training = (when: Condition, requiredIf: string, t: RequiredTraining) => {
+    if (when.holds === true) requiredTraining.push(t);
+    else if (when.holds === null) undeterminedTraining.push({ ...t, dependsOn: when.unstated, reason: notDetermined(when.unstated, requiredIf) });
+  };
+
+  const human = fact('involvesHumanSubjects', p.involvesHumanSubjects);
+  const animals = fact('involvesAnimals', p.involvesAnimals);
+  const geneTransfer = fact('involvesHumanGeneTransfer', p.involvesHumanGeneTransfer);
+  const nucleicAcid = anyOf(fact('involvesRecombinantDNA', p.involvesRecombinantDNA), geneTransfer);
+  const funding = (test: (f: FundingSource) => boolean) => fact('fundingSource', p.fundingSource == null ? null : test(p.fundingSource));
+  const federal = funding((f) => FEDERAL_FUNDING.includes(f));
+
+  // IRB for human subjects here; for human gene transfer it is added after IBC (below).
+  const irb = anyOf(human, geneTransfer);
+  if (human.holds === true) {
     requiredApprovals.push({ committee: 'IRB', reason: 'Research involving human subjects requires IRB review.', citation: '45 CFR 46.103; 21 CFR 56.103' });
-    requiredTraining.push({ trainingType: 'citi_human_subjects', appliesTo: 'all_personnel', citation: 'NIH human-subjects protection training requirement' });
-    if (p.fundingSource !== 'internal') {
-      requiredTraining.push({ trainingType: 'citi_gcp', appliesTo: 'investigators', citation: 'ICH E6(R3) GCP; FDA/NIH GCP training' });
-    }
+  } else if (irb.holds === null) {
+    undeterminedApprovals.push({ committee: 'IRB', dependsOn: irb.unstated, reason: notDetermined(irb.unstated, 'the activity involves human subjects or human gene transfer'), citation: '45 CFR 46.103; 21 CFR 56.103; NIH Guidelines III-C' });
   }
-  if (p.involvesAnimals) {
-    requiredApprovals.push({ committee: 'IACUC', reason: 'Research involving live vertebrate animals requires IACUC approval.', citation: 'PHS Policy IV.C; AWA 9 CFR 2.31' });
-    requiredTraining.push({ trainingType: 'citi_animal', appliesTo: 'animal_handlers', citation: 'PHS Policy IV.C.1.f (personnel qualifications/training)' });
-  }
-  if (p.involvesRecombinantDNA || p.involvesHumanGeneTransfer) {
-    requiredApprovals.push({ committee: 'IBC', reason: 'Recombinant/synthetic nucleic acid (or human gene transfer) work requires IBC registration.', citation: 'NIH Guidelines Section III' });
-    requiredTraining.push({ trainingType: 'biosafety', appliesTo: 'all_personnel', citation: 'NIH Guidelines; CDC/NIH BMBL' });
-  }
-  if (p.involvesHumanGeneTransfer) {
-    // CGT typically needs IRB too (human subjects) — ensure IRB present.
-    if (!requiredApprovals.some((a) => a.committee === 'IRB')) {
-      requiredApprovals.push({ committee: 'IRB', reason: 'Human gene transfer involves human subjects and requires IRB review.', citation: '45 CFR 46; NIH Guidelines III-C' });
-    }
+  training(human, 'the activity involves human subjects', { trainingType: 'citi_human_subjects', appliesTo: 'all_personnel', citation: 'NIH human-subjects protection training requirement' });
+  training(allOf(human, funding((f) => f !== 'internal')), 'the activity involves human subjects and is not internally funded', { trainingType: 'citi_gcp', appliesTo: 'investigators', citation: 'ICH E6(R3) GCP; FDA/NIH GCP training' });
+
+  approval(animals, 'the activity involves live vertebrate animals', { committee: 'IACUC', reason: 'Research involving live vertebrate animals requires IACUC approval.', citation: 'PHS Policy IV.C; AWA 9 CFR 2.31' });
+  training(animals, 'the activity involves live vertebrate animals', { trainingType: 'citi_animal', appliesTo: 'animal_handlers', citation: 'PHS Policy IV.C.1.f (personnel qualifications/training)' });
+
+  approval(nucleicAcid, 'the activity involves recombinant/synthetic nucleic acids or human gene transfer', { committee: 'IBC', reason: 'Recombinant/synthetic nucleic acid (or human gene transfer) work requires IBC registration.', citation: 'NIH Guidelines Section III' });
+  training(nucleicAcid, 'the activity involves recombinant/synthetic nucleic acids or human gene transfer', { trainingType: 'biosafety', appliesTo: 'all_personnel', citation: 'NIH Guidelines; CDC/NIH BMBL' });
+
+  // CGT typically needs IRB too (human subjects) — ensure IRB present.
+  if (human.holds !== true && geneTransfer.holds === true) {
+    requiredApprovals.push({ committee: 'IRB', reason: 'Human gene transfer involves human subjects and requires IRB review.', citation: '45 CFR 46; NIH Guidelines III-C' });
   }
 
   // FCOI / research-security disclosure for federally-funded work.
-  if (['nih', 'nsf', 'barda', 'dod'].includes(p.fundingSource)) {
-    requiredTraining.push({ trainingType: 'fcoi_disclosure', appliesTo: 'investigators', citation: 'PHS FCOI 42 CFR 50 Subpart F; NSPM-33 / NOT-OD-26-017 research security' });
-  }
+  training(federal, 'the funding is federal (NIH, NSF, BARDA or DoD)', { trainingType: 'fcoi_disclosure', appliesTo: 'investigators', citation: 'PHS FCOI 42 CFR 50 Subpart F; NSPM-33 / NOT-OD-26-017 research security' });
 
   // RCR training for NIH/NSF trainees.
-  if (p.fundingSource === 'nih' || p.fundingSource === 'nsf') {
-    requiredTraining.push({ trainingType: 'citi_rcr', appliesTo: 'all_personnel', citation: 'NIH RCR (NOT-OD-10-019); NSF RCR (America COMPETES Act)' });
-  }
+  training(funding((f) => f === 'nih' || f === 'nsf'), 'the funding is NIH or NSF', { trainingType: 'citi_rcr', appliesTo: 'all_personnel', citation: 'NIH RCR (NOT-OD-10-019); NSF RCR (America COMPETES Act)' });
+
+  const unstatedFacts = (Object.keys(FACT_LABEL) as ProfileFact[]).filter((f) => p[f] == null);
+  const determined = undeterminedApprovals.length === 0 && undeterminedTraining.length === 0;
 
   const steps: ChecklistStep[] = [];
   let order = 1;
+  if (!determined) {
+    const deciding = Array.from(new Set([...undeterminedApprovals, ...undeterminedTraining].flatMap((u) => u.dependsOn)));
+    steps.push({ order: order++, step: `State ${deciding.map((f) => FACT_LABEL[f]).join(', ')}: until then, the approvals and training listed as not determined may be required.`, basis: 'activity profile incomplete' });
+  }
   steps.push({ order: order++, step: 'Confirm all listed personnel have current required training before submission (no index/account until trained).', basis: 'institutional roster gate' });
   for (const a of requiredApprovals) {
     steps.push({ order: order++, step: `Obtain ${a.committee} approval before initiating the corresponding activities.`, basis: a.citation });
   }
-  if (['nih', 'nsf', 'barda', 'dod'].includes(p.fundingSource)) {
+  if (federal.holds === true) {
     steps.push({ order: order++, step: 'File FCOI / research-security disclosures for all investigators prior to expenditure.', basis: '42 CFR 50 Subpart F; NSPM-33' });
   }
 
-  return { ruleVersion: RULE_VERSION, requiredApprovals, requiredTraining, steps };
+  return { ruleVersion: RULE_VERSION, requiredApprovals, requiredTraining, undeterminedApprovals, undeterminedTraining, unstatedFacts, determined, steps };
+}
+
+export type ActivityProfileRead = { ok: true; profile: ActivityProfile } | { ok: false; error: string };
+
+/**
+ * Read an activity profile from request or tool input. A fact that is absent or
+ * null was not stated and stays null: it is never read as false, and funding
+ * source and region are never defaulted. A value of the wrong kind is refused,
+ * naming its key. `keys` renames a fact's input key (AnA tools use snake_case).
+ */
+export function readActivityProfile(input: Record<string, unknown>, keys: Partial<Record<ProfileFact, string>> = {}): ActivityProfileRead {
+  const problems: string[] = [];
+  const keyOf = (f: ProfileFact): string => keys[f] ?? f;
+  const flag = (f: ProfileFact): boolean | null => {
+    const v = input[keyOf(f)];
+    if (v === undefined || v === null) return null;
+    if (typeof v === 'boolean') return v;
+    problems.push(`${keyOf(f)} must be true or false`);
+    return null;
+  };
+  const oneOf = <T extends string>(f: ProfileFact, allowed: readonly T[]): T | null => {
+    const v = input[keyOf(f)];
+    if (v === undefined || v === null) return null;
+    const match = allowed.find((a) => a === v);
+    if (match === undefined) problems.push(`${keyOf(f)} must be one of ${allowed.join(', ')}`);
+    return match ?? null;
+  };
+  const profile: ActivityProfile = {
+    involvesHumanSubjects: flag('involvesHumanSubjects'),
+    involvesAnimals: flag('involvesAnimals'),
+    involvesRecombinantDNA: flag('involvesRecombinantDNA'),
+    involvesHumanGeneTransfer: flag('involvesHumanGeneTransfer'),
+    fundingSource: oneOf('fundingSource', FUNDING_SOURCES),
+    region: oneOf('region', REGIONS),
+  };
+  return problems.length > 0
+    ? { ok: false, error: `${problems.join('; ')}. Omit a fact that has not been stated; what it decides is then reported as not determined.` }
+    : { ok: true, profile };
 }
 
 // ─── Training gate ───────────────────────────────────────────────────────────
@@ -140,22 +272,33 @@ export function trainingStatus(rec: { completedDate?: string | null; expiresDate
 }
 
 export interface TrainingGateResult {
-  cleared: boolean;
+  /**
+   * true: every required training is current for every applicable person.
+   * false: a required training is missing or expired.
+   * null: nothing required is missing, but the gate cannot clear: training is
+   * not determined (a fact was not stated), or nobody was evaluated.
+   */
+  cleared: boolean | null;
   missing: Array<{ personnelId: number; personnelName: string; trainingType: string; reason: 'missing' | 'expired' }>;
   expiringSoon: Array<{ personnelId: number; personnelName: string; trainingType: string }>;
+  /** Training a fact not stated could require; the gate does not clear while any is listed. */
+  undeterminedTraining: UndeterminedTraining[];
+  personnelEvaluated: number;
 }
 
 /**
  * The "no index until trained" gate. For each (person, required training) pair,
  * confirm a current record exists. Investigator-only training is checked against
  * investigator personnel; animal-handler training against animal handlers; all-
- * personnel training against everyone. Pure.
+ * personnel training against everyone. Pass the checklist's undeterminedTraining:
+ * omit it only for a requirement list known to be complete. Pure.
  */
 export function evaluateTrainingGate(
   personnel: Array<{ id: number; name: string; role: string }>,
   requiredTraining: RequiredTraining[],
   records: TrainingRecord[],
   today: string,
+  undeterminedTraining: UndeterminedTraining[] = [],
 ): TrainingGateResult {
   const missing: TrainingGateResult['missing'] = [];
   const expiringSoon: TrainingGateResult['expiringSoon'] = [];
@@ -178,7 +321,11 @@ export function evaluateTrainingGate(
     }
   }
 
-  return { cleared: missing.length === 0, missing, expiringSoon };
+  // 2026-10-15: cleared was `missing.length === 0`, so the gate cleared against a
+  // requirement list that unstated facts had left incomplete, and over nobody.
+  const unsettled = undeterminedTraining.length > 0 || (personnel.length === 0 && requiredTraining.length > 0);
+  const cleared = missing.length > 0 ? false : unsettled ? null : true;
+  return { cleared, missing, expiringSoon, undeterminedTraining, personnelEvaluated: personnel.length };
 }
 
 // ─── Study-onboarding orchestration ──────────────────────────────────────────
@@ -200,18 +347,26 @@ export interface ApprovalReadiness {
   citation: string;
   /** Missing/expired trainings that block submitting for THIS approval. */
   blockingGaps: Array<{ personnelId: number; personnelName: string; trainingType: string; reason: 'missing' | 'expired' }>;
-  ready: boolean;
+  /** false on a blocking gap; null when training it needs is not determined or nobody was evaluated. */
+  ready: boolean | null;
 }
 
 export interface StudyOnboardingAssessment {
   ruleVersion: string;
   requiredApprovals: RequiredApproval[];
   requiredTraining: RequiredTraining[];
+  undeterminedApprovals: UndeterminedApproval[];
+  undeterminedTraining: UndeterminedTraining[];
+  unstatedFacts: ProfileFact[];
   steps: ChecklistStep[];
   gate: TrainingGateResult;
   approvals: ApprovalReadiness[];
-  /** True when every required approval is clear of training gaps (the team can submit). */
-  readyToSubmit: boolean;
+  /**
+   * true: every approval is determined and clear of training gaps (the team can
+   * submit). false: a training gap blocks. null: not determined (a fact was not
+   * stated, or nobody was evaluated).
+   */
+  readyToSubmit: boolean | null;
   blockers: string[];
 }
 
@@ -230,11 +385,16 @@ export function assessStudyOnboarding(
   today: string,
 ): StudyOnboardingAssessment {
   const checklist = resolveComplianceChecklist(profile);
-  const gate = evaluateTrainingGate(personnel, checklist.requiredTraining, records, today);
+  const gate = evaluateTrainingGate(personnel, checklist.requiredTraining, records, today, checklist.undeterminedTraining);
 
   const approvals: ApprovalReadiness[] = checklist.requiredApprovals.map((a) => {
-    const blockingGaps = gate.missing.filter((m) => TRAINING_TO_COMMITTEE[m.trainingType] === a.committee);
-    return { committee: a.committee, reason: a.reason, citation: a.citation, blockingGaps, ready: blockingGaps.length === 0 };
+    const gates = (trainingType: string) => TRAINING_TO_COMMITTEE[trainingType] === a.committee;
+    const blockingGaps = gate.missing.filter((m) => gates(m.trainingType));
+    // 2026-10-15: ready was `blockingGaps.length === 0`, true even when training this
+    // approval needs was not determined, or nobody was checked.
+    const unsettled = checklist.undeterminedTraining.some((u) => gates(u.trainingType))
+      || (personnel.length === 0 && checklist.requiredTraining.some((r) => gates(r.trainingType)));
+    return { committee: a.committee, reason: a.reason, citation: a.citation, blockingGaps, ready: blockingGaps.length > 0 ? false : unsettled ? null : true };
   });
 
   const blockers: string[] = [];
@@ -254,10 +414,14 @@ export function assessStudyOnboarding(
     ruleVersion: checklist.ruleVersion,
     requiredApprovals: checklist.requiredApprovals,
     requiredTraining: checklist.requiredTraining,
+    undeterminedApprovals: checklist.undeterminedApprovals,
+    undeterminedTraining: checklist.undeterminedTraining,
+    unstatedFacts: checklist.unstatedFacts,
     steps: checklist.steps,
     gate,
     approvals,
-    readyToSubmit: gate.cleared,
+    // An approval that is itself undetermined also keeps this from true.
+    readyToSubmit: gate.cleared === false ? false : gate.cleared === null || !checklist.determined ? null : true,
     blockers,
   };
 }

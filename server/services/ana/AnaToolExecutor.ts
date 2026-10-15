@@ -13908,25 +13908,54 @@ registerToolHandler('review_tmf_completeness', async (input, ctx) => {
 // add_personnel_training is governed (surface 'ana').
 // ─────────────────────────────────────────────────────────────────────────────
 
-function rcProfile(input: Record<string, unknown>) {
-  return {
-    involvesHumanSubjects: input.involves_human_subjects === true,
-    involvesAnimals: input.involves_animals === true,
-    involvesRecombinantDNA: input.involves_recombinant_dna === true,
-    involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
-    fundingSource: (typeof input.funding_source === 'string' ? input.funding_source : 'other') as any,
-    region: (typeof input.region === 'string' ? input.region : 'us') as any,
-  };
+/* 2026-10-15: rcProfile read every omitted fact as false (funding_source as
+   'other', region as 'us') and took any string as a funding source, so a study
+   nobody described came back "Required committee approvals: none" and its gate
+   "cleared". An omitted fact is now not stated, a value outside the schema is
+   refused, and what an unstated fact could require is reported as not determined. */
+const RC_INPUT_KEYS = {
+  involvesHumanSubjects: 'involves_human_subjects',
+  involvesAnimals: 'involves_animals',
+  involvesRecombinantDNA: 'involves_recombinant_dna',
+  involvesHumanGeneTransfer: 'involves_human_gene_transfer',
+  fundingSource: 'funding_source',
+  region: 'region',
+} as const;
+type RcChecklist = import('../research-compliance/compliance-checklist.js').ComplianceChecklist;
+
+async function rcProfile(input: Record<string, unknown>) {
+  const { readActivityProfile } = await import('../research-compliance/compliance-checklist.js');
+  return readActivityProfile(input, RC_INPUT_KEYS);
+}
+
+function rcFacts(facts: RcChecklist['unstatedFacts']): string {
+  return facts.map((f) => RC_INPUT_KEYS[f]).join(', ');
+}
+
+/** 'none' only when no approval is required or undetermined. */
+function rcApprovals(c: Pick<RcChecklist, 'requiredApprovals' | 'undeterminedApprovals'>): string {
+  const parts = c.requiredApprovals.length ? [c.requiredApprovals.map((a) => a.committee).join(', ')] : [];
+  if (c.undeterminedApprovals.length) parts.push(`not determined: ${c.undeterminedApprovals.map((u) => `${u.committee} (${rcFacts(u.dependsOn)} not stated)`).join(', ')}`);
+  return parts.join('; ') || 'none';
+}
+
+/** '' when every training requirement is determined. */
+function rcUndeterminedTraining(c: Pick<RcChecklist, 'undeterminedTraining'>): string {
+  return c.undeterminedTraining.map((u) => `${u.trainingType} (${rcFacts(u.dependsOn)} not stated)`).join(', ');
 }
 
 registerToolHandler('run_compliance_checklist', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'run_compliance_checklist requires tenant context.' });
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { resolveComplianceChecklist } = await import('../research-compliance/compliance-checklist.js');
-  const c = resolveComplianceChecklist(rcProfile(input));
-  const committees = c.requiredApprovals.map((a) => a.committee).join(', ') || 'none';
+  const c = resolveComplianceChecklist(read.profile);
+  const undetermined = rcUndeterminedTraining(c);
   return JSON.stringify({
-    ok: true, ruleVersion: c.ruleVersion, requiredApprovals: c.requiredApprovals, requiredTraining: c.requiredTraining, steps: c.steps,
-    message: `Required committee approvals: ${committees}; ${c.requiredTraining.length} training requirement(s).`,
+    ok: true, ruleVersion: c.ruleVersion, requiredApprovals: c.requiredApprovals, requiredTraining: c.requiredTraining,
+    undeterminedApprovals: c.undeterminedApprovals, undeterminedTraining: c.undeterminedTraining, notStated: c.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
+    steps: c.steps,
+    message: `Required committee approvals: ${rcApprovals(c)}; ${c.requiredTraining.length} training requirement(s)${undetermined ? `; training not determined: ${undetermined}` : ''}.`,
   });
 });
 
@@ -13967,16 +13996,25 @@ registerToolHandler('add_personnel_training', async (input, ctx) => {
 registerToolHandler('review_training_gate', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_training_gate requires tenant context.' });
   const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { resolveComplianceChecklist, evaluateTrainingGate } = await import('../research-compliance/compliance-checklist.js');
   const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
   try {
-    const checklist = resolveComplianceChecklist(rcProfile(input));
+    const checklist = resolveComplianceChecklist(read.profile);
     const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
     const today = new Date().toISOString().slice(0, 10);
-    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today);
+    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today, checklist.undeterminedTraining);
+    const undetermined = rcUndeterminedTraining(gate);
+    const notChecked = gate.personnelEvaluated === 0 && checklist.requiredTraining.length > 0 ? 'no personnel were named, so nobody was checked' : '';
     return JSON.stringify({
       ok: true, cleared: gate.cleared, missing: gate.missing, expiringSoon: gate.expiringSoon,
-      message: gate.cleared ? 'Training gate cleared — all required training is current.' : `Training gate BLOCKED — ${gate.missing.length} missing/expired requirement(s).`,
+      undeterminedTraining: gate.undeterminedTraining, notStated: checklist.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
+      message: gate.cleared === true
+        ? 'Training gate cleared — all required training is current.'
+        : gate.cleared === false
+          ? `Training gate BLOCKED — ${gate.missing.length} missing/expired requirement(s).${undetermined ? ` Training not determined: ${undetermined}.` : ''}`
+          : `Training gate not determined — ${[undetermined && `training not determined: ${undetermined}`, notChecked].filter(Boolean).join('; ')}. Not cleared.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_training_gate failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -14133,19 +14171,26 @@ registerToolHandler('screen_restricted_party', async (input, ctx) => {
 registerToolHandler('assess_study_onboarding', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'assess_study_onboarding requires tenant context.' });
   const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { assessStudyOnboarding } = await import('../research-compliance/compliance-checklist.js');
   const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
   try {
     const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
     const today = new Date().toISOString().slice(0, 10);
-    const a = assessStudyOnboarding(rcProfile(input), roster.personnel, roster.records, today);
-    const committees = a.requiredApprovals.map((x) => x.committee).join(', ') || 'none';
+    const a = assessStudyOnboarding(read.profile, roster.personnel, roster.records, today);
+    const committees = rcApprovals(a);
+    const undetermined = rcUndeterminedTraining(a);
+    const notChecked = a.gate.personnelEvaluated === 0 && a.requiredTraining.length > 0 ? 'no personnel were named, so nobody was checked' : '';
     return JSON.stringify({
       ok: true, ruleVersion: a.ruleVersion, requiredApprovals: a.requiredApprovals, requiredTraining: a.requiredTraining,
+      undeterminedApprovals: a.undeterminedApprovals, undeterminedTraining: a.undeterminedTraining, notStated: a.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
       steps: a.steps, approvals: a.approvals, readyToSubmit: a.readyToSubmit, blockers: a.blockers,
-      message: a.readyToSubmit
+      message: a.readyToSubmit === true
         ? `Required approvals: ${committees}. Team training is current — ready to submit.`
-        : `Required approvals: ${committees}. NOT ready — ${a.blockers.length} blocker(s): ${a.blockers.slice(0, 4).join('; ')}${a.blockers.length > 4 ? '…' : ''}`,
+        : a.readyToSubmit === false
+          ? `Required approvals: ${committees}. NOT ready — ${a.blockers.length} blocker(s): ${a.blockers.slice(0, 4).join('; ')}${a.blockers.length > 4 ? '…' : ''}${undetermined ? ` Training not determined: ${undetermined}.` : ''}`
+          : `Required approvals: ${committees}. Readiness not determined${[undetermined && `training not determined: ${undetermined}`, notChecked].filter(Boolean).map((r) => ` — ${r}`).join('')}.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `assess_study_onboarding failed: ${err instanceof Error ? err.message : String(err)}` });
