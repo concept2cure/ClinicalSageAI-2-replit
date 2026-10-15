@@ -295,6 +295,20 @@ router.post('/', limiter, requireRole(AUTHOR), async (req, res) => {
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const parsed = createSubmissionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  /* A market the platform does not offer for this application type is refused
+     here as the market statement says it (filing-spine design review, item 6,
+     2026-10-15): a UK IND read "Not offered" and could still be created. An
+     unreadable statement creates nothing. */
+  let statement: { offered: boolean; line: string } | undefined;
+  try {
+    const { readMarketSupport } = await import('../services/regulatory/market-support.js');
+    [statement] = await readMarketSupport(requestPgClient(req), [{ applicationType: parsed.data.applicationType, market: parsed.data.primaryRegion }]);
+  } catch {
+    return res.status(503).json({ error: { code: 'MARKET_SUPPORT_UNAVAILABLE', message: 'Whether this market is offered could not be read. Nothing was created.' } });
+  }
+  if (statement && !statement.offered) {
+    return res.status(422).json({ error: { code: 'MARKET_NOT_OFFERED', message: `${statement.line}. Nothing was created.` } });
+  }
   try {
     res.status(201).json(await createSubmission(parsed.data, ctx));
   } catch (err) {

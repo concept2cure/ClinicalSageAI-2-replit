@@ -117,7 +117,8 @@ function noticeFor(projectUnread: boolean, submissionsUnread: boolean): string |
 /** The form's fields, with each region option labelled by the server's statement. */
 function submissionFields(
   defaults: NewSubmissionDefaults,
-  summaryFor: (v: string) => string | null,
+  /** Each region's server statement: its summary, and whether it is offered (null: not read). */
+  market: { summaryFor: (v: string) => string | null; offeredFor: (v: string) => boolean | null },
   /** The region field's description, ending with the chosen region's full statement. */
   regionDesc: string,
   openProjectName: string | null,
@@ -137,8 +138,10 @@ function submissionFields(
     {
       key: 'primaryRegion', label: 'Primary region', type: 'select',
       options: SC_REGIONS.map((r) => {
-        const summary = summaryFor(r.v);
-        return { value: r.v, label: summary ? `${r.l} · ${summary}` : r.l };
+        const summary = market.summaryFor(r.v);
+        // A market the server does not offer for the type is listed and not
+        // choosable; the server refuses it too (review item 6, 2026-10-15).
+        return { value: r.v, label: summary ? `${r.l} · ${summary}` : r.l, disabled: market.offeredFor(r.v) === false };
       }),
       // Full width: the option carries the market's statement (F19). Its last
       // clause still clips at 375px, so the chosen region's full statement is
@@ -168,6 +171,13 @@ function submissionFields(
           options: programmes.map((p) => ({ value: p.id, label: [p.code, p.title].filter(Boolean).join(' · ') || p.id })),
           required: true,
         },
+    /* In a project, a new submission adds a market to it: its regional
+       modules, the market on the project's record and the submission, for a
+       stated reason recorded with them (FILING_SPINE F22). */
+    ...(openProjectName
+      ? [{ key: 'reason', label: 'Reason', type: 'textarea' as const, required: true, rows: 2,
+          desc: "Recorded with the market on this project's record." }]
+      : []),
   ];
 }
 
@@ -193,6 +203,8 @@ function useRegionStatements(appType: string) {
   const current = support.data?.applicationType === appType ? support.data : null;
   const marketFor = (v: string) => current?.markets?.find((m) => m.region === canonicalRegionOf(v)) ?? null;
   const summaryFor = (v: string): string | null => marketFor(v)?.summary ?? null;
+  /** False only when the server states the market is not offered; null when no statement was read. */
+  const offeredFor = (v: string): boolean | null => marketFor(v)?.offered ?? null;
   const regionDesc = regionDescFor(appType, support.loading, !!support.error, current?.markets?.length ?? null);
   /** The chosen region's full statement, as the market rows say it, or "". */
   const statementFor = (v: string | null): string => {
@@ -200,7 +212,7 @@ function useRegionStatements(appType: string) {
     const label = SC_REGIONS.find((r) => r.v === v)?.l;
     return m && label ? ` ${label}: ${marketSupportText(m)}` : '';
   };
-  return { summaryFor, regionDesc, statementFor };
+  return { summaryFor, offeredFor, regionDesc, statementFor };
 }
 
 export function NewSubmissionForm({
@@ -232,7 +244,7 @@ export function NewSubmissionForm({
   const [chosenType, setChosenType] = React.useState<string | null>(null);
   const [chosenRegion, setChosenRegion] = React.useState<string | null>(null);
   const appType = chosenType ?? filing.defaults.applicationType;
-  const { summaryFor, regionDesc, statementFor } = useRegionStatements(appType);
+  const { summaryFor, offeredFor, regionDesc, statementFor } = useRegionStatements(appType);
 
   /* The drawer opens at once, busy, inside the dialog (design review
      2026-10-08: a placeholder in the page moved the page twice and was never
@@ -243,7 +255,7 @@ export function NewSubmissionForm({
   const busy = settledOnce.current ? undefined : "Loading the project's filing…";
   const notice = busy ? undefined : noticeFor(filing.unread, submissionsUnread);
 
-  const fields = submissionFields(filing.defaults, summaryFor, regionDesc + statementFor(chosenRegion ?? filing.defaults.primaryRegion), openProjectName, programmes);
+  const fields = submissionFields(filing.defaults, { summaryFor, offeredFor }, regionDesc + statementFor(chosenRegion ?? filing.defaults.primaryRegion), openProjectName, programmes);
 
   return (
     <C2CForm

@@ -55,6 +55,12 @@ function serve(opts: { notOffered?: unknown; failScoped?: boolean; projects?: un
       posts.push(body);
       return res({ ...MINE, id: 77, title: (body as { title: string }).title }, 201);
     }
+    // 2026-10-15 (FILING_SPINE F22): with a project open, a new submission is
+    // a market of that project, added through the project's own route.
+    if (method === 'POST' && url === `/api/c2c/projects/${PID}/markets`) {
+      posts.push({ url, ...(body as object) });
+      return res({ ok: true, documentId: 'doc_m', sectionCount: 12, submissionId: 77, agency: 'EMA' }, 201);
+    }
     // The server's scoped read: the program's rows, the count it left out in meta.
     if (method === 'GET' && url === SCOPED) {
       if (opts.failScoped) throw Object.assign(new Error('Server error'), { status: 500 });
@@ -138,9 +144,14 @@ describe('Submission Center — with a project open', () => {
     // No client type is preselected unless the project's product type or the
     // open workspace names one (F20: no longer Biotech for every submission).
     fireEvent.change(screen.getByLabelText(/Client type/), { target: { value: 'biotech' } });
+    // The market is added to the project for a stated reason (F22, 2026-10-15).
+    fireEvent.change(screen.getByLabelText(/Reason/), { target: { value: 'The EU filing starts this quarter' } });
     fireEvent.click(screen.getByRole('button', { name: /Create submission/ }));
     await waitFor(() => expect(posts).toHaveLength(1));
-    expect(posts[0]).toMatchObject({ title: 'ONC-221 — EU MAA', programId: PID, applicationType: 'maa', primaryRegion: 'eu' });
+    expect(posts[0]).toMatchObject({
+      url: `/api/c2c/projects/${PID}/markets`, title: 'ONC-221 — EU MAA', applicationType: 'maa', agency: 'eu',
+      clientType: 'biotech', reason: 'The EU filing starts this quarter',
+    });
   });
 });
 

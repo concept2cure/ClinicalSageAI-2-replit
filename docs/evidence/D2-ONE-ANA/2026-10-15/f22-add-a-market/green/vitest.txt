@@ -1,0 +1,150 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-10-15T06:06:46.989Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T06:06:46.991Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-10-15T06:06:46.991Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-10-15T06:06:47.285Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action 56ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the home filing is still the one an authored section binds to 39ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a newer market document of the home filing's own class never takes the home binding 17ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the project's own market with no submission yet gets its submission, and no second document 24ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a repeat is refused (409), and nothing more is written 31ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a UK IND (the UK has no IND) with 422, and writes nothing 10ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses Health Canada (no outline) with 422, and writes nothing 9ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a device project with 422, and writes nothing 8ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > reads the project-scoped list, not the organization, and lists only its submissions 303ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > says whose submissions these are and how many others the server left out 19ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > shows every submission of the organization on request, and can go back 158ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > does not guess the count of others when the server did not send one 90ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with a project open > creates the submission in the open project: no programme picker, the project named 211ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — with no project open > reads the organization as before, with no scope line and the programme picker 97ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > keeps keyboard focus on the scope toggle in both directions 58ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a project known only by its id is "the open project" once, not twice 68ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > a failed scoped read does not call the list the organization’s 15ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterOpenProject.test.tsx > Submission Center — the open project, as the review found it > AnA asking for another project’s submission is told it is not listed here, not that it does not exist 40ms
+ ✓ client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: the chosen region is stated in full > states the chosen region's summary and line under the select, and follows the choice 376ms
+ ✓ client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: a market not offered cannot be chosen > disables the option the statement does not offer, and keeps the offered ones 166ms
+stdout | server/routes/__tests__/submissions-create-not-offered.test.ts
+{
+  "timestamp": "2026-10-15T06:06:57.245Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T06:06:57.246Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-create-not-offered.test.ts
+{
+  "timestamp": "2026-10-15T06:06:57.246Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-create-not-offered.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-create-not-offered.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-create-not-offered.test.ts
+{
+  "timestamp": "2026-10-15T06:06:57.553Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-create-not-offered.test.ts > POST /api/submissions — a market the platform does not offer > refuses a UK IND with the statement, and creates nothing 33ms
+ ✓ server/routes/__tests__/submissions-create-not-offered.test.ts > POST /api/submissions — a market the platform does not offer > creates a US IND as before 7ms
+stderr | server/routes/c2c/__tests__/projects-add-market-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-add-market-route.test.ts
+{
+  "timestamp": "2026-10-15T06:07:02.076Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-add-market-route.test.ts
+{
+  "timestamp": "2026-10-15T06:07:02.168Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T06:07:02.168Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-add-market-route.test.ts
+{
+  "timestamp": "2026-10-15T06:07:02.169Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-add-market-route.test.ts > POST /:id/markets > adds the market for the project lead, with the stated reason, and commits 29ms
+ ✓ server/routes/c2c/__tests__/projects-add-market-route.test.ts > POST /:id/markets > a market with no stated reason is refused, and nothing is attempted 5ms
+ ✓ server/routes/c2c/__tests__/projects-add-market-route.test.ts > POST /:id/markets > someone who may not change the project is refused, and nothing is attempted 9ms
+ ✓ server/routes/c2c/__tests__/projects-add-market-route.test.ts > POST /:id/markets > the service's refusal is the answer, and the transaction is rolled back 4ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > the editor's outline is the home filing (F22) > asks for the project documents scoped to home 20ms
+
+ Test Files  6 passed (6)
+      Tests  27 passed (27)
+   Start at  06:06:44
+   Duration  19.65s (transform 5.42s, setup 405ms, import 12.00s, tests 4.50s, environment 1.66s)
+

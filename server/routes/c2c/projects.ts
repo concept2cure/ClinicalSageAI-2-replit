@@ -74,6 +74,8 @@ import {
    create failure could not be looked up in the logs — the reference the UI
    invited the user to quote pointed at nothing. */
 import { serverError } from '../../lib/api-response.js';
+import { requireGovernedReason } from '../governed-reason.js';
+import { addProjectMarket, AddMarketRefusal } from '../../services/c2c/add-project-market.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { createSource, findSourceByChecksum } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { uploadedBinaryAvailableSql } from '../../services/document-data-disposition/eligibility.js';
@@ -2140,6 +2142,60 @@ async function transitionProgram(
     client.release();
   }
 }
+
+/** The market a POST /:id/markets body names, its strings trimmed; unknown client types dropped. */
+function readMarketBody(body: Record<string, unknown> | undefined) {
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  const clientType = str(body?.clientType);
+  return {
+    agency: str(body?.agency),
+    applicationType: str(body?.applicationType),
+    title: str(body?.title) || undefined,
+    clientType: ['pharma', 'biotech', 'mdx', 'ivd'].includes(clientType) ? clientType : undefined,
+  };
+}
+
+/* ── POST /:id/markets — add a market (FILING_SPINE.md F22) ──────────────────
+   The market's own Module 1 and 3.2.R, the market on target_agencies, its
+   anchored submission and the governed action, in one transaction, for a stated
+   reason, by someone who may change the project (add-project-market.ts). A
+   market the platform does not offer, a device program, a class with no outline
+   and a repeat are refused by name, and nothing is written. */
+router.post('/:id/markets', async (req: Request, res: Response) => {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!userId || !orgId) { send403(res); return; }
+  const market = readMarketBody(req.body);
+  if (!market.agency || !market.applicationType) { send400(res, 'Name the agency and the application type of the market to add.'); return; }
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) { res.status(400).json({ error: 'REASON_REQUIRED', message: reason.error }); return; }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+      [req.params.id, orgId],
+    );
+    if (rows.length === 0) { await client.query('ROLLBACK'); send404(res); return; }
+    await requireProjectRouteAccess(req, res, { kind: 'projects', executor: client, forShare: true });
+    const lead = (rows[0] as { lead_user_id: number | null }).lead_user_id;
+    if (!allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'c2c.project.add_market')) {
+      await client.query('ROLLBACK');
+      return;
+    }
+    const added = await addProjectMarket({ client, orgId, userId, programId: String(req.params.id), ...market, reason: reason.reason });
+    await client.query('COMMIT');
+    res.status(201).json({ ok: true, ...added });
+  } catch (err: unknown) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof AddMarketRefusal) { res.status(err.status).json({ error: err.code, message: err.message }); return; }
+    if (err instanceof ProgramReadAccessError) { sendProjectAccessFailure(res, err); return; }
+    serverError(res, logger, 'c2c.project.add_market', err, { programId: String(req.params.id) });
+  } finally {
+    client.release();
+  }
+});
 
 router.post('/:id/archive', async (req: Request, res: Response) => {
   await transitionProgram(req, res, {

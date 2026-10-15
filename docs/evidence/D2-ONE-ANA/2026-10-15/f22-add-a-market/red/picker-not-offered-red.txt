@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: the chosen region is stated in full > states the chosen region's summary and line under the select, and follows the choice 503ms
+ × client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: a market not offered cannot be chosen > disables the option the statement does not offer, and keeps the offered ones 146ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: a market not offered cannot be chosen > disables the option the statement does not offer, and keeps the offered ones
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx:64:26
+     62|     fireEvent.change(screen.getByLabelText(/Application type/), { targ…
+     63|     const fda = await screen.findByRole('option', { name: /FDA \(US\) …
+     64|     expect(fda.disabled).toBe(true);
+       |                          ^
+     65|     expect((screen.getByRole('option', { name: /EU \(EMA\) · Flat Modu…
+     66|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  05:52:58
+   Duration  1.90s (transform 273ms, setup 175ms, import 363ms, tests 654ms, environment 524ms)
+

@@ -3227,6 +3227,12 @@ export const C2C_MIGRATION_FILES = [
   // the in-place amendment of the overlay-only creator
   // migrations/20260622_protocol_risks.sql; conditional, creates nothing.
   'migrations/20261015d_protocol_risk_ratings_no_default.sql',
+  // c2c_documents.filing_scope (2026-10-15, FILING_SPINE F22): which governed
+  // document is a project's home filing and which holds an added market's
+  // Module 1 and 3.2.R, so the editor's outline and a section's binding take
+  // the home one by name. After 20260528_phase9_document_schema, which creates
+  // the table. Additive: column, conditional CHECK, partial unique index.
+  'migrations/20261015e_c2c_documents_filing_scope.sql',
   // coauthor_validation_history.agency becomes nullable (2026-10-15):
   // run_validation recorded 'FDA' for every run that named no agency, though
   // its checks are not agency-specific. The table comes from the drizzle
