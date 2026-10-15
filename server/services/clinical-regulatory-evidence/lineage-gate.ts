@@ -32,6 +32,8 @@ import {
   assertLineageCoversContent,
   type Queryable,
   retireStaleSourceSpans,
+  retireStaleFigureSpans,
+  replaceVaultFigureSpans,
   hashSpanText,
   type LiveMachineSpan,
 } from './span-lineage.service';
@@ -238,6 +240,8 @@ export async function enforceAuthorLineage(
   // otherwise — the "a citation can never go stale" guarantee holds across a
   // human edit, not just across an accept.
   const { kept } = await retireStaleSourceSpans(orgId, ref, content, exec);
+  // The same for a figure's Vault support (S5c): kept only where its figure still is.
+  await retireStaleFigureSpans(orgId, ref, content, exec);
   const keptRanges = new Set(kept.map((k) => `${k.charStart}:${k.charEnd}`));
   const candidates = clauseSpans(content).filter(
     (s) => !keptRanges.has(`${s.charStart}:${s.charEnd}`),
@@ -345,6 +349,7 @@ export async function enforceSourceAndAuthorLineage(
     await replaceSourceSpans(orgId, ref, [], { createdBy: actor }, exec);
     await replaceMachineSpans(orgId, ref, [], { createdBy: actor }, exec);
     await replaceAuthorSpans(orgId, ref, [], { assertedBy: actor, createdBy: actor }, exec);
+    await replaceVaultFigureSpans(orgId, ref, [], { createdBy: actor }, exec);
     return {
       sourceSpans: 0,
       quotedSpans: 0,
@@ -356,6 +361,8 @@ export async function enforceSourceAndAuthorLineage(
       coverage: 0,
     };
   }
+  // A figure's Vault support stands only while the figure is where it was supported (S5c).
+  await retireStaleFigureSpans(orgId, ref, content, exec);
 
   // 1. Verified-quote spans — pure, deterministic, zero model trust. Clause
   //    granularity matches author lineage so the passes partition the same clauses.

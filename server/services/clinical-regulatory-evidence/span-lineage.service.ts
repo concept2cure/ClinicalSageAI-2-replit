@@ -110,7 +110,18 @@ export type SpanProvenanceKind =
   | 'cre_evidence_source'
   | 'author_assertion'
   | 'accepted_machine_draft'
-  | 'machine_draft';
+  | 'machine_draft'
+  /**
+   * A figure of a drafted section that the cited Vault version states (S5c,
+   * 2026-10-15): usage 'derived', reference_id the vault.documents id,
+   * payload_sha256 that version's content hash, no asserter. A support claim,
+   * not an authorship one: the clause around it stays the machine's or the
+   * author's (KIND_PRECEDENCE). migrations/20260908 (amended) adds it.
+   */
+  | 'vault_document';
+
+/** The kinds that cite external content, and so can go stale. */
+const SOURCE_KINDS = new Set<string>(['cre_evidence_source', 'vault_document']);
 
 /** The two machine-authored kinds, discriminated by whether anyone accepted. */
 export type MachineSpanKind = 'accepted_machine_draft' | 'machine_draft';
@@ -818,11 +829,13 @@ export async function replaceMachineSpans(
  * stored), so a moved quote is a retired quote, and the author gate then
  * covers it as the author's assertion.
  */
-export async function retireStaleSourceSpans(
+/** Retire one kind's spans whose text is no longer where they say; return the ones in place. */
+async function retireStaleOfKind(
   orgId: number,
   ref: { documentTable: string; documentId: string },
   content: string,
-  exec: Queryable = pool as unknown as Queryable,
+  kind: 'cre_evidence_source' | 'vault_document',
+  exec: Queryable,
 ): Promise<{ kept: Array<{ charStart: number; charEnd: number }>; retired: number }> {
   const { rows } = await exec.query<{
     id: string;
@@ -835,9 +848,9 @@ export async function retireStaleSourceSpans(
       WHERE organization_id = $1
         AND document_table = $2
         AND document_id = $3
-        AND provenance_kind = 'cre_evidence_source'
+        AND provenance_kind = $4
         AND deleted_at IS NULL`,
-    [orgId, ref.documentTable, ref.documentId],
+    [orgId, ref.documentTable, ref.documentId, kind],
   );
   const kept: Array<{ charStart: number; charEnd: number }> = [];
   const stale: string[] = [];
@@ -861,6 +874,88 @@ export async function retireStaleSourceSpans(
     );
   }
   return { kept, retired: stale.length };
+}
+
+export async function retireStaleSourceSpans(
+  orgId: number,
+  ref: { documentTable: string; documentId: string },
+  content: string,
+  exec: Queryable = pool as unknown as Queryable,
+): Promise<{ kept: Array<{ charStart: number; charEnd: number }>; retired: number }> {
+  return retireStaleOfKind(orgId, ref, content, 'cre_evidence_source', exec);
+}
+
+/**
+ * Retire the Vault figure spans (S5c) whose figure is no longer where they
+ * say, for one content write. Both gates call it: an edit keeps a figure's
+ * support only while the figure is exactly where it was supported.
+ */
+export async function retireStaleFigureSpans(
+  orgId: number,
+  ref: { documentTable: string; documentId: string },
+  content: string,
+  exec: Queryable = pool as unknown as Queryable,
+): Promise<{ retired: number }> {
+  const { retired } = await retireStaleOfKind(orgId, ref, content, 'vault_document', exec);
+  return { retired };
+}
+
+/** A drafted figure the cited Vault version states, at its place in the stored content. */
+export interface VaultFigureSpanInput {
+  charStart: number;
+  charEnd: number;
+  /** The figure as stored at [charStart, charEnd). Hashed, never stored. */
+  spanText: string;
+  /** vault.documents id and the version's content hash the figure was found in. */
+  vaultDocumentId: string;
+  contentHash: string;
+  /** Where in the source, e.g. "offset:1043"; null when the position was not confirmed. */
+  sourceLocator: string | null;
+}
+
+/**
+ * Replace a section's Vault figure spans (S5c): usage 'derived', the Vault
+ * version as the reference. Each insert is admitted only for a version of a
+ * project of this organization with that content hash; one that is not fails
+ * the write closed (SpanLineageError), in the caller's transaction.
+ */
+export async function replaceVaultFigureSpans(
+  orgId: number,
+  ref: DocumentRef,
+  spans: VaultFigureSpanInput[],
+  opts: { createdBy?: string | null } = {},
+  exec: Queryable = defaultExec,
+): Promise<{ recorded: number }> {
+  await exec.query(
+    `UPDATE document_span_lineage SET deleted_at = NOW(), updated_at = NOW()
+      WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
+        AND provenance_kind = 'vault_document' AND deleted_at IS NULL`,
+    [orgId, ref.documentTable, ref.documentId],
+  );
+  // One row per (range, version): the same figure found twice is one claim.
+  const unique = [...new Map(spans.map((sp) => [`${sp.charStart}:${sp.charEnd}:${sp.vaultDocumentId}`, sp])).values()];
+  for (const sp of unique) {
+    assertSpan(sp.charStart, sp.charEnd);
+    const inserted = await exec.query(
+      `INSERT INTO document_span_lineage (
+         document_table, document_id, document_version, char_start, char_end, span_text_sha256,
+         provenance_kind, source, reference_id, payload_sha256, source_locator, usage, organization_id, created_by
+       )
+       SELECT $1::text, $2::text, $3::text, $4::int, $5::int, $6::text, 'vault_document', 'vault_document',
+              $7::text, $8::text, $9::text, 'derived', $10::int, $11::text
+        WHERE EXISTS (
+          SELECT 1 FROM vault.documents d
+            JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $10::int
+           WHERE d.id::text = $7::text AND d.content_hash::text = $8::text AND d.deleted_at IS NULL)
+       RETURNING id`,
+      [ref.documentTable, ref.documentId, ref.documentVersion ?? null, sp.charStart, sp.charEnd, hashSpanText(sp.spanText),
+        sp.vaultDocumentId, sp.contentHash, sp.sourceLocator, orgId, opts.createdBy ?? null],
+    );
+    if (inserted.rows.length === 0) {
+      throw new SpanLineageError(`figure lineage names a Vault version this organization does not hold: ${sp.vaultDocumentId}`);
+    }
+  }
+  return { recorded: unique.length };
 }
 
 export async function replaceSourceSpans(
@@ -1008,6 +1103,47 @@ function mapRow(r: any): SpanLineageRow {
 }
 
 /**
+ * The cited Vault versions of a read's `vault_document` rows (S5c), looked up
+ * only when the read holds one: a lineage read on a database or a test schema
+ * without the Vault never touches it.
+ */
+async function withVaultVersions(rows: any[], exec: Queryable): Promise<any[]> {
+  const ids = [...new Set(rows.filter((r) => r.provenance_kind === 'vault_document').map((r) => String(r.reference_id)))];
+  if (ids.length === 0) return rows;
+  const { rows: found } = await exec.query(
+    `SELECT id::text AS id, content_hash, document_title FROM vault.documents
+      WHERE id::text = ANY($1::text[]) AND deleted_at IS NULL`,
+    [ids],
+  );
+  const byId = new Map(found.map((v: any) => [String(v.id), v]));
+  return rows.map((r) => {
+    if (r.provenance_kind !== 'vault_document') return r;
+    const v = byId.get(String(r.reference_id));
+    return { ...r, vault_found: Boolean(v), vault_content_hash: v?.content_hash ?? null, vault_title: v?.document_title ?? null };
+  });
+}
+
+/**
+ * A read row with its state against its source's current content: a spine
+ * citation against the source's checksum, a Vault citation (S5c) against the
+ * cited version's content hash. An author assertion or a machine draft is not
+ * against external content, so it cannot go stale the way a citation can.
+ */
+function withState(r: any): SpanLineageRow {
+  const row = mapRow(r);
+  if (row.provenanceKind === 'cre_evidence_source') {
+    row.state = spanState(r.payload_sha256 ?? null, r.current_checksum ?? null, r.current_checksum !== null);
+    row.sourceTitle = r.source_title ?? null;
+  } else if (row.provenanceKind === 'vault_document') {
+    row.state = spanState(r.payload_sha256 ?? null, r.vault_content_hash ?? null, r.vault_found === true);
+    row.sourceTitle = r.vault_title ?? null;
+  } else {
+    row.state = 'current';
+  }
+  return row;
+}
+
+/**
  * Forward read: everything backing this document, in document order.
  *
  * This is the click-through — given a character offset the reader clicked, the
@@ -1023,7 +1159,8 @@ export async function listDocumentSpans(
        FROM document_span_lineage l
        LEFT JOIN cre_evidence_sources s
               ON l.provenance_kind = 'cre_evidence_source'
-             AND s.id = NULLIF(l.reference_id, '')::int
+             -- The cast only for a spine row: a Vault citation's reference is a uuid.
+             AND s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1
         AND l.document_table = $2
@@ -1033,18 +1170,7 @@ export async function listDocumentSpans(
     [orgId, ref.documentTable, ref.documentId],
   );
 
-  return rows.map((r: any) => {
-    const row = mapRow(r);
-    if (row.provenanceKind === 'cre_evidence_source') {
-      row.state = spanState(r.payload_sha256 ?? null, r.current_checksum ?? null, r.current_checksum !== null);
-      row.sourceTitle = r.source_title ?? null;
-    } else {
-      // An author assertion or an accepted machine draft is not against
-      // external content, so it cannot go stale the way a citation can.
-      row.state = 'current';
-    }
-    return row;
-  });
+  return (await withVaultVersions(rows, exec)).map(withState);
 }
 
 /**
@@ -1092,7 +1218,7 @@ export async function listStaleSpans(
     `SELECT l.*, s.checksum AS current_checksum, s.title AS source_title
        FROM document_span_lineage l
        JOIN cre_evidence_sources s
-              ON s.id = NULLIF(l.reference_id, '')::int
+              ON s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1
         AND l.provenance_kind = 'cre_evidence_source'
@@ -1159,7 +1285,8 @@ export async function getSelectionOrigins(
        FROM document_span_lineage l
        LEFT JOIN cre_evidence_sources s
               ON l.provenance_kind = 'cre_evidence_source'
-             AND s.id = NULLIF(l.reference_id, '')::int
+             -- The cast only for a spine row: a Vault citation's reference is a uuid.
+             AND s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1
         AND l.document_table = $2
@@ -1172,20 +1299,7 @@ export async function getSelectionOrigins(
     [orgId, ref.documentTable, ref.documentId, charStart, charEnd],
   );
 
-  const origins = rows.map((r: any) => {
-    const row = mapRow(r);
-    if (row.provenanceKind === 'cre_evidence_source') {
-      row.state = spanState(
-        r.payload_sha256 ?? null,
-        r.current_checksum ?? null,
-        r.current_checksum !== null,
-      );
-      row.sourceTitle = r.source_title ?? null;
-    } else {
-      row.state = 'current';
-    }
-    return row;
-  });
+  const origins = (await withVaultVersions(rows, pool as unknown as Queryable)).map(withState);
 
   // Gaps WITHIN the selection — clipped to it, so a reader is told about the
   // text they actually selected rather than the whole document.
@@ -1216,7 +1330,7 @@ export async function getSelectionOrigins(
         : Math.round(((selectedLength - uncoveredLength) / selectedLength) * 100),
     counts: {
       total: origins.length,
-      fromSources: origins.filter((o) => o.provenanceKind === 'cre_evidence_source').length,
+      fromSources: origins.filter((o) => SOURCE_KINDS.has(o.provenanceKind)).length,
       authorAsserted: origins.filter((o) => o.provenanceKind === 'author_assertion').length,
       machineDrafted: origins.filter((o) => o.provenanceKind === 'accepted_machine_draft').length,
       machineDraftedUnaccepted: origins.filter((o) => o.provenanceKind === 'machine_draft').length,
@@ -1388,6 +1502,8 @@ const KIND_PRECEDENCE = [
   'machine_draft',
   'accepted_machine_draft',
   'author_assertion',
+  // Both cite external content; a character either credits is fromSources.
+  'vault_document',
   'cre_evidence_source',
 ] as const;
 
@@ -1427,7 +1543,7 @@ export async function summarizeDocumentAttribution(
     const mine = mergeRanges(spans.filter((s) => s.provenanceKind === kind).map(clip));
     const unclaimed = subtractRanges(mine, claimed);
     const chars = totalLength(unclaimed);
-    if (kind === 'cre_evidence_source') byKind.fromSources = chars;
+    if (SOURCE_KINDS.has(kind)) byKind.fromSources += chars;
     else if (kind === 'author_assertion') byKind.authorAsserted = chars;
     else if (kind === 'accepted_machine_draft') byKind.machineDrafted = chars;
     else byKind.machineDraftedUnaccepted = chars;
@@ -1440,15 +1556,15 @@ export async function summarizeDocumentAttribution(
   // are intersected with exactly that: the ranges this partition credited to
   // sources, not every stale span (one may sit under a weaker claim).
   const sourceRanges = subtractRanges(
-    mergeRanges(spans.filter((s) => s.provenanceKind === 'cre_evidence_source').map(clip)),
+    mergeRanges(spans.filter((s) => SOURCE_KINDS.has(s.provenanceKind)).map(clip)),
     mergeRanges(
       spans
-        .filter((s) => s.provenanceKind !== 'cre_evidence_source')
+        .filter((s) => !SOURCE_KINDS.has(s.provenanceKind))
         .map(clip),
     ),
   );
   const staleRanges = mergeRanges(
-    spans.filter((s) => s.provenanceKind === 'cre_evidence_source' && s.state === 'changed').map(clip),
+    spans.filter((s) => SOURCE_KINDS.has(s.provenanceKind) && s.state === 'changed').map(clip),
   );
   const staleChars = totalLength(
     subtractRanges(staleRanges, subtractRanges(staleRanges, sourceRanges)),

@@ -30,6 +30,7 @@ import {
   DocumentAliasConflictError,
 } from '../c2c/document-alias-map.js';
 import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
+import { replaceVaultFigureSpans } from '../clinical-regulatory-evidence/span-lineage.service';
 import { grantAuthoringPermission } from './authoring-permissions';
 import { describeRefusedFigures, refusedFigures, refusedKind } from './authoring-html-sanitizer';
 import { isSectionCodeConflict, placeNewSection, sectionCodeExists } from './section-placement';
@@ -181,7 +182,15 @@ export interface SectionSeed {
   /** Non-human contributors recorded on the genesis revision. */
   contributors?: { id: string; name: string }[];
   /** Enlist the lineage gate — the from-draft path, where content is prose. */
-  lineage?: { machineDraft: { authorId: string } | null };
+  lineage?: {
+    machineDraft: { authorId: string } | null;
+    /**
+     * The section's figures the cited Vault versions state (S5c), read after
+     * beforeInsert has verified the sources: recorded as 'derived' lineage in
+     * this transaction, beside the clause attribution.
+     */
+    figureSpans?: () => import('./draft-figure-check').FigureSpan[];
+  };
 }
 
 function verifiedGenesisReceipt(spec: DocumentRowSpec): Record<string, unknown> | undefined {
@@ -235,6 +244,19 @@ async function recordAliasesTx(client: Queryable, tenantId: number, spec: Docume
     const holderId = holder.available && holder.canonicalId ? holder.canonicalId : 'another document';
     return { documentId: null, reason: filingAlreadyHeld(String(spec.binding.documentId), holderId) };
   }
+}
+
+/**
+ * A seeded section's lineage, in the insert's transaction: who wrote each
+ * clause, then (S5c) the figures the cited Vault versions state.
+ */
+async function recordSeedLineage(client: TxClient, tenantId: number, actorId: string, sectionId: string, s: SectionSeed): Promise<void> {
+  if (!s.lineage) return;
+  const ref = { documentTable: 'authoring_sections', documentId: sectionId };
+  await enforceAuthorLineage(client, tenantId, ref, s.content, actorId,
+    s.lineage.machineDraft ? { machineDraft: s.lineage.machineDraft } : undefined);
+  const figures = s.lineage.figureSpans?.() ?? [];
+  if (figures.length > 0) await replaceVaultFigureSpans(tenantId, ref, figures, { createdBy: actorId }, client);
 }
 
 /**
@@ -292,16 +314,7 @@ export async function insertDocumentTx(
         [spec.docId, s.code, s.title, s.content, s.orderIndex, tenantId],
       );
       const row = seededRow.rows[0];
-      if (s.lineage) {
-        await enforceAuthorLineage(
-          client,
-          tenantId,
-          { documentTable: 'authoring_sections', documentId: String(row.id) },
-          s.content,
-          actor.id,
-          s.lineage.machineDraft ? { machineDraft: s.lineage.machineDraft } : undefined,
-        );
-      }
+      if (s.lineage) await recordSeedLineage(client, tenantId, actor.id, String(row.id), s);
       await createRevision(client, {
         sectionId: row.id,
         content: row.content ?? '',
