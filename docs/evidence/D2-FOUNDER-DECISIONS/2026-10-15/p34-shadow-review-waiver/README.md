@@ -116,3 +116,18 @@ Commit `b544c9304` (with OQ-SUBC-15 in `7dbb2c44d`).
 - Item 2 (revocation by intent) is a separate change.
 
 Still owed (the second half of item 1): the waiver's identity in the `SEQUENCE_FROZEN` and `SEQUENCE_DISPATCHED` audit details, and a re-check of the waiver under the transition lock. Both are in `submission-service.ts`.
+
+## Later still: the step that relies on a waiver names it, and the lock asks again (owed item 1, second half)
+
+- **The audit rows.** `SEQUENCE_FROZEN`, `SEQUENCE_DISPATCHED` and `ECTD_TRANSMITTED` carry `shadowReviewWaiver: { signatureActionId, signatureId, waiverRunId, failedRunId, failureCode }` when no review had completed and an active waiver cleared the presence gate (`waiverReliedOn`). A step on a completed review names none. P-34 asked for exactly this: "the freeze and dispatch that rely on it are in the audit chain".
+- **The lock.** The assessment runs unlocked, seconds before the commit. Under the transition lock, on the transaction's client, `shadowReviewRefusalUnderLock` asks again about what the verdict relied on:
+  - a waiver it relied on must still be active;
+  - no critical may block that it counted as closed (P-35: a closure stands only while its signature is in force).
+  A revocation in that window refuses the step 409 `DISPATCH_BLOCKED`, and the step's signature is voided (P-23).
+- `green/08-reliance.txt`: `freeze-relies-on-waiver.pglite.test.ts` 4/4, over the real transition, assembly, lock, waiver resolution and critical count. The regression run passes 70 files, 922 tests.
+- `green/09-reliance-mutations.txt`: each guard is removed alone, the suite fails its case, and the file is restored byte-identical.
+  - W1: the row names no waiver.
+  - W2: no re-check under the lock.
+  - W3: the re-check skips the criticals.
+  - W4: the re-check skips the waiver.
+- Shared: `completedShadowReviewRuns` (text SQL, one definition) serves the offer and the lock. The freeze-gate and refused-step suites build the Shadow Review tables (`shadowReview: true`), as the lock now reads them.

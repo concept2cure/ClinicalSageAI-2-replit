@@ -179,10 +179,13 @@ interface GateReadiness {
   scores: Record<string, number | null>;
   unassessedDimensions?: GateUnassessed[];
 }
-interface GateRisk { overallRisk: string; riskScore: number }
-interface GateIch { overallStatus: string; counts: Record<string, number> }
+/* `overallRisk` 'not_assessed' with a null score and a reason: the gate has
+   no CRL/RTF risk model (ADR 0013). `ich` 'incomplete' with null counts: the
+   check was asked for and could not run. Neither is ever painted green. */
+interface GateRisk { overallRisk: string; riskScore: number | null; reason?: string }
+interface GateIch { overallStatus: string; counts: Record<string, number> | null; reason?: string }
 interface Gate {
-  submissionType: string;
+  submissionType: string | null;
   verdict: string;
   verdictRationale: string[];
   readiness: GateReadiness;
@@ -302,6 +305,28 @@ const EMPTY_TPLS: WorkflowTpl[] = [];
    apiRequest, the same transport the GET hooks use. Loop-safe: the effect is
    keyed on [path, projectId, enabled] primitives and the body is built
    internally, so no fresh object identity re-triggers it. */
+/* A recorded level's tone. Anything else — not assessed, could not run,
+   absent — is neutral: green was the default for all of them, and the ICH
+   check's 'non_compliant' and 'warnings' never matched 'fail' / 'warning'. */
+const GATE_TONE: Record<string, string> = {
+  critical: 'err', high: 'err', non_compliant: 'err',
+  medium: 'warn', moderate: 'warn', warnings: 'warn', incomplete: 'warn',
+  low: 'ok', compliant: 'ok',
+};
+const gateTone = (level?: string | null) => (level ? GATE_TONE[level] ?? '' : '');
+
+function GateRiskValue({ risk }: { risk?: GateRisk }) {
+  if (!risk) return <div className="ac-gate-cv">--</div>;
+  if (risk.overallRisk === 'not_assessed') {
+    return <div className="ac-gate-cv" title={risk.reason}>not assessed</div>;
+  }
+  return (
+    <div className={'ac-gate-cv ' + gateTone(risk.overallRisk)}>
+      {risk.overallRisk}{risk.riskScore !== null ? <span> · {risk.riskScore}</span> : null}
+    </div>
+  );
+}
+
 function useLivePost<T>(path: string, projectId: number | null, enabled = true): DataState<T> {
   const [state, setState] = useState<DataState<T>>({ data: null, loading: false, empty: false });
   useEffect(() => {
@@ -820,19 +845,19 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   </div>
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">CRL risk</div>
-                    <div className={'ac-gate-cv ' + (gate.crl?.overallRisk === 'high' ? 'err' : gate.crl?.overallRisk === 'moderate' ? 'warn' : 'ok')}>{gate.crl?.overallRisk ?? '--'}<span> · {gate.crl?.riskScore ?? '--'}</span></div>
+                    <GateRiskValue risk={gate.crl} />
                   </div>
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">RTF risk</div>
-                    <div className={'ac-gate-cv ' + (gate.rtf?.overallRisk === 'high' ? 'err' : 'ok')}>{gate.rtf?.overallRisk ?? '--'}<span> · {gate.rtf?.riskScore ?? '--'}</span></div>
+                    <GateRiskValue risk={gate.rtf} />
                   </div>
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">ICH compliance</div>
-                    <div className={'ac-gate-cv ' + (gate.ich?.overallStatus === 'fail' ? 'err' : gate.ich?.overallStatus === 'warning' ? 'warn' : 'ok')}>{gate.ich ? gate.ich.overallStatus : 'not evaluated'}<span>{gate.ich ? ' · ' + (gate.ich.counts?.fail ?? 0) + ' fail' : ' · no CMC project linked'}</span></div>
+                    <div className={'ac-gate-cv ' + gateTone(gate.ich?.overallStatus)} title={gate.ich?.reason}>{!gate.ich ? 'not evaluated' : gate.ich.overallStatus === 'incomplete' ? 'could not run' : gate.ich.overallStatus}<span>{!gate.ich ? ' · no CMC project linked' : gate.ich.counts ? ' · ' + (gate.ich.counts.fail ?? 0) + ' fail' : ''}</span></div>
                   </div>
                 </div>
                 <div className="ac-gate-foot">
-                  <button className="ac-gate-ask" onClick={() => { ask('Explain the ' + gate.submissionType + ' pre-submission gate verdict for ' + progLabel + ' and how to move it to GO.'); setGateOpen(false); }}>{I.sparkles} Ask AnA how to clear it</button>
+                  <button className="ac-gate-ask" onClick={() => { ask('Explain the ' + (gate.submissionType ? gate.submissionType + ' ' : '') + 'pre-submission gate verdict for ' + progLabel + ' and how to move it to GO.'); setGateOpen(false); }}>{I.sparkles} Ask AnA how to clear it</button>
                   <span className="ac-gate-audit">{Ico.lock || Ico.shield || I.check} Verdict audited · 21 CFR Part 11</span>
                 </div>
               </>

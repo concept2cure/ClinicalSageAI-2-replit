@@ -17549,7 +17549,7 @@ export const indemnificationAttestations = pgTable(
     guidelineReference: text('guideline_reference'), // e.g. "ICH E3 Section 11.4"
 
     // Attestation result
-    complianceStatus: text('compliance_status').notNull(), // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable'
+    complianceStatus: text('compliance_status').notNull(), // 'compliant', 'partially_compliant', 'non_compliant', 'not_applicable', 'not_assessed'
     complianceScore: real('compliance_score'), // 0-100
     findings: json('findings'), // [{finding, severity, recommendation}]
     evidenceReferences: json('evidence_references'), // [{type, id, description}] pointers to supporting evidence
