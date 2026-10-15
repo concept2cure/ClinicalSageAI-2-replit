@@ -195,32 +195,6 @@ describe('draft_authoring_document — durable project source references', () =>
     expect((saved.rows[0] as { provenance: { projectSourceReferences: Array<{ figures: unknown }> } }).provenance.projectSourceReferences[0].figures).toEqual(figures);
   });
 
-  it('records each found figure as derived lineage to the cited Vault version, and retires it when the figure moves (S5c)', async () => {
-    const content = '<p>The endpoint was observed in 30 subjects. The response rate was 55%.</p>';
-    const figuresInput = { ...input, sections: [{ ...M25_SECTIONS[0], content, sourceReferences: [sourceRef()] }] };
-    const out = JSON.parse(await handler(figuresInput, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
-    expect(out.saved, JSON.stringify(out)).toBe(true);
-    const section = await jdb.pool.query('SELECT id, content FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
-    const { id: sectionId, content: stored } = section.rows[0] as { id: string; content: string };
-    const { listDocumentSpans, summarizeDocumentAttribution } = await import('../../clinical-regulatory-evidence/span-lineage.service');
-    const { retireStaleFigureSpans } = await import('../../clinical-regulatory-evidence/span-lineage-vault');
-    const ref = { documentTable: 'authoring_sections', documentId: String(sectionId) };
-    const spans = await listDocumentSpans(ORG, ref, jdb.pool as never);
-    const figure = spans.filter((sp) => sp.provenanceKind === 'vault_document');
-    // The found figure only; the unverified 55% has no source to name.
-    expect(figure).toHaveLength(1);
-    expect(figure[0]).toMatchObject({ usage: 'derived', referenceId: SOURCE_ID, payloadSha256: 'a'.repeat(64), state: 'current', sourceTitle: 'Processed CSR' });
-    expect(stored.slice(figure[0].charStart, figure[0].charEnd)).toBe('30 subjects');
-    // A support claim beside the authorship one: the clause stays the machine's.
-    const summary = await summarizeDocumentAttribution(ORG, ref, stored.length, jdb.pool as never);
-    expect(summary.byKind.machineDraftedUnaccepted).toBe(summary.attributedChars);
-    expect(summary.spans.some((sp) => sp.provenanceKind === 'vault_document')).toBe(true);
-    // The figure moves: its support is retired, not left pointing at other characters.
-    const { retired } = await retireStaleFigureSpans(ORG, ref, stored.replace('30 subjects', '31 subjects'), jdb.pool as never);
-    expect(retired).toBe(1);
-    expect((await listDocumentSpans(ORG, ref, jdb.pool as never)).filter((sp) => sp.provenanceKind === 'vault_document')).toHaveLength(0);
-  });
-
   it('retains the original legacy NULL-organization source as a no-write admission refusal', async () => {
     await jdb.pool.query('UPDATE vault.documents SET organization_id=NULL WHERE id=$1', [SOURCE_ID]);
     const before = await authoringCounts();
@@ -258,6 +232,56 @@ describe('draft_authoring_document — durable project source references', () =>
     }
   });
 
+});
+
+describe('draft_authoring_document — figure lineage and grounded excerpts (S5c, S5d)', () => {
+  it('records each found figure as derived lineage to the cited Vault version, and retires it when the figure moves (S5c)', async () => {
+    const content = '<p>The endpoint was observed in 30 subjects. The response rate was 55%.</p>';
+    const figuresInput = { ...input, sections: [{ ...M25_SECTIONS[0], content, sourceReferences: [sourceRef()] }] };
+    const out = JSON.parse(await handler(figuresInput, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
+    expect(out.saved, JSON.stringify(out)).toBe(true);
+    const section = await jdb.pool.query('SELECT id, content FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
+    const { id: sectionId, content: stored } = section.rows[0] as { id: string; content: string };
+    const { listDocumentSpans, summarizeDocumentAttribution } = await import('../../clinical-regulatory-evidence/span-lineage.service');
+    const { retireStaleFigureSpans } = await import('../../clinical-regulatory-evidence/span-lineage-vault');
+    const ref = { documentTable: 'authoring_sections', documentId: String(sectionId) };
+    const spans = await listDocumentSpans(ORG, ref, jdb.pool as never);
+    const figure = spans.filter((sp) => sp.provenanceKind === 'vault_document');
+    // The found figure only; the unverified 55% has no source to name.
+    expect(figure).toHaveLength(1);
+    expect(figure[0]).toMatchObject({ usage: 'derived', referenceId: SOURCE_ID, payloadSha256: 'a'.repeat(64), state: 'current', sourceTitle: 'Processed CSR' });
+    expect(stored.slice(figure[0].charStart, figure[0].charEnd)).toBe('30 subjects');
+    // A support claim beside the authorship one: the clause stays the machine's.
+    const summary = await summarizeDocumentAttribution(ORG, ref, stored.length, jdb.pool as never);
+    expect(summary.byKind.machineDraftedUnaccepted).toBe(summary.attributedChars);
+    expect(summary.spans.some((sp) => sp.provenanceKind === 'vault_document')).toBe(true);
+    // The figure moves: its support is retired, not left pointing at other characters.
+    const { retired } = await retireStaleFigureSpans(ORG, ref, stored.replace('30 subjects', '31 subjects'), jdb.pool as never);
+    expect(retired).toBe(1);
+    expect((await listDocumentSpans(ORG, ref, jdb.pool as never)).filter((sp) => sp.provenanceKind === 'vault_document')).toHaveLength(0);
+  });
+
+  it('saves a reference whose excerpt starts inside the document, and every offset is the document\'s own (S5d)', async () => {
+    const start = SOURCE_TEXT.indexOf('endpoint');
+    const windowRef = { documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } };
+    const out = JSON.parse(await handler({ ...input, sections: [{ ...M25_SECTIONS[0],
+      content: '<p>The endpoint was observed in 30 subjects.</p>', sourceReferences: [windowRef] }] },
+    { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
+    expect(out.saved, JSON.stringify(out)).toBe(true);
+    const ref = out.projectSourceReferences[0];
+    expect(ref.sources[0]).toMatchObject({ span: { start, end: SOURCE_TEXT.length }, completeText: false });
+    const found = ref.figures.figures.find((f: { status: string }) => f.status === 'found');
+    // The figure's offset is in the document, not in the excerpt.
+    expect(SOURCE_TEXT.slice(found.source.offset)).toMatch(/^30 subjects/);
+  });
+
+  it('refuses an excerpt longer than 12,000 characters wherever it starts, and saves nothing', async () => {
+    const before = await authoringCounts();
+    const tooLong = { documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 5, end: 12010, totalChars: 20000 } };
+    const out = JSON.parse(await handler(sourcedInput(tooLong), { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
+    expect(out.saved).toBeUndefined();
+    expect(await authoringCounts()).toEqual(before);
+  });
 });
 
 describe('project catalog — source-version truth', () => {

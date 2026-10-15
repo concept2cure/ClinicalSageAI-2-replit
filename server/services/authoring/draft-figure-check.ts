@@ -25,11 +25,13 @@
 import { figureFoundAt, figuresIn, indexNumbers, type FigureKind } from '../ana/answer-check-figures.js';
 import { canonNumber, numbersInText } from '../ana/answer-check-sources.js';
 
-/** One cited excerpt, as the save verified it: the excerpt starts at character 0 of the document's text. */
+/** One cited excerpt, as the save verified it. */
 export interface CitedExcerpt {
   documentId: string;
   contentHash: string;
   text: string;
+  /** Where the excerpt starts in the document's text (S5d); 0, the opening, when absent. */
+  start?: number;
 }
 
 export interface FigureFinding {
@@ -67,6 +69,12 @@ function confirmedOffset(text: string, seen: { pos: number; value: string }): nu
   return raw && canonNumber(raw[0]) === seen.value ? seen.pos : null;
 }
 
+/** The figure's place in the DOCUMENT's text: its place in the excerpt, plus where the excerpt starts. */
+function documentOffset(excerpt: CitedExcerpt, seen: { pos: number; value: string }): number | null {
+  const at = confirmedOffset(excerpt.text, seen);
+  return at === null ? null : at + (excerpt.start ?? 0);
+}
+
 /** The excerpt numbers, indexed per source, so a figure names the source that holds it. */
 function indexExcerpts(excerpts: CitedExcerpt[]) {
   return excerpts.map((e) => ({ excerpt: e, index: indexNumbers(numbersInText(e.text, '', e.documentId, false)) }));
@@ -83,7 +91,7 @@ export function checkSectionFigures(sectionText: string, excerpts: CitedExcerpt[
       if (!seen) continue;
       finding = {
         text: fig.text, kind: fig.kind, status: 'found',
-        source: { documentId: excerpt.documentId, contentHash: excerpt.contentHash, offset: confirmedOffset(excerpt.text, seen) },
+        source: { documentId: excerpt.documentId, contentHash: excerpt.contentHash, offset: documentOffset(excerpt, seen) },
       };
       break;
     }
