@@ -99,6 +99,7 @@ import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
 import { outlineReadState, unboundNodeTitle, unboundNodeToast } from './outlineReadState';
 import { useStartOutlineSection, unstartedRowProps } from './startOutlineSection';
+import { FilingMarkets, FilingGaps, useCreateMarketCopy } from './FilingMarkets';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
@@ -1219,10 +1220,6 @@ export function DocumentWorkbench({
      Until now none of it reached here — the canvas showed a Module × status
      dropdown pair, defaulted to M3, identical for every filing type. */
   const projectIdForOutline = programId;
-  const filing = useFilingOutline(projectIdForOutline);
-  /* The outline's keys: a node the outline does not subdivide opens the
-     document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
-  const outlineKeys = useMemo(() => Array.from(filing.flat, n => n.key), [filing.flat]);
   /* The program's name and phase, for the header. Read from the one program
      route (GET /api/c2c/projects/:id); null while unread or with no program. */
   const program = useProgramSummary(programId);
@@ -1507,6 +1504,13 @@ export function DocumentWorkbench({
   }, [consumeDeepLinks]);
 
   const activeDoc = docs.find(d => d.id === activeDocId) ?? null;
+  /* The filing the open document is the editing copy of: an added market's
+     Module 1 and 3.2.R when it is that market's copy (FILING_SPINE F22b),
+     otherwise the project's home filing. */
+  const filing = useFilingOutline(projectIdForOutline, activeDoc?.c2c_document_id ?? null);
+  /* The outline's keys: a node the outline does not subdivide opens the
+     document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
+  const outlineKeys = useMemo(() => Array.from(filing.flat, n => n.key), [filing.flat]);
   const unboundDraft = !!activeDoc && activeDoc.module === null && !activeDoc.c2c_document_id;
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
@@ -2036,6 +2040,8 @@ export function DocumentWorkbench({
     activeDoc, filing: filing.document, docs, sections, loadSections, requestLeave, fireToast,
     activeSectionId, docPane: () => docScrollRef.current,
   });
+  /* F22b: a market's editing copy, created bound to its document and opened. */
+  const marketCopy = useCreateMarketCopy({ programId, fireToast, openDocument: openPulledDocument });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -3728,6 +3734,21 @@ export function DocumentWorkbench({
           )}
         </div>
 
+        {/* The project's filings: its home filing and each market added to it
+            (FILING_SPINE F22b), and from here, which one to open. */}
+        {!unboundDraft && !pinnedDocId && (
+          <FilingMarkets
+            home={filing.home}
+            markets={filing.markets}
+            marketsError={filing.marketsError}
+            shownId={filing.document?.id ?? null}
+            docs={docs}
+            onOpen={(id) => requestLeave({ kind: 'document', id })}
+            onCreate={(m) => void marketCopy.create(m)}
+            creatingId={marketCopy.creatingId}
+          />
+        )}
+
         {/* ── What the outline below was built FROM ──
             Until this shipped, a tree transcribed from 21 CFR 814.20(b) and a
             tree constructed by reasoning about a regulation with no enumerated
@@ -3826,6 +3847,10 @@ export function DocumentWorkbench({
               );
             })}
           </div>
+        )}
+
+        {!unboundDraft && filing.document?.filing_scope === 'market' && (
+          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} />
         )}
 
         {/* Why there is no outline, said plainly rather than as a blank pane.
