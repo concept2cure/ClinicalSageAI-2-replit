@@ -13,3 +13,11 @@ Lane `…session_01SuVLo2`.
 `green/chat-protocol-m11.txt`: 3/3. The 24 suites that load the chat templates or `orchestrate()` pass, 903 of 903. Typecheck shows 0 errors, and the lint ratchet against origin is clean.
 
 **Not done.** Chat drafting uses the M11 level-1 headings only. The level-2 headings (1.1 Protocol Synopsis and so on) reach AnA through the open-document brief and `get_document_template`.
+
+## Follow-up the same day: the medical-writing advisor, and a long M11 heading
+
+**The advisor's protocol structure.** The medical-writing advisor (`medical-writing.ts`) listed a protocol as thirteen headings of its own. It now lists the ICH M11 level-1 headings from the record, and it names ICH M11 and E6(R3) Appendix B among the governing standards. `red/medical-writing-protocol.txt`: 1 of 1 red.
+
+**A defect found by doing that.** `reviewMedicalWriting` detected headings through `extractHeadingOutline` (`document-search-core.ts`), which skipped every line over 120 characters. M11 §9, "Adverse events, serious adverse events, product complaints, pregnancy and postpartum information, and special safety situations", is about 130 characters, so a complete M11 draft would always be reported as missing §9. Numbered and all-caps lines keep the 120-character cap, because a line that long is usually a sentence. Explicit markdown headings may now run to 200 characters. `red/m11-long-heading.txt`: 1 of 1 red, with only the extractor fix held back.
+
+`green/chat-protocol-m11.txt`: 5/5. The 36 suites that load the extractor, passage search or medical writing pass, 511 of 511.
