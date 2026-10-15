@@ -20,6 +20,7 @@
 
 import { PLR_FORMAT_RULES } from '../ind/ctd/fda-technical-rules.js';
 import { SMPC_QRD_SECTIONS } from './smpc-qrd-catalog';
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Types
@@ -27,9 +28,11 @@ import { SMPC_QRD_SECTIONS } from './smpc-qrd-catalog';
 
 export type ProductType = 'prescription_drug' | 'biological' | 'biosimilar' | 'generic';
 export type ApplicationType = 'NDA' | 'BLA' | 'ANDA' | 'supplement';
-export type OTCCategory = 'analgesic' | 'antacid' | 'antihistamine' | 'antidiarrheal' | 'laxative' | 'cough_cold' | 'topical_antibiotic' | 'topical_antifungal' | 'sunscreen' | 'antiperspirant' | 'acne' | 'other';
+export const OTC_CATEGORIES = ['analgesic', 'antacid', 'antihistamine', 'antidiarrheal', 'laxative', 'cough_cold', 'topical_antibiotic', 'topical_antifungal', 'sunscreen', 'antiperspirant', 'acne', 'other'] as const;
+export type OTCCategory = (typeof OTC_CATEGORIES)[number];
 export type REMSElement = 'medication_guide' | 'communication_plan' | 'etasu' | 'implementation_system';
-export type SafetySignalType = 'cardiovascular' | 'hepatotoxicity' | 'suicidality' | 'infection' | 'malignancy' | 'teratogenicity' | 'cytokine_release' | 'pml' | 'anaphylaxis' | 'gi_perforation' | 'bleeding' | 'nephrotoxicity' | 'other';
+export const SAFETY_SIGNAL_TYPES = ['cardiovascular', 'hepatotoxicity', 'suicidality', 'infection', 'malignancy', 'teratogenicity', 'cytokine_release', 'pml', 'anaphylaxis', 'gi_perforation', 'bleeding', 'nephrotoxicity', 'other'] as const;
+export type SafetySignalType = (typeof SAFETY_SIGNAL_TYPES)[number];
 export type SmPCProcedure = 'centralized' | 'mutual_recognition' | 'decentralized' | 'national';
 export type SmPCProductType = 'medicinal_product' | 'herbal' | 'homeopathic';
 
@@ -40,6 +43,42 @@ export interface Citation {
   year: number;
   url?: string;
 }
+
+/** One input an assessment cannot be made without, and whether it was stated in a readable form. */
+interface RequiredInput {
+  field: string;
+  value: unknown;
+  ok: boolean;
+  expected: string;
+}
+
+const isUnstated = (v: unknown): boolean => v === undefined || v === null;
+const isOneOf = (v: unknown, allowed: readonly string[]): boolean => typeof v === 'string' && allowed.includes(v);
+
+/*
+ * 2026-10-15: an input that decides an assessment, left unstated, used to be read
+ * as its most favourable value (no signal type or severity met no boxed-warning
+ * criterion). Such inputs are now refused, all named in one refusal; AnA relays
+ * it as needs_parameters and asks for them.
+ */
+function refuseUnlessStated(fn: string, inputs: RequiredInput[]): void {
+  const bad = inputs.filter((i) => !i.ok);
+  if (bad.length === 0) return;
+  const named = bad.map((i) => `${i.field} (${i.expected}${isUnstated(i.value) ? '' : `; got ${JSON.stringify(i.value)}`})`);
+  throw new ComputationRefusal(
+    bad.every((i) => isUnstated(i.value)) ? 'missing_input' : 'invalid_input',
+    `${fn}: required and not stated: ${named.join('; ')}. Nothing is assessed without ${bad.length > 1 ? 'them' : 'it'}.`,
+    bad[0].field,
+  );
+}
+
+/** A required input from a closed vocabulary. */
+const oneOf = (field: string, value: unknown, allowed: readonly string[]): RequiredInput =>
+  ({ field, value, ok: isOneOf(value, allowed), expected: `one of ${allowed.join(', ')}` });
+
+/** A required true or false; absent is not false. */
+const yesNo = (field: string, value: unknown): RequiredInput =>
+  ({ field, value, ok: typeof value === 'boolean', expected: 'true or false' });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Function 1 Interfaces — PLR Structure Assessment
@@ -97,7 +136,8 @@ export interface AssessPLRStructureResult {
 export interface BoxedWarningCriterion {
   criterionNumber: number;
   description: string;
-  met: boolean;
+  /** null when an input that decides the criterion was not stated (the rationale names it). */
+  met: boolean | null;
   rationale: string;
 }
 
@@ -116,9 +156,11 @@ export interface BoxedWarningCategory {
   warningDescription: string;
 }
 
+const BOXED_WARNING_SEVERITIES = ['life_threatening', 'serious', 'significant'] as const;
+
 export interface AssessBoxedWarningInput {
   safetySignalType: SafetySignalType;
-  severity: 'life_threatening' | 'serious' | 'significant';
+  severity: (typeof BOXED_WARNING_SEVERITIES)[number];
   clinicalEvidenceLevel: 'controlled_trials' | 'observational' | 'postmarketing' | 'case_reports';
   riskMitigationAvailable: boolean;
   classWide: boolean;
@@ -166,11 +208,13 @@ export interface ETASUDetail {
   examples: string[];
 }
 
+const REMS_RISK_SEVERITIES = ['high', 'moderate', 'significant'] as const;
+
 export interface DesignREMSInput {
   identifiedRisk: string;
   safetySignalType: SafetySignalType;
   productType: ProductType;
-  riskSeverity: 'high' | 'moderate' | 'significant';
+  riskSeverity: (typeof REMS_RISK_SEVERITIES)[number];
   riskFrequency: 'common' | 'uncommon' | 'rare' | 'very_rare';
   riskMitigationOptions: string[];
   targetPopulation: string;
@@ -214,11 +258,13 @@ export interface FormerCategoryMapping {
   status: string;
 }
 
+const TRANSFER_STATUSES = ['known', 'likely', 'unknown', 'none'] as const;
+
 export interface AssessPregnancyLactationInput {
   animalReproToxData: AnimalReproToxData[];
   humanPregnancyData: boolean;
-  placentalTransfer: 'known' | 'likely' | 'unknown' | 'none';
-  breastMilkExcretion: 'known' | 'likely' | 'unknown' | 'none';
+  placentalTransfer: (typeof TRANSFER_STATUSES)[number];
+  breastMilkExcretion: (typeof TRANSFER_STATUSES)[number];
   mechanismBasedRisk: boolean;
   pregnancyRegistryData: boolean;
 }
@@ -314,11 +360,13 @@ export interface StudyDesignRequirement {
   regulatoryContext: string;
 }
 
+const OTC_POPULATIONS = ['adult', 'pediatric', 'both'] as const;
+
 export interface AssessOTCLabelingInput {
   otcCategory: OTCCategory;
   activeIngredients: string[];
   dosageForm: string;
-  targetPopulation: 'adult' | 'pediatric' | 'both';
+  targetPopulation: (typeof OTC_POPULATIONS)[number];
 }
 
 export interface AssessOTCLabelingResult {
@@ -1351,6 +1399,12 @@ export function assessPLRStructure(params: AssessPLRStructureInput): AssessPLRSt
  *         because the drug has a serious safety concern
  */
 export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxedWarningResult {
+  // 2026-10-15: with no signal type or severity this answered "does not meet the criteria"
+  // ('classified as "undefined"'). Both decide every criterion, so without them it refuses.
+  refuseUnlessStated('assessBoxedWarning', [
+    oneOf('safetySignalType', params.safetySignalType, SAFETY_SIGNAL_TYPES),
+    oneOf('severity', params.severity, BOXED_WARNING_SEVERITIES),
+  ]);
   const { safetySignalType, severity, clinicalEvidenceLevel, riskMitigationAvailable, classWide, productSpecific } = params;
 
   // Criterion (i): Serious adverse reaction requiring risk-benefit weighing
@@ -1365,16 +1419,24 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   };
 
   // Criterion (ii): Risk can be mitigated through appropriate use
-  const criterion2Met = riskMitigationAvailable && (severity === 'life_threatening' || severity === 'serious');
+  // 2026-10-15: an unstated riskMitigationAvailable gave met: undefined and "No risk mitigation measures
+  // have been identified". For a serious reaction the criterion now stays open (null) until it is stated.
+  const seriousReaction = severity === 'life_threatening' || severity === 'serious';
+  const mitigationUnstated = typeof riskMitigationAvailable !== 'boolean';
+  const criterion2Met: boolean | null = !seriousReaction ? false : mitigationUnstated ? null : riskMitigationAvailable;
   const criterion2: BoxedWarningCriterion = {
     criterionNumber: 2,
     description: '21 CFR 201.57(c)(1)(ii): There is a serious adverse reaction that can be prevented or reduced in frequency or severity by appropriate use of the drug (e.g., monitoring, patient selection, avoiding certain concomitant therapy).',
     met: criterion2Met,
-    rationale: criterion2Met
+    rationale: criterion2Met === true
       ? `Risk mitigation measures are available for this ${severity} safety signal. A boxed warning can communicate necessary steps to prevent or reduce the frequency/severity of the adverse reaction.`
-      : riskMitigationAvailable
-        ? 'Risk mitigation is available but the severity classification may not independently support Criterion (ii).'
-        : 'No risk mitigation measures have been identified. Criterion (ii) typically requires that appropriate use can prevent or reduce the adverse reaction.',
+      : criterion2Met === null
+        ? 'Not assessed: whether appropriate use (monitoring, patient selection, avoiding certain concomitant therapy) can prevent or reduce this serious reaction was not stated (riskMitigationAvailable).'
+        : riskMitigationAvailable === true
+          ? 'Risk mitigation is available but the severity classification may not independently support Criterion (ii).'
+          : mitigationUnstated
+            ? `Criterion (ii) concerns a serious adverse reaction; this signal is classified "${severity}".`
+            : 'No risk mitigation measures have been identified. Criterion (ii) typically requires that appropriate use can prevent or reduce the adverse reaction.',
   };
 
   // Criterion (iii): Approved with restrictions (REMS-linked)
@@ -1389,7 +1451,7 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   };
 
   // Overall assessment
-  const meetsBoxedWarningCriteria = criterion1Met || criterion2Met || criterion3Met;
+  const meetsBoxedWarningCriteria = criterion1Met || criterion2Met === true || criterion3Met;
 
   // Additional assessment factors based on evidence level
   if (clinicalEvidenceLevel === 'controlled_trials') {
@@ -1434,7 +1496,7 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
   let remsRelationship: string;
   if (criterion3Met) {
     remsRelationship = 'Products with boxed warnings that meet Criterion (iii) are typically accompanied by a REMS with ETASU. The REMS operationalizes the restrictions described in or implied by the boxed warning. Not all boxed warnings require a REMS, but all REMS with ETASU products have boxed warnings. Per FDA, approximately 60+ currently active REMS exist, and the majority of products with REMS ETASU carry boxed warnings.';
-  } else if (criterion2Met) {
+  } else if (criterion2Met === true) {
     remsRelationship = 'This safety signal may benefit from a REMS, but a Medication Guide or Communication Plan may suffice without ETASU. A boxed warning can be present without a REMS (e.g., NSAID cardiovascular/GI warnings). The determination of whether a REMS is needed is a separate regulatory assessment under FD&C Act Section 505-1.';
   } else {
     remsRelationship = 'A boxed warning does not automatically require a REMS. Many products carry boxed warnings without any associated REMS (e.g., fluoroquinolone class warnings). A REMS is required when FDA determines that a Medication Guide, patient package insert, or communication plan alone is insufficient to ensure the benefits outweigh the risks.';
@@ -1473,7 +1535,13 @@ export function assessBoxedWarning(params: AssessBoxedWarningInput): AssessBoxed
  * Amendments Act (FDAAA) of 2007 and modified by FDORA 2022.
  */
 export function designREMS(params: DesignREMSInput): DesignREMSResult {
-  const { safetySignalType, productType, riskSeverity, riskFrequency, targetPopulation } = params;
+  // 2026-10-15: with neither given this recommended a Medication Guide for "the identified risk
+  // (undefined, severity: undefined)". Both decide the elements, so without them it refuses.
+  refuseUnlessStated('designREMS', [
+    oneOf('safetySignalType', params.safetySignalType, SAFETY_SIGNAL_TYPES),
+    oneOf('riskSeverity', params.riskSeverity, REMS_RISK_SEVERITIES),
+  ]);
+  const { safetySignalType, riskSeverity } = params;
 
   // Element hierarchy from least to most restrictive
   const elementHierarchy: string[] = [
@@ -1662,6 +1730,19 @@ export function designREMS(params: DesignREMSInput): DesignREMSResult {
  * and 8.3 Females and Males of Reproductive Potential.
  */
 export function assessPregnancyLactationLabeling(params: AssessPregnancyLactationInput): AssessPregnancyLactationResult {
+  // 2026-10-15: an unstated fact was read as "no": breastMilkExcretion missing fell through to "Drug is
+  // not excreted in breast milk", humanPregnancyData missing to "There are no adequate data ...". Each
+  // of these writes label text, so each is required; [] states that no animal studies were conducted.
+  refuseUnlessStated('assessPregnancyLactationLabeling', [
+    {
+      field: 'animalReproToxData', value: params.animalReproToxData, ok: Array.isArray(params.animalReproToxData),
+      expected: 'the animal reproductive toxicology studies, or [] if none were conducted',
+    },
+    yesNo('humanPregnancyData', params.humanPregnancyData),
+    oneOf('placentalTransfer', params.placentalTransfer, TRANSFER_STATUSES),
+    oneOf('breastMilkExcretion', params.breastMilkExcretion, TRANSFER_STATUSES),
+    yesNo('mechanismBasedRisk', params.mechanismBasedRisk),
+  ]);
   const { animalReproToxData, humanPregnancyData, placentalTransfer, breastMilkExcretion, mechanismBasedRisk, pregnancyRegistryData } = params;
 
   // ── Section 8.1: Pregnancy ──
@@ -1770,6 +1851,7 @@ export function assessPregnancyLactationLabeling(params: AssessPregnancyLactatio
       'Breast milk excretion is unknown. State: "There are no data on the presence of [drug name] in human milk, the effects on the breastfed infant, or the effects on milk production."',
     );
   } else {
+    // breastMilkExcretion === 'none' (stated): the only value left.
     lactationGuidance.push(
       'Drug is not excreted in breast milk. State this and note whether breastfeeding may be continued during therapy.',
     );
@@ -2122,6 +2204,20 @@ export function structureSmPC(params: StructureSmPCInput): StructureSmPCResult {
  * label comprehension and self-selection study design, and bilingual labeling.
  */
 export function assessOTCLabeling(params: AssessOTCLabelingInput): AssessOTCLabelingResult {
+  // 2026-10-15: an unstated targetPopulation dropped the 21 CFR 201.63 pregnancy/breast-feeding warning
+  // and an unstated otcCategory every category warning. Each decides what the panel must say: required.
+  refuseUnlessStated('assessOTCLabeling', [
+    oneOf('otcCategory', params.otcCategory, OTC_CATEGORIES),
+    {
+      field: 'activeIngredients', value: params.activeIngredients,
+      ok: Array.isArray(params.activeIngredients) && params.activeIngredients.length > 0, expected: 'at least one active ingredient',
+    },
+    {
+      field: 'dosageForm', value: params.dosageForm,
+      ok: typeof params.dosageForm === 'string' && params.dosageForm.trim() !== '', expected: 'the dosage form, e.g. "tablet"',
+    },
+    oneOf('targetPopulation', params.targetPopulation, OTC_POPULATIONS),
+  ]);
   const { otcCategory, activeIngredients, dosageForm, targetPopulation } = params;
 
   // Build Drug Facts panel with category-specific adjustments

@@ -92,6 +92,8 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
   description:
     'Evaluate whether a safety signal meets FDA criteria for a Boxed Warning and ' +
     'return the recommended format, language structure, and regulatory basis. ' +
+    'Without safetySignalType and severity it assesses nothing and asks for them; a criterion ' +
+    'whose deciding input was not stated comes back met: null — report it as not assessed. ' +
     'Assesses the signal against the four FDA criteria for boxed warnings per ' +
     '21 CFR 201.57(c)(1): (i) an adverse reaction so serious that the risk must ' +
     'be weighed against benefit, (ii) a serious adverse reaction that can be ' +
@@ -128,7 +130,7 @@ export const ASSESS_BOXED_WARNING: AnaTool = {
       },
       riskMitigationAvailable: {
         type: 'boolean',
-        description: 'Whether effective risk mitigation measures exist (e.g., monitoring, dose adjustment, contraindication) — affects whether criterion (ii) applies.',
+        description: 'Whether effective risk mitigation measures exist (e.g., monitoring, dose adjustment, contraindication) — affects whether criterion (ii) applies. Unstated, criterion (ii) for a serious reaction is met: null (not assessed).',
       },
       classWide: {
         type: 'boolean',
@@ -267,7 +269,8 @@ export const ASSESS_PREGNANCY_LACTATION_LABELING: AnaTool = {
         description: 'Whether a pregnancy exposure registry exists or is planned — affects Clinical Considerations content and whether registry enrollment language is included in Section 8.1.',
       },
     },
-    required: ['placentalTransfer', 'breastMilkExcretion'],
+    // 2026-10-15: each of these writes label text; unstated, the engine used to read it as "no".
+    required: ['animalReproToxData', 'humanPregnancyData', 'placentalTransfer', 'breastMilkExcretion', 'mechanismBasedRisk'],
   },
 };
 

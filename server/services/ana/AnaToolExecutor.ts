@@ -19971,12 +19971,15 @@ registerToolHandler('plan_essential_documents', async (input: Record<string, unk
 // IVDR 2017/746, IMDRF. Deterministic.
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('classify_medical_device', async (input: Record<string, unknown>) =>
-  runStatsTool('classify_medical_device', async () => {
-    const { classifyDevice } = await import('../medical-device/medical-device-knowledge.js');
-    return classifyDevice(input as any);
-  }, 'deterministic')
-);
+// 2026-10-15: this ran classifyDevice, a second classification engine that stated
+// US Class I and EU MDR Class I ("no notified body") from no device facts. It is
+// deleted; this tool is classify_device under a second name, so it runs that
+// handler (market-specs/device-classification.ts) rather than a copy of it.
+registerToolHandler('classify_medical_device', async (input, ctx) => {
+  const canonical = getToolHandler('classify_device');
+  if (!canonical) return JSON.stringify({ error: 'classify_medical_device failed: classify_device is not registered.' });
+  return canonical(input, ctx);
+});
 
 registerToolHandler('select_device_pathway', async (input: Record<string, unknown>) =>
   runStatsTool('select_device_pathway', async () => {

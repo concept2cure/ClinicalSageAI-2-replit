@@ -9,9 +9,10 @@
  * reaction phenotyping (CYP / UGT / transporter fraction-metabolized), and
  * plasma protein binding.
  *
- * NO LLM, NO network, NO database, NO imports from other services. Every
- * function is closed-form and reproducible: identical input always yields
- * identical output.
+ * NO LLM, NO network, NO database. The one import is ComputationRefusal,
+ * thrown when an input an engine needs is missing so that AnA relays it as
+ * needs_parameters. Every function is closed-form and reproducible: identical
+ * input always yields identical output.
  *
  * Scope guard: this module is NONCLINICAL and IN-VITRO focused. It deliberately
  * does NOT perform clinical DDI risk classification (that lives elsewhere). It
@@ -35,6 +36,8 @@
  *
  * @module server/services/nonclinical-adme/nonclinical-adme-knowledge
  */
+
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 0. Shared types
@@ -876,13 +879,14 @@ export interface AssessMetaboliteSafetyParams {
 /** Per-metabolite MIST verdict. */
 export interface MetaboliteVerdict {
   name: string;
-  percentOfTotalDrugRelated: number;
-  /** True when the metabolite exceeds the 10% MIST threshold. */
-  exceedsThreshold: boolean;
+  /** The stated share of total drug-related exposure; null when none was stated. */
+  percentOfTotalDrugRelated: number | null;
+  /** True when the metabolite exceeds the 10% MIST threshold; null when its share was not stated. */
+  exceedsThreshold: boolean | null;
   /** True when adequate animal coverage is demonstrated. */
   animalCoverageAdequate: boolean | 'unknown';
-  /** Classification of the metabolite. */
-  classification: 'no_action' | 'monitor' | 'qualification_needed' | 'human_unique_qualification';
+  /** Classification of the metabolite; 'not_assessed' when its exposure share was not stated. */
+  classification: 'no_action' | 'monitor' | 'qualification_needed' | 'human_unique_qualification' | 'not_assessed';
   rationale: string[];
 }
 
@@ -895,12 +899,77 @@ export interface AssessMetaboliteSafetyResult {
   disproportionateOrMajor: string[];
   /** Names of human-unique metabolites of concern. */
   humanUniqueOfConcern: string[];
-  /** Overall whether nonclinical qualification activity is triggered. */
-  qualificationTriggered: boolean;
+  /**
+   * Overall whether nonclinical qualification activity is triggered. null when no
+   * metabolite data were supplied, or a metabolite was not assessed and none triggers it.
+   */
+  qualificationTriggered: boolean | null;
+  /** Metabolites whose exposure share was not stated, so MIST was not assessed for them. */
+  notAssessed: string[];
   /** Recommended actions. */
   recommendedActions: string[];
   citations: Citation[];
   summary: string;
+}
+
+const SHARE_NOT_STATED =
+  'Its share of total drug-related exposure (percentOfTotalDrugRelated) was not stated, so whether it exceeds the ' +
+  '10% MIST threshold was not assessed.';
+
+/** A stated exposure share, or null: a missing value or a non-number is not a share. */
+function statedShare(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/** What a MIST result concludes, given what was and was not assessed. */
+interface MistConclusionInput {
+  triggered: boolean;
+  metaboliteCount: number;
+  notAssessed: string[];
+  majorCount: number;
+  humanUniqueCount: number;
+}
+
+/**
+ * The overall verdict, the leading actions and the summary. 2026-10-15: an empty list and
+ * metabolites never assessed both read "no additional nonclinical qualification triggered";
+ * neither is a finding, so the verdict is null for them unless something else triggers it.
+ */
+function mistConclusion(c: MistConclusionInput): { qualificationTriggered: boolean | null; actions: string[]; summary: string } {
+  const names = c.notAssessed.join(', ');
+  const notAssessedAction = `Not assessed: ${names} — state each one's share of total drug-related exposure (percentOfTotalDrugRelated).`;
+  if (c.triggered) {
+    return {
+      qualificationTriggered: true,
+      actions: [
+        'Demonstrate adequate animal exposure to each disproportionate/human-unique metabolite, or conduct nonclinical studies on the metabolite itself (synthesized standard).',
+        'Where animal coverage is absent, options include selecting an alternate tox species that forms the metabolite, dosing the metabolite directly, or generic toxicology of the metabolite.',
+        ...(c.notAssessed.length > 0 ? [notAssessedAction] : []),
+      ],
+      summary:
+        `MIST: ${c.majorCount} metabolite(s) exceed 10% of total drug-related exposure; ${c.humanUniqueCount} human-unique. Nonclinical qualification or additional animal coverage is triggered.` +
+        (c.notAssessed.length > 0 ? ` Not assessed (exposure share not stated): ${names}.` : ''),
+    };
+  }
+  if (c.metaboliteCount === 0) {
+    return {
+      qualificationTriggered: null,
+      actions: ['No metabolite data were supplied, so MIST was not assessed: give each circulating human metabolite with its share of total drug-related exposure.'],
+      summary: 'MIST: no metabolite data supplied; MIST not assessed.',
+    };
+  }
+  if (c.notAssessed.length > 0) {
+    return {
+      qualificationTriggered: null,
+      actions: [notAssessedAction],
+      summary: `MIST: not assessed for ${c.notAssessed.length} metabolite(s) whose exposure share was not stated (${names}); no qualification verdict is given.`,
+    };
+  }
+  return {
+    qualificationTriggered: false,
+    actions: ['No metabolite exceeds the 10% threshold without adequate animal coverage — no additional nonclinical metabolite qualification is triggered on current data.'],
+    summary: 'MIST: no metabolite exceeds the 10% threshold without adequate animal coverage; no additional nonclinical qualification triggered on current data.',
+  };
 }
 
 /**
@@ -918,10 +987,23 @@ export function assessMetaboliteSafety(
     chronicUse = false,
   } = params;
 
+  if (!Array.isArray(metabolites)) {
+    throw new ComputationRefusal(
+      'missing_input',
+      'assessMetaboliteSafety: metabolites is required — each circulating human metabolite with its share of total ' +
+        'drug-related exposure. No MIST assessment is made without it.',
+      'metabolites',
+    );
+  }
+
   const thresholdPercent = 10;
 
   const perMetabolite: MetaboliteVerdict[] = metabolites.map((m: MetaboliteInput) => {
-    const exceeds = m.percentOfTotalDrugRelated > thresholdPercent;
+    // 2026-10-15: an unstated share was compared as given, and undefined > 10 is false, so the
+    // metabolite was "below the 10% MIST threshold" ('no_action', "At undefined% ..."). A share
+    // that is not a number is now not assessed, and exceedsThreshold is null.
+    const share = statedShare(m.percentOfTotalDrugRelated);
+    const exceeds = share === null ? null : share > thresholdPercent;
     let coverage: boolean | 'unknown';
     if (typeof m.humanToAnimalExposureRatio === 'number') {
       // Animal coverage adequate when animal exposure >= human exposure,
@@ -939,13 +1021,18 @@ export function assessMetaboliteSafety(
       rationale.push(
         'Metabolite is human-unique (not formed at meaningful levels in tox species); animal toxicology cannot have covered it.',
       );
-      if (exceeds) {
+      if (exceeds === true) {
         rationale.push('Exceeds the 10% MIST threshold — nonclinical characterization/qualification is expected.');
-      } else {
+      } else if (exceeds === false) {
         rationale.push(
           'Below 10% but human-unique — evaluate whether qualification is warranted, particularly for structural alerts or chronic use.',
         );
+      } else {
+        rationale.push(SHARE_NOT_STATED);
       }
+    } else if (exceeds === null) {
+      classification = 'not_assessed';
+      rationale.push(SHARE_NOT_STATED);
     } else if (!exceeds) {
       classification = 'no_action';
       rationale.push(
@@ -981,7 +1068,7 @@ export function assessMetaboliteSafety(
 
     return {
       name: m.name,
-      percentOfTotalDrugRelated: m.percentOfTotalDrugRelated,
+      percentOfTotalDrugRelated: share,
       exceedsThreshold: exceeds,
       animalCoverageAdequate: coverage,
       classification,
@@ -997,24 +1084,21 @@ export function assessMetaboliteSafety(
     .filter((v: MetaboliteVerdict) => v.classification === 'human_unique_qualification')
     .map((v: MetaboliteVerdict) => v.name);
 
-  const qualificationTriggered = perMetabolite.some(
-    (v: MetaboliteVerdict) =>
-      v.classification === 'qualification_needed' || v.classification === 'human_unique_qualification',
-  );
+  const notAssessed = perMetabolite
+    .filter((v: MetaboliteVerdict) => v.classification === 'not_assessed')
+    .map((v: MetaboliteVerdict) => v.name);
+  const conclusion = mistConclusion({
+    triggered: perMetabolite.some(
+      (v: MetaboliteVerdict) =>
+        v.classification === 'qualification_needed' || v.classification === 'human_unique_qualification',
+    ),
+    metaboliteCount: metabolites.length,
+    notAssessed,
+    majorCount: disproportionateOrMajor.length,
+    humanUniqueCount: humanUniqueOfConcern.length,
+  });
 
-  const recommendedActions: string[] = [];
-  if (qualificationTriggered) {
-    recommendedActions.push(
-      'Demonstrate adequate animal exposure to each disproportionate/human-unique metabolite, or conduct nonclinical studies on the metabolite itself (synthesized standard).',
-    );
-    recommendedActions.push(
-      'Where animal coverage is absent, options include selecting an alternate tox species that forms the metabolite, dosing the metabolite directly, or generic toxicology of the metabolite.',
-    );
-  } else {
-    recommendedActions.push(
-      'No metabolite exceeds the 10% threshold without adequate animal coverage — no additional nonclinical metabolite qualification is triggered on current data.',
-    );
-  }
+  const recommendedActions: string[] = [...conclusion.actions];
   recommendedActions.push(
     'Base the MIST comparison on steady-state human exposure; metabolite percentages from a single-dose study should be confirmed at steady state.',
   );
@@ -1035,20 +1119,17 @@ export function assessMetaboliteSafety(
     { source: CITATIONS.ICH_M3R2, detail: 'Overall nonclinical safety context for metabolite testing.' },
   ];
 
-  const summary = qualificationTriggered
-    ? `MIST: ${disproportionateOrMajor.length} metabolite(s) exceed 10% of total drug-related exposure; ${humanUniqueOfConcern.length} human-unique. Nonclinical qualification or additional animal coverage is triggered.`
-    : `MIST: no metabolite exceeds the 10% threshold without adequate animal coverage; no additional nonclinical qualification triggered on current data.`;
-
   return {
     exposureBasis,
     thresholdPercent,
     perMetabolite,
     disproportionateOrMajor,
     humanUniqueOfConcern,
-    qualificationTriggered,
+    qualificationTriggered: conclusion.qualificationTriggered,
+    notAssessed,
     recommendedActions,
     citations,
-    summary,
+    summary: conclusion.summary,
   };
 }
 
@@ -1538,7 +1619,8 @@ export interface SpeciesBindingResult {
 }
 
 export interface AssessProteinBindingResult {
-  method: NonNullable<AssessProteinBindingParams['method']>;
+  /** The stated method; null when none was stated. */
+  method: NonNullable<AssessProteinBindingParams['method']> | null;
   perSpecies: SpeciesBindingResult[];
   /** Human fraction unbound, if human data present. */
   humanFractionUnbound?: number;
@@ -1560,6 +1642,41 @@ function bindingCategory(fu: number): string {
   return 'low_binding (<70% bound)';
 }
 
+/** The per-species data; without them there is nothing to assess, so the call is refused. */
+function requiredSpeciesData(value: unknown): SpeciesBindingInput[] {
+  if (Array.isArray(value)) return value as SpeciesBindingInput[];
+  throw new ComputationRefusal(
+    'missing_input',
+    'assessProteinBinding: speciesData is required — the fraction unbound or percent bound per species, human included.',
+    'speciesData',
+  );
+}
+
+/**
+ * The stated method, the caveat it carries and how the summary names it. 2026-10-15: an
+ * unstated method was reported as 'equilibrium_dialysis' ("Plasma protein binding by
+ * equilibrium_dialysis: ..."), which also dropped the correction owed to other methods.
+ */
+function describeMethod(stated: AssessProteinBindingParams['method']): {
+  method: AssessProteinBindingResult['method'];
+  caveat: string | null;
+  how: string;
+} {
+  if (stated === undefined || stated === null) {
+    return {
+      method: null,
+      caveat:
+        'The method was not stated: record it. Values from ultrafiltration or ultracentrifugation need correction for non-specific binding and validation against equilibrium dialysis for highly bound compounds.',
+      how: '(method not stated)',
+    };
+  }
+  const caveat =
+    stated === 'equilibrium_dialysis'
+      ? null
+      : `Method specified is ${stated}; if ultrafiltration/ultracentrifugation is used, correct for non-specific binding and validate against equilibrium dialysis for highly bound compounds.`;
+  return { method: stated, caveat, how: `by ${stated}` };
+}
+
 /**
  * assessProteinBinding — plasma protein binding assessment: method, fraction
  * unbound, cross-species comparison, and implications for free-drug exposure
@@ -1568,11 +1685,9 @@ function bindingCategory(fu: number): string {
 export function assessProteinBinding(
   params: AssessProteinBindingParams,
 ): AssessProteinBindingResult {
-  const {
-    speciesData,
-    method = 'equilibrium_dialysis',
-    concentrationDependentSuspected = false,
-  } = params;
+  const { concentrationDependentSuspected = false } = params;
+  const speciesData = requiredSpeciesData(params.speciesData);
+  const { method, caveat, how } = describeMethod(params.method);
 
   const perSpecies: SpeciesBindingResult[] = speciesData.map((d: SpeciesBindingInput) => {
     let fu: number;
@@ -1618,11 +1733,7 @@ export function assessProteinBinding(
     'Measure at multiple concentrations spanning the expected therapeutic range to detect saturable (concentration-dependent) binding.',
     'Use the SAME method across species so the cross-species comparison is internally consistent.',
   ];
-  if (method !== 'equilibrium_dialysis') {
-    methodGuidance.push(
-      `Method specified is ${method}; if ultrafiltration/ultracentrifugation is used, correct for non-specific binding and validate against equilibrium dialysis for highly bound compounds.`,
-    );
-  }
+  if (caveat) methodGuidance.push(caveat);
 
   const freeDrugImplications: string[] = [
     'Only the unbound (free) drug is available to distribute, bind targets, be metabolized, and be eliminated — interpret exposure and safety margins on a free (unbound) basis when binding differs across species.',
@@ -1658,10 +1769,10 @@ export function assessProteinBinding(
 
   const summary =
     typeof humanFractionUnbound === 'number'
-      ? `Plasma protein binding by ${method}: human fu = ${humanFractionUnbound}${
+      ? `Plasma protein binding ${how}: human fu = ${humanFractionUnbound}${
           typeof maxSpeciesFoldDifference === 'number' ? `, cross-species fu spread ~${maxSpeciesFoldDifference}-fold` : ''
         }; interpret margins on a free-drug basis.`
-      : `Plasma protein binding by ${method}: provide human plasma data to anchor free-drug margins.`;
+      : `Plasma protein binding ${how}: provide human plasma data to anchor free-drug margins.`;
 
   return {
     method,

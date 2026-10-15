@@ -225,12 +225,15 @@ export const ASSESS_METABOLITE_SAFETY: AnaTool = {
   name: 'assess_metabolite_safety',
   description:
     'Perform a Metabolites-in-Safety-Testing (MIST) assessment per ICH M3(R2) and the FDA ' +
-    'Safety Testing of Drug Metabolites guidance (2020). For each human metabolite, the ' +
+    'Safety Testing of Drug Metabolites guidance (2020). A metabolite whose exposure share is not ' +
+    'stated is not_assessed (exceedsThreshold null), and qualificationTriggered is null when none ' +
+    'triggers it but one was not assessed or none were given: report that as not assessed, never ' +
+    'as below the threshold. For each human metabolite, the ' +
     'engine determines whether it exceeds 10% of total drug-related exposure, whether animal ' +
     '(tox-species) exposure covers human exposure, and whether the metabolite is ' +
     'disproportionate (major in humans but not covered by animals) or human-unique. Returns ' +
     'a per-metabolite verdict (no_action / monitor / qualification_needed / ' +
-    'human_unique_qualification), the lists of disproportionate-or-major and human-unique ' +
+    'human_unique_qualification / not_assessed), the lists of disproportionate-or-major and human-unique ' +
     'metabolites, an overall qualification-triggered flag, and recommended actions ' +
     '(synthesize and dose the metabolite, select an alternate tox species, etc.). Flags ' +
     'structural alerts and pharmacologically active metabolites. Citations: FDA MIST (2020), ' +
@@ -579,8 +582,9 @@ export const ASSESS_PROTEIN_BINDING: AnaTool = {
         type: 'string',
         enum: ['equilibrium_dialysis', 'ultrafiltration', 'ultracentrifugation', 'other'],
         description:
-          'Method used / planned. Default equilibrium_dialysis (the reference method). Other ' +
-          'methods trigger non-specific-binding correction guidance.',
+          'Method used / planned. Unstated, the result says the method was not stated (method null) ' +
+          'rather than assuming equilibrium dialysis, the reference method. Other methods trigger ' +
+          'non-specific-binding correction guidance.',
       },
       concentrationDependentSuspected: {
         type: 'boolean',
