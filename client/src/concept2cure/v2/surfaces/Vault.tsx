@@ -941,7 +941,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     if (docId) setSel(docId);
   };
   /* "Open in Vault" after File to Vault names the document it filed
-     (vaultTarget.ts): open on that row, where "Place into submission…" is,
+     (vaultTarget.ts): open on that row, where "Place into filing…" is,
      instead of the first node. A document this tree does not hold, or one
      filed under another project, is said, not silently ignored. */
   const [pendingTarget, setPendingTarget] = useState(() => takeVaultTarget(projectId));
@@ -1103,7 +1103,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   >(null);
 
   /* The tree's record of a document wins over a search hit for the same one:
-     it carries the filing block (Confirm, Move, Place into submission) that a
+     it carries the filing block (Confirm, Move, Place into filing) that a
      hit does not, and keeps the hit's matching excerpt. A document only the
      search found is shown as its hit. */
   const pick = (id: string | undefined): VaultDoc | undefined => {
@@ -1809,7 +1809,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                             }
                             data-testid="vault-place-into-submission"
                           >
-                            {I.folder} Place into submission…
+                            {I.folder} Place into filing…
                           </button>
                         </div>
                       )}

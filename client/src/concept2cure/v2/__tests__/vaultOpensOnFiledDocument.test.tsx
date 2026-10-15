@@ -5,7 +5,7 @@
  *
  * ── The defect ───────────────────────────────────────────────────────────────
  * The path from an approved Authoring document to a submission leaf runs File
- * to Vault, then the filed record's "Place into submission…" in the Vault. The
+ * to Vault, then the filed record's "Place into filing…" in the Vault. The
  * dialog's "Open in Vault" landed on the Vault's first node (the CTD spine),
  * so the person had to find the record they had just filed before the next
  * step was on screen. The dialog now names the document (vaultTarget.ts) and
@@ -160,7 +160,7 @@ describe('Vault — opens on the document File to Vault named', () => {
     expect(screen.queryByTestId(PLACE)).toBeNull();
   });
 
-  it('with the filed document named, opens on its row with "Place into submission…" on screen', async () => {
+  it('with the filed document named, opens on its row with "Place into filing…" on screen', async () => {
     setVaultTarget({ documentId: DOC_UUID, programId: PID });
     render(<Vault {...props()} />);
     expect(await screen.findByTestId(PLACE)).toBeTruthy();
