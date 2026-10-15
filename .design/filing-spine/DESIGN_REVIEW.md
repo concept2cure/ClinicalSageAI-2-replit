@@ -132,7 +132,7 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
    - All of this predates the spine.
    - **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/submission-history/`): the Builder shows the sequence's history, with who created the submission and every placement, from the one ledger, in the Vault's history view (now shared as `RecordHistory.tsx`).
    - **What it needed** (checked 2026-10-08): `submissions` and `submission_leaves` record `created_by` as a user id only, so attribution needs the person's name joined on the submissions and leaves reads. "What it replaced" is in the `LEAF_*` audit rows, and no route reads a resource's audit rows back. That is a slice of its own: a history read, not a fix to this review's screens.
-4. **The global half-field rule.** `.de-field.half:nth-of-type(odd)` (`journey-v2.css:472`) counts every div in the drawer body. `AuthoringCreateExport.tsx` has the same latent mispairing. A sibling-independent rule (flex-wrap with `gap`) wants a visual pass across all 332 uses.
+4. **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/review-items-4-11/`): a pair is two adjacent halves, top-aligned, measured in Chromium. As raised: **The global half-field rule.** `.de-field.half:nth-of-type(odd)` (`journey-v2.css:472`) counts every div in the drawer body. `AuthoringCreateExport.tsx` has the same latent mispairing. A sibling-independent rule (flex-wrap with `gap`) wants a visual pass across all 332 uses.
 5. **Selector-shadowing baseline.** `scripts/ci/css-selector-shadowing-baseline.json` still lists `.pj-convo` and `.pj-convo-t`, which no longer shadow, and `.ana-composer` (found by the F14 audit, not this review's). The file says it is edited downward by a human only, so the three lines are left for one to delete.
 6. **`offered:false` is enforced nowhere.** A UK IND can still be created. Refusing it at the picker and at `POST /api/submissions` is F22 territory (picker refusals). It waits on the founder's answer to `WORKFLOW_DECISION_2026-10-08.md`.
 7. **Vocabulary not taken this round:**
@@ -151,7 +151,7 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
     - The Respond tab's coming-later line sits in a card, while Submit's is bare. **Fixed after the review** (item 7): it sits under the card, as Submit's does.
     - BuilderSources keeps its doors; see "Where the lenses disagreed".
     - The Vault header's "Open project" shows with no project open. **Fixed after the review** (item 5): it shows only with a project open.
-11. **Motion advisory.** The global `--ease` token is in-out, not ease-out. It is global and not this change's.
+11. **Fixed 2026-10-15** (same folder): `--ease` is `cubic-bezier(0, 0, 0.2, 1)`, held by `tests/ui/motion-token.test.ts`. As raised: **Motion advisory.** The global `--ease` token is in-out, not ease-out. It is global and not this change's.
 
 ## Lens reports
 
