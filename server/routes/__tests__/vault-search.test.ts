@@ -38,15 +38,28 @@ import request from 'supertest';
 const { query } = vi.hoisted(() => ({ query: vi.fn() }));
 vi.mock('../../db.js', () => ({ pool: { query, connect: vi.fn() } }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization. Its reads are answered
+   from seats (support/current-member.ts); an unseated caller or program is
+   refused exactly as the real gate refuses. */
+vi.mock('../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import createProjectVaultRoutes from '../c2c/project-vault';
+import { clearSeats, seatMember, seatProgram } from '../c2c/__tests__/support/current-member';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
+const USER = 3;
 
 function app(org: number | null = 7) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: 3 };
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: USER };
+    // The request's own connection, which the production request scope supplies.
+    (req as unknown as { dbClient: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());
@@ -59,6 +72,10 @@ const url = (q?: string, extra = '') =>
 /** Programme found (or not), then the count, then the page. */
 function store(opts: { programFound?: boolean; total?: number; rows?: Record<string, unknown>[] } = {}) {
   const { programFound = true, total = 0, rows = [] } = opts;
+  // The current member is seated; the program only when it is this org's.
+  clearSeats();
+  seatMember(7, USER, 'member');
+  if (programFound) seatProgram(7, PROGRAM);
   query.mockImplementation(async (sql: string) => {
     if (/SELECT\s+id\s+FROM\s+regulatory_programs/.test(sql)) {
       return { rows: programFound ? [{ id: PROGRAM }] : [] };
@@ -84,10 +101,24 @@ const HIT = {
 beforeEach(() => query.mockReset());
 
 describe('tenant scope', () => {
-  it('403s without organization context', async () => {
+  it('refuses without organization context, concealed as 404 on a read, and searches nothing', async () => {
+    // The current-access gate refuses a caller with no organization actor
+    // (403 PROJECT_ACTOR_REQUIRED) and, on a GET, conceals every 403 as the 404
+    // a missing project answers (sendProjectAccessFailure, 14362ef00).
     store();
     const res = await request(app(null)).get(url('stability'));
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('PROJECT_NOT_FOUND');
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('refuses a caller who is not a current member, concealed as 404, and searches nothing', async () => {
+    store();
+    clearSeats();
+    seatProgram(7, PROGRAM);
+    const res = await request(app()).get(url('stability'));
+    expect(res.status).toBe(404);
+    expect(query).not.toHaveBeenCalled();
   });
 
   it("404s when the programme is not this org's, and never searches it", async () => {
@@ -178,6 +209,7 @@ describe('results', () => {
 
 describe('failure is not an empty result', () => {
   it('500s with a message saying nothing was searched', async () => {
+    store();
     query.mockImplementation(async (sql: string) => {
       if (/SELECT\s+id\s+FROM\s+regulatory_programs/.test(sql)) return { rows: [{ id: PROGRAM }] };
       // Only the SEARCH fails. A blanket throw also breaks the audit service's

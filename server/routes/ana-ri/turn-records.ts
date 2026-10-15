@@ -152,6 +152,8 @@ const listedFor = (access: Extract<Access, { ok: true }>) => (r: ListedTurnRecor
         startedAt: r.startedAt,
         endedAt: r.endedAt,
         recordSha256: r.recordSha256,
+        // Which models served it says nothing about who asked.
+        ...(r.servedBy ? { servedBy: r.servedBy } : {}),
       };
 
 /**
@@ -192,6 +194,7 @@ async function listRecords(req: Request, res: Response) {
         runId,
         actorUserId,
         limit: Number(req.query.limit) || 100,
+        withServedBy: true,
       })
     ).map(listedFor(access));
     return sendSuccess(res, { records }, { count: records.length });

@@ -72,7 +72,7 @@ import {
 } from '../../../../shared/regulatory/regional-module1';
 import { normalizeCtdCode } from '../../../../shared/regulatory/section-code';
 import { REGIONAL_FILING_TYPES } from './filing-types';
-import { readRecordedRegionalFiling, regionalFilingApplicability, type ModeledRegionalFiling } from './filing-applicability';
+import { readRecordedRegionalFiling, regionalDeclarationRefusal, regionalFilingApplicability, type ModeledRegionalFiling } from './filing-applicability';
 import { readMarketSupport, type MarketSupport } from '../../regulatory/market-support';
 import type { ProviderResult, RunComputationResult } from '../orchestrator';
 
@@ -497,6 +497,8 @@ export async function computeRegionalRun(
   const binding = REGIONAL_FILING_TYPES[typeId];
   if (!binding) throw new RegionalNotComputed(`No market readiness is computed for ${typeId}.`);
   const declared = declaredByCaller ?? (await readDeclared(typeId));
+  const declaration = regionalDeclarationRefusal(typeId, declared);
+  if (declaration) throw new RegionalNotComputed(declaration.availabilityReason);
   const projectId = oneProgramScope(scopeType, scopeId);
 
   const context = readRecordedRegionalFiling(await readProjectMetadata(organizationId, projectId));

@@ -3,8 +3,9 @@
  * The docks say that Manual does not reach them (row 74, slice S4).
  *
  * Manual is honoured by the AnA rail and the conversation screen, which run
- * the shell's chat and send its run policy. The editor dock
- * (DocumentWorkbench), the eCTD co-author and RBM run their OWN chats, which
+ * the shell's chat and send its run policy. The eCTD co-author and RBM run
+ * their OWN chats (the editor dock, DocumentWorkbench, did until 0bf71a61e
+ * routed its asks into the conversation), which
  * send no run policy — the server's turn there is today's effort-bounded one:
  * she does not stop between steps, and anything that changes a record still
  * waits for a person. Bridging Manual into them is handed on (row 74). Until
@@ -87,8 +88,16 @@ describe('each dock mounts it beside its composer', () => {
     return s.slice(at, at + span);
   };
 
-  it('DocumentWorkbench — the editor dock', () => {
-    expect(near('editor/DocumentWorkbench.tsx', 'ref={anaComposerRef}', 2400)).toContain('<RunPolicyDockNote />');
+  /* The editor dock's own chat was removed on 2026-10-13 (0bf71a61e): every
+     DocumentWorkbench ask now goes to ConversationThread — the shell's
+     conversation, which sends its run policy — so Manual does reach it and the
+     note would be untrue there. What stays pinned is that it has no chat of
+     its own again without the note. */
+  it('DocumentWorkbench — no dock chat of its own, so no note', () => {
+    const s = src('editor/DocumentWorkbench.tsx');
+    expect(s).not.toMatch(/import\s*\{[^}]*\buseAnaChat\b[^}]*\}\s*from\s*'\.\.\/\.\.\/components\/ana\/useAnaChat'/);
+    expect(s).not.toContain('<RunPolicyDockNote />');
+    expect(s).toMatch(/import\s*\{[^}]*\bopenConversationWithPrompt\b[^}]*\}\s*from\s*'\.\/askAnaToDraft'/);
   });
 
   it('EctdCoauthor — the co-author composer', () => {

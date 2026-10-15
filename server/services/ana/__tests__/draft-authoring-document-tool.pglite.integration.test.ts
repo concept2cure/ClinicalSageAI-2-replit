@@ -15,6 +15,13 @@ import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, PROGRAM, PROGRAM_B, OTHER_PROG
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { createDocumentDispositionService } from '../../document-data-disposition/service';
+import { runWithTenantScope } from '../../../db/tenantStore';
+
+/** The request's tenant scope, as the global /api gate opens it for every AnA
+ *  turn. Since 9c266724f the actor source read (withAnaSourceReadScope) and the
+ *  catalog write (catalogTenantPreflight) refuse a call that runs outside one. */
+const inRequestScope = <T>(fn: () => Promise<T>): Promise<T> =>
+  runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'request', caller: 'draft-authoring-document-tool.test' }, fn);
 
 /** TEST-ONLY impact-store prerequisites, matching disposition-fixture.ts.
  * Authoring and catalog tables still use their canonical migrations below.
@@ -95,7 +102,10 @@ beforeAll(async () => {
       'migrations/20261008e_document_catalog_attribution.sql',
       'migrations/20261006_document_data_dispositions.sql',
     ],
-    testOnlySql: AUTHORING_ACCESS_DDL,
+    // The review-assignment row id the catalog write's project hold locks
+    // (document-catalog-admission.ts holdCatalogProject), as deployed.
+    testOnlySql: `${AUTHORING_ACCESS_DDL}
+      ALTER TABLE concept2cure_review_assignments ADD COLUMN IF NOT EXISTS id SERIAL;`,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -250,7 +260,7 @@ describe('draft_authoring_document — durable project source references', () =>
 });
 
 describe('project catalog — source-version truth', () => {
-  it('refuses stale comprehension without read receipts or backfill, and lists the file as unstudied', async () => {
+  it('refuses stale comprehension without read receipts or backfill, and lists the file as unstudied', () => inRequestScope(async () => {
     const { loadDocumentForOrg, listProjectDocuments, completeCatalog } = await import('../../vault/document-catalog.service');
     await jdb.pool.query("UPDATE vault.document_catalog SET content_hash=$1,catalog_status='cataloged',char_count=4,summary='stale endpoint 9 of 10',key_data='{\"n\":999}' WHERE document_id=$2", ['d'.repeat(64), SOURCE_ID]);
     try {
@@ -273,9 +283,9 @@ describe('project catalog — source-version truth', () => {
     } finally {
       await jdb.pool.query("UPDATE vault.document_catalog SET content_hash=$1,catalog_status='extracted',char_count=$2,summary=NULL,key_data=NULL WHERE document_id=$3", ['a'.repeat(64), SOURCE_TEXT.length, SOURCE_ID]);
     }
-  });
+  }));
 
-  it('does not report success when the non-vector catalog compare-and-set updates zero rows', async () => {
+  it('does not report success when the non-vector catalog compare-and-set updates zero rows', () => inRequestScope(async () => {
     const { recordReadReceipt, completeCatalog, loadDocumentForOrg } = await import('../../vault/document-catalog.service');
     await recordReadReceipt({ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 0, end: SOURCE_TEXT.length }, readBy: Number(AUTHOR.id) });
     h.beforeEmbedding = async () => { await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['d'.repeat(64), SOURCE_ID]); };
@@ -287,7 +297,7 @@ describe('project catalog — source-version truth', () => {
       h.beforeEmbedding = null;
       await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['a'.repeat(64), SOURCE_ID]);
     }
-  });
+  }));
 });
 
 describe('draft_authoring_document', () => {

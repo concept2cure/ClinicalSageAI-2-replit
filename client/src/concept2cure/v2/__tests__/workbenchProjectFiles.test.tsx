@@ -80,7 +80,9 @@ function mockApi(routes: Routes = {}) {
     if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [] });
     if (url.startsWith(`/api/c2c/projects/${PID}/sources?`)) {
       // The protocol IS a data-room source (same bytes); the SAP is not.
-      return ok({ projectId: PID, sources: [{ id: 5, title: 'Protocol C2C-101-201 v1.0', extractionStatus: 'extracted', checksum: 'sha-protocol', isCurrent: true, dataEligible: true, originalFileAvailable: true }], total: 1, currentTotal: 1, page: { limit: 200, offset: 0 }, window: { shown: 1, truncated: false } });
+      // textAvailable is part of what GET /:id/sources answers (shapeSource);
+      // citing requires it positively true (sourceHasGroundingText, 9c266724f).
+      return ok({ projectId: PID, sources: [{ id: 5, title: 'Protocol C2C-101-201 v1.0', extractionStatus: 'extracted', checksum: 'sha-protocol', isCurrent: true, dataEligible: true, originalFileAvailable: true, disposition: null, textAvailable: true }], total: 1, currentTotal: 1, page: { limit: 200, offset: 0 }, window: { shown: 1, truncated: false } });
     }
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
     if (url === `/api/c2c/project-vault/${PID}`) return (routes.vault ?? (() => ok(VAULT)))();

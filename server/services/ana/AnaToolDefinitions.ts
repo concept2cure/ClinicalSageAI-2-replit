@@ -685,7 +685,7 @@ export const LOOKUP_ICH_GUIDELINE: AnaTool = {
     properties: {
       guideline: {
         type: 'string',
-        description: 'ICH guideline code (e.g., "E6(R2)", "E8(R1)", "E9(R1)", "M4") or topic to search',
+        description: 'ICH guideline code (e.g., "E6(R3)", "E8(R1)", "E9(R1)", "M4") or topic to search',
       },
       section: {
         type: 'string',

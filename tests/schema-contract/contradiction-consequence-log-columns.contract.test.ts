@@ -9,11 +9,17 @@
  *   db/migrations/20260323_assumption_decision_contradiction.sql:291
  *                                                             execution_notes
  *
- * Nine INSERTs across three services write one name or the other:
+ * Nine INSERTs across three services wrote one name or the other:
  *
  *   notes             contradiction-consequence-service.ts  ×4
  *                     contradiction-engine-service.ts       ×1
  *   execution_notes   contradiction-resolution-orchestrator.ts ×4
+ *
+ * (2026-10-15: five remain. Three of the consequence service's four and the
+ * engine's one recorded consequences that created nothing — review threads,
+ * rewrites, dossier attachments under invented ids — and were removed; the
+ * engine now delegates to the consequence service. See
+ * server/services/__tests__/contradiction-consequence-honest-outcome.test.ts.)
  *
  * WHICH NAME A REAL DATABASE HAS IS NOT A COIN FLIP. The work order framed this
  * as two lineages — "whichever shape you have, four of nine writes fail" — and
@@ -83,8 +89,9 @@ const SET_CREATOR = 'db/migrations/20260323_assumption_decision_contradiction.sq
 const WRITERS = [
   'server/services/resolution/contradiction-resolution-orchestrator.ts',
   'server/services/contradiction-consequence-service.ts',
-  'server/services/contradiction-engine-service.ts',
 ];
+/** Wrote the log for consequences it never carried out; delegates now. */
+const FORMER_WRITER = 'server/services/contradiction-engine-service.ts';
 
 /** SQL literals in a service that write the consequence log. */
 function extractStatements(src: string): string[] {
@@ -130,12 +137,17 @@ afterAll(async () => { await pg?.close(); });
 const short = (s: string) => s.replace(/\s+/g, ' ').slice(0, 100);
 
 describe('every consequence-log write names columns that exist', () => {
-  it('found the writes to check, in all three services', () => {
+  it('found the writes to check, in both writing services', () => {
     // A gate that silently stops extracting is a gate that always passes.
-    expect(results.length).toBeGreaterThanOrEqual(9);
+    expect(results.length).toBeGreaterThanOrEqual(5);
     for (const rel of WRITERS) {
       expect(results.some((r) => r.file === rel)).toBe(true);
     }
+  });
+
+  it('the engine no longer writes the log itself', () => {
+    const src = fs.readFileSync(path.join(REPO_ROOT, FORMER_WRITER), 'utf8');
+    expect(extractStatements(src)).toEqual([]);
   });
 
   it('raises no 42703 — the orchestrator\'s four are the ones that did', () => {

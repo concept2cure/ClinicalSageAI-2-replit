@@ -10,6 +10,8 @@
  */
 
 import { hashPayload } from '../audit/chain.js';
+import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models.js';
+import { servedModelsOf } from './turn-record-models.js';
 import {
   sha256Hex,
   TURN_RECORD_AUDIT_ACTION,
@@ -309,15 +311,48 @@ export interface ListedTurnRecord {
   startedAt: string;
   endedAt: string;
   recordSha256: string;
+  /**
+   * Every model that served the turn, with RULE 2's verdict on each, read from
+   * the stored record text when it still matches its hash (SEC-A-7, door 3).
+   * Only when the caller asks (`withServedBy`); absent when the text does not
+   * match or does not parse, never guessed.
+   *
+   * This is what a RELOADED conversation needs to decide "Open as document"
+   * and the editor's insert: the live stream hands the same list to the turn
+   * it serves (`turn-record.ts`), and without it a reopened draft was refused
+   * as "this page has no record of which model wrote this answer". It is the
+   * browser's offer, not the authority: the hash check here does not walk the
+   * audit chain, so a record forged consistently with its hash still lists, and
+   * every server door re-reads the record in full (`servedModelsForTurn`,
+   * `verifyMachineText`) before it credits model prose.
+   *
+   * Only for a turn that finished (`answered`): a stopped or failed turn's saved
+   * text is not a whole answer, and its record says nothing that should open a
+   * door. And only for a record of at most 256 KiB, so a 500-row listing cannot
+   * pull 500 large bodies; a larger one lists without it, and the gate refuses.
+   */
+  servedBy?: QualifiedServedModel[];
+}
+
+/** RULE 2's verdict on each model a stored record names, when its text still matches its hash. */
+function listedServedBy(recordText: unknown, recordSha256: string): QualifiedServedModel[] | undefined {
+  if (typeof recordText !== 'string' || sha256Hex(recordText) !== recordSha256) return undefined;
+  const body = parseBody(recordText);
+  return body ? qualifyServedModels(servedModelsOf(body.model)) : undefined;
 }
 
 /** A tenant's records, newest first, optionally one thread's or one person's. */
 export async function listTurnRecords(
   q: Queryable,
   orgId: number,
-  filter: { threadId?: string | null; runId?: string | null; actorUserId?: number | null; limit?: number },
+  filter: {
+    threadId?: string | null; runId?: string | null; actorUserId?: number | null; limit?: number;
+    /** Read each record's text to say which models served it (the record listing route). */
+    withServedBy?: boolean;
+  },
 ): Promise<ListedTurnRecord[]> {
-  const params: unknown[] = [orgId];
+  // $2 is whether to read each record's text (bound, never spliced into the SQL).
+  const params: unknown[] = [orgId, filter.withServedBy === true];
   const where = ['organization_id = $1'];
   if (filter.threadId) {
     params.push(filter.threadId);
@@ -333,7 +368,9 @@ export async function listTurnRecords(
   }
   params.push(Math.min(Math.max(Math.trunc(filter.limit ?? 100), 1), 500));
   const { rows } = await q.query(
-    `SELECT id, thread_id, assistant_message_id, actor_user_id, outcome, started_at, ended_at, record_sha256
+    `SELECT id, thread_id, assistant_message_id, actor_user_id, outcome, started_at, ended_at, record_sha256,
+            CASE WHEN $2::boolean AND outcome = 'answered' AND octet_length(record_text) <= 262144
+                 THEN record_text END AS record_text
        FROM ana_turn_records
       WHERE ${where.join(' AND ')}
       ORDER BY started_at DESC
@@ -349,5 +386,8 @@ export async function listTurnRecords(
     startedAt: iso(r.started_at),
     endedAt: iso(r.ended_at),
     recordSha256: r.record_sha256,
+    ...(filter.withServedBy ? withServed(listedServedBy(r.record_text, r.record_sha256)) : {}),
   }));
 }
+
+const withServed = (servedBy: QualifiedServedModel[] | undefined) => (servedBy ? { servedBy } : {});

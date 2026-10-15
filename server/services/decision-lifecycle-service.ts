@@ -107,6 +107,7 @@ async function persistTransition(
   decision: FormalDecisionRecord,
   newStatus: DecisionStatus,
   actorId: string | undefined,
+  detail: { reason?: string; escalatedToRole?: string } = {},
 ): Promise<boolean> {
   if (decision.organizationId == null) return false;
   const actionState = DECISION_STATUS_TO_ACTION_STATE[newStatus];
@@ -125,11 +126,21 @@ async function persistTransition(
       });
       return false;
     }
-    await decisionRecordService.transition(row.id, {
+    /* transition() answers null when its UPDATE matched no row; that was
+       ignored and the transition reported durable. The escalation target and
+       reason were not passed, so the ledger's escalated_to named the person who
+       escalated rather than the role escalated to (2026-10-15). */
+    const updated = await decisionRecordService.transition(row.id, {
       organizationId: decision.organizationId,
       actionState,
       performedBy: actorId || 'system',
+      ...(detail.reason ? { reason: detail.reason } : {}),
+      ...(detail.escalatedToRole ? { escalatedTo: detail.escalatedToRole } : {}),
     });
+    if (!updated) {
+      log.warn('Decision transition matched no durable row', { id: decision.id, newStatus });
+      return false;
+    }
     return true;
   } catch (err) {
     log.warn('Decision transition could not be persisted', {
@@ -331,6 +342,33 @@ export class DecisionLifecycleService {
       }
     }
 
+    /* The confirmed / executed / approved / rejected stamps touched NO database:
+       they mutated `decisionStore`, a module-level Map, and every route reported
+       success. So the moment an action was confirmed — the fact a Part 11
+       reviewer would ask about — was lost at the next restart and invisible to
+       every other worker. The durable row is addressed by decision_code, not by
+       this id: `create` lets the database mint the primary key, the same
+       mismatch the governed-fabric writer had.
+
+       The ledger is written FIRST (2026-10-15). The in-memory record used to be
+       advanced before the write was attempted, so after a refusal that said
+       "the in-memory record was not advanced" the decision read the new status
+       anyway. persistTransition needs only the decision's id, kind and tenant. */
+    const durable = await persistTransition(decision, newStatus, opts.actorId, {
+      reason: opts.reason,
+      escalatedToRole: opts.escalatedToRole,
+    });
+    if (!durable) {
+      return {
+        success: false,
+        error:
+          `Decision ${decisionId} could not be transitioned to ${newStatus} durably. ` +
+          'The in-memory record was not advanced; retry once the store is reachable.',
+        decision,
+      };
+    }
+
+    const from = decision.status;
     const now = new Date().toISOString();
     decision.status = newStatus;
     decision.updatedAt = now;
@@ -357,27 +395,9 @@ export class DecisionLifecycleService {
         break;
     }
 
-    /* The confirmed / executed / approved / rejected stamps touched NO database:
-       they mutated `decisionStore`, a module-level Map, and every route reported
-       success. So the moment an action was confirmed — the fact a Part 11
-       reviewer would ask about — was lost at the next restart and invisible to
-       every other worker. The durable row is addressed by decision_code, not by
-       this id: `create` lets the database mint the primary key, the same
-       mismatch the governed-fabric writer had. */
-    const durable = await persistTransition(decision, newStatus, opts.actorId);
-    if (!durable) {
-      return {
-        success: false,
-        error:
-          `Decision ${decisionId} could not be transitioned to ${newStatus} durably. ` +
-          'The in-memory record was not advanced; retry once the store is reachable.',
-        decision,
-      };
-    }
-
     log.info('Decision transitioned', {
       id: decisionId,
-      from: decision.status,
+      from,
       to: newStatus,
       actor: opts.actorId,
     });

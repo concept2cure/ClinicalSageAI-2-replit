@@ -147,7 +147,8 @@ describe('evaluateAnaReadiness — the embedding lane is ready only once it has 
 
   it('outside production the probe runs too: an OpenAI lane that does not answer is NOT serving', async () => {
     embeddingServer.create.mockRejectedValue(Object.assign(new Error('Incorrect API key provided'), { status: 401 }));
-    gatewayStub = await laneGateway('development', { ANTHROPIC_API_KEY: 'sk-ant-test' });
+    // A key the server refuses: a keyless OpenAI lane sends nothing at all (1bd3af0bc), which is not this case.
+    gatewayStub = await laneGateway('development', { ANTHROPIC_API_KEY: 'sk-ant-test', OPENAI_API_KEY: 'sk-test-fake-refused' });
 
     expect(await evaluateAnaReadiness()).toBe('embedding_lane_down');
     expect(getAnaReadinessDetail()).toMatch(/HTTP 401/);
