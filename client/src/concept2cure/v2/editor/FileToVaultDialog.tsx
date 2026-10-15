@@ -20,6 +20,7 @@ import React, { useState } from 'react';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
+import { setVaultTarget } from '../vaultTarget';
 import type { FireToast } from '../toast';
 
 export interface FileToVaultResult {
@@ -141,6 +142,21 @@ function filedFormatLabel(result: FileToVaultResult, chosenFormat: string): stri
 }
 
 /**
+ * The next step on the filing path, in the order the path enforces: a
+ * submission takes PDF, and a sequence is not frozen or transmitted until each
+ * leaf names an approved, current version. Placement itself does not check
+ * approval, so an unapproved filing is told to approve first.
+ */
+export function filedNextStep(format: string, approved: boolean): string {
+  if (format !== 'PDF') {
+    return `Submissions take PDF, so this ${format === 'DOCX' ? 'Word' : format} copy cannot be placed into one. To submit this document, file it again as PDF.`;
+  }
+  return approved
+    ? 'Next: open it in the Vault and use “Place into submission…” on its record.'
+    : 'Next: review and approve this version in the Vault. It can be placed into a submission before then, but the sequence is not frozen or transmitted until it is approved.';
+}
+
+/**
  * What the dialog shows once the attempt has answered — the server's own vault
  * record, or the server's refusal, and the way onwards to the vault. Separated
  * so the dialog body stays the form and the outcome stays one readable block.
@@ -149,12 +165,15 @@ function FileToVaultOutcome({
   result,
   error,
   chosenFormat,
+  programId,
   onClose,
   onNav,
 }: {
   result: FileToVaultResult | null;
   error: string | null;
   chosenFormat: string;
+  /** The program the document was filed under; the Vault opens on it only there. */
+  programId: string | null | undefined;
   onClose: () => void;
   onNav?: (id: string) => void;
 }) {
@@ -180,9 +199,23 @@ function FileToVaultOutcome({
       {error && (
         <div className="de-err" role="alert" data-testid="ftv-error">{error}</div>
       )}
+      {result && (
+        <div className="de-field" data-testid="ftv-next">
+          {filedNextStep(filedFormatLabel(result, chosenFormat), result.approval?.carried === true)}
+        </div>
+      )}
       {result && onNav && (
         <div className="de-field">
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => { onClose(); onNav('vault'); }}>
+          <button
+            className="btn ghost"
+            style={{ height: 30 }}
+            data-testid="ftv-open-vault"
+            onClick={() => {
+              if (programId) setVaultTarget({ documentId: result.vaultDocumentId, programId });
+              onClose();
+              onNav('vault');
+            }}
+          >
             {I.vault} Open in Vault
           </button>
         </div>
@@ -274,7 +307,7 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
               One governed action: export, ingest and filing are recorded together in the audit trail. The vault folder is decided by the project’s filing rules and shown below once recorded.
             </span>
           </div>
-          <FileToVaultOutcome result={result} error={error} chosenFormat={format} onClose={onClose} onNav={onNav} />
+          <FileToVaultOutcome result={result} error={error} chosenFormat={format} programId={programId} onClose={onClose} onNav={onNav} />
         </div>
         <div className="de-f">
           <button className="de-btn ghost" onClick={onClose} disabled={filing}>{result ? 'Close' : 'Cancel'}</button>

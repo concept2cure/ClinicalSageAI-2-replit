@@ -41,6 +41,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { DocumentWorkbench, type AuthDoc } from '../editor/DocumentWorkbench';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { clearEditorTarget } from '../editorTarget';
+import { clearVaultTarget } from '../vaultTarget';
 import '../styles/project-home-v2.css';
 
 /* The audit-metadata reader moved with the audit rail; its unit test and any
@@ -99,7 +100,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     onCancel: () => { if (requestedRef.current === requestedId) setDismissedSwitch(targetKey); },
   } : null, [held, dismissedSwitch, targetKey, requestedProject, requestedId]);
   const { docs, docsState, loadDocs } = useScopedDocuments(programId, status);
-  const guardedNav = useCallback((id: string) => { if (held) { clearEditorTarget(); return; } onNav(id); }, [held, onNav]);
+  const guardedNav = useCallback((id: string) => { if (held) { clearEditorTarget(); clearVaultTarget(); return; } onNav(id); }, [held, onNav]);
   return <>
     {held && <div className="scaf-note" role="status">
       Still editing the previous project. Finish the unsaved-work decision before switching or navigating.
