@@ -17,6 +17,7 @@ import {
 } from '@shared/constants/domain/vault-taxonomy';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 
 export interface RecordedDetails {
   documentTitle: string | null;
@@ -108,7 +109,8 @@ function useDetailsEditor({ projectId, documentId, details, onSaved }: Props) {
   return { editing, setEditing, draft, setDraft, saving, note, canSave, open, save };
 }
 
-function DetailsView({ details, onEdit }: { details: RecordedDetails; onEdit: () => void }) {
+/** `onEdit` is absent for a role the details route refuses: the values are shown, the control is not. */
+function DetailsView({ details, onEdit }: { details: RecordedDetails; onEdit?: () => void }) {
   return (
     <div className="vd-d-filing">
       <div className="vd-d-filing-row">
@@ -123,11 +125,15 @@ function DetailsView({ details, onEdit }: { details: RecordedDetails; onEdit: ()
         <span className="k">Classification</span>
         <span className="v">{classificationLabel(details.classification)}</span>
       </div>
-      <div className="vd-d-filing-acts">
-        <button className="sp-ask" onClick={onEdit} data-testid="vault-edit-details-open">
-          Edit details
-        </button>
-      </div>
+      {onEdit ? (
+        <div className="vd-d-filing-acts">
+          <button className="sp-ask" onClick={onEdit} data-testid="vault-edit-details-open">
+            Edit details
+          </button>
+        </div>
+      ) : (
+        <VaultViewOnly act="change its details" testId="vault-edit-details-view-only" />
+      )}
     </div>
   );
 }
@@ -178,10 +184,11 @@ function DetailsForm({ ed }: { ed: ReturnType<typeof useDetailsEditor> }) {
 
 export function VaultEditDetails(props: Props) {
   const ed = useDetailsEditor(props);
+  const canWrite = useVaultCanWrite();
   return (
     <div data-testid="vault-edit-details">
       <div className="vd-d-seclbl">Details</div>
-      {ed.editing ? <DetailsForm ed={ed} /> : <DetailsView details={props.details} onEdit={ed.open} />}
+      {ed.editing && canWrite ? <DetailsForm ed={ed} /> : <DetailsView details={props.details} onEdit={canWrite ? ed.open : undefined} />}
       {ed.note && (
         <div className={ed.note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
           role={ed.note.tone === 'error' ? 'alert' : 'status'} data-testid="vault-edit-details-note">

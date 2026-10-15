@@ -12,6 +12,7 @@
  */
 import React, { useState } from 'react';
 import { I } from '../icons';
+import { useVaultCanWrite } from './VaultViewOnly';
 
 export type VaultCoverageShape =
   | {
@@ -45,6 +46,15 @@ function provenanceLine(p: Extract<VaultCoverageShape, { state: 'available' }>['
   return `Required list is the ICH CTD baseline, not this program's own: ${p.reason ?? 'no rule pack applies.'}`;
 }
 
+function MissingLine({ code }: { code: string }) {
+  return (
+    <div className="vd-dr-row" data-testid={`vault-coverage-missing-${code}`}>
+      <span className="vd-dr-kind">{code}</span>
+      <span className="vd-dr-name">No confirmed document</span>
+    </div>
+  );
+}
+
 function MissingSection({
   code,
   moduleCode,
@@ -54,6 +64,9 @@ function MissingSection({
   busy,
 }: { code: string; moduleCode: string } & Omit<Props, 'coverage'>) {
   const [docId, setDocId] = useState('');
+  // The gap is stated to every reader; uploading and filing into it only to a role the routes admit.
+  const canWrite = useVaultCanWrite();
+  if (!canWrite) return <MissingLine code={code} />;
   return (
     <div className="vd-dr-row" data-testid={`vault-coverage-missing-${code}`}>
       <span className="vd-dr-kind">{code}</span>

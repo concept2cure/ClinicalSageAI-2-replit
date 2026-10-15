@@ -21,6 +21,7 @@ import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/l
 import { I } from '../icons';
 import { useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
 import { VaultVersionCompare } from './VaultVersionCompare';
+import { useVaultCanWrite } from './VaultViewOnly';
 import { downloadBlob, safeFileName } from '../download';
 import {
   APPROVED_STAGES,
@@ -373,6 +374,16 @@ function CheckInWarning({ current }: { current: VaultVersion | undefined }) {
   );
 }
 
+/** A new version is an ingest, which admits the writing roles only. */
+function NewVersionButton({ uploading, onPick }: { uploading: boolean; onPick: () => void }) {
+  if (!useVaultCanWrite()) return null;
+  return (
+    <button className="sp-ask" disabled={uploading} onClick={onPick}>
+      {I.upload} Upload new version
+    </button>
+  );
+}
+
 export function VaultVersions({
   projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged,
 }: Props) {
@@ -431,9 +442,7 @@ export function VaultVersions({
         }}
       />
       <CheckInWarning current={versions.find((v) => v.current)} />
-      <button className="sp-ask" disabled={uploading} onClick={() => picker.current?.click()}>
-        {I.upload} Upload new version
-      </button>
+      <NewVersionButton uploading={uploading} onPick={() => picker.current?.click()} />
       {versions.length > 0 && (
         <button className="sp-ask" disabled={exporting} onClick={() => void exportHistory(versions.map((v) => v.id))}>
           {I.download} Export signed history
