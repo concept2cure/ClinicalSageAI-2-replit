@@ -25,7 +25,7 @@ beforeAll(async () => {
     ALTER TABLE cre_evidence_sources ADD COLUMN visibility_class text DEFAULT 'tenant_private',
       ADD COLUMN client_workspace_id integer, ADD COLUMN created_at timestamptz DEFAULT now();
     ALTER TABLE regulatory_programs ADD COLUMN name text DEFAULT 'Study program';
-    ALTER TABLE vault.documents ADD COLUMN document_code text DEFAULT 'STUDY-01',
+    ALTER TABLE vault.documents ALTER COLUMN document_code SET DEFAULT 'STUDY-01',
       ADD COLUMN document_type text DEFAULT 'CSR', ADD COLUMN file_name text DEFAULT 'Study.pdf',
       ADD COLUMN mime_type text DEFAULT 'application/pdf', ADD COLUMN folder_id text,
       ADD COLUMN evidence_kind text, ADD COLUMN ctd_section text,

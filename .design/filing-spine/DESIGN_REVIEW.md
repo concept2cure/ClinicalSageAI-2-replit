@@ -135,7 +135,7 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
 4. **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/review-items-4-11/`): a pair is two adjacent halves, top-aligned, measured in Chromium. As raised: **The global half-field rule.** `.de-field.half:nth-of-type(odd)` (`journey-v2.css:472`) counts every div in the drawer body. `AuthoringCreateExport.tsx` has the same latent mispairing. A sibling-independent rule (flex-wrap with `gap`) wants a visual pass across all 332 uses.
 5. **Selector-shadowing baseline.** `scripts/ci/css-selector-shadowing-baseline.json` still lists `.pj-convo` and `.pj-convo-t`, which no longer shadow, and `.ana-composer` (found by the F14 audit, not this review's). The file says it is edited downward by a human only, so the three lines are left for one to delete.
 6. **`offered:false` is enforced nowhere.** A UK IND can still be created. Refusing it at the picker and at `POST /api/submissions` is F22 territory (picker refusals). It waits on the founder's answer to `WORKFLOW_DECISION_2026-10-08.md`.
-7. **Vocabulary not taken this round:**
+7. **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/review-item-7-vocabulary/`), except the picker's Module 1 labels, which stay with F22. As raised: **Vocabulary not taken this round:**
    - "no channel" → "no transmit channel";
    - "Flat/Structured Module 1" in a select label;
    - showing the chosen region's full statement under the select at 375px, where the option clips;

@@ -23,6 +23,25 @@ interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
+/**
+ * The board's determination date, as recorded by the board — required.
+ *
+ * A missing date was stamped as the day the record was entered, and the
+ * approval date and the continuing-review expiration were derived from it: an
+ * approval entered a week late expired a week late (2026-10-15).
+ */
+function requireDeterminationDate(
+  value: string | null | undefined,
+  Err: new (code: 'BAD_INPUT', message: string) => Error,
+): string {
+  const v = typeof value === 'string' ? value.trim() : '';
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00Z`) : null;
+  if (!d || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) {
+    throw new Err('BAD_INPUT', 'determinationDate is required, as the date the board made the determination (YYYY-MM-DD).');
+  }
+  return v;
+}
+
 export class IbcError extends Error {
   constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT', message: string) {
     super(message);
@@ -99,7 +118,7 @@ export async function recordReviewTx(
   input: { outcome: 'approved' | 'conditional' | 'disapproved' | 'tabled'; convenedQuorum?: boolean; conditions?: string | null; determinationDate?: string | null },
 ): Promise<{ reviewId: number; expirationDate: string | null; provenanceLinkId: number | null }> {
   const reg = await getRegistration(client, orgId, registrationId);
-  const determinationDate = input.determinationDate ?? new Date().toISOString().slice(0, 10);
+  const determinationDate = requireDeterminationDate(input.determinationDate, IbcError);
   const { rows } = await client.query(
     `INSERT INTO ibc_reviews (organization_id, registration_id, outcome, convened_quorum, conditions, determination_date, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,

@@ -102,10 +102,7 @@ beforeAll(async () => {
       'migrations/20261008e_document_catalog_attribution.sql',
       'migrations/20261006_document_data_dispositions.sql',
     ],
-    // The review-assignment row id the catalog write's project hold locks
-    // (document-catalog-admission.ts holdCatalogProject), as deployed.
-    testOnlySql: `${AUTHORING_ACCESS_DDL}
-      ALTER TABLE concept2cure_review_assignments ADD COLUMN IF NOT EXISTS id SERIAL;`,
+    testOnlySql: AUTHORING_ACCESS_DDL,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;

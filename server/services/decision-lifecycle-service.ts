@@ -856,7 +856,14 @@ export class DecisionLifecycleService {
    */
   async computeContradictionAwareStatus(
     projectId: string,
-    scope: { moduleCode?: string; dossierId?: string; regulatorBody?: string; submissionType?: string }
+    scope: {
+      /** The caller's tenant. Required: both reads below are scoped by it. */
+      organizationId: number;
+      moduleCode?: string;
+      dossierId?: string;
+      regulatorBody?: string;
+      submissionType?: string;
+    }
   ): Promise<{
     hasUnresolvedContradictions: boolean;
     hasProvisionalDecisions: boolean;
@@ -870,31 +877,35 @@ export class DecisionLifecycleService {
     overlayActiveCount: number;
     summary: string;
   }> {
-    // Base decision-aware status
-    const baseStatus = this.computeDecisionAwareStatus(projectId, scope);
-
-    // Enrich with contradiction context
-    let contradictionCount = 0;
-    let contradictionBlockingCount = 0;
-    let overlayActiveCount = 0;
-
-    try {
-      const { contradictionEngineService } = await import('./contradiction-engine-service.js');
-      const contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
-        1, // Default org — real multi-tenant uses req context
-        Number(projectId),
-        {
-          moduleCode: scope.moduleCode,
-          regulatorBody: scope.regulatorBody,
-          submissionType: scope.submissionType,
-        }
-      );
-      contradictionCount = contradictionContext.unresolvedCount;
-      contradictionBlockingCount = contradictionContext.blockingCount;
-      overlayActiveCount = contradictionContext.overlayActiveCount;
-    } catch {
-      // Contradiction engine unavailable
+    /* Both reads are the caller's tenant's (2026-10-15). The contradiction read
+       was hard-coded to organization 1 ("Default org — real multi-tenant uses
+       req context"), so every other tenant was told its project had no
+       contradictions — while organization 1's counts were served to anyone
+       naming the same project id — and the decisions were read unscoped. A
+       failed read left the counts at 0 and the summary at "No pending
+       decisions or contradictions"; it now fails, rather than reporting none. */
+    if (!Number.isInteger(scope.organizationId) || scope.organizationId <= 0) {
+      throw new Error('computeContradictionAwareStatus: an organization is required');
     }
+    const baseStatus = this.computeDecisionAwareStatus(projectId, {
+      moduleCode: scope.moduleCode,
+      dossierId: scope.dossierId,
+      organizationId: scope.organizationId,
+    });
+
+    const { contradictionEngineService } = await import('./contradiction-engine-service.js');
+    const contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
+      scope.organizationId,
+      Number(projectId),
+      {
+        moduleCode: scope.moduleCode,
+        regulatorBody: scope.regulatorBody,
+        submissionType: scope.submissionType,
+      }
+    );
+    const contradictionCount = contradictionContext.unresolvedCount;
+    const contradictionBlockingCount = contradictionContext.blockingCount;
+    const overlayActiveCount = contradictionContext.overlayActiveCount;
 
     const parts: string[] = [];
     if (baseStatus.summary !== 'No pending decisions') {

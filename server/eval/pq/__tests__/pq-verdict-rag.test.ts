@@ -74,9 +74,13 @@ function passingGeneration(p: PqProtocol): PqGenerationResult[] {
   }));
 }
 
-const passingExtraction: PqExtractionResult[] = [
-  { taskId: 'ext-0', docType: 'ind', servedModel: 'claude-opus-5-5', servedModelVerified: true, f1: 1, precision: 1, recall: 1 },
-];
+/** Extraction results that meet every extraction criterion of the real protocol, its sample floor included. */
+function passingExtraction(p: PqProtocol): PqExtractionResult[] {
+  const floor = p.components.extraction?.criteria.minTasksPerDocType ?? 1;
+  return Array.from({ length: floor }, (_, i) => ({
+    taskId: `ext-${i}`, docType: 'ind', servedModel: 'claude-opus-5-5', servedModelVerified: true, f1: 1, precision: 1, recall: 1,
+  }));
+}
 
 /** A positive gold item the pinned model answered perfectly. */
 function item(id: string, over: Partial<PqRagResult> = {}): PqRagResult {
@@ -110,7 +114,7 @@ function ragRun(items: PqRagResult[]): PqRagRecord {
 
 const passingRag = () => ragRun([item('q1'), item('q2'), item('q3')]);
 
-const verdictOf = (p: PqProtocol, rag?: PqRagRecord) => computeVerdict(p, passingGeneration(p), passingExtraction, rag);
+const verdictOf = (p: PqProtocol, rag?: PqRagRecord) => computeVerdict(p, passingGeneration(p), passingExtraction(p), rag);
 const why = (r: { reasons: string[] }) => r.reasons.join(' | ');
 
 describe('a mean is not a qualification: one unfaithful answer is the harm', () => {

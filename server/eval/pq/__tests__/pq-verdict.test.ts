@@ -71,13 +71,13 @@ describe('an extraction criterion that cannot be applied is not a criterion', ()
   const why = (r: { reasons: string[] }) => r.reasons.join(' | ');
 
   it('control — a usable minimum is applied: F1 below it is a miss', () => {
-    const r = computeVerdict(withExtraction({ minF1: 0.8 }), [task('a'), task('b')], extracted(0.5));
+    const r = computeVerdict(withExtraction({ minF1: 0.8, minTasksPerDocType: 1 }), [task('a'), task('b')], extracted(0.5));
     expect(r.verdict).toBe('FAIL');
     expect(why(r)).toMatch(/mean extraction F1 0\.500 is below 0\.8/);
   });
 
   it('control — a usable minimum that is met passes', () => {
-    const r = computeVerdict(withExtraction({ minF1: 0.8 }), [task('a'), task('b')], extracted(0.9));
+    const r = computeVerdict(withExtraction({ minF1: 0.8, minTasksPerDocType: 1 }), [task('a'), task('b')], extracted(0.9));
     expect(r.verdict, why(r)).toBe('PASS');
   });
 
@@ -110,6 +110,28 @@ describe('an extraction criterion that cannot be applied is not a criterion', ()
     const r = computeVerdict(withExtraction({ minF1: Number.NaN }), [task('a'), task('b')], extracted(0.1));
     expect(r.verdict, 'a NaN minimum qualified a model against nothing').not.toBe('PASS');
     expect(why(r)).toMatch(/minF1/);
+  });
+
+  /* P-31 condition 3 (2026-10-15): the extraction sample floor. */
+  it('no extraction sample floor → INCOMPLETE, naming it, however well the one task scored', () => {
+    const r = computeVerdict(withExtraction({ minF1: 0.8 }), [task('a'), task('b')], extracted(1));
+    expect(r.verdict).toBe('INCOMPLETE');
+    expect(why(r)).toMatch(/no extraction sample floor/);
+  });
+
+  it('fewer verified extraction tasks than the floor → INCOMPLETE; a fallback model\'s answer does not make up the sample', () => {
+    const two = [...extracted(1), { ...extracted(1)[0], taskId: 'ext-1', servedModel: 'other', servedModelVerified: false }];
+    const r = computeVerdict(withExtraction({ minF1: 0.8, minTasksPerDocType: 2 }), [task('a'), task('b')], two);
+    expect(r.verdict).toBe('INCOMPLETE');
+    expect(why(r)).toMatch(/extraction sample below the protocol floor of 2 per document type: ind=1/);
+  });
+
+  it('a floor that is not a positive whole number is named, not applied', () => {
+    for (const bad of [0, 2.5, '10']) {
+      const r = computeVerdict(withExtraction({ minF1: 0.8, minTasksPerDocType: bad }), [task('a'), task('b')], extracted(1));
+      expect(r.verdict, String(bad)).toBe('INCOMPLETE');
+      expect(why(r)).toMatch(/minTasksPerDocType is/);
+    }
   });
 
   it('an out-of-range minimum is named rather than applied', () => {

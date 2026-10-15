@@ -547,7 +547,7 @@ function VaultPlaceIntoSubmissionForDocument({
         <div className="de-h">
           <div>
             <div className="de-h-eye">Vault → filing</div>
-            <div className="de-h-t" id="vpf-title">Place into submission</div>
+            <div className="de-h-t" id="vpf-title">Place into filing</div>
             <div className="de-h-s">
               The vault copy is filed as itself — the leaf points at this document, so what is
               assembled is what is stored here. Nothing is copied.
@@ -610,7 +610,7 @@ function VaultPlaceIntoSubmissionForDocument({
             disabled={!canPlace}
             title={placeBlockedReason(Boolean(seq), sectionUsable, vocabulary, reasonOk, alreadyPlaced)}
           >
-            {placing ? 'Filing…' : 'Place into submission'}
+            {placing ? 'Filing…' : 'Place into filing'}
           </button>
         </div>
       </div>

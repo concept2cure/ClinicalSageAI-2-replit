@@ -28,6 +28,9 @@ import {
 import { resolveSubmissionPlan, submissionCoverageMatrix } from '../submission-resolver';
 import { pmdaEctdV4Fact } from '../../ectd/dispatch-readiness';
 
+// 2026-10-15: "no channel" reads "no transmit channel" in the summary and the
+// line (filing-spine design review, item 7); the pins below are amended in place.
+
 /** The date marketSupport judges as of when given none. */
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -45,9 +48,9 @@ const packs: ActiveRulePacks = {
 
 describe('marketSupport — the FILING_SPINE.md F19 table', () => {
   it.each([
-    ['maa', 'EMA', 'Flat Module 1, no channel'],
+    ['maa', 'EMA', 'Flat Module 1, no transmit channel'],
     ['nda', 'FDA', 'Structured Module 1'],
-    ['nds', 'Health_Canada', 'No outline, no channel'],
+    ['nds', 'Health_Canada', 'No outline, no transmit channel'],
     ['nda', 'ANVISA', 'Not supported'],
   ])('(%s, %s) → %s', (applicationType, market, summary) => {
     expect(marketSupport({ applicationType, market }, packs).summary).toBe(summary);
@@ -55,10 +58,10 @@ describe('marketSupport — the FILING_SPINE.md F19 table', () => {
 
   it('a market is named by its agency, its region code or its submission region alike', () => {
     for (const market of ['EMA', 'eu', 'EU', 'ema']) {
-      expect(marketSupport({ applicationType: 'maa', market }, packs).summary, market).toBe('Flat Module 1, no channel');
+      expect(marketSupport({ applicationType: 'maa', market }, packs).summary, market).toBe('Flat Module 1, no transmit channel');
     }
     for (const market of ['Health_Canada', 'ca', 'CA', 'Health Canada']) {
-      expect(marketSupport({ applicationType: 'nds', market }, packs).summary, market).toBe('No outline, no channel');
+      expect(marketSupport({ applicationType: 'nds', market }, packs).summary, market).toBe('No outline, no transmit channel');
     }
   });
 
@@ -89,7 +92,7 @@ describe('marketSupport — the FILING_SPINE.md F19 table', () => {
 
   it('PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0', () => {
     const s = marketSupport({ applicationType: 'jnda', market: 'PMDA' }, packs);
-    expect(s.summary).toBe('Flat Module 1, no channel');
+    expect(s.summary).toBe('Flat Module 1, no transmit channel');
     expect(s.channel.state).toBe('refused');
     // 2026-10-08 (filing-spine review, open item 9): the line is true only
     // from a date, so it names that date — the dated registry fact's, read
@@ -105,13 +108,13 @@ describe('marketSupport — the FILING_SPINE.md F19 table', () => {
     expect(s.outline.state).toBe('no_outline');
     expect(s.channel.state).toBe('none');
     expect(s.regionProfile).toBe(false);
-    expect(s.line).toBe('No outline; no channel');
+    expect(s.line).toBe('No outline; no transmit channel');
   });
 
   it('NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not', () => {
     for (const [market, profiled] of [['NMPA', true], ['MFDS', true], ['TGA', false]] as const) {
       const s = marketSupport({ applicationType: 'nda', market }, packs);
-      expect(s.summary, market).toBe('No outline, no channel');
+      expect(s.summary, market).toBe('No outline, no transmit channel');
       expect(s.module1.state, market).toBe('placeholder');
       expect(s.regionProfile, market).toBe(profiled);
     }
@@ -212,7 +215,7 @@ describe('readMarketSupport reads the active packs once, from c2c_rule_packs', (
     expect(queries).toHaveLength(1);
     expect(queries[0]).toMatch(/c2c_rule_packs/);
     expect(queries[0]).toMatch(/superseded_by IS NULL/);
-    expect(out.map((m) => m.summary)).toEqual(['Flat Module 1, no channel', 'Structured Module 1']);
+    expect(out.map((m) => m.summary)).toEqual(['Flat Module 1, no transmit channel', 'Structured Module 1']);
   });
 });
 

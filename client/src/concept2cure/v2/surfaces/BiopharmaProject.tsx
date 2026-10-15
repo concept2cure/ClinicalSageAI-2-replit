@@ -402,6 +402,7 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
       return { summary: 'CSR workflow: the board returned no ICH E3 sections for this organisation yet.' };
     }
     return {
+      documentType: 'ICH_CSR',
       summary:
         (program
           ? `CSR workflow for ${program.title} (${program.code}), build progress ${program.readiness}%: `

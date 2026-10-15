@@ -38,7 +38,7 @@ The block is capped at 3,200 characters. Past the cap it points to `get_document
 
 ## The gate
 
-`server/services/ana-ri/__tests__/open-document-turn.test.ts`, 12 cases. It covers:
+`server/services/ana-ri/__tests__/open-document-turn.test.ts`, 15 cases, and `client/src/concept2cure/components/ana/__tests__/useAnaChat-document-type.test.ts`, 4 cases. It covers:
 - **the saved IB:** its outline and Appendix A reach the prefetch, and the record is read with `[document, org]`;
 - **an unverifiable recorded template:** stated, and not used as a type;
 - **a failed read:** stated, and listed as unavailable;
@@ -48,6 +48,26 @@ The block is capped at 3,200 characters. Past the cap it points to `get_document
 - **the route lines:** the two stream lines that carry the type, pinned.
 
 `green/open-document-turn.txt`: 12/12. Every suite that calls `orchestrate()`, reads the persona prompt or loads the prefetch (70 files) passes, except `report-os/compute-run-regional.test.ts`. That suite fails 1 of 3 on the trunk tree without this change too, and is recorded below. Typecheck shows 0 errors, and the lint ratchet shows no file gaining a warning.
+
+## The client half: a surface states the type it authors
+
+Measured at `d7ed0d0fb`, `useAnaChat` sent `document_context` only when an authoring pack was present. Protocol Development, the IB surface and the CSR workflow have no pack, so they sent no document context and no type.
+
+What changed:
+- **The surface contract.** `SurfaceContext` takes an optional `documentType`, a registry id, which `toModuleContext` sends as `document_type`.
+- **Screens that state a type:**
+  - Protocol Development states `ICH_PROTOCOL` for a clinical protocol. IACUC, IRB and IBC protocols have no registry type, so they state none.
+  - The IB surface states `ICH_IB`.
+  - The CSR workflow states `ICH_CSR`.
+- **The authoring pack.** `AuthoringContextPack` gains `documentType`, for an editor host that knows it.
+- **`useAnaChat`** sends the pack's type, or else the surface's, as `document_context.documentType`. It also includes the pack's type in `authoring_context`.
+- **The server** hands a type stated in `document_context` to the open-document read (`withStatedDocumentType`), where it is still accepted only as a registry id and a saved record still outranks it.
+
+`red/client-document-type.txt`: 3 of 4 red on that tree. The fourth case, "a surface that states no type sends no document context", guards existing behaviour and passes on both trees. All 4 are green after, and the server suite is now 15/15.
+
+The QMS controlled-document screens state no type. The registry has no SOP document type, so SOP requirements stay keyed by topic in `shared/regulatory/sop-requirements.ts` and are reached through `review_sop_requirements`. A registry entry for SOPs, or a topic route, is owed.
+
+A hand-off into the conversation carries the surface's context on its first turn only (`ConversationThread.tsx`). Later turns on the conversation screen carry that screen's own context, so they carry no type unless an editor canvas is open.
 
 ## The security review
 
@@ -70,7 +90,6 @@ It noted two limits, both recorded and not fixed:
 
 ## Not done, recorded
 
-- **Surfaces with no saved record do not state their type yet:** Protocol Development, QMS, the IB surface, the CSR board and Submission Center. The server accepts `authoring_context.documentType` as a registry id; the client half sets it. `useAnaChat.ts` and `DocumentWorkbench.tsx` were changed by another author within 24 hours of this commit.
 - **`send-message.ts`** (the non-stream path) still builds `documentContext` from a `clientCtx.documentType` that no client sends. Its prompt now prints that only as a registry id.
 - **Duplicate template registry.** The message-text template registry (`ana-ri/document-templates.ts`) still duplicates the canonical one (`market-specs/document-template-library.ts`). The open document now outranks it; retiring it is owed.
 - **Trunk red, not this lane's:** `server/services/report-os/__tests__/compute-run-regional.test.ts` ("retains a supplied declaration and refuses its wrong region") fails on the trunk tree without this change.

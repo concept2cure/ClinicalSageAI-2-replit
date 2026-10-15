@@ -3135,21 +3135,21 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
       }
     );
 
-    // Also get contradiction-aware decision status
-    let contradictionAwareStatus: any = null;
-    try {
-      const { decisionLifecycleService } = await import(
-        '../services/decision-lifecycle-service.js'
-      );
-      contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
-        String(projectId ?? ''),
-        {
-          moduleCode: moduleCode as string || undefined,
-          regulatorBody: regulatorBody as string || undefined,
-          submissionType: submissionType as string || undefined,
-        }
-      );
-    } catch { /* non-blocking */ }
+    // Also get contradiction-aware decision status — for this tenant. A
+    // failure fails the request: it was swallowed into `null` beside a
+    // context that read as complete.
+    const { decisionLifecycleService } = await import(
+      '../services/decision-lifecycle-service.js'
+    );
+    const contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
+      String(projectId ?? ''),
+      {
+        organizationId: orgId,
+        moduleCode: moduleCode as string || undefined,
+        regulatorBody: regulatorBody as string || undefined,
+        submissionType: submissionType as string || undefined,
+      }
+    );
 
     return res.json({
       status: 'data',

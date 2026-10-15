@@ -156,12 +156,12 @@ describe('DocumentWorkbench — File to vault', () => {
   });
 
   /* Filing-path trace, 2026-10-15: "Open in Vault" landed on the Vault's first
-     node, away from the filed record and its "Place into submission…". */
+     node, away from the filed record and its "Place into filing…". */
   it('"Open in Vault" names the filed document for the Vault to open on, and says the next step', async () => {
     fileToVault = () => ok({ ...FILED, data: { ...FILED.data, sealed: true, approval: { carried: true, reviewedBy: 'R', approvedBy: 'A', canonicalId: 'x' } } }, 201);
     const dlg = await openDialog();
     fireEvent.click(within(dlg).getByTestId('ftv-submit'));
-    expect((await within(dlg).findByTestId('ftv-next')).textContent).toContain('Place into submission');
+    expect((await within(dlg).findByTestId('ftv-next')).textContent).toContain('Place into filing');
     fireEvent.click(within(dlg).getByTestId('ftv-open-vault'));
     expect((window as any).C2C_VAULT_TARGET).toEqual({ documentId: FILED.data.vaultDocumentId, programId: PID });
   });
