@@ -23,9 +23,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ensureJournal, recordApplied } from './migration-journal.mjs';
 
-// Dependency-safe order: governance ALTERs ana_capability_registry (pre-existing),
-// PV + commitments create their own tables, council provisioning seeds the four
-// drafting-council agents into the lumen schema.
+// Dependency-safe order: the AnA base creates ana_capability_registry before
+// governance ALTERs it; PV + commitments create their own tables, and council
+// provisioning seeds the four drafting-council agents into the lumen schema.
 //
 // Entries are repo-relative so a root-lineage file can declare a prerequisite that
 // lives in the canonical db/migrations lineage. 044b is that prerequisite: it owns
@@ -153,6 +153,10 @@ export const C2C_MIGRATION_FILES = [
   // fresh installs that already have it.
   'migrations/20260604_submission_core_canonical.sql',
 
+  // The governance migration below alters this table; the historical 0013
+  // migration must therefore run first on databases provisioned by drizzle.
+  // Its tables are idempotent and its optional profile alteration is guarded.
+  'migrations/0013_ana_intelligence_system.sql',
   'migrations/20260603_ai_capability_governance.sql',
   'migrations/20260603_pv_operational.sql',
   'migrations/20260603_commitments.sql',
@@ -1748,17 +1752,6 @@ export const C2C_MIGRATION_FILES = [
   // learned in the interim is lost. Ordered before the sweep so both tables are
   // policied in the deploy that creates them.
   'migrations/20260820b_rim_learned_patterns.sql',
-
-  // ── AnA outcome log + capability registry (added 2026-08-20, ledger L77) ──
-  // ana_outcome_log is READ by session bootstrap ("AnA's past lessons") and
-  // now WRITTEN by the feedback interceptor — and the whole 0013 family sat on
-  // no durable apply path (fresh-install overlay only), so on deploy-migrated
-  // databases the reader queried a missing table and the writer would have
-  // too. Fully IF NOT EXISTS-idempotent; its trailing DO block is guarded on
-  // project_intelligence_profiles actually existing, so it is safe on a
-  // set-only database where that push-surface table never appears. Ordered
-  // before the sweep so the org-scoped tables get tenant policies.
-  'migrations/0013_ana_intelligence_system.sql',
 
   // ── The v2 module-catalog seed joins the durable path (found via BP-W1-5) ──
   // db/migrations/20260810_reconcile_module_catalog.sql seeds/reconciles the
